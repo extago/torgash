@@ -8,8 +8,9 @@ older and kept a list of everything that annoyed them. It has a small core,
 modules that plug in through hooks and never patch anything, and themes that
 can override any template.
 
-- **Installing a shop:** [INSTALL.md](INSTALL.md) ([по-русски](INSTALL.ru.md)).
-- **Working on the engine:** `CLAUDE.md`, then `docs/PLAN.md` and `docs/architecture/`.
+**Installing a shop:** take `torgash-X.Y.Z-install.zip` from
+[Releases](https://github.com/extago/torgash/releases) and follow the
+`INSTALL.md` inside it (`INSTALL.ru.md` по-русски).
 
 ## What's inside
 
