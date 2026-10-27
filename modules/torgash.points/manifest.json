@@ -1,0 +1,129 @@
+{
+    "id": "torgash.points",
+    "name": "Bonus points",
+    "version": "1.0.0",
+    "icon": "coins",
+    "color": "#ca8a04",
+    "section": "marketing",
+    "description": "Bonus points for customers with an account: earned for an order once it reaches the status the shop chose, from the money actually paid, with multipliers per category, product and customer group; spent in the basket as a discount after the coupon, within a share of the order; optionally a price in points under a product's price, for which a line can be bought outright. Every movement is a line in the customer's history.",
+    "provider": "Torgash\\Points\\PointsServiceProvider",
+    "autoload": {
+        "Torgash\\Points\\": "src/"
+    },
+    "requires": {
+        "core": ">=0.1",
+        "modules": [
+            "torgash.catalog",
+            "torgash.cart",
+            "torgash.checkout"
+        ]
+    },
+    "settings": [
+        {
+            "key": "earn_points",
+            "type": "number",
+            "default": 1,
+            "label": "Points earned",
+            "help": "For every amount below. 0 — nothing is earned (points can still be given by hand and spent)."
+        },
+        {
+            "key": "earn_per",
+            "type": "number",
+            "default": 100,
+            "label": "For every, in the shop's currency",
+            "help": "1 point for every 100 — an order of 2 450 earns 24. Counted from the goods after every discount, never from delivery."
+        },
+        {
+            "key": "money_only",
+            "type": "checkbox",
+            "default": true,
+            "label": "Earn only on what was paid with money",
+            "help": "The part of an order a gift card paid earns nothing — it was paid for once already. Off — the whole order earns."
+        },
+        {
+            "key": "earn_statuses",
+            "type": "checkboxes",
+            "default": ["complete"],
+            "options": {},
+            "label": "Credit the points when an order moves into",
+            "help": "Until then they are shown to the customer as waiting. An order that moves into a status below takes them back."
+        },
+        {
+            "key": "revoke_statuses",
+            "type": "checkboxes",
+            "default": ["cancelled", "declined", "failed"],
+            "options": {},
+            "label": "Take the points back when an order moves into",
+            "help": "What the order earned is taken back and what was spent on it is returned. A refund takes back its share too."
+        },
+        {
+            "key": "point_value",
+            "type": "number",
+            "default": 1,
+            "label": "One point is worth, in the shop's currency",
+            "help": "What a point takes off an order when it is spent."
+        },
+        {
+            "key": "spend_min",
+            "type": "number",
+            "default": 0,
+            "label": "Spend at least, points",
+            "help": "0 — any number."
+        },
+        {
+            "key": "spend_max_percent",
+            "type": "number",
+            "default": 50,
+            "label": "Points may pay at most, % of the goods",
+            "help": "After the coupon. 100 — the whole of the goods; delivery is never paid with points."
+        },
+        {
+            "key": "with_coupon",
+            "type": "checkbox",
+            "default": true,
+            "label": "Points can be spent together with a coupon",
+            "help": "Off — an order takes either a coupon or points."
+        },
+        {
+            "key": "lifetime_months",
+            "type": "number",
+            "default": 0,
+            "label": "Points live for, months",
+            "help": "Counted from the day they were credited; the oldest are spent first. 0 — for ever."
+        },
+        {
+            "key": "show_earn",
+            "type": "checkbox",
+            "default": true,
+            "label": "Show \"+N points\" on product cards and pages",
+            "help": "What buying the product earns, and to a guest — that it would earn it with an account."
+        },
+        {
+            "key": "points_prices",
+            "type": "checkbox",
+            "default": false,
+            "label": "Prices in points",
+            "help": "A product can have a price in points, shown under its price; a customer can then buy that line outright for points in the basket. Set on the product's Bonus points tab."
+        }
+    ],
+    "permissions": [
+        {
+            "name": "points.manage",
+            "label": "Manage bonus points"
+        }
+    ],
+    "admin_menu": [
+        {
+            "label": "Bonus points",
+            "url": "/admin/points",
+            "icon": "coins",
+            "group": "marketing",
+            "position": 26,
+            "can": "points.manage",
+            "keywords": {
+                "en": "loyalty reward bonus cashback",
+                "ru": "лояльность бонусы кэшбэк баллы вознаграждение"
+            }
+        }
+    ]
+}

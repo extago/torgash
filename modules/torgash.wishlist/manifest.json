@@ -1,0 +1,81 @@
+{
+    "id": "torgash.wishlist",
+    "name": "Wishlist",
+    "version": "1.0.0",
+    "icon": "heart",
+    "description": "Favourites: a heart on every product, a list the customer can filter, buy from and share — kept for guests as a basket is and merged into the account on signing in.",
+    "provider": "Torgash\\Wishlist\\WishlistServiceProvider",
+    "autoload": {
+        "Torgash\\Wishlist\\": "src/"
+    },
+    "requires": {
+        "core": ">=0.1",
+        "modules": [
+            "torgash.catalog"
+        ]
+    },
+    "settings": [
+        {
+            "key": "card_button",
+            "type": "checkbox",
+            "default": true,
+            "label": "A heart on catalogue cards",
+            "help": "On the product page and in the search window it is always there."
+        },
+        {
+            "key": "notice_on_add",
+            "type": "checkbox",
+            "default": true,
+            "label": "A notice in the corner when a product is added",
+            "help": "The photograph, the name and a link to the list, just under the header; it leaves by itself after a few seconds and stays while the pointer is over it."
+        },
+        {
+            "key": "share",
+            "type": "checkbox",
+            "default": true,
+            "label": "Customers may share their list by a link",
+            "help": "Whoever has the link sees the products and can buy them — never whose list it is. The owner can replace the link or close it."
+        },
+        {
+            "key": "offer_notifications",
+            "type": "checkbox",
+            "default": true,
+            "label": "Offer letters about price drops and returns",
+            "help": "Two switches on the list page, for customers with an account; both are off until the customer turns them on. Off here, nothing is offered and nothing is sent."
+        },
+        {
+            "key": "price_drop_percent",
+            "type": "number",
+            "default": 5,
+            "label": "A price drop worth a letter, %",
+            "help": "Measured against the price when the product was saved, or when the last letter about it went. Checked every morning and after an exchange rate changes."
+        },
+        {
+            "key": "keep_guest_days",
+            "type": "number",
+            "default": 90,
+            "label": "Keep a guest's list for, days",
+            "help": "A list nobody has touched and nobody signed in with is deleted after this. An account's list is kept for ever. 0 keeps guests' lists for ever too."
+        }
+    ],
+    "permissions": [
+        {
+            "name": "wishlist.stats",
+            "label": "See wishlist statistics"
+        }
+    ],
+    "admin_menu": [
+        {
+            "label": "Wishlists",
+            "url": "/admin/wishlist",
+            "icon": "heart",
+            "group": "marketing",
+            "position": 50,
+            "can": "wishlist.stats",
+            "keywords": {
+                "en": "favourites most wished demand statistics",
+                "ru": "избранное популярные спрос статистика"
+            }
+        }
+    ]
+}

@@ -1,0 +1,42 @@
+{
+    "id": "torgash.pages",
+    "name": "Pages",
+    "version": "1.0.0",
+    "icon": "file-text",
+    "description": "Static pages — About us, Delivery and payment, Terms, Privacy policy. One text page per row: a translatable title, body and SEO fields, an address of its own, and core's display rules deciding which storefront, language and visitor it is for. A link, a form and a blog post are deliberately NOT page types here: those are a menu item, torgash.enquiries and a future blog.",
+    "provider": "Torgash\\Pages\\PagesServiceProvider",
+    "autoload": {
+        "Torgash\\Pages\\": "src/"
+    },
+    "requires": {
+        "core": ">=0.1"
+    },
+    "permissions": [
+        {
+            "name": "pages.manage",
+            "label": "Manage pages"
+        }
+    ],
+    "admin_menu": [
+        {
+            "label": "Pages",
+            "url": "/admin/pages",
+            "icon": "file-text",
+            "group": "content",
+            "position": 8
+        }
+    ],
+    "zones": [
+        {
+            "name": "pages.sidebar",
+            "group": "pages",
+            "label": "Page — sidebar",
+            "shape": "narrow"
+        },
+        {
+            "name": "pages.after_content",
+            "group": "pages",
+            "label": "Page — under the text"
+        }
+    ]
+}

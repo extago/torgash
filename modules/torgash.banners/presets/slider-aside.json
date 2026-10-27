@@ -1,0 +1,8 @@
+{
+    "kind": "frame",
+    "label": "Slider with a column",
+    "shape": "wide",
+    "fields": [
+        {"key": "column", "type": "checkbox", "label": "The column only from a tablet up", "on": "hf-aside-wide-only", "default": true}
+    ]
+}

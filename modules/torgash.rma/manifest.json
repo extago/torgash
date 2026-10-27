@@ -1,0 +1,62 @@
+{
+    "id": "torgash.rma",
+    "name": "Returns and exchanges",
+    "version": "1.0.0",
+    "icon": "undo-2",
+    "section": "sales",
+    "description": "A return is a kind of ticket, not a second inbox: the customer asks from their order, the conversation happens in the enquiry, and the money, the stock and the order status move through the shop's own code. An exchange is a new order linked to the old one.",
+    "provider": "Torgash\\Rma\\RmaServiceProvider",
+    "autoload": {
+        "Torgash\\Rma\\": "src/"
+    },
+    "requires": {
+        "core": ">=0.1",
+        "modules": [
+            "torgash.enquiries",
+            "torgash.checkout"
+        ]
+    },
+    "settings": [
+        {
+            "key": "statuses",
+            "type": "checkboxes",
+            "default": [],
+            "label": "Offer a return in these order statuses",
+            "help": "The shop's own statuses, ticked by the shop — nobody else knows which of them means \"the customer has it\". Tick none and the button is never offered."
+        },
+        {
+            "key": "paid_only",
+            "type": "checkbox",
+            "default": false,
+            "label": "Only for orders we recorded as paid",
+            "help": "Off by default on purpose: plenty of shops watch payment in their CRM or their accounting system rather than here, and there this check would refuse a perfectly lawful return."
+        },
+        {
+            "key": "days",
+            "type": "number",
+            "default": null,
+            "label": "Within, days of the order",
+            "help": "Empty means no limit. Counted from when the order was placed."
+        },
+        {
+            "key": "restock",
+            "type": "checkbox",
+            "default": true,
+            "label": "Put received goods back into stock by default",
+            "help": "Which way the radio is set when the receipt form opens — not a rule. What actually happens to a parcel is decided when it is opened: a warranty item goes back to the manufacturer or into the bin, and adding it to stock would put a broken thing on sale."
+        },
+        {
+            "key": "completed_status",
+            "type": "select",
+            "default": "",
+            "label": "When a return is completed, move the order to",
+            "help": "Applied only when nothing is left of the order to return — half an order coming back does not make the order returned. Statuses that put stock back are not offered: this module has already returned the lines, and such a status would count the same goods twice."
+        }
+    ],
+    "permissions": [
+        {
+            "name": "rma.manage",
+            "label": "Handle returns and exchanges"
+        }
+    ]
+}

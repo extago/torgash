@@ -1,0 +1,17 @@
+/* Slider with a column — the slides across the whole
+   width, and over them, inside the page's width, the dots on the left and a
+   second slider (choose it in the slider's settings, "Beside it") standing
+   in a column on the right. */
+.hf-aside { position: relative; height: 100%; }
+.hf-aside .torgash-slider-viewport { border-radius: 0; }
+.hf-aside-over {
+    position: absolute; inset: 0; z-index: 3; pointer-events: none;
+    width: 100%; max-width: var(--torgash-container, 1500px); margin: 0 auto; padding: 3.75rem 1.25rem;
+    display: flex; justify-content: space-between; align-items: flex-start; gap: 1.5rem;
+}
+.hf-aside-over > * { pointer-events: auto; }
+.hf-aside-dots .torgash-slider-dots { display: flex; gap: 0.375rem; padding: 0.375rem 0.625rem; border: 1px solid #fff; border-radius: 9999px; }
+.hf-aside .torgash-slider-dot { width: 0.375rem; height: 0.375rem; border-radius: 9999px; background: #fff; opacity: 0.45; }
+.hf-aside .torgash-slider-dot.is-active { opacity: 1; }
+.hf-aside-column { width: 22rem; max-width: 40%; align-self: stretch; }
+@media (max-width: 767px) { .hf-aside-wide-only .hf-aside-column { display: none; } }

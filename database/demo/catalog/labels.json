@@ -1,0 +1,6 @@
+[
+    {"code": "demo", "name": {"en": "Demo", "ru": "Демо"}, "color": "neutral", "position": "top-right",
+     "tooltip": {"en": "A sample product of the demo shop. Remove the demo data in Admin → System.", "ru": "Демонстрационный товар. Демо-данные удаляются в Админке → Система."}},
+    {"code": "new", "name": {"en": "New", "ru": "Новинка"}, "color": "success"},
+    {"code": "hit", "name": {"en": "Bestseller", "ru": "Хит"}, "color": "warning"}
+]

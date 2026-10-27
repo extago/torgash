@@ -1,0 +1,37 @@
+{
+    "country": "UA",
+    "languages": {
+        "base": "en",
+        "local": "uk",
+        "extra": "ru"
+    },
+    "generated_at": "2026-08-29T14:10:48+0300",
+    "source": {
+        "name": "OpenStreetMap",
+        "url": "https://download.geofabrik.de/",
+        "file": "ukraine-260827.osm.pbf",
+        "hierarchy": "codes",
+        "licence": "ODbL 1.0",
+        "attribution": "© OpenStreetMap contributors"
+    },
+    "counts": {
+        "states": 27,
+        "cities": 29420,
+        "cities_with_local_name": 29420,
+        "cities_with_postal": 29113,
+        "cities_with_district": 29416,
+        "cities_with_en_name": 29420,
+        "cities_with_en_romanised": 280,
+        "districts": 136,
+        "districts_with_en_name": 136,
+        "districts_with_en_romanised": 13,
+        "matched_to_previous_pack": 29420,
+        "by_type": {
+            "capital": 1,
+            "region_center": 24,
+            "district_center": 122,
+            "community_center": 1637,
+            "settlement": 27636
+        }
+    }
+}

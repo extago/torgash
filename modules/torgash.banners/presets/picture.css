@@ -1,0 +1,4 @@
+/* Picture — a banner drawn whole by a designer, with a link over it. */
+.hb-picture { position: relative; height: 100%; overflow: hidden; border-radius: var(--radius-box, 1rem); }
+.hb-picture img { display: block; width: 100%; height: 100%; object-fit: cover; }
+a.hb-picture-link { position: absolute; inset: 0; }

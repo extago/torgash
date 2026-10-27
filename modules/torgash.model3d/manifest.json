@@ -1,0 +1,44 @@
+{
+    "id": "torgash.model3d",
+    "name": "3D view",
+    "version": "1.0.0",
+    "icon": "rotate-3d",
+    "section": "content",
+    "description": "A product's 3D model (.glb) among its photos: the visitor turns it, zooms in and, on a phone that can, puts it in the room through the camera. The viewer loads only when the model is opened.",
+    "provider": "Torgash\\Model3d\\Model3dServiceProvider",
+    "autoload": {
+        "Torgash\\Model3d\\": "src/"
+    },
+    "requires": {
+        "core": ">=0.1",
+        "modules": [
+            "torgash.catalog",
+            "torgash.media"
+        ]
+    },
+    "settings": [
+        {
+            "key": "max_mb",
+            "type": "number",
+            "default": 30,
+            "label": "Largest model file, MB",
+            "help": "A model is downloaded whole before it turns, on a phone too: a few megabytes open at once, fifty make a visitor wait. The server's own upload limit may be lower; then that one decides."
+        },
+        {
+            "key": "auto_rotate",
+            "type": "checkbox",
+            "default": true,
+            "label": "The model turns slowly by itself",
+            "help": "Until the visitor takes hold of it."
+        },
+        {
+            "key": "ar",
+            "type": "checkbox",
+            "default": true,
+            "label": "Offer \"View in your room\" on phones",
+            "help": "Augmented reality through the phone's camera, where the phone can (most Android phones and iPhones). The model must be made to real size for this to mean anything."
+        }
+    ],
+    "permissions": [],
+    "admin_menu": []
+}

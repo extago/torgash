@@ -1,0 +1,36 @@
+{
+    "id": "torgash.attachments",
+    "name": "Documentation",
+    "version": "1.0.0",
+    "icon": "file-text",
+    "section": "content",
+    "description": "Files beside a product — a specification sheet, a manual, drawings, certificates — or links to them on the maker's site, in a section of the product page of their own. Each may be for everyone or for signed-in customers only.",
+    "provider": "Torgash\\Attachments\\AttachmentsServiceProvider",
+    "autoload": {
+        "Torgash\\Attachments\\": "src/"
+    },
+    "requires": {
+        "core": ">=0.1",
+        "modules": [
+            "torgash.catalog"
+        ]
+    },
+    "settings": [
+        {
+            "key": "types",
+            "type": "text",
+            "default": "pdf, doc, docx, xls, xlsx, odt, ods, rtf, txt, csv, zip, 7z, rar, dwg, dxf, step, stp, stl, jpg, jpeg, png, webp",
+            "label": "Types of files accepted",
+            "help": "Extensions, comma separated. The type is read from the file itself, not from its name. Programs, web pages and SVG are never accepted, whatever is listed here."
+        },
+        {
+            "key": "max_mb",
+            "type": "number",
+            "default": 50,
+            "label": "Largest file, MB",
+            "help": "The server's own upload limit may be lower; then that one decides."
+        }
+    ],
+    "permissions": [],
+    "admin_menu": []
+}

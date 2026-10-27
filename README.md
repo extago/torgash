@@ -25,7 +25,7 @@ live shop that took the admin sign-in page from about 85 ms to about 13 ms.
 Every per-request leak found along the way has a test that fails without its
 fix.
 
-**48 modules, one distribution.** Catalog with options, kits and variations;
+**53 modules, one distribution.** Catalog with options, kits and variations;
 cart, checkout, promotions, gift cards, taxes; shipping with zones and
 carriers (Nova Poshta, CDEK); payments (Stripe, LiqPay, monobank, WayForPay);
 warehouses and an inventory journal with FIFO costing; reviews, wishlists,
@@ -73,5 +73,8 @@ Thank you, Anthropic, for building a collaborator worth arguing with. 🛒
 
 ## License
 
-MIT for the engine. Third-party JavaScript and assets are MIT, BSD, ISC or
-Apache only, so a shop never inherits a copyleft or per-seat licence.
+MIT for the engine ([LICENSE](LICENSE)). Third-party code is MIT, BSD, ISC or
+Apache, so a shop never inherits a copyleft or per-seat licence. The fonts are
+under the SIL Open Font License, the bundled towns come from OpenStreetMap
+(ODbL) and the country list from GeoNames (CC BY). Every piece, its version
+and its notice: [THIRD-PARTY.md](THIRD-PARTY.md).

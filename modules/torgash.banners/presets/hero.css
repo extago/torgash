@@ -1,0 +1,66 @@
+/* Big slide. A slide's colours are
+   its OWN (--slide-bg, the scheme), not the theme's: a light slide stays light
+   in the dark theme. The entrance runs only once the slider's script has
+   taken over (.is-ready), and not for a visitor who asked for less motion. */
+.hb-hero {
+    --pad: 1.25rem;
+    position: relative; display: flex; height: 100%; min-height: 22rem;
+    overflow: hidden; border-radius: var(--radius-box, 1rem);
+    background: var(--slide-bg); color: #191b1e;
+}
+@media (min-width: 768px) { .hb-hero { --pad: 3.75rem; min-height: 25rem; } }
+.hb-hero-dark { color: #fff; }
+/* A video behind the slide fills it; the colour shows until it plays. */
+.hb-hero-video { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+.hb-hero-dim .hb-hero-video { filter: brightness(0.55); }
+.hb-hero-picture img {
+    position: absolute; top: 0; left: 25%; width: 100%; height: 100%;
+    object-fit: contain; object-position: bottom left;
+}
+.hb-fit-cover .hb-hero-picture img { object-fit: cover; object-position: center; }
+.hb-hero-content {
+    position: relative; z-index: 2; margin-top: auto; max-width: 75%; padding: var(--pad);
+    display: flex; flex-direction: column; align-items: flex-start; pointer-events: none;
+}
+.hb-hero-content a { pointer-events: auto; }
+.hb-hero-eyebrow { font-size: 1rem; margin-bottom: 0.5rem; }
+.hb-hero-title { font-size: 1.625rem; line-height: 1.35; font-weight: 600; text-wrap: balance; }
+.hb-hero-title s { text-decoration: none; display: inline-block; font-weight: 100; margin: 0 0.25em; }
+.hb-hero-text { margin-top: 0.75rem; font-size: 1rem; line-height: 1.5; }
+.hb-hero-notice { margin-top: 0.75rem; font-size: 1rem; font-weight: 700; }
+.hb-hero-button { margin-top: 2rem; border: 0; background: #191b1e; color: #fff; }
+.hb-hero-dark .hb-hero-button { background: #fff; color: #191b1e; }
+.hb-hero-button:hover { filter: brightness(1.15); }
+/* The whole slide is the link, under the words and their button. */
+a.hb-hero-link { position: absolute; inset: 0; z-index: 1; }
+/* A phone: the slide grows taller and becomes a column — a picture kept
+   WHOLE takes whatever height the words leave above them, so however long
+   the text, the two never overlap (at full height it sat behind the words
+   and the button, a grey strip under "See the gateway"). A picture that
+   fills the slide stays behind everything, under the blurred band. */
+@media (max-width: 767px) {
+    .hb-hero { min-height: 27rem; }
+    .hb-hero-picture img { left: 0; }
+    .hb-hero:not(.hb-fit-cover) { flex-direction: column; }
+    .hb-hero:not(.hb-fit-cover) .hb-hero-picture { position: relative; flex: 1 1 auto; min-height: 8rem; }
+    .hb-hero:not(.hb-fit-cover) .hb-hero-picture img {
+        padding: 1rem 1rem 0; object-position: center bottom;
+    }
+    .hb-hero:not(.hb-fit-cover) .hb-hero-content { margin-top: 0; }
+    .hb-hero-content { max-width: 100%; width: 100%; }
+    .hb-hero-content::after {
+        content: ""; position: absolute; inset: 0; z-index: -1;
+        background: color-mix(in srgb, var(--slide-bg) 75%, transparent);
+        backdrop-filter: saturate(1) blur(4px);
+        mask: linear-gradient(rgb(0 0 0 / 0), rgb(0 0 0 / 0.75), #000);
+    }
+}
+@media (prefers-reduced-motion: no-preference) {
+    .is-ready .hb-hero-content > * { opacity: 0; transform: translateY(20px); transition: opacity 0.5s, transform 0.5s; }
+    .is-ready .is-selected .hb-hero-content > * { opacity: 1; transform: none; }
+    .is-ready .is-selected .hb-hero-content > :nth-child(2) { transition-delay: 0.1s; }
+    .is-ready .is-selected .hb-hero-content > :nth-child(3) { transition-delay: 0.15s; }
+    .is-ready .is-selected .hb-hero-content > :nth-child(n+4) { transition-delay: 0.2s; }
+    .is-ready .hb-hero-picture img { opacity: 0; transition: opacity 1s; }
+    .is-ready .is-selected .hb-hero-picture img { opacity: 1; transition-delay: 0.5s; }
+}

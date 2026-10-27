@@ -1,0 +1,12 @@
+{
+    "The least a theme of its own needs: one layout with every line the engine relies on, a plain header and footer, no settings. Start a new theme by copying this folder.": "Минимум для самостоятельной темы: один шаблон страницы со всеми строками, на которые опирается движок, простые шапка и подвал, никаких настроек. Новую тему начинайте с копии этой папки.",
+    "Search products": "Поиск товаров",
+    "Header — after the search box": "Шапка — после строки поиска",
+    "Homepage — above everything": "Главная — над всем содержимым",
+    "Homepage — above the products": "Главная — над товарами",
+    "Homepage — products": "Главная — товары",
+    "Homepage — below everything": "Главная — под всем содержимым",
+    "Cart page — under the cart": "Страница корзины — под корзиной",
+    "Product page — at the very bottom": "Страница товара — в самом низу",
+    "Footer — the bottom line": "Подвал — нижняя строка"
+}

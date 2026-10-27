@@ -1,0 +1,183 @@
+{
+    "id": "torgash.cdek",
+    "name": "CDEK",
+    "version": "0.1.0",
+    "regions": ["RU"],
+    "icon": "truck",
+    "section": "logistics",
+    "description": "CDEK as a shipping carrier: syncs its own city directory, matches it to the locations registry once, keeps its pickup points and parcel lockers, and prices delivery live by the tariff you choose. \"To a pickup point\" and \"by courier\" are separate shipping methods that name this carrier.",
+    "provider": "Torgash\\Cdek\\CdekServiceProvider",
+    "autoload": {
+        "Torgash\\Cdek\\": "src/"
+    },
+    "requires": {
+        "core": ">=0.1",
+        "modules": [
+            "torgash.checkout",
+            "torgash.shipping",
+            "torgash.locations"
+        ]
+    },
+    "settings": [
+        {
+            "key": "_g_api",
+            "type": "group",
+            "label": "API"
+        },
+        {
+            "key": "account",
+            "type": "text",
+            "default": "",
+            "label": "Account (client_id)",
+            "help": "From the CDEK business cabinet: Integration → API keys. Every sync and every live rate goes through it."
+        },
+        {
+            "key": "secure_password",
+            "type": "text",
+            "default": "",
+            "label": "Secure password (client_secret)",
+            "help": "Issued together with the account."
+        },
+        {
+            "key": "test_mode",
+            "type": "checkbox",
+            "default": false,
+            "label": "Test environment",
+            "help": "Talks to CDEK's test server (api.edu.cdek.ru) instead of the real one. With the two fields above left empty it uses CDEK's own published test account, so the module can be tried before a contract exists. The test server's directory is a small sample, not the country."
+        },
+        {
+            "key": "_g_sync",
+            "type": "group",
+            "label": "Data"
+        },
+        {
+            "key": "_link_data",
+            "type": "link",
+            "url": "/admin/cdek",
+            "label": "Directory and matching",
+            "help": "The carrier's own cities and pickup points, and how they line up with your locations. A carrier is not a section of the shop, so it hangs off its settings rather than the menu."
+        },
+        {
+            "key": "countries",
+            "type": "text",
+            "default": "RU",
+            "label": "Countries",
+            "help": "Two-letter codes, comma-separated: whose cities are pulled from CDEK and matched with your locations. CDEK also delivers in Belarus, Kazakhstan, Armenia, Kyrgyzstan and Uzbekistan."
+        },
+        {
+            "key": "cities_ttl_days",
+            "type": "number",
+            "default": 7,
+            "label": "City directory: refresh after, days",
+            "help": "The whole city list (~140 000 rows for Russia) is pulled at once. It changes rarely."
+        },
+        {
+            "key": "points_ttl_hours",
+            "type": "number",
+            "default": 24,
+            "label": "Pickup points per city: refresh after, hours",
+            "help": "Points are fetched per city on first need, or all at once from the directory page, and kept this long. Points open and close, but not hourly."
+        },
+        {
+            "key": "prefetch_on_town",
+            "type": "checkbox",
+            "default": true,
+            "label": "Fetch a town’s pickup points as soon as the customer names it",
+            "help": "In the background, while they are still filling in the form, so the delivery step has the list ready. Needs a queue worker; without one nothing is lost, the delivery step fetches the town itself."
+        },
+        {
+            "key": "sender_city_code",
+            "type": "number",
+            "default": 0,
+            "label": "Sender city (CDEK code)",
+            "help": "A price is from somewhere to somewhere: without this the carrier is never asked for one, and a CDEK method is priced by your own rate table instead. Set it with the picker on the directory page rather than by hand. A warehouse with a town of its own overrides this — the parcel actually leaves from there."
+        },
+        {
+            "key": "_g_parcel",
+            "type": "group",
+            "label": "Default parcel"
+        },
+        {
+            "key": "default_weight_g",
+            "type": "number",
+            "default": 500,
+            "label": "Weight, g",
+            "help": "Used for the rate when the cart's own weight is zero (no product has a weight)."
+        },
+        {
+            "key": "default_length_cm",
+            "type": "number",
+            "default": 20,
+            "label": "Length, cm"
+        },
+        {
+            "key": "default_width_cm",
+            "type": "number",
+            "default": 20,
+            "label": "Width, cm"
+        },
+        {
+            "key": "default_height_cm",
+            "type": "number",
+            "default": 10,
+            "label": "Height, cm"
+        },
+        {
+            "key": "insure",
+            "type": "checkbox",
+            "default": true,
+            "label": "Declare the goods' value",
+            "help": "The rate then includes CDEK's insurance on the cart total — what an order sent with its real value actually costs. Off: the bare delivery price."
+        },
+        {
+            "key": "_g_waybills",
+            "type": "group",
+            "label": "Waybills"
+        },
+        {
+            "key": "shipment_point",
+            "type": "text",
+            "default": "",
+            "label": "CDEK office you drop parcels at (code)",
+            "help": "Its code, such as MSK2 — on the office's page at cdek.ru. A waybill for a method where you hand parcels in at an office names this office."
+        },
+        {
+            "key": "sender_company",
+            "type": "text",
+            "default": "",
+            "label": "Sender: company",
+            "help": "Printed on the waybill as the sender."
+        },
+        {
+            "key": "sender_name",
+            "type": "text",
+            "default": "",
+            "label": "Sender: contact person"
+        },
+        {
+            "key": "sender_phone",
+            "type": "text",
+            "default": "",
+            "label": "Sender: phone",
+            "help": "With the country code, +7…. CDEK's courier rings it when collecting."
+        },
+        {
+            "key": "sender_address",
+            "type": "text",
+            "default": "",
+            "label": "Pickup address (street, building)",
+            "help": "Where CDEK's courier collects parcels, for methods where it does. The city is the sender city above."
+        }
+    ],
+    "permissions": [
+        {
+            "name": "cdek.manage",
+            "label": "Manage the CDEK integration"
+        },
+        {
+            "name": "cdek.waybills",
+            "label": "Create and print CDEK waybills"
+        }
+    ],
+    "admin_menu": []
+}

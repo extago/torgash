@@ -1,0 +1,53 @@
+{
+    "name": "Skeleton",
+    "parent": null,
+    "version": "0.1.0",
+    "author": {
+        "name": "Torgash",
+        "url": "https://torgash.local"
+    },
+    "description": "The least a theme of its own needs: one layout with every line the engine relies on, a plain header and footer, no settings. Start a new theme by copying this folder.",
+    "zones": [
+        {
+            "name": "storefront.header.after_search",
+            "group": "header",
+            "label": "Header — after the search box",
+            "shape": "inline"
+        },
+        {
+            "name": "storefront.home.top",
+            "group": "home",
+            "label": "Homepage — above everything"
+        },
+        {
+            "name": "storefront.home.content",
+            "group": "home",
+            "label": "Homepage — above the products"
+        },
+        {
+            "name": "storefront.home.products",
+            "group": "home",
+            "label": "Homepage — products"
+        },
+        {
+            "name": "storefront.home.bottom",
+            "group": "home",
+            "label": "Homepage — below everything"
+        },
+        {
+            "name": "cart.page.bottom",
+            "group": "cart",
+            "label": "Cart page — under the cart"
+        },
+        {
+            "name": "catalog.product.bottom",
+            "group": "product",
+            "label": "Product page — at the very bottom"
+        },
+        {
+            "name": "storefront.footer.bottom",
+            "group": "footer",
+            "label": "Footer — the bottom line"
+        }
+    ]
+}

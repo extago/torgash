@@ -1,0 +1,122 @@
+{
+    "id": "torgash.reviews",
+    "name": "Reviews",
+    "version": "1.0.0",
+    "icon": "star",
+    "description": "Product reviews with a rating: the shop's own criteria (which apply everywhere or to chosen categories), pros and cons, a recommendation, and a verified-purchase mark. Guests never write one — an account is the cheapest honest barrier — and everything is checked before it is published. The average and its 1-5 spread are recomputed as reviews are published, so a card, a listing and the page's structured data all read one number.",
+    "provider": "Torgash\\Reviews\\ReviewsServiceProvider",
+    "autoload": {
+        "Torgash\\Reviews\\": "src/"
+    },
+    "requires": {
+        "core": ">=0.1",
+        "modules": [
+            "torgash.catalog",
+            "torgash.checkout"
+        ]
+    },
+    "permissions": [
+        {
+            "name": "reviews.moderate",
+            "label": "Moderate reviews"
+        }
+    ],
+    "admin_menu": [
+        {
+            "label": "Reviews",
+            "url": "/admin/reviews",
+            "icon": "star",
+            "group": "marketing",
+            "position": 8
+        }
+    ],
+    "settings": [
+        {
+            "key": "premoderate",
+            "type": "checkbox",
+            "default": true,
+            "label": "Check reviews before publishing",
+            "help": "On by default, and worth leaving on. A review is printed next to a price and stays there for years; a shop that finds an advert or a competitor's link under its best-selling product switches reviews off for good, which is the same outcome as never having them."
+        },
+        {
+            "key": "buyers_only",
+            "type": "checkbox",
+            "default": false,
+            "label": "Only customers who bought the product may review it",
+            "help": "Off by default: a strict shop gets fewer reviews than it has customers, because people buy by phone, as a gift, or from a shop nearby. Whoever did buy is marked as a verified purchase either way — the mark is what a reader believes, and it costs no one their voice."
+        },
+        {
+            "key": "pros_cons",
+            "type": "checkbox",
+            "default": true,
+            "label": "Ask for pros and cons separately"
+        },
+        {
+            "key": "recommendation",
+            "type": "checkbox",
+            "default": true,
+            "label": "Ask \"would you recommend it\""
+        },
+        {
+            "key": "reward_note",
+            "type": "text",
+            "default": "",
+            "label": "Line above the form (a reward for reviewing, a house rule)",
+            "help": "Printed above the review form when it is filled in, and nothing is drawn when it is empty. Plain words on purpose: this engine awards nothing by itself, so a shop that pays for reviews says here exactly what it pays and stays the one who decides who earned it."
+        },
+        {
+            "key": "notify_email",
+            "type": "text",
+            "default": "",
+            "label": "Tell this address about new reviews",
+            "help": "Empty means the storefront's own contact address. A review waiting for moderation that nobody knows about is why this is sent by the module rather than left to an automation rule."
+        },
+        {
+            "key": "photos_max",
+            "type": "number",
+            "default": 0,
+            "label": "Photos a review may carry",
+            "help": "0 turns photographs off. They are published with the review, so a review waiting for moderation shows nobody its pictures. Images only, checked by their contents and resized by the media module."
+        },
+        {
+            "key": "share_variations",
+            "type": "checkbox",
+            "default": true,
+            "label": "Variations share their reviews",
+            "help": "Products with the same variation group are one model to a reader: every member's page, card stars and \"best rated\" place count the reviews of all of them, and a review written about another variation says which one. Each review still belongs to the variation it was written on, so switching this off splits them back with nothing lost."
+        },
+        {
+            "key": "_g_review_list",
+            "type": "group",
+            "label": "The list on the product page"
+        },
+        {
+            "key": "per_page",
+            "type": "number",
+            "default": 10,
+            "label": "Reviews shown at first",
+            "help": "And as many more each time \"Show more\" is pressed."
+        },
+        {
+            "key": "filters_from",
+            "type": "number",
+            "default": 5,
+            "label": "Filters from this many reviews",
+            "help": "A period, the stars, buyers only and with photos — drawn once a product has at least this many reviews; 0 never. A filter in force is always shown, so a reader can take it off."
+        },
+        {
+            "key": "photo_strip",
+            "type": "checkbox",
+            "default": true,
+            "label": "A strip of the customers' photos over the list",
+            "help": "Every published review's photographs in one row, from two of them on."
+        },
+        {
+            "key": "highlights_from",
+            "type": "number",
+            "default": 10,
+            "label": "The most helpful positive and critical review side by side, from this many reviews",
+            "help": "Only when both exist and each has at least one \"helpful\" vote — the most helpful of three is a coin toss. 0 never."
+        }
+    ]
+}

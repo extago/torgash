@@ -1,0 +1,18 @@
+{
+    "WayForPay": "WayForPay",
+    "Order :number": "Заказ №:number",
+    "Refund for order :number": "Возврат по заказу №:number",
+    "Merchant account": "Логин мерчанта",
+    "The merchant login from WayForPay's cabinet (Store settings). The test one is test_merch_n1.": "Логин мерчанта из кабинета WayForPay (настройки магазина). Тестовый — test_merch_n1.",
+    "Secret key": "Секретный ключ",
+    "Signs every message both ways. It never leaves the server.": "Подписывает каждое сообщение в обе стороны. Никогда не покидает сервер.",
+    "Shop domain": "Домен магазина",
+    "As registered with WayForPay. Empty means the domain of this site.": "Как он зарегистрирован в WayForPay. Пусто — домен этого сайта.",
+    "Invoice is valid for, hours": "Счёт действителен, часов",
+    "After this the invoice expires and the customer needs a new one — which the Pay link on their order gives them. Default 24.": "После этого счёт истекает, и покупателю нужен новый — его даёт ссылка «Оплатить» на заказе. По умолчанию 24.",
+    "WayForPay cannot charge in :currency. Give this payment method a currency it takes: :list.": "WayForPay не принимает оплату в :currency. Задайте этому способу оплаты валюту, которую он принимает: :list.",
+    "WayForPay credentials are not set on this payment method.": "У этого способа оплаты не заданы учётные данные WayForPay.",
+    "WayForPay answered :status": "WayForPay ответил :status",
+    "Invoice created": "Счёт выставлен",
+    "Card, Apple Pay, Google Pay and Privat24 payments through WayForPay: an invoice per order, the customer pays on WayForPay's page and a signed callback tells the shop what happened. Supports full and partial refunds and re-asking WayForPay from the order screen.": "Оплата картой, Apple Pay, Google Pay и Приват24 через WayForPay: счёт на заказ, покупатель платит на странице WayForPay, а подписанный колбэк сообщает магазину результат. Поддерживает полный и частичный возврат и перезапрос статуса с карточки заказа."
+}

@@ -1,0 +1,38 @@
+{
+    "id": "torgash.exim",
+    "name": "Import / Export",
+    "version": "1.0.0",
+    "icon": "file-spreadsheet",
+    "description": "CSV/XML/JSON export profiles, feeds, and code/sku-matched import.",
+    "provider": "Torgash\\Exim\\EximServiceProvider",
+    "autoload": {
+        "Torgash\\Exim\\": "src/"
+    },
+    "requires": {
+        "core": ">=0.1",
+        "modules": []
+    },
+    "settings": [],
+    "permissions": [
+        {
+            "name": "exim.manage",
+            "label": "Import and export data"
+        }
+    ],
+    "admin_menu": [
+        {
+            "label": "Export profiles",
+            "url": "/admin/exim/profiles",
+            "icon": "arrow-up-from-line",
+            "group": "data",
+            "position": 10
+        },
+        {
+            "label": "Import",
+            "url": "/admin/exim/import",
+            "icon": "arrow-down-to-line",
+            "group": "data",
+            "position": 20
+        }
+    ]
+}

@@ -1,0 +1,60 @@
+{
+    "id": "torgash.api",
+    "name": "API",
+    "version": "1.0.0",
+    "icon": "plug",
+    "description": "A JSON API over the shop's own resources: every module declares what it exposes, and one controller serves all of them. Token-authenticated, permission-checked with the same rights as the admin panel.",
+    "provider": "Torgash\\Api\\ApiServiceProvider",
+    "autoload": {
+        "Torgash\\Api\\": "src/"
+    },
+    "requires": {
+        "core": ">=0.1",
+        "modules": []
+    },
+    "settings": [
+        {
+            "key": "items_per_page",
+            "type": "number",
+            "default": 30,
+            "label": "Items per page by default",
+            "help": "What a list returns when the caller does not say. The hard ceiling below is what protects the database from a client asking for everything."
+        },
+        {
+            "key": "max_items_per_page",
+            "type": "number",
+            "default": 200,
+            "label": "Hard ceiling per page",
+            "help": "A request for more is silently capped, not refused: an integration that asks for 10000 should get 200 and keep working, not fail at three in the morning."
+        },
+        {
+            "key": "rate_limit",
+            "type": "number",
+            "default": 120,
+            "label": "Requests per minute, per token",
+            "help": "Counted per token, not per address: two integrations behind one office NAT must not throttle each other, and one runaway script must not take the others down with it."
+        }
+    ],
+    "permissions": [
+        {
+            "name": "api.manage",
+            "label": "Issue and revoke API tokens"
+        }
+    ],
+    "admin_menu": [
+        {
+            "label": "API tokens",
+            "url": "/admin/api/tokens",
+            "icon": "key-round",
+            "position": 95,
+            "group": "data"
+        },
+        {
+            "label": "API reference",
+            "url": "/admin/api/docs",
+            "icon": "book-open",
+            "position": 96,
+            "group": "data"
+        }
+    ]
+}

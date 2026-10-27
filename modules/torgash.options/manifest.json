@@ -1,0 +1,68 @@
+{
+    "id": "torgash.options",
+    "name": "Options",
+    "version": "1.0.0",
+    "icon": "list-checks",
+    "description": "Questions a product asks before it can be bought: a processor from a list, licences by the tick, power supplies by the number, a service priced by a formula (a fee plus a percentage of the product, a multiplier, the linked product's own price). An answer can be a service, a real product with its own stock — which then becomes a line of the order, so the warehouse and 1C see the goods — or a whole set of products to pick from with a search. A shared group is placed by display rules (a category with its subtree, a characteristic) and prices itself by formula rather than being re-priced per product.",
+    "provider": "Torgash\\Options\\OptionsServiceProvider",
+    "autoload": {
+        "Torgash\\Options\\": "src/"
+    },
+    "requires": {
+        "core": ">=0.1",
+        "modules": [
+            "torgash.catalog",
+            "torgash.cart"
+        ]
+    },
+    "admin_menu": [
+        {
+            "label": "Option groups",
+            "keywords": {
+                "en": "options, configurator, warranty, service, installation, extra, add-on",
+                "ru": "опции, конфигуратор, гарантия, услуга, установка, доплата, комплектующие, конфигурация"
+            },
+            "url": "/admin/options/groups",
+            "icon": "list-checks",
+            "group": "catalog",
+            "position": 18
+        }
+    ],
+    "settings": [
+        {
+            "key": "search_threshold",
+            "type": "number",
+            "default": 8,
+            "label": "Offer a search box in a list longer than",
+            "help": "A dropdown of two hundred processors is not a choice, it is a scroll. Below this many answers the list is drawn as it is."
+        },
+        {
+            "key": "show_price_in_label",
+            "type": "checkbox",
+            "default": true,
+            "label": "Show what each answer adds beside it",
+            "help": "\"+1 700 ₴\" next to the answer, as on the owner's own configurator. Off leaves only the total, which is what a shop that prices by formula sometimes prefers."
+        },
+        {
+            "key": "files_types",
+            "type": "text",
+            "default": "jpg,jpeg,png,webp,pdf",
+            "label": "File answers: formats taken",
+            "help": "Comma-separated extensions, checked against what the BYTES say the file is rather than what it was called. A question can narrow this further on its own. Executable and script formats are refused whatever is typed here."
+        },
+        {
+            "key": "files_max_kb",
+            "type": "number",
+            "default": 10240,
+            "label": "File answers: largest file, KB",
+            "help": "A print shop takes a 40 MB layout; a shop asking for a logo does not. A question can set its own limit instead."
+        },
+        {
+            "key": "files_keep_days",
+            "type": "number",
+            "default": 30,
+            "label": "File answers: keep an unbought file for, days",
+            "help": "A basket abandoned with a layout in it is the ordinary case, and without this the disk grows for ever. A file an order holds is never swept — it is kept for as long as the order is."
+        }
+    ]
+}

@@ -1,0 +1,42 @@
+{
+    "id": "torgash.seo",
+    "name": "SEO",
+    "version": "1.0.0",
+    "icon": "file-search",
+    "description": "Titles, descriptions and headings written once as a template and applied to the whole catalogue, plus a screen that shows what is still empty and fills it in bulk. The fields themselves belong to the product, the category and the page — they stay when this module is removed; what goes with it is the automation.",
+    "provider": "Torgash\\Seo\\SeoServiceProvider",
+    "autoload": {
+        "Torgash\\Seo\\": "src/"
+    },
+    "requires": {
+        "core": ">=0.1"
+    },
+    "permissions": [
+        {
+            "name": "seo.manage",
+            "label": "Manage SEO templates and metadata"
+        }
+    ],
+    "admin_menu": [
+        {
+            "label": "Templates & audit",
+            "url": "/admin/seo",
+            "icon": "file-search",
+            "group": "seo",
+            "position": 10,
+            "keywords": {
+                "en": "SEO meta title description",
+                "ru": "SEO мета заголовок описание"
+            }
+        }
+    ],
+    "settings": [
+        {
+            "key": "description_length",
+            "type": "number",
+            "default": 160,
+            "label": "Length of a description the shop writes itself",
+            "help": "When a product has no description of its own, the shop cuts one from its text to about this many characters. Search engines show roughly 155–160."
+        }
+    ]
+}

@@ -1,0 +1,1 @@
+@include('errors.frame', ['code' => 403, 'title' => __('No access'), 'text' => __('This page is closed to you. If you think it should not be, sign in with another account or ask the shop.'), 'actions' => ['home', 'back']])

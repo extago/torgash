@@ -1,0 +1,27 @@
+{
+    "id": "torgash.fixture",
+    "name": "Fixture",
+    "version": "1.0.0",
+    "description": {
+        "en": "Test-only module: installed and uninstalled by the module lifecycle tests.",
+        "ru": "Модуль только для тестов: ставится и удаляется тестами жизненного цикла."
+    },
+    "provider": "Tests\\Fixtures\\FixtureServiceProvider",
+    "autoload": {
+        "Tests\\Fixtures\\": "src/"
+    },
+    "requires": {
+        "core": ">=0.1",
+        "modules": []
+    },
+    "settings": [
+        {
+            "key": "greeting",
+            "type": "text",
+            "default": "hello from the manifest",
+            "label": {"en": "Greeting", "ru": "Приветствие"}
+        }
+    ],
+    "permissions": ["fixture.manage"],
+    "admin_menu": []
+}

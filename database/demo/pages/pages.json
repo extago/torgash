@@ -1,0 +1,50 @@
+[
+    {
+        "slug": "about",
+        "title": {"en": "About us", "ru": "О нас"},
+        "body": {
+            "en": "<p>We are a shop of electronics we use ourselves: phones, laptops, sound, cameras and the network gear that holds a home or an office together.</p><h2>What we promise</h2><ul><li>Only new goods with the maker's warranty.</li><li>Honest stock: what the site says is in stock is on our shelves.</li><li>Advice from people who have the thing in their own hands.</li></ul><p><em>This is a page of the demo shop — write your own story here.</em></p>",
+            "ru": "<p>Мы — магазин электроники, которой пользуемся сами: телефоны, ноутбуки, звук, камеры и сетевое оборудование, на котором держится дом или офис.</p><h2>Что мы обещаем</h2><ul><li>Только новые товары с гарантией производителя.</li><li>Честное наличие: что на сайте «в наличии», то лежит на нашей полке.</li><li>Совет от людей, которые держали эту вещь в руках.</li></ul><p><em>Это страница демо-магазина — расскажите здесь свою историю.</em></p>"
+        }
+    },
+    {
+        "slug": "delivery",
+        "title": {"en": "Delivery", "ru": "Доставка"},
+        "body": {
+            "en": "<h2>Courier</h2><p>Within the city — the next working day, to the door. A big enough order travels free.</p><h2>Pickup</h2><p>From our shops, the same day if the product is there: the product page shows where it is in stock.</p><p><em>Demo text — set out your own terms and prices here.</em></p>",
+            "ru": "<h2>Курьером</h2><p>По городу — на следующий рабочий день, до двери. Достаточно крупный заказ доставим бесплатно.</p><h2>Самовывоз</h2><p>Из наших магазинов, в тот же день, если товар там есть: на странице товара видно, где он в наличии.</p><p><em>Демо-текст — опишите здесь свои условия и цены.</em></p>"
+        }
+    },
+    {
+        "slug": "payment",
+        "title": {"en": "Payment", "ru": "Оплата"},
+        "body": {
+            "en": "<ul><li><strong>By card online</strong> — right after placing the order.</li><li><strong>In cash or by card on delivery</strong> — to the courier or at the shop.</li><li><strong>By bank transfer</strong> — for companies, with an invoice.</li></ul><p>Try the coupon <strong>DEMO10</strong> at checkout.</p><p><em>Demo text — name the ways your shop accepts.</em></p>",
+            "ru": "<ul><li><strong>Картой онлайн</strong> — сразу после оформления заказа.</li><li><strong>Наличными или картой при получении</strong> — курьеру или в магазине.</li><li><strong>Безналичным переводом</strong> — для компаний, по счёту.</li></ul><p>Попробуйте купон <strong>DEMO10</strong> при оформлении.</p><p><em>Демо-текст — перечислите способы, которые принимает ваш магазин.</em></p>"
+        }
+    },
+    {
+        "slug": "returns",
+        "title": {"en": "Returns", "ru": "Возврат и обмен"},
+        "body": {
+            "en": "<p>A product that did not suit you can be returned within 14 days if it keeps its look and its box. A faulty one — throughout the warranty: we take it in, send it for a check and repair it, replace it or give the money back.</p><p><em>Demo text — the law of your country decides the real terms.</em></p>",
+            "ru": "<p>Товар, который не подошёл, можно вернуть в течение 14 дней, если сохранены вид и упаковка. Неисправный — в течение всей гарантии: примем, отправим на проверку, отремонтируем, заменим или вернём деньги.</p><p><em>Демо-текст — настоящие условия определяет закон вашей страны.</em></p>"
+        }
+    },
+    {
+        "slug": "contacts",
+        "title": {"en": "Contacts", "ru": "Контакты"},
+        "body": {
+            "en": "<p>[Phone: {phone_actions}<br>][Email: {email_actions}<br>][Hours: {hours}]</p><p>[Address: {address}]</p><p><em>The contacts come from the storefront's settings — change them there, not here.</em></p>",
+            "ru": "<p>[Телефон: {phone_actions}<br>][Почта: {email_actions}<br>][Часы работы: {hours}]</p><p>[Адрес: {address}]</p><p><em>Контакты берутся из настроек витрины — меняйте их там, а не здесь.</em></p>"
+        }
+    },
+    {
+        "slug": "privacy",
+        "title": {"en": "Privacy policy", "ru": "Политика конфиденциальности"},
+        "body": {
+            "en": "<p><strong>This is a placeholder, not a policy.</strong> A shop that collects names, phones and addresses needs a privacy policy written for its own country and its own processing — replace this text before opening the shop.</p>",
+            "ru": "<p><strong>Это заглушка, а не политика.</strong> Магазину, который собирает имена, телефоны и адреса, нужна политика конфиденциальности, написанная для своей страны и своей обработки данных, — замените этот текст до открытия магазина.</p>"
+        }
+    }
+]

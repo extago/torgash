@@ -1,0 +1,10 @@
+{
+    "kind": "banner",
+    "label": "Picture",
+    "fields": [
+        {"key": "image", "type": "image", "label": "Picture", "help": "A finished banner, drawn whole. Any size; the slider takes the height of the tallest."},
+        {"key": "image_phone", "type": "image", "label": "Picture for a phone", "fallback": "image", "help": "Optional. Up to 767 px wide the phone gets this one instead."},
+        {"key": "alt", "type": "text", "label": "Description of the picture", "help": "For whoever cannot see it, and for search engines."},
+        {"key": "link", "type": "link", "label": "Link"}
+    ]
+}

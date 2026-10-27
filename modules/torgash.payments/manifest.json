@@ -1,0 +1,41 @@
+{
+    "id": "torgash.payments",
+    "name": "Payment gateways",
+    "version": "1.0.0",
+    "icon": "wallet",
+    "section": "sales",
+    "description": "The machinery every online payment needs: start a payment for an order, take the gateway's server-to-server callback, verify it, and move the order's payment state — once, in the right order, with every attempt kept. A gateway module supplies the vendor-specific half; this owns the rest.",
+    "provider": "Torgash\\Payments\\PaymentsServiceProvider",
+    "autoload": {
+        "Torgash\\Payments\\": "src/"
+    },
+    "requires": {
+        "core": ">=0.1",
+        "modules": [
+            "torgash.checkout"
+        ]
+    },
+    "settings": [
+        {
+            "key": "reconcile_hours",
+            "type": "number",
+            "default": 72,
+            "label": "Keep asking about a payment for, hours",
+            "help": "Every 15 minutes the shop asks the gateway about orders it is still waiting on — a callback can be lost, and on a development machine it never arrives at all. Older than this and an unpaid invoice is not going to be paid."
+        },
+        {
+            "key": "keep_transactions_days",
+            "type": "number",
+            "default": 180,
+            "label": "Keep the transaction log, days",
+            "help": "Raw callbacks are your only evidence in a dispute with the bank, so this is deliberately long. Older rows are swept nightly."
+        }
+    ],
+    "permissions": [
+        {
+            "name": "payments.manage",
+            "label": "Manage payment gateways"
+        }
+    ],
+    "admin_menu": []
+}

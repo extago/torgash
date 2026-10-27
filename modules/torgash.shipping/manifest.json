@@ -1,0 +1,63 @@
+{
+    "id": "torgash.shipping",
+    "name": "Shipping",
+    "version": "0.1.0",
+    "icon": "truck",
+    "description": "Delivery: zones, shipping methods, per-(method, zone) rates with bands, and the carrier contract live carriers plug into. Checkout asks it for options through a hook, so a digital-goods shop can uninstall delivery whole.",
+    "provider": "Torgash\\Shipping\\ShippingServiceProvider",
+    "autoload": {
+        "Torgash\\Shipping\\": "src/"
+    },
+    "requires": {
+        "core": ">=0.1",
+        "modules": [
+            "torgash.checkout",
+            "torgash.media"
+        ]
+    },
+    "settings": [
+        {
+            "key": "cart_estimate",
+            "type": "checkbox",
+            "default": false,
+            "label": "Delivery estimate on the cart page",
+            "help": "Off — delivery is chosen at checkout, where the address is asked anyway, and the cart stays a list of goods and a total."
+        },
+        {
+            "key": "product_estimate",
+            "type": "checkbox",
+            "default": true,
+            "label": "Delivery to the visitor's town on the product page",
+            "help": "Under the buy panel: each method on offer for that product in the town the visitor chose, with its term (the rate's \"delivery time\") and its price — priced exactly as the cart will price it. No town chosen: the catch-all zone's methods and a link to choose one."
+        },
+        {
+            "key": "packing_factor",
+            "type": "number",
+            "default": 1.15,
+            "label": "Packing factor for volumetric weight",
+            "help": "The goods' own volume times this is the parcel's. 1.15 assumes ordinary cartons with some air; a shop shipping in moulded boxes packs tighter. Only used by methods that charge on volume — and the carrier remeasures the real parcel anyway."
+        }
+    ],
+    "permissions": [
+        {
+            "name": "shipping.manage",
+            "label": "Manage shipping zones, methods and carriers"
+        }
+    ],
+    "admin_menu": [
+        {
+            "label": "Shipping",
+            "url": "/admin/shipping/methods",
+            "group": "logistics",
+            "icon": "truck",
+            "position": 21
+        },
+        {
+            "label": "Shipping zones",
+            "url": "/admin/shipping/zones",
+            "group": "logistics",
+            "icon": "map",
+            "position": 21.5
+        }
+    ]
+}

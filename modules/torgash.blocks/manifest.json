@@ -1,0 +1,35 @@
+{
+    "id": "torgash.blocks",
+    "name": "Content blocks",
+    "version": "1.0.0",
+    "icon": "layout-template",
+    "description": "Admin-managed content in the storefront's named zones. Block types are registered by modules and themes and declare a settings schema; the admin form is generated from that schema, so the same definition drives both the visual editor and the raw-JSON view.",
+    "provider": "Torgash\\Blocks\\BlocksServiceProvider",
+    "autoload": {
+        "Torgash\\Blocks\\": "src/"
+    },
+    "requires": {
+        "core": ">=0.1",
+        "modules": []
+    },
+    "settings": [],
+    "permissions": [
+        {
+            "name": "blocks.manage",
+            "label": "Manage content blocks"
+        },
+        {
+            "name": "blocks.html",
+            "label": "Insert raw HTML into blocks"
+        }
+    ],
+    "admin_menu": [
+        {
+            "label": "Blocks",
+            "url": "/admin/blocks",
+            "icon": "layout-template",
+            "position": 12,
+            "group": "content"
+        }
+    ]
+}

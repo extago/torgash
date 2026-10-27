@@ -1,0 +1,272 @@
+{
+    "id": "torgash.commerceml",
+    "name": "CommerceML (1C, МойСклад)",
+    "version": "1.0.0",
+    "icon": "arrow-left-right",
+    "description": "Exchange with 1C:Enterprise and anything else that speaks CommerceML 2 — the catalogue and offers come in, orders go out. The shop decides which of its fields each 1C attribute fills, and nothing is created behind its back.",
+    "provider": "Torgash\\CommerceMl\\CommerceMlServiceProvider",
+    "autoload": {
+        "Torgash\\CommerceMl\\": "src/"
+    },
+    "requires": {
+        "core": ">=0.1",
+        "modules": [
+            "torgash.catalog",
+            "torgash.api",
+            "torgash.checkout"
+        ]
+    },
+    "settings": [
+        {
+            "key": "_link_exchange",
+            "type": "link",
+            "url": "/admin/commerceml",
+            "group": "data",
+            "label": "Connection and matching",
+            "help": "The address to give 1C, what it has sent so far, and which of your price types, characteristics and statuses its own are. Matching is data, not a setting — it lives on its own screen."
+        },
+        {
+            "key": "_g_policy",
+            "type": "group",
+            "label": "What an exchange may do"
+        },
+        {
+            "key": "import_strategy",
+            "type": "select",
+            "default": "all",
+            "options": {
+                "all": "Create and update",
+                "create": "Create new only, never touch existing",
+                "update": "Update existing only, never create",
+                "none": "Nothing — receive and record, change nothing"
+            },
+            "label": "Products",
+            "help": "\"Nothing\" is the setting to start with: the first exchange then only fills the matching screen, and you see what 1C actually sends before it can write anything."
+        },
+        {
+            "key": "new_product_status",
+            "type": "select",
+            "default": "hidden",
+            "options": {
+                "active": "Listed",
+                "hidden": "Hidden — reachable by link, absent from listings",
+                "disabled": "Disabled"
+            },
+            "label": "A product 1C has just created is",
+            "help": "Hidden by default on purpose: a product arrives from 1C with no photo, no description and no category of yours, and a shop should choose when that goes on sale."
+        },
+        {
+            "key": "create_categories",
+            "type": "checkbox",
+            "default": true,
+            "label": "Create categories automatically",
+            "help": "Off means every new group waits on the matching screen instead. A catalogue tree is usually 1C's to own, so this is on."
+        },
+        {
+            "key": "create_features",
+            "type": "checkbox",
+            "default": false,
+            "label": "Create characteristics automatically",
+            "help": "Off by default, and deliberately the other way round from categories: 1C's properties are an internal bookkeeping vocabulary, and letting them into the shop unread is how a filter panel grows forty entries nobody meant to publish."
+        },
+        {
+            "key": "import_offers",
+            "type": "checkbox",
+            "default": true,
+            "label": "Take prices and stock from offers.xml",
+            "help": "Off when the shop prices for itself and 1C is only the source of the catalogue."
+        },
+        {
+            "key": "_g_changes",
+            "type": "group",
+            "label": "When 1C changes something it already sent"
+        },
+        {
+            "key": "category_change",
+            "type": "select",
+            "default": "add",
+            "options": {
+                "add": "Add the new category, keep the others",
+                "replace": "Replace the product's categories",
+                "new_only": "Ignore — categories are set on the first import only"
+            },
+            "label": "Categories"
+        },
+        {
+            "key": "image_change",
+            "type": "select",
+            "default": "new_only",
+            "options": {
+                "add": "Add the new photo to the gallery",
+                "replace": "Replace every photo the product has",
+                "new_only": "Ignore — photos are set on the first import only"
+            },
+            "label": "Photographs",
+            "help": "\"Ignore\" is the default because \"replace\" destroys, every night, the photographs the shop took itself. Turn it up only when 1C is genuinely the better photographer."
+        },
+        {
+            "key": "_g_first",
+            "type": "group",
+            "label": "The first exchange, on a catalogue that already exists"
+        },
+        {
+            "key": "match_categories_by_name",
+            "type": "checkbox",
+            "default": true,
+            "label": "Recognise a category by its name",
+            "help": "Only for rows that have no 1C identifier yet: matching by name once is how an existing catalogue acquires its links. Afterwards the identifier is what counts, and renaming either side changes nothing."
+        },
+        {
+            "key": "match_products_by_sku",
+            "type": "checkbox",
+            "default": true,
+            "label": "Recognise a product by its article number",
+            "help": "Same rule, and the same one exchange conventions everywhere here follow: the identifier first, the shop's own key only when there is no identifier yet."
+        },
+        {
+            "key": "_g_fields",
+            "type": "group",
+            "label": "Which 1C field fills which of ours"
+        },
+        {
+            "key": "field_name",
+            "type": "select",
+            "default": "name",
+            "options": {
+                "name": "Наименование",
+                "full_name": "Полное наименование"
+            },
+            "label": "Product name"
+        },
+        {
+            "key": "field_sku",
+            "type": "select",
+            "default": "article",
+            "options": {
+                "article": "Артикул",
+                "code": "Код",
+                "barcode": "Штрихкод"
+            },
+            "label": "Article number (sku)"
+        },
+        {
+            "key": "field_description",
+            "type": "select",
+            "default": "html_description",
+            "options": {
+                "": "Do not import",
+                "html_description": "ОписаниеВФорматеHTML",
+                "description": "Описание",
+                "full_name": "Полное наименование"
+            },
+            "label": "Description"
+        },
+        {
+            "key": "fields_new_only",
+            "type": "checkboxes",
+            "default": [
+                "name",
+                "description"
+            ],
+            "options": {
+                "name": "Name",
+                "sku": "Article number",
+                "description": "Description",
+                "categories": "Categories",
+                "features": "Characteristics"
+            },
+            "label": "Fill these on the first import only",
+            "help": "What the shop edits after the import and does not want overwritten tonight. Names and descriptions are ticked because they are usually rewritten for the storefront the day a product arrives."
+        },
+        {
+            "key": "_g_attributes",
+            "type": "group",
+            "label": "Attributes — named differently in every 1C"
+        },
+        {
+            "key": "attr_weight",
+            "type": "textarea",
+            "rows": 3,
+            "default": "Вес\nВес, кг\nВесБрутто",
+            "label": "Weight",
+            "help": "The names of the ЗначенияРеквизитов entries to read this from — one per line, and the last one actually present wins. This bag is open-ended and no two 1C configurations name it alike, which is why it is typed rather than guessed. Weight is read in kilograms and stored in whole grams."
+        },
+        {
+            "key": "attr_length",
+            "type": "textarea",
+            "rows": 2,
+            "default": "Длина\nДлина, см",
+            "label": "Length",
+            "help": "Read in centimetres, stored in whole millimetres."
+        },
+        {
+            "key": "attr_width",
+            "type": "textarea",
+            "rows": 2,
+            "default": "Ширина\nШирина, см",
+            "label": "Width"
+        },
+        {
+            "key": "attr_height",
+            "type": "textarea",
+            "rows": 2,
+            "default": "Высота\nВысота, см",
+            "label": "Height"
+        },
+        {
+            "key": "_g_transport",
+            "type": "group",
+            "label": "The exchange itself"
+        },
+        {
+            "key": "batch_size",
+            "type": "number",
+            "default": 200,
+            "label": "Products per request",
+            "help": "The protocol is built to be sliced: 1C asks again while the shop answers \"progress\". Lower this if the import times out; raising it does not make the whole exchange much faster."
+        },
+        {
+            "key": "file_limit",
+            "type": "number",
+            "default": 8388608,
+            "label": "Largest chunk 1C may send, bytes",
+            "help": "Announced at the start of the exchange; 1C splits bigger files itself and the shop appends the pieces. Keep it under what PHP will accept in one request."
+        },
+        {
+            "key": "_g_sale",
+            "type": "group",
+            "label": "Orders coming back from 1C"
+        },
+        {
+            "key": "attr_shipped",
+            "type": "textarea",
+            "rows": 3,
+            "default": "Дата отгрузки по 1С\nОтгружен",
+            "label": "Shipment is reported as",
+            "help": "The names of the attributes to read the shipment from — one per line, the last one present wins, exactly as for weight. A name that is present and not empty is the event; its value is only written to the log. What it moves the order to is chosen on the exchange screen."
+        },
+        {
+            "key": "attr_paid",
+            "type": "textarea",
+            "rows": 3,
+            "default": "Дата оплаты по 1С\nОплачен",
+            "label": "Payment is reported as",
+            "help": "Same rule. Payment is not a status here — it is the order's second axis — so this marks the order paid through the shop's own settlement, the one the manager's \"mark as paid\" runs. An order already paid is left alone."
+        }
+    ],
+    "permissions": [
+        {
+            "name": "commerceml.manage",
+            "label": "Set up the 1C exchange and match its data"
+        }
+    ],
+    "admin_menu": [
+        {
+            "label": "1C exchange",
+            "url": "/admin/commerceml",
+            "icon": "refresh-cw",
+            "position": 97,
+            "group": "data"
+        }
+    ]
+}

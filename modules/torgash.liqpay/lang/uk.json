@@ -1,0 +1,19 @@
+{
+    "LiqPay": "LiqPay",
+    "Order :number": "Замовлення №:number",
+    "Public key": "Публічний ключ",
+    "From liqpay.ua → your shop → API. A key starting with \"sandbox_\" works only with the test switch on.": "З liqpay.ua → ваш магазин → API. Ключ, що починається з «sandbox_», працює лише з увімкненим тестовим режимом.",
+    "Private key": "Приватний ключ",
+    "Signs every message both ways. It never leaves the server: not in a URL, not in the page.": "Підписує кожне повідомлення в обидва боки. Ніколи не залишає сервера: ні в адресі, ні на сторінці.",
+    "Authorize first, take the money later": "Спершу холд, гроші списати пізніше",
+    "Two-phase: the card is held and nothing is taken until you press Capture on the order.": "Двофазний платіж: сума заморожується на картці й не списується, поки ви не натиснете «Списати холд» на замовленні.",
+    "Payment page is valid for, hours": "Сторінка оплати дійсна, годин",
+    "After this LiqPay refuses the payment and the customer needs a new page — which the Pay link on their order gives them. Empty means LiqPay's own default.": "Після цього LiqPay не прийме оплату, і покупцеві потрібна нова сторінка — її дає посилання «Сплатити» на його замовленні. Порожньо — строк за замовчуванням LiqPay.",
+    "The public key is a sandbox key, and test mode is off. Every payment will be refused. Turn test mode on, or paste the live keys.": "Публічний ключ — тестовий (sandbox), а тестовий режим вимкнено. Кожен платіж буде відхилено. Увімкніть тестовий режим або вставте бойові ключі.",
+    "Test mode is on: LiqPay takes no real money and still reports the payment as successful. Turn it off before taking real orders.": "Увімкнено тестовий режим: LiqPay не списує справжніх грошей, але повідомляє про успішну оплату. Вимкніть його, перш ніж приймати справжні замовлення.",
+    "LiqPay cannot charge in :currency. Give this payment method a currency it takes: :list.": "LiqPay не приймає оплату в :currency. Задайте цьому способу оплати валюту, яку він приймає: :list.",
+    "LiqPay keys are not set on this payment method.": "Для цього способу оплати не задано ключів LiqPay.",
+    "Payment page prepared": "Сторінку оплати підготовлено",
+    "LiqPay answered :status": "LiqPay відповів :status",
+    "Card, Apple Pay, Google Pay and Privat24 payments through LiqPay (PrivatBank): the customer pays on LiqPay's page and a signed callback tells the shop what happened. Supports two-phase holds, full and partial refunds, the sandbox, and re-asking LiqPay from the order screen.": "Оплата карткою, Apple Pay, Google Pay і Приват24 через LiqPay (ПриватБанк): покупець платить на сторінці LiqPay, а підписаний колбек повідомляє магазину результат. Підтримує двофазний холд, повне й часткове повернення, пісочницю й перезапит статусу з картки замовлення."
+}

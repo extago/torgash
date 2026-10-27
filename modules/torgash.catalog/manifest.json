@@ -1,0 +1,536 @@
+{
+    "id": "torgash.catalog",
+    "name": "Catalog",
+    "version": "1.0.0",
+    "icon": "package",
+    "description": "Categories, products with JSONB features, prices in minor units.",
+    "provider": "Torgash\\Catalog\\CatalogServiceProvider",
+    "autoload": {
+        "Torgash\\Catalog\\": "src/"
+    },
+    "requires": {
+        "core": ">=0.1",
+        "modules": [
+            "torgash.media"
+        ]
+    },
+    "settings": [
+        {
+            "key": "per_page",
+            "type": "number",
+            "default": 12,
+            "label": "Products per page"
+        },
+        {
+            "key": "per_page_choices",
+            "type": "text",
+            "default": "24 48 96",
+            "label": "Page sizes a visitor can choose",
+            "help": "Numbers separated by spaces, shown above the listing. The default size above is always among them. Empty hides the switch."
+        },
+        {
+            "key": "filter_flags",
+            "type": "checkboxes",
+            "default": [
+                "in_stock"
+            ],
+            "label": "Yes/no filters in the catalogue panel",
+            "help": "The list is what the shop's modules can actually answer — \"on sale\" covers a price below its RRP and, with the promotions module installed, a product in a running sale. A ticked filter is hidden anyway on a page where nothing matches it, so it never becomes a promise of an empty grid."
+        },
+        {
+            "key": "filter_open_blocks",
+            "type": "select",
+            "default": "all",
+            "options": {
+                "all": "All of them",
+                "3": "The first three",
+                "5": "The first five",
+                "none": "None — each opens with a click"
+            },
+            "label": "Filter blocks open from the start",
+            "help": "Counted from the price. A block with something ticked in it is always open, and a visitor who opens or closes one finds it the same way on the next page."
+        },
+        {
+            "key": "filter_search_from",
+            "type": "number",
+            "default": 10,
+            "label": "A search box in a filter block from this many values",
+            "help": "Past this number the block gets a search box and scrolls inside itself instead of stretching the panel; ticked values come first. 0 turns it off."
+        },
+        {
+            "key": "catalog_sorts",
+            "type": "checkboxes",
+            "default": [
+                "popular",
+                "newest",
+                "price_asc",
+                "price_desc",
+                "name"
+            ],
+            "label": "Sort orders offered in the catalogue",
+            "help": "The list is what the shop's modules can answer for; a module may add its own. Leave one ticked and the select is not drawn at all — the listing is simply in that order. An address asking for a sort that is not on offer falls back to the default one."
+        },
+        {
+            "key": "default_sort",
+            "type": "select",
+            "default": "newest",
+            "label": "Default sort order",
+            "help": "What a listing is in when the visitor has not chosen. If this one is not among those offered, the first offered one is used instead."
+        },
+        {
+            "key": "popularity_view_points",
+            "type": "number",
+            "default": 1,
+            "label": "Popularity points for a view",
+            "help": "Counted once per visitor per product, and never for a known bot. 0 switches views off. Points rather than a tick box because there are far more views than orders: weighted the same, views alone would decide the order, and a product everybody looks at and nobody buys would lead the listing."
+        },
+        {
+            "key": "popularity_order_points",
+            "type": "number",
+            "default": 10,
+            "label": "Popularity points for an order",
+            "help": "Added once per order the product is in, whatever the quantity — \"how often it is chosen\", which is a different question from the units Sales counts. 0 switches orders off; 0 in both fields leaves popularity entirely manual. Nothing is taken back when an order is cancelled or returned."
+        },
+        {
+            "key": "out_of_stock_last",
+            "type": "checkbox",
+            "default": false,
+            "label": "Order listings by availability status first",
+            "help": "Applies before whichever sort is chosen. Each status has a weight (the Availability statuses screen): a higher weight comes earlier, equal weights are mixed and keep the chosen sort. By default what can be bought comes first and the rest goes to the end. A product whose stock ran out ranks as Out of stock — the same answer the Buy button gives, so a preorder sold ahead of stock is not pushed down."
+        },
+        {
+            "key": "filter_page_links",
+            "type": "number",
+            "default": 12,
+            "label": "Filter-page links above the grid",
+            "help": "How many buttons each row of the strip shows — narrowing pages and city pages are counted separately. 0 shows every published page, which is what a shop with a page per town does not want. A page can also be kept out of the strip one at a time, without unpublishing its address."
+        },
+        {
+            "key": "stock_level_labels",
+            "type": "checkbox",
+            "default": false,
+            "label": "Show stock as Many/Low instead of just In stock"
+        },
+        {
+            "key": "stock_low_threshold",
+            "type": "number",
+            "default": 10,
+            "label": "Low stock threshold",
+            "help": "At or below this quantity, show \"Low stock\" instead of \"In stock\"."
+        },
+        {
+            "key": "availability_on_zero_status",
+            "type": "select",
+            "default": "out_of_stock",
+            "label": "When a tracked product's stock reaches zero, switch it to",
+            "help": "The one automatic change of Availability in this shop — everything else (a shipment arriving, production resuming) is a fact only a person or 1C can supply, so it stays a manual edit. Only applies to a status that tracks stock and does not allow it to go negative (Preorder is exempt on purpose)."
+        },
+        {
+            "key": "old_price_source",
+            "type": "select",
+            "default": "list_price",
+            "options": {
+                "list_price": "The old price typed on the product (RRP)",
+                "lowest": "The lowest price of the last days before the discount (EU Omnibus rule)"
+            },
+            "label": "The crossed-out price beside a discount",
+            "help": "Everywhere at once: cards, the product page, \"−X%\" labels, the \"On sale\" box. The lowest price comes from the shop's own price history, recorded hourly; a product with no history before its current price shows no discount rather than one nobody can check. Run php artisan catalog:price-history once to start the history."
+        },
+        {
+            "key": "lowest_price_days",
+            "type": "number",
+            "default": 30,
+            "label": "The lowest price counts over, days",
+            "help": "Measured back from the moment the current price began. 30 is what the EU rule says."
+        },
+        {
+            "key": "lowest_price_note",
+            "type": "checkbox",
+            "default": false,
+            "label": "Say the lowest price under a discount on the product page",
+            "help": "\"Lowest price in the 30 days before the discount: …\" — only while a discount is shown and the history knows the answer."
+        },
+        {
+            "key": "club_price_row",
+            "type": "checkbox",
+            "default": true,
+            "label": "Show the built-in club-price row on the product page",
+            "help": "The framed line under the price advertising a cheaper price type. Turn it off to build your own in a block instead — {club_price}, {club_price_name} and {club_price_note} are available there, together with a popup explaining it."
+        },
+        {
+            "key": "prices_in_other_currencies",
+            "type": "checkbox",
+            "default": false,
+            "label": "A product may be priced in another currency",
+            "help": "Adds a currency picker to the product's pricing card. The typed number is what stays fixed: the shop's own price for that product is recomputed whenever the rate changes. Leave off for a catalogue priced entirely in the shop's currency — every screen stays a little simpler."
+        },
+        {
+            "key": "_g_category_nav",
+            "type": "group",
+            "label": "Category list beside the catalogue"
+        },
+        {
+            "key": "category_nav_mode",
+            "type": "select",
+            "default": "tree",
+            "options": {
+                "tree": "The whole tree, opened along the visitor's branch",
+                "branch": "Only the visitor's branch, with a way back up",
+                "off": "Not shown"
+            },
+            "label": "Category list",
+            "help": "The branch keeps the list short in a deep catalogue: the categories above as \"back\" rows, the open one, and what is under it — a category with nothing under it is shown among its neighbours. On a phone the list stays hidden either way: the menu and the subcategory strip lead there."
+        },
+        {
+            "key": "category_nav_counts",
+            "type": "checkbox",
+            "default": false,
+            "label": "Show how many products each category has",
+            "help": "Counted with everything under the category, as its page lists them, and only what this visitor may be shown."
+        },
+        {
+            "key": "category_nav_hide_empty",
+            "type": "checkbox",
+            "default": false,
+            "label": "Hide categories with no products",
+            "help": "The category the visitor is in, and the ones above it, are always shown."
+        },
+        {
+            "key": "category_nav_all_link",
+            "type": "checkbox",
+            "default": true,
+            "label": "\"All products\" at the top of the list"
+        },
+        {
+            "key": "_g_product_details",
+            "type": "group",
+            "label": "Under the gallery"
+        },
+        {
+            "key": "product_details_mode",
+            "type": "select",
+            "default": "tabs",
+            "options": {
+                "tabs": "Tabs — one strip, one panel open",
+                "sections": "Sections — all of them open, each under its own heading"
+            },
+            "label": "Description, characteristics and your own sections are shown as",
+            "help": "A tab holds one word; a section's heading holds a line with the product in it (\"Reviews of the TIGER PRO-300 floodlight\") — which is why a long page usually wants sections. The headings are written per section under Catalogue → Product tabs."
+        },
+        {
+            "key": "buy_box_specs_max",
+            "type": "number",
+            "default": 4,
+            "label": "Characteristics under the buy button, at most",
+            "help": "A limit on a narrow panel, not a choice of which ones: WHICH characteristics may appear there is ticked on the characteristic itself (Catalogue → Characteristics → where it is shown). 0 leaves the panel without them."
+        },
+        {
+            "key": "brand_logo_on_product",
+            "type": "checkbox",
+            "default": true,
+            "label": "The brand's logo on the product page",
+            "help": "At the top of the buy panel, beside the rating, leading to the brand's page. Drawn when the product has a brand and that brand has a logo — added on the brand characteristic, with \"Page\" on its value."
+        },
+        {
+            "key": "sticky_buy_card",
+            "type": "checkbox",
+            "default": true,
+            "label": "A small buy card follows the page",
+            "help": "The picture, the name, the price and the buy button at the end of the right column, staying on screen once the buy panel has scrolled away. On a computer; a phone has its own bar. Its button sends the panel's own form — a product with options still to choose is scrolled to instead."
+        },
+        {
+            "key": "variation_image_hover",
+            "type": "checkbox",
+            "default": true,
+            "label": "Pointing at a variation's picture shows it in the gallery",
+            "help": "For characteristics whose variations are drawn as pictures. Only a look: the photo comes back when the pointer leaves, and nothing is chosen until the picture is clicked."
+        },
+        {
+            "key": "variations_list",
+            "type": "checkbox",
+            "default": true,
+            "label": "A list of all variants under the buy button",
+            "help": "A whole-width button under the buy box's small actions opens a table of the group's variants — picture, code, one column per characteristic that tells them apart, availability, price and a basket button for each, sortable by any column. Only for a product with more than one variant."
+        },
+        {
+            "key": "description_fold_height",
+            "type": "number",
+            "default": 420,
+            "label": "Fold a long description at, px",
+            "help": "A description taller than this shows its first part with a fade and a \"Show in full\" button. 0 — never fold."
+        },
+        {
+            "key": "specs_fold_height",
+            "type": "number",
+            "default": 0,
+            "label": "Fold long characteristics at, px",
+            "help": "The same for the characteristics. 0 — never fold: they are usually what a customer came to read."
+        },
+        {
+            "key": "_g_recently_viewed",
+            "type": "group",
+            "label": "Viewed recently"
+        },
+        {
+            "key": "recently_viewed",
+            "type": "checkbox",
+            "default": true,
+            "label": "Remember the products a visitor has looked at",
+            "help": "For product blocks whose products are \"Viewed recently by the visitor\" (on the product page, under it, by default). Kept in the visitor's session only, newest first, and gone when the session ends — the shop stores nothing. Off: nothing is remembered and such blocks show nothing."
+        },
+        {
+            "key": "_g_short_description",
+            "type": "group",
+            "label": "Short description"
+        },
+        {
+            "key": "short_description_mode",
+            "type": "select",
+            "default": "fill_empty",
+            "options": {
+                "off": "Only what is typed",
+                "fill_empty": "Compose it where nothing is typed",
+                "override": "Compose it always"
+            },
+            "label": "Short description under the product's name",
+            "help": "Composed from the characteristics ticked as \"in the short description\" on the Features screen — for a catalogue nobody is going to write three thousand blurbs for. With none ticked nothing is composed, whatever this says."
+        },
+        {
+            "key": "short_description_names",
+            "type": "checkbox",
+            "default": true,
+            "label": "Name the characteristics on the product page",
+            "help": "\"Memory: 16 GB, Screen: 15.6″\" against \"16 GB, 15.6″\". A card in a grid never names them — there is no room, and the photograph beside it has already said what kind of thing this is."
+        },
+        {
+            "key": "short_description_separator",
+            "type": "text",
+            "default": ", ",
+            "label": "Separator on the product page"
+        },
+        {
+            "key": "short_description_card_separator",
+            "type": "text",
+            "default": " · ",
+            "label": "Separator in a listing"
+        },
+        {
+            "key": "short_description_card_limit",
+            "type": "number",
+            "default": 3,
+            "label": "How many characteristics in a listing",
+            "help": "A card has two lines for this. 0 means all of them."
+        },
+        {
+            "key": "card_sku",
+            "type": "checkbox",
+            "default": true,
+            "label": "Show the SKU on product cards",
+            "help": "The code line above the name in a grid card and in a list's row. The product page always shows it."
+        },
+        {
+            "key": "card_description_on_hover",
+            "type": "checkbox",
+            "default": true,
+            "label": "Open a card's short description beneath it on hover",
+            "help": "With a mouse, the two lines leave the card and open, longer, in a panel under it while the pointer is over it — the grid stays even and says more to whoever is looking. A phone has no hover and keeps them in the card either way."
+        },
+        {
+            "key": "card_photos_max",
+            "type": "number",
+            "default": 5,
+            "label": "Photos a card flips through",
+            "help": "Moving the pointer across a card's photo left and right shows the product's other photos, with thin marks under it — one per photo. 0 or 1 turns it off.",
+            "keywords": {
+                "en": "gallery hover images",
+                "ru": "галерея фотографии наведение листать"
+            }
+        },
+        {
+            "key": "external_images",
+            "type": "checkbox",
+            "default": false,
+            "label": "Photos by external links",
+            "help": "Lets a product show pictures from another site, listed by address, when it has no photos of its own. Not recommended: nothing is downloaded, so there are no thumbnails, and the picture vanishes when the other site removes it or blocks linking. Off, the field is hidden and stored links are not shown.",
+            "keywords": {
+                "en": "image url remote hotlink",
+                "ru": "ссылка на фото внешние картинки url изображения"
+            }
+        },
+        {
+            "key": "_g_weight",
+            "type": "group",
+            "label": "Weight from a characteristic"
+        },
+        {
+            "key": "weight_feature",
+            "type": "text",
+            "default": "",
+            "label": "Take the weight from",
+            "help": "For a catalogue whose weights arrived as a spec instead of in the weight field. Enter a global feature's CODE, or the exact key of a per-product characteristic. The weight field still wins where it is filled; this answers for everything else."
+        },
+        {
+            "key": "weight_feature_unit",
+            "type": "select",
+            "default": "kg",
+            "options": {
+                "kg": "Kilograms",
+                "g": "Grams",
+                "lb": "Pounds"
+            },
+            "label": "Values there are in",
+            "help": "The number is read out of the text (\"0,65 кг\" → 0.65) and multiplied by this. Guessing the unit from the text would be worse than being told."
+        },
+        {
+            "key": "fill_weights",
+            "type": "action",
+            "url": "/admin/catalog/fill-weights",
+            "label": "Copy those weights into the weight field",
+            "help": "Optional, and one-off: reading the characteristic works without it. Do it to make the weights editable, exportable and visible in the product form — products that already have a weight are left alone. Save the settings above first."
+        },
+        {
+            "key": "closed_assortment",
+            "type": "select",
+            "default": "notice",
+            "options": {
+                "notice": "Show its name and ask to sign in — no price, no way to buy",
+                "hide": "Not there at all — the address answers \"not found\""
+            },
+            "label": "A product or category closed to the visitor's group",
+            "help": "Who may see a product or a category is chosen on its form (\"Who sees it\"); a closed category closes everything under it. Either way it is not listed, found or put in the sitemap for an outsider. This decides only what its own address says: a wholesale customer forwarding a link to a colleague gets \"sign in\" rather than \"not found\" with the first choice; the second is for a range whose very existence is private.",
+            "keywords": {
+                "en": "closed assortment wholesale customer group hidden products",
+                "ru": "закрытый ассортимент опт группа покупателей скрытые товары"
+            }
+        }
+    ],
+    "permissions": [
+        {
+            "name": "catalog.manage",
+            "label": "Manage the catalogue: categories, products, prices"
+        }
+    ],
+    "admin_menu": [
+        {
+            "label": "Products",
+            "url": "/admin/catalog/products",
+            "group": "catalog",
+            "icon": "shopping-bag",
+            "position": 10
+        },
+        {
+            "label": "Categories",
+            "url": "/admin/catalog/categories",
+            "group": "catalog",
+            "icon": "tag",
+            "position": 11
+        },
+        {
+            "label": "Features",
+            "url": "/admin/catalog/features",
+            "group": "catalog",
+            "icon": "sliders-horizontal",
+            "position": 12
+        },
+        {
+            "label": "Labels",
+            "url": "/admin/catalog/labels",
+            "group": "catalog",
+            "icon": "bookmark",
+            "position": 13
+        },
+        {
+            "label": "Price types",
+            "url": "/admin/catalog/price-types",
+            "group": "catalog",
+            "icon": "banknote",
+            "position": 14
+        },
+        {
+            "label": "Filter pages",
+            "url": "/admin/catalog/filter-pages",
+            "group": "seo",
+            "icon": "filter",
+            "position": 15
+        },
+        {
+            "label": "Product tabs",
+            "url": "/admin/catalog/product-tabs",
+            "group": "catalog",
+            "icon": "panels-top-left",
+            "position": 16
+        },
+        {
+            "label": "Availability statuses",
+            "keywords": {
+                "en": "stock, in stock, out of stock, preorder, discontinued, sort order, buy button",
+                "ru": "наличие, остаток, в наличии, нет в наличии, предзаказ, под заказ, снято с производства, сортировка, порядок, кнопка купить"
+            },
+            "url": "/admin/catalog/availability-statuses",
+            "group": "catalog",
+            "icon": "package-check",
+            "position": 17
+        }
+    ],
+    "zones": [
+        {
+            "name": "catalog.category.top",
+            "group": "category",
+            "label": "Category — under the heading, above the products"
+        },
+        {
+            "name": "catalog.category.bottom",
+            "group": "category",
+            "label": "Category — under the products"
+        },
+        {
+            "name": "catalog.product.top",
+            "group": "product",
+            "label": "Product page — under the heading"
+        },
+        {
+            "name": "catalog.product.before_details",
+            "group": "product",
+            "label": "Product page — full width, above the description"
+        },
+        {
+            "name": "catalog.product.bottom",
+            "group": "product",
+            "label": "Product page — at the very bottom"
+        },
+        {
+            "name": "catalog.product.price_extra",
+            "group": "product",
+            "label": "Product page — under the price",
+            "shape": "narrow"
+        },
+        {
+            "name": "catalog.product.availability",
+            "group": "product",
+            "label": "Product page — under the stock line",
+            "shape": "narrow"
+        },
+        {
+            "name": "catalog.product.buy_box",
+            "group": "product",
+            "label": "Product page — buy box (override)",
+            "shape": "narrow"
+        },
+        {
+            "name": "catalog.product.after_buy_box",
+            "group": "product",
+            "label": "Product page — under the buy box",
+            "shape": "narrow"
+        },
+        {
+            "name": "catalog.product.before_description",
+            "group": "product",
+            "label": "Product page — above the description"
+        },
+        {
+            "name": "catalog.product.after_description",
+            "group": "product",
+            "label": "Product page — below the description"
+        }
+    ]
+}

@@ -1,0 +1,111 @@
+{
+    "id": "torgash.novaposhta",
+    "name": "Nova Poshta",
+    "version": "0.1.0",
+    "regions": ["UA"],
+    "icon": "truck",
+    "section": "logistics",
+    "description": "Nova Poshta as a shipping carrier: syncs its own settlement and warehouse directory, matches it to the locations registry once, and prices delivery live. \"To branch\", \"to parcel locker\" and \"by courier\" are separate shipping methods that name this carrier.",
+    "provider": "Torgash\\NovaPoshta\\NovaPoshtaServiceProvider",
+    "autoload": {
+        "Torgash\\NovaPoshta\\": "src/"
+    },
+    "requires": {
+        "core": ">=0.1",
+        "modules": [
+            "torgash.shipping",
+            "torgash.locations"
+        ]
+    },
+    "settings": [
+        {
+            "key": "_g_api",
+            "type": "group",
+            "label": "API"
+        },
+        {
+            "key": "api_key",
+            "type": "text",
+            "default": "",
+            "label": "API key",
+            "help": "From the Nova Poshta business cabinet (Settings → Security → API keys). Every sync and every live rate goes through it."
+        },
+        {
+            "key": "_g_sync",
+            "type": "group",
+            "label": "Data"
+        },
+        {
+            "key": "_link_data",
+            "type": "link",
+            "url": "/admin/nova-poshta",
+            "label": "Directory and matching",
+            "help": "The carrier's own settlements and branches, and how they line up with your locations. A carrier is not a section of the shop, so it hangs off its settings rather than the menu."
+        },
+        {
+            "key": "settlements_ttl_days",
+            "type": "number",
+            "default": 14,
+            "label": "Settlement directory: refresh after, days",
+            "help": "The whole settlement list (~30 000 rows) is pulled at once. It changes rarely."
+        },
+        {
+            "key": "prefetch_on_town",
+            "type": "checkbox",
+            "default": true,
+            "label": "Fetch a town’s branches as soon as the customer names it",
+            "help": "In the background, while they are still filling in the form — so the delivery step has the list ready even when the carrier is rate-limiting that minute. Needs a queue worker; without one nothing is lost, the delivery step fetches the town itself as before."
+        },
+        {
+            "key": "warehouse_ttl_hours",
+            "type": "number",
+            "default": 24,
+            "label": "Branch list per town: refresh after, hours",
+            "help": "Branches are fetched per town on first need, or all at once from the directory page, and kept this long. A day is what Nova Poshta's own module uses for the same data — branches open and close, but not hourly, and a shorter window mostly spends the request budget the carrier rate-limits you on."
+        },
+        {
+            "key": "sender_city_ref",
+            "type": "text",
+            "default": "",
+            "label": "Sender city (Nova Poshta id)",
+            "help": "A price is from somewhere to somewhere: without this the carrier is never asked for one, and a Nova Poshta method is priced by your own rate table instead. Set it with the picker on the directory page rather than by hand. A warehouse with a town of its own overrides this — the parcel actually leaves from there."
+        },
+        {
+            "key": "_g_parcel",
+            "type": "group",
+            "label": "Default parcel"
+        },
+        {
+            "key": "default_weight_g",
+            "type": "number",
+            "default": 500,
+            "label": "Weight, g",
+            "help": "Used for the rate when the cart's own weight is zero (no product has a weight)."
+        },
+        {
+            "key": "default_length_cm",
+            "type": "number",
+            "default": 20,
+            "label": "Length, cm"
+        },
+        {
+            "key": "default_width_cm",
+            "type": "number",
+            "default": 20,
+            "label": "Width, cm"
+        },
+        {
+            "key": "default_height_cm",
+            "type": "number",
+            "default": 10,
+            "label": "Height, cm"
+        }
+    ],
+    "permissions": [
+        {
+            "name": "novaposhta.manage",
+            "label": "Manage the Nova Poshta integration"
+        }
+    ],
+    "admin_menu": []
+}

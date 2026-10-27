@@ -1,0 +1,67 @@
+{
+    "id": "torgash.automations",
+    "name": "Automations",
+    "version": "1.0.0",
+    "icon": "zap",
+    "description": "Rules that react to what happens in the shop: when something changes about an order, wait if you like, check the conditions, then act — today by sending a webhook you compose yourself. One rule engine replaces the class of integration modules that only ever POST JSON somewhere: analytics, a chat notification, Make/Zapier, a CRM lead.",
+    "provider": "Torgash\\Automations\\AutomationsServiceProvider",
+    "autoload": {
+        "Torgash\\Automations\\": "src/"
+    },
+    "requires": {
+        "core": ">=0.1",
+        "modules": [
+            "torgash.checkout",
+            "torgash.catalog"
+        ]
+    },
+    "settings": [
+        {
+            "key": "timeout",
+            "type": "number",
+            "default": 10,
+            "label": "Request timeout, seconds",
+            "help": "How long a webhook may take before it counts as failed. Runs happen in the queue, so this never delays a customer — but a receiver that hangs would hold a worker."
+        },
+        {
+            "key": "allow_private_hosts",
+            "type": "checkbox",
+            "default": false,
+            "label": "Allow requests to private addresses",
+            "help": "Off by default and should stay off in production: the URL is written by an admin but the request is made by the server, from inside your network. With this off, localhost, link-local (169.254.x — cloud metadata) and private ranges are refused. Turn it on only on a development machine talking to a local receiver."
+        },
+        {
+            "key": "keep_runs_days",
+            "type": "number",
+            "default": 30,
+            "label": "Keep the run log, days",
+            "help": "Older entries are deleted nightly. The log is what tells you whether the receiver actually got it, so keep enough of it to answer that after a weekend."
+        }
+    ],
+    "permissions": [
+        {
+            "name": "automations.manage",
+            "label": "Manage automations"
+        }
+    ],
+    "admin_menu": [
+        {
+            "label": "Automations",
+            "url": "/admin/automations",
+            "group": "sales",
+            "icon": "zap",
+            "position": 70
+        },
+        {
+            "label": "Code delivery",
+            "url": "/admin/automations/channels",
+            "group": "customers",
+            "icon": "message-square-lock",
+            "position": 31,
+            "keywords": {
+                "en": "sms gateway telegram verification code otp turbosms channel",
+                "ru": "смс шлюз телеграм код подтверждения канал турбосмс"
+            }
+        }
+    ]
+}

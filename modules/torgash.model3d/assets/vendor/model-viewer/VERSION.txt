@@ -1,0 +1,4 @@
+@google/model-viewer 4.3.1 (Apache-2.0, LICENSE beside it), dist/model-viewer.min.js from
+https://cdn.jsdelivr.net/npm/@google/model-viewer@4.3.1/ — self-contained: it bundles
+three.js (MIT), lit (BSD-3-Clause) and @monogrid/gainmap-js (MIT).
+The source-map comment at the end was removed (the map is not shipped).

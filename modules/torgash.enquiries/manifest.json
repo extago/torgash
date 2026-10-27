@@ -1,0 +1,96 @@
+{
+    "id": "torgash.enquiries",
+    "name": "Enquiries",
+    "version": "1.0.0",
+    "icon": "inbox",
+    "description": "One inbox for everything a visitor asks: a callback, a question about a product, \"tell me when it is back\", a message. The answers are stored — not emailed and forgotten — and every enquiry is an automations trigger.",
+    "provider": "Torgash\\Enquiries\\EnquiriesServiceProvider",
+    "autoload": {
+        "Torgash\\Enquiries\\": "src/"
+    },
+    "requires": {
+        "core": ">=0.1",
+        "modules": [
+            "torgash.catalog",
+            "torgash.media"
+        ]
+    },
+    "settings": [
+        {
+            "key": "notify_email",
+            "type": "text",
+            "default": "",
+            "label": "Send new enquiries to",
+            "help": "Empty means the storefront's own contact address. One email is sent by this module itself, so an enquiry is never lost waiting for somebody to set up a rule; anything beyond it — a messenger, a webhook, a reminder — is an automation."
+        },
+        {
+            "key": "callback",
+            "type": "checkbox",
+            "default": true,
+            "label": "Offer a callback",
+            "help": "Puts the callback dialog on every storefront page and points the {callback_link} token at it. Off, and the token goes back to dialling the shop's number — content written with it keeps working either way."
+        },
+        {
+            "key": "auto_close_hours",
+            "type": "number",
+            "default": 0,
+            "label": "Close an answered enquiry after, hours",
+            "help": "0 keeps every thread open until somebody closes it. Otherwise a thread the SHOP spoke last in is closed once that answer is this old — the customer said nothing back, so there is nothing to answer. A thread the customer spoke last in is never closed by this, however old: that is an unanswered question, not a finished one."
+        },
+        {
+            "key": "reply_within_hours",
+            "type": "number",
+            "default": 24,
+            "label": "Answer within, hours",
+            "help": "The shop's own promise. An enquiry the shop owes an answer to for longer than this is marked red in the inbox. 0 turns the mark off."
+        },
+        {
+            "key": "product_question",
+            "type": "checkbox",
+            "default": true,
+            "label": "\"Ask about this product\" on the product page"
+        },
+        {
+            "key": "back_in_stock",
+            "type": "checkbox",
+            "default": true,
+            "label": "\"Tell me when it is back\" on out-of-stock products",
+            "help": "Shown only when the product really is out of stock: offering to notify somebody about something sitting on the shelf reads as a broken shop."
+        },
+        {
+            "key": "attachments_max",
+            "type": "number",
+            "default": 3,
+            "label": "Photos a customer may attach",
+            "help": "Per enquiry and per reply, counted against what that message already holds. 0 turns attachments off everywhere. Photographs only — the size limit and the formats are the Media module's, and a file is checked by what it actually is rather than by its name."
+        }
+    ],
+    "permissions": [
+        {
+            "name": "enquiries.manage",
+            "label": "Read and answer enquiries"
+        },
+        {
+            "name": "enquiries.forms",
+            "label": "Build the shop's own forms"
+        }
+    ],
+    "admin_menu": [
+        {
+            "label": "Enquiries",
+            "url": "/admin/enquiries",
+            "icon": "inbox",
+            "group": "sales",
+            "position": 35
+        },
+        {
+            "label": "Forms",
+            "url": "/admin/enquiries/forms",
+            "icon": "clipboard-list",
+            "group": "content",
+            "position": 40,
+            "can": "enquiries.forms",
+            "keywords": {"en": "form builder fields questionnaire application survey", "ru": "конструктор форм поля анкета заявка опрос форма"}
+        }
+    ]
+}

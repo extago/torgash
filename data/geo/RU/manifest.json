@@ -1,0 +1,37 @@
+{
+    "country": "RU",
+    "languages": {
+        "base": "en",
+        "local": "ru",
+        "extra": null
+    },
+    "generated_at": "2026-08-29T14:13:04+0300",
+    "source": {
+        "name": "OpenStreetMap",
+        "url": "https://download.geofabrik.de/",
+        "file": "russia-260827.osm.pbf",
+        "hierarchy": "boundaries",
+        "licence": "ODbL 1.0",
+        "attribution": "© OpenStreetMap contributors"
+    },
+    "counts": {
+        "states": 83,
+        "cities": 144802,
+        "cities_with_local_name": 144800,
+        "cities_with_postal": 29915,
+        "cities_with_district": 144453,
+        "cities_with_en_name": 144802,
+        "cities_with_en_romanised": 116313,
+        "districts": 2266,
+        "districts_with_en_name": 2266,
+        "districts_with_en_romanised": 594,
+        "matched_to_previous_pack": 118767,
+        "by_type": {
+            "region_center": 80,
+            "district_center": 2059,
+            "settlement": 132667,
+            "community_center": 9995,
+            "capital": 1
+        }
+    }
+}

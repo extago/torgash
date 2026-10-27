@@ -1,0 +1,26 @@
+/* Slider — one wide slide at a time, the dots in the top left corner, on the
+   line the slide's text starts on, in dark glass; the arrows as glass tabs on
+   the edges that show on hover. Dark glass with white dots reads on a dark
+   slide and a light one alike; the old light glass all but vanished on a dark
+   slide. */
+.hf-slider { position: relative; height: 100%; --pad: 1.25rem; }
+@media (min-width: 768px) { .hf-slider { --pad: 3.75rem; } }
+.hf-dots { position: absolute; z-index: 3; top: 1.25rem; left: var(--pad); }
+.hf-dots .torgash-slider-dots {
+    display: flex; gap: 0.5rem; padding: 0.4375rem 0.625rem; border-radius: 9999px;
+    background: rgb(0 0 0 / 0.35); backdrop-filter: blur(6px);
+}
+.hf-slider .torgash-slider-dot { width: 0.5rem; height: 0.5rem; border-radius: 9999px; background: rgb(255 255 255 / 0.5); transition: width 0.2s, background-color 0.2s; }
+.hf-slider .torgash-slider-dot.is-active { background: #fff; width: 1.25rem; }
+.hf-slider .torgash-slider-arrow {
+    position: absolute; z-index: 3; top: 50%; transform: translateY(-50%);
+    display: flex; align-items: center; justify-content: center; width: 2.5rem; height: 5rem;
+    color: #fff; background: rgb(255 255 255 / 0.2); backdrop-filter: blur(10px);
+    box-shadow: 0 0 10px rgb(30 30 30 / 0.1); opacity: 0; transition: opacity 0.1s;
+}
+.hf-slider .torgash-slider-arrow svg { filter: drop-shadow(0 0 5px rgb(0 0 0 / 0.5)); }
+.hf-slider .torgash-slider-prev { left: 0; border-radius: 0 0.375rem 0.375rem 0; }
+.hf-slider .torgash-slider-next { right: 0; border-radius: 0.375rem 0 0 0.375rem; }
+.hf-slider:hover .torgash-slider-arrow, .hf-slider .torgash-slider-arrow:focus-visible { opacity: 0.85; }
+@media (hover: none) { .hf-slider .torgash-slider-arrow { display: none; } }
+.hf-slider .torgash-slider-arrow:disabled { visibility: hidden; }

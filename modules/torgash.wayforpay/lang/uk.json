@@ -1,0 +1,18 @@
+{
+    "WayForPay": "WayForPay",
+    "Order :number": "Замовлення №:number",
+    "Refund for order :number": "Повернення за замовленням №:number",
+    "Merchant account": "Логін мерчанта",
+    "The merchant login from WayForPay's cabinet (Store settings). The test one is test_merch_n1.": "Логін мерчанта з кабінету WayForPay (налаштування магазину). Тестовий — test_merch_n1.",
+    "Secret key": "Секретний ключ",
+    "Signs every message both ways. It never leaves the server.": "Підписує кожне повідомлення в обидва боки. Ніколи не залишає сервера.",
+    "Shop domain": "Домен магазину",
+    "As registered with WayForPay. Empty means the domain of this site.": "Як його зареєстровано у WayForPay. Порожньо — домен цього сайту.",
+    "Invoice is valid for, hours": "Рахунок дійсний, годин",
+    "After this the invoice expires and the customer needs a new one — which the Pay link on their order gives them. Default 24.": "Після цього рахунок спливає, і покупцеві потрібен новий — його дає посилання «Сплатити» на замовленні. За замовчуванням 24.",
+    "WayForPay cannot charge in :currency. Give this payment method a currency it takes: :list.": "WayForPay не приймає оплату в :currency. Задайте цьому способу оплати валюту, яку він приймає: :list.",
+    "WayForPay credentials are not set on this payment method.": "Для цього способу оплати не задано облікових даних WayForPay.",
+    "WayForPay answered :status": "WayForPay відповів :status",
+    "Invoice created": "Рахунок виставлено",
+    "Card, Apple Pay, Google Pay and Privat24 payments through WayForPay: an invoice per order, the customer pays on WayForPay's page and a signed callback tells the shop what happened. Supports full and partial refunds and re-asking WayForPay from the order screen.": "Оплата карткою, Apple Pay, Google Pay і Приват24 через WayForPay: рахунок на замовлення, покупець платить на сторінці WayForPay, а підписаний колбек повідомляє магазину результат. Підтримує повне й часткове повернення та перезапит статусу з картки замовлення."
+}

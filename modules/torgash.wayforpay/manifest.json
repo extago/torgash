@@ -1,0 +1,22 @@
+{
+    "id": "torgash.wayforpay",
+    "name": "WayForPay",
+    "version": "1.0.0",
+    "regions": ["UA"],
+    "icon": "credit-card",
+    "section": "sales",
+    "description": "Card, Apple Pay, Google Pay and Privat24 payments through WayForPay: an invoice per order, the customer pays on WayForPay's page and a signed callback tells the shop what happened. Supports full and partial refunds and re-asking WayForPay from the order screen.",
+    "provider": "Torgash\\WayForPay\\WayForPayServiceProvider",
+    "autoload": {
+        "Torgash\\WayForPay\\": "src/"
+    },
+    "requires": {
+        "core": ">=0.1",
+        "modules": [
+            "torgash.payments"
+        ]
+    },
+    "settings": [],
+    "permissions": [],
+    "admin_menu": []
+}

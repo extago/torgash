@@ -1,0 +1,25 @@
+/* Carousel of cards — several upright cards in a row (how many: the
+   slider's "in view"; a fraction leaves the next one peeking), the dots in a
+   pill under them. The arrows are frosted strips on the cards' edges: they
+   appear under the pointer and stay away from a finger, which swipes. An
+   arrow with nowhere to go (no loop, at an end) hides. */
+.hf-carousel { --slider-gap: 0.625rem; }
+.hf-carousel .torgash-slide { min-height: 26rem; }
+.hf-carousel-stage { position: relative; }
+.hf-carousel-nav { display: flex; align-items: center; justify-content: center; margin-top: 1rem; }
+.hf-carousel .torgash-slider-dots { display: flex; gap: 0.375rem; padding: 0.375rem 0.625rem; border: 1px solid currentColor; border-radius: 9999px; }
+.hf-carousel .torgash-slider-dot { width: 0.375rem; height: 0.375rem; border-radius: 9999px; background: currentColor; opacity: 0.3; }
+.hf-carousel .torgash-slider-dot.is-active { opacity: 1; }
+.hf-carousel .torgash-slider-arrow {
+    position: absolute; top: 50%; z-index: 2; display: flex; width: 2.5rem; height: 5rem; transform: translateY(-50%);
+    align-items: center; justify-content: center; color: #fff;
+    background: rgb(255 255 255 / 0.2); -webkit-backdrop-filter: blur(10px); backdrop-filter: blur(10px);
+    opacity: 0; transition: opacity 0.15s, background-color 0.15s;
+}
+.hf-carousel .torgash-slider-arrow svg { filter: drop-shadow(0 0 5px rgb(0 0 0 / 0.5)); }
+.hf-carousel .torgash-slider-prev { left: 0; border-radius: 0 0.25rem 0.25rem 0; }
+.hf-carousel .torgash-slider-next { right: 0; border-radius: 0.25rem 0 0 0.25rem; }
+.hf-carousel-stage:hover .torgash-slider-arrow, .hf-carousel .torgash-slider-arrow:focus-visible { opacity: 1; }
+.hf-carousel .torgash-slider-arrow:hover { background: rgb(255 255 255 / 0.35); }
+.hf-carousel .torgash-slider-arrow:disabled { visibility: hidden; }
+@media (hover: none) { .hf-carousel .torgash-slider-arrow { display: none; } }

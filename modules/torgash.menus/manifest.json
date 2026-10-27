@@ -1,0 +1,41 @@
+{
+    "id": "torgash.menus",
+    "name": "Menus",
+    "version": "1.1.0",
+    "icon": "menu",
+    "description": "Storefront menus: named menus of links, shop pages, headings and categories that open into their subcategories (only those with something to buy, if you like). A menu is placed anywhere with the Menu block and drawn as a row, a drop-down, a list or columns.",
+    "provider": "Torgash\\Menus\\MenusServiceProvider",
+    "autoload": {
+        "Torgash\\Menus\\": "src/"
+    },
+    "requires": {
+        "core": ">=0.1",
+        "modules": [
+            "torgash.catalog"
+        ]
+    },
+    "settings": [
+        {
+            "key": "counts_ttl",
+            "type": "number",
+            "default": 10,
+            "label": "Keep category counts for, minutes",
+            "help": "How long the number of products behind a menu's categories (and the \"only with products in stock\" rule) is reused before being counted again. 0 — count on every page."
+        }
+    ],
+    "permissions": [
+        {
+            "name": "menus.manage",
+            "label": "Manage menus"
+        }
+    ],
+    "admin_menu": [
+        {
+            "label": "Menus",
+            "url": "/admin/menus",
+            "icon": "menu",
+            "group": "content",
+            "position": 10
+        }
+    ]
+}

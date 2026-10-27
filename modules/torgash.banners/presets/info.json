@@ -1,0 +1,20 @@
+{
+    "kind": "banner",
+    "label": "Info card",
+    "fields": [
+        {"key": "logo", "type": "image", "label": "Logo", "help": "About 200 × 40. Drawn instead of the icon."},
+        {"key": "icon", "type": "icon", "label": "Icon", "help": "A name from lucide.dev: wallet-cards, truck, badge-percent…"},
+        {"key": "title", "type": "rich", "label": "Heading"},
+        {"key": "text", "type": "rich", "label": "Text"},
+        {"key": "button", "type": "text", "label": "Button"},
+        {"key": "link", "type": "link", "label": "Link", "help": "The whole card is the link."},
+        {"key": "tone", "type": "select", "label": "Colour", "options": [
+            {"value": "light", "label": "Light"},
+            {"value": "dark", "label": "Dark"},
+            {"value": "primary", "label": "The shop's colour"},
+            {"value": "accent", "label": "Accent"}
+        ]},
+        {"key": "glow", "type": "checkbox", "label": "A glow of colour in the corner", "on": "hb-info-glow"},
+        {"key": "glow_colour", "type": "color", "label": "Colour of the glow", "default": "#55d48e"}
+    ]
+}

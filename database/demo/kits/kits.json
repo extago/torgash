@@ -1,0 +1,56 @@
+[
+    {
+        "code": "demo-iphone-set",
+        "admin_name": "iPhone 16 Pro set (demo)",
+        "name": {"en": "Everything for your iPhone", "ru": "Всё для вашего iPhone"},
+        "description": {"en": "A case and a fast charger, cheaper together.", "ru": "Чехол и быстрая зарядка — вместе дешевле."},
+        "main": "IP16P-256-BT",
+        "type": "extended",
+        "slots": [
+            {"product": "CASE-IP16P", "discount": "percent", "percent": 20},
+            {"product": "APPLE-35W-DUAL", "discount": "percent", "percent": 15}
+        ]
+    },
+    {
+        "code": "demo-s25-ultra-set",
+        "admin_name": "Galaxy S25 Ultra set (demo)",
+        "name": {"en": "Protect and charge", "ru": "Защита и зарядка"},
+        "main": "S25U-256-BK",
+        "type": "extended",
+        "slots": [
+            {"product": "GLASS-S25U", "discount": "percent", "percent": 50},
+            {"product": "ANKER-NANO-65", "discount": "percent", "percent": 10}
+        ]
+    },
+    {
+        "code": "demo-gopro-set",
+        "admin_name": "GoPro and a card (demo)",
+        "name": {"en": "Bought with it", "ru": "Берут вместе"},
+        "main": "HERO13",
+        "type": "simple",
+        "slots": [
+            {"product": "SD-EXT-256"}
+        ]
+    },
+    {
+        "code": "demo-ps5-set",
+        "admin_name": "PS5 Pro and a second controller (demo)",
+        "name": {"en": "A second controller for two", "ru": "Второй геймпад — играть вдвоём"},
+        "main": "PS5PRO",
+        "type": "extended",
+        "slots": [
+            {"product": "DUALSENSE-W", "discount": "fixed", "amount": 15}
+        ]
+    },
+    {
+        "code": "demo-ipad-set",
+        "admin_name": "iPad Air charging (demo)",
+        "name": {"en": "Charge it faster", "ru": "Заряжать быстрее"},
+        "main": "IPADAIR11-M3",
+        "type": "simple",
+        "slots": [
+            {"product": "ANKER-NANO-65"},
+            {"product": "ANKER-USBC-2M"}
+        ]
+    }
+]

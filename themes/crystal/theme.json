@@ -1,0 +1,29 @@
+{
+    "name": "Crystal",
+    "parent": "default",
+    "version": "0.2.0",
+    "author": {
+        "name": "Extago.com",
+        "url": "https://extago.com"
+    },
+    "description": "A test theme with not one template of its own: it is the default theme with other defaults — the light three-row header, the strip of categories, Golos Text. Everything a storefront changes in the configurator it still changes.",
+    "preview": "preview.jpg",
+    "settings": [
+        {
+            "key": "header",
+            "default": "three_rows"
+        },
+        {
+            "key": "header_palette",
+            "default": "light"
+        },
+        {
+            "key": "category_strip",
+            "default": true
+        },
+        {
+            "key": "font",
+            "default": "golos"
+        }
+    ]
+}

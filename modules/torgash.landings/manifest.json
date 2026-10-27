@@ -1,0 +1,37 @@
+{
+    "id": "torgash.landings",
+    "name": "Product landings",
+    "version": "1.0.0",
+    "icon": "panels-top-left",
+    "description": "Pages of HTML and CSS with pictures of their own on a product's page — above its description, below it, INSTEAD of it, or as a tab of their own. Shown by the core's display rules (a category with its subcategories, labels, stock, \"no description of its own\", storefront, language, dates, weekdays) and for products picked by hand, with others left out; a text per language; CSS kept inside the landing; the product's own data put in by placeholders. A landing comes and goes as a ZIP of index.html, style.css and its assets. The description itself stays the product's — for feeds, exports and search engines.",
+    "provider": "Torgash\\Landings\\LandingsServiceProvider",
+    "autoload": {
+        "Torgash\\Landings\\": "src/"
+    },
+    "requires": {
+        "core": ">=0.2",
+        "modules": [
+            "torgash.catalog"
+        ]
+    },
+    "permissions": [
+        {
+            "name": "landings.manage",
+            "label": "Write product landings and choose where they are shown"
+        }
+    ],
+    "admin_menu": [
+        {
+            "label": "Product landings",
+            "url": "/admin/landings",
+            "icon": "panels-top-left",
+            "group": "catalog",
+            "position": 70,
+            "keywords": {
+                "en": "landing banner product block html description promo",
+                "ru": "лендинг баннер блок товара html описание промо"
+            }
+        }
+    ],
+    "settings": []
+}

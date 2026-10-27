@@ -1,0 +1,87 @@
+{
+    "id": "torgash.locations",
+    "name": "Locations",
+    "version": "1.0.0",
+    "icon": "map-pin",
+    "description": "Registry of regions and towns behind the address fields: import a prepared CSV pack per country, then search, edit, disable or add places by hand. Rows an admin touched are never overwritten by the next import, so local corrections survive a data update.",
+    "provider": "Torgash\\Locations\\LocationsServiceProvider",
+    "autoload": {
+        "Torgash\\Locations\\": "src/"
+    },
+    "requires": {
+        "core": ">=0.1",
+        "modules": []
+    },
+    "settings": [
+        {
+            "key": "packs_path",
+            "type": "text",
+            "default": "data/geo",
+            "label": "Folder with prepared packs",
+            "help": "Relative to the project root. The import screen lists every <country>-states.csv / <country>-cities.csv pair it finds there, so a pack can be dropped in by file rather than uploaded."
+        },
+        {
+            "key": "autocomplete_limit",
+            "type": "number",
+            "default": 10,
+            "label": "Suggestions in the city field"
+        },
+        {
+            "key": "hidden_types",
+            "type": "checkboxes",
+            "default": [],
+            "options": {
+                "capital": "Capital",
+                "region_center": "Regional centre",
+                "district_center": "District centre",
+                "community_center": "Community centre",
+                "settlement": "Town or village",
+                "city_district": "City district"
+            },
+            "label": "Types not offered to customers",
+            "help": "A ticked type disappears from the city field in the cart and the checkout; the places stay in the registry, keep their zones and are still searchable in the admin. \"City district\" is the usual one to switch off — those rows are neighbourhoods of a bigger city, and a customer names the city. Be careful with the two centres: administratively they are seats of a district or a community, but they are ordinary towns as well (Polevskoy, 66 000 people, is one), so switching them off hides real destinations."
+        },
+        {
+            "key": "town_prompt",
+            "type": "select",
+            "default": "off",
+            "options": {
+                "off": "Do not ask",
+                "default": "Offer the shop's own town",
+                "browser": "By the browser's location",
+                "ip": "By the visitor's IP address"
+            },
+            "label": "Ask \"Is your town …?\" on the first visit",
+            "help": "A small window under the town in the header: \"Your town is Kyiv? Yes / Change\". Shown to a visitor who has not chosen a town, once a visit; \"Yes\" remembers the town as if it was picked by hand. The browser's location asks the visitor's permission first — the browser's own question, before ours. By IP needs a city database file below; where neither finds a town, the shop's own town is offered, and with none set nothing is asked."
+        },
+        {
+            "key": "town_prompt_default",
+            "type": "text",
+            "default": "",
+            "label": "The shop's own town",
+            "help": "Its name as the registry has it (Kyiv, Київ — any language); the most populous of the same name is taken. Offered when nothing else knows the town."
+        },
+        {
+            "key": "geoip_database",
+            "type": "text",
+            "default": "",
+            "label": "City database by IP (.mmdb)",
+            "help": "Relative to the project root, e.g. data/geo/dbip-city-lite.mmdb. A free one: DB-IP \"IP to City Lite\" (CC BY 4.0 — the licence asks for a link to db-ip.com on the site) or MaxMind GeoLite2 City (free account). Replace the file monthly to keep it fresh."
+        }
+    ],
+    "permissions": [
+        {
+            "name": "locations.manage",
+            "label": "Manage countries, regions and settlements"
+        }
+    ],
+    "admin_menu": [
+        {
+            "label": "Locations",
+            "url": "/admin/locations",
+            "group": "logistics",
+            "icon": "map-pin",
+            "position": 65
+        }
+    ]
+}

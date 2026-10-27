@@ -1,0 +1,5 @@
+[
+    {"code": "demo-camera", "name": {"en": "Camera", "ru": "Камера"}, "categories": ["smartphones"]},
+    {"code": "demo-battery", "name": {"en": "Battery life", "ru": "Автономность"}, "categories": ["smartphones", "laptops", "headphones"]},
+    {"code": "demo-sound", "name": {"en": "Sound", "ru": "Звук"}, "categories": ["audio", "tv"]}
+]

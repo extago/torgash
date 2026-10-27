@@ -1,0 +1,226 @@
+[
+    {
+        "email": "anna.kovalenko@example.com",
+        "status": "subscribed",
+        "source": "block",
+        "locale": "ru",
+        "days_ago": 29
+    },
+    {
+        "email": "dmitry.petrov@example.com",
+        "status": "subscribed",
+        "source": "block",
+        "locale": "ru",
+        "days_ago": 38
+    },
+    {
+        "email": "olena.shevchenko@example.com",
+        "status": "unsubscribed",
+        "source": "block",
+        "locale": "ru",
+        "days_ago": 82
+    },
+    {
+        "email": "max.ivanov@example.com",
+        "status": "pending",
+        "source": "block",
+        "locale": "ru",
+        "days_ago": 3
+    },
+    {
+        "email": "kateryna.bondar@example.com",
+        "status": "unsubscribed",
+        "source": "block",
+        "locale": "ru",
+        "days_ago": 67
+    },
+    {
+        "email": "sergey.smirnov@example.com",
+        "status": "unsubscribed",
+        "source": "block",
+        "locale": "en",
+        "days_ago": 49
+    },
+    {
+        "email": "iryna.melnyk@example.com",
+        "status": "subscribed",
+        "source": "block",
+        "locale": "ru",
+        "days_ago": 84
+    },
+    {
+        "email": "oleg.kravets@example.com",
+        "status": "unsubscribed",
+        "source": "block",
+        "locale": "ru",
+        "days_ago": 70
+    },
+    {
+        "email": "natalia.lysenko@example.com",
+        "status": "subscribed",
+        "source": "block",
+        "locale": "ru",
+        "days_ago": 73
+    },
+    {
+        "email": "andrii.tkachenko@example.com",
+        "status": "subscribed",
+        "source": "block",
+        "locale": "ru",
+        "days_ago": 72
+    },
+    {
+        "email": "maria.popova@example.com",
+        "status": "unsubscribed",
+        "source": "block",
+        "locale": "ru",
+        "days_ago": 66
+    },
+    {
+        "email": "yuriy.moroz@example.com",
+        "status": "pending",
+        "source": "block",
+        "locale": "ru",
+        "days_ago": 47
+    },
+    {
+        "email": "svitlana.rudenko@example.com",
+        "status": "subscribed",
+        "source": "checkout",
+        "locale": "ru",
+        "days_ago": 31
+    },
+    {
+        "email": "pavel.volkov@example.com",
+        "status": "unsubscribed",
+        "source": "checkout",
+        "locale": "en",
+        "days_ago": 51
+    },
+    {
+        "email": "oksana.savchenko@example.com",
+        "status": "subscribed",
+        "source": "checkout",
+        "locale": "ru",
+        "days_ago": 58
+    },
+    {
+        "email": "alex.green@example.com",
+        "status": "subscribed",
+        "source": "checkout",
+        "locale": "ru",
+        "days_ago": 58
+    },
+    {
+        "email": "julia.martin@example.com",
+        "status": "subscribed",
+        "source": "checkout",
+        "locale": "ru",
+        "days_ago": 7
+    },
+    {
+        "email": "viktor.hnatiuk@example.com",
+        "status": "subscribed",
+        "source": "checkout",
+        "locale": "ru",
+        "days_ago": 67
+    },
+    {
+        "email": "tetiana.zhuk@example.com",
+        "status": "pending",
+        "source": "checkout",
+        "locale": "ru",
+        "days_ago": 71
+    },
+    {
+        "email": "roman.kuzmenko@example.com",
+        "status": "subscribed",
+        "source": "checkout",
+        "locale": "en",
+        "days_ago": 1
+    },
+    {
+        "email": "daria.sokolova@example.com",
+        "status": "unsubscribed",
+        "source": "cart",
+        "locale": "en",
+        "days_ago": 47
+    },
+    {
+        "email": "ivan.boyko@example.com",
+        "status": "subscribed",
+        "source": "cart",
+        "locale": "en",
+        "days_ago": 3
+    },
+    {
+        "email": "lesya.marchenko@example.com",
+        "status": "subscribed",
+        "source": "cart",
+        "locale": "ru",
+        "days_ago": 18
+    },
+    {
+        "email": "artem.orlov@example.com",
+        "status": "subscribed",
+        "source": "cart",
+        "locale": "ru",
+        "days_ago": 36
+    },
+    {
+        "email": "polina.fedorova@example.com",
+        "status": "subscribed",
+        "source": "cart",
+        "locale": "ru",
+        "days_ago": 34
+    },
+    {
+        "email": "bohdan.kovalchuk@example.com",
+        "status": "subscribed",
+        "source": "account",
+        "locale": "ru",
+        "days_ago": 19
+    },
+    {
+        "email": "alina.ponomarenko@example.com",
+        "status": "subscribed",
+        "source": "account",
+        "locale": "ru",
+        "days_ago": 93
+    },
+    {
+        "email": "denys.lytvyn@example.com",
+        "status": "subscribed",
+        "source": "account",
+        "locale": "ru",
+        "days_ago": 35
+    },
+    {
+        "email": "vera.nikolaeva@example.com",
+        "status": "subscribed",
+        "source": "import",
+        "locale": "ru",
+        "days_ago": 109
+    },
+    {
+        "email": "mykola.shapoval@example.com",
+        "status": "subscribed",
+        "source": "import",
+        "locale": "ru",
+        "days_ago": 74
+    },
+    {
+        "email": "sofia.romanenko@example.com",
+        "status": "subscribed",
+        "source": "import",
+        "locale": "ru",
+        "days_ago": 14
+    },
+    {
+        "email": "taras.hrytsenko@example.com",
+        "status": "subscribed",
+        "source": "import",
+        "locale": "ru",
+        "days_ago": 69
+    }
+]

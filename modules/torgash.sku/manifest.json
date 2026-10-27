@@ -1,0 +1,57 @@
+{
+    "id": "torgash.sku",
+    "name": "SKU templates",
+    "version": "1.0.0",
+    "icon": "barcode",
+    "description": "Assigns products their SKUs by a template: a running number, the category, the brand, the year, random characters or an EAN-13 for the shop's own barcodes. A template of its own per category, inherited by the subcategories; for new products only when the SKU is left blank, or always. The products already in the shop are renumbered in the background, by category, with every change in the audit.",
+    "provider": "Torgash\\Sku\\SkuServiceProvider",
+    "autoload": {
+        "Torgash\\Sku\\": "src/"
+    },
+    "requires": {
+        "core": ">=0.2",
+        "modules": [
+            "torgash.catalog"
+        ]
+    },
+    "permissions": [
+        {
+            "name": "sku.manage",
+            "label": "Set SKU templates and renumber products"
+        }
+    ],
+    "admin_menu": [
+        {
+            "label": "SKU templates",
+            "url": "/admin/sku",
+            "icon": "barcode",
+            "group": "catalog",
+            "position": 80,
+            "keywords": {
+                "en": "sku article code barcode ean generator numbering",
+                "ru": "артикул код штрихкод ean генератор нумерация"
+            }
+        }
+    ],
+    "settings": [
+        {
+            "key": "on_create",
+            "type": "select",
+            "default": "blank",
+            "options": {
+                "blank": "When the SKU is left blank",
+                "always": "Always — even over a SKU typed in",
+                "off": "Never — the template is used only by the renumbering"
+            },
+            "label": "Give a new product a SKU by the template",
+            "help": "Blank is the safe choice: a SKU typed in, or brought by an import or 1C, is kept. \"Always\" suits a shop whose SKUs are only ever its own."
+        },
+        {
+            "key": "template",
+            "type": "text",
+            "default": "SKU-{n:6}",
+            "label": "SKU template",
+            "help": "Text as it is, and in braces: {n:6} a running number of 6 digits, {id} the product's number, {category} / {category:3} the category's address in capitals (or its first 3 characters), {brand} / {brand:3} the brand's code, {year} / {yy}, {rand:4} random letters and digits, {digits:4} random digits, {ean13} a whole EAN-13 for the shop's own use (prefix 2). A category may have a template of its own (Catalogue → SKU templates)."
+        }
+    ]
+}

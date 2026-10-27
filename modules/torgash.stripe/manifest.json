@@ -1,0 +1,21 @@
+{
+    "id": "torgash.stripe",
+    "name": "Stripe",
+    "version": "1.0.0",
+    "icon": "credit-card",
+    "section": "sales",
+    "description": "Card, Apple Pay, Google Pay and the rest of Stripe's methods through Stripe Checkout: the customer pays on Stripe's page and a signed webhook tells the shop what happened. Supports authorize-then-capture with a separate release of the hold, full and partial refunds, and re-asking Stripe from the order screen.",
+    "provider": "Torgash\\Stripe\\StripeServiceProvider",
+    "autoload": {
+        "Torgash\\Stripe\\": "src/"
+    },
+    "requires": {
+        "core": ">=0.1",
+        "modules": [
+            "torgash.payments"
+        ]
+    },
+    "settings": [],
+    "permissions": [],
+    "admin_menu": []
+}

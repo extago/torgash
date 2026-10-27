@@ -1,0 +1,60 @@
+{{! Yandex Market, YML. Delivery and pickup are the shop's own terms — change the options below. }}
+<?xml version="1.0" encoding="UTF-8"?>
+<yml_catalog date="{{ profile.generated_at }}">
+    <shop>
+        <name>{{ shop.name }}</name>
+        <url>{{ shop.url }}</url>
+        <company>{{ shop.company }}</company>
+        <currencies>
+            {{#shop.currencies}}
+            <currency id="{{ id }}" rate="{{ rate }}"/>
+            {{/shop.currencies}}
+        </currencies>
+        <categories>
+            {{#shop.categories}}
+            <category id="{{ id }}"{{#parent_id}} parentId="{{ parent_id }}"{{/parent_id}}>{{ name }}</category>
+            {{/shop.categories}}
+        </categories>
+        <delivery-options>
+            <option cost="0" days="0" order-before="18"/>
+        </delivery-options>
+        <offers>
+            {{#rows}}
+            <offer id="{{ item.id }}" available="{{ item.available }}">
+                <name>{{ item.name.@lang@ }}</name>
+                <vendorCode>{{ item.sku }}</vendorCode>
+                {{#item.brand}}
+                <vendor>{{ item.brand }}</vendor>
+                {{/item.brand}}
+                <url>{{ item.url }}</url>
+                <price>{{ item.price | money }}</price>
+                {{#item.old_price}}
+                <oldprice>{{ item.old_price | money }}</oldprice>
+                {{/item.old_price}}
+                <currencyId>{{ shop.currency }}</currencyId>
+                <categoryId>{{ item.category_id }}</categoryId>
+                {{#item.pictures}}
+                <picture>{{ . }}</picture>
+                {{/item.pictures}}
+                <delivery>true</delivery>
+                <pickup>false</pickup>
+                <description>{{#item.short_description.@lang@}}{{ item.short_description.@lang@ | cdata }}{{/item.short_description.@lang@}}{{^item.short_description.@lang@}}{{ item.description.@lang@ | strip_tags | squish | truncate:3000 | cdata }}{{/item.short_description.@lang@}}</description>
+                {{! A barcode kept as a characteristic: put its code in place of "barcode". }}
+                {{#item.feature.barcode}}
+                <barcode>{{ item.feature.barcode }}</barcode>
+                {{/item.feature.barcode}}
+                {{! The shop's characteristics, then the product's own rows: "own" is true for those. }}
+                {{#item.params}}
+                <param name="{{ name }}">{{ value }}</param>
+                {{/item.params}}
+                {{#item.weight_g}}
+                <weight>{{ item.weight_g | divide:1000 }}</weight>
+                {{/item.weight_g}}
+                {{#item.length_mm}}
+                <dimensions>{{ item.length_mm | divide:10 }}/{{ item.width_mm | divide:10 }}/{{ item.height_mm | divide:10 }}</dimensions>
+                {{/item.length_mm}}
+            </offer>
+            {{/rows}}
+        </offers>
+    </shop>
+</yml_catalog>

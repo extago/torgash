@@ -1,0 +1,1713 @@
+@import "tailwindcss";
+
+@plugin "daisyui" {
+    themes: false;
+}
+
+/* Brand themes (what each colour is for: docs/DESIGN-REFERENCE.md): sky-blue
+   CTA, green/violet/pale-gold badge trio, coral-red discount, a dark sticky
+   header. */
+@plugin "daisyui/theme" {
+    name: "torgash-light";
+    default: true;
+    color-scheme: light;
+    --color-primary: #13b3f8;
+    --color-primary-content: #ffffff;
+    --color-secondary: #a56ffd;
+    --color-secondary-content: #ffffff;
+    --color-accent: #f5b400;
+    --color-accent-content: #2b1e00;
+    --color-neutral: #29303d;
+    --color-neutral-content: #e7e9ee;
+    --color-base-100: #ffffff;
+    --color-base-200: #f5f6f9;
+    --color-base-300: #eaecf2;
+    --color-base-content: #191b1e;
+    /* Copies of the base tokens under names nothing overrides, so a panel
+       inside the dark header (.torgash-bar) can opt back into the page
+       palette — see .torgash-bar-panel below. */
+    --torgash-page-100: #ffffff;
+    --torgash-page-200: #f5f6f9;
+    --torgash-page-300: #eaecf2;
+    --torgash-page-content: #191b1e;
+    /* "Look here" — a field the form could not take (<x-form-problems>).
+       Orange, not the error red: nothing is broken, something is missing. */
+    --torgash-attention: #f2711c;
+    --color-info: #2ab0ed;
+    --color-success: #00b259;
+    --color-success-content: #ffffff;
+    --color-warning: #ffeca8;
+    --color-warning-content: #2b2100;
+    --color-error: #ff4f64;
+    --color-error-content: #ffffff;
+    --radius-selector: 0.5rem;
+    --radius-field: 0.5rem;
+    --radius-box: 0.75rem;
+    /* daisyUI's two size knobs, written out so they are found: every
+       field and button height is --size-field × 10 (8 for -sm, 12 for -lg),
+       every checkbox/toggle/radio --size-selector × 6. Change the shop's
+       scale HERE, never with h-10 on one control. */
+    --size-field: 0.25rem;
+    --size-selector: 0.25rem;
+    /* daisyUI 5's own border/shadow rules read these via var(--border) /
+       var(--depth) with NO fallback — omitting them from a custom theme
+       (rather than extending a built-in one) makes those declarations
+       "guaranteed-invalid" per the CSS var() spec, so the browser drops
+       them back to their initial values: every .input/.select/.textarea/
+       .btn border silently vanished sitewide. Real bug, not a style nit. */
+    --border: 1px;
+    --depth: 1;
+    --noise: 0;
+}
+
+@plugin "daisyui/theme" {
+    name: "torgash-dark";
+    prefersdark: true;
+    color-scheme: dark;
+    --color-primary: #13b3f8;
+    --color-primary-content: #ffffff;
+    --color-secondary: #a56ffd;
+    --color-secondary-content: #ffffff;
+    --color-accent: #f5b400;
+    --color-accent-content: #2b1e00;
+    --color-neutral: #1c2230;
+    --color-neutral-content: #e7e9ee;
+    --color-base-100: #1c2230;
+    --color-base-200: #12161e;
+    --color-base-300: #262d3d;
+    --color-base-content: #e7e9ee;
+    --torgash-page-100: #1c2230;
+    --torgash-page-200: #12161e;
+    --torgash-page-300: #262d3d;
+    --torgash-page-content: #e7e9ee;
+    --torgash-attention: #ff8a3d;
+    --color-info: #2ab0ed;
+    /* The same fill as the light palette keeps the same words on it: a green
+       "New" with white text in one theme and black in the other read as two
+       different labels. */
+    --color-success: #00b259;
+    --color-success-content: #ffffff;
+    --color-warning: #ffd75e;
+    --color-warning-content: #2b2100;
+    --color-error: #ff4f64;
+    --color-error-content: #ffffff;
+    --radius-selector: 0.5rem;
+    --radius-field: 0.5rem;
+    --radius-box: 0.75rem;
+    /* daisyUI's two size knobs, written out so they are found: every
+       field and button height is --size-field × 10 (8 for -sm, 12 for -lg),
+       every checkbox/toggle/radio --size-selector × 6. Change the shop's
+       scale HERE, never with h-10 on one control. */
+    --size-field: 0.25rem;
+    --size-selector: 0.25rem;
+    --border: 1px;
+    --depth: 1;
+    --noise: 0;
+}
+
+@source "../views";
+@source "../../themes";
+@source "../../modules";
+
+/* Label colours (badge-*) and motivation-item icon colours (text-*) are picked
+   in the admin and applied from a stored value, so the class name never
+   appears literally in a template for the scanner to find. */
+@source inline("badge-{primary,secondary,accent,neutral,info,success,warning,error}");
+@source inline("text-{primary,secondary,accent,neutral,info,success,warning,error}");
+@source inline("badge-{xs,sm,md,lg}"); /* a label's size is a column (Label::badgeClass()) */
+
+/* Finlandica Text — self-hosted, cyrillic + latin */
+@font-face {
+    font-family: "Finlandica Text";
+    font-style: normal;
+    font-weight: 400;
+    font-display: swap;
+    src: url("../fonts/finlandica-text-v1-cyrillic_latin-regular.woff2") format("woff2");
+}
+@font-face {
+    font-family: "Finlandica Text";
+    font-style: italic;
+    font-weight: 400;
+    font-display: swap;
+    src: url("../fonts/finlandica-text-v1-cyrillic_latin-italic.woff2") format("woff2");
+}
+@font-face {
+    font-family: "Finlandica Text";
+    font-style: normal;
+    font-weight: 500;
+    font-display: swap;
+    src: url("../fonts/finlandica-text-v1-cyrillic_latin-500.woff2") format("woff2");
+}
+@font-face {
+    font-family: "Finlandica Text";
+    font-style: normal;
+    font-weight: 600;
+    font-display: swap;
+    src: url("../fonts/finlandica-text-v1-cyrillic_latin-600.woff2") format("woff2");
+}
+@font-face {
+    font-family: "Finlandica Text";
+    font-style: normal;
+    font-weight: 700;
+    font-display: swap;
+    src: url("../fonts/finlandica-text-v1-cyrillic_latin-700.woff2") format("woff2");
+}
+
+@theme {
+    --font-sans: "Finlandica Text", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+}
+
+[x-cloak] {
+    display: none !important;
+}
+
+/*
+ * Dark bars (site header, footer) in BOTH themes.
+ *
+ * They paint bg-neutral / text-neutral-content, but daisyUI components inside
+ * don't inherit that: .btn (incl. .btn-ghost), .input and friends each set
+ * their own colour from --color-base-content. In the light theme that token is
+ * near-black, so anything relying on inheritance — the account button, the cart
+ * badge — rendered black on a dark bar and was effectively invisible.
+ *
+ * Remapping the base tokens for the bar fixes every component inside at once,
+ * including ones added later, instead of sprinkling text-neutral-content by
+ * hand and forgetting it on the next widget.
+ */
+.torgash-bar {
+    --color-base-100: var(--color-neutral);
+    --color-base-200: var(--color-neutral);
+    --color-base-300: color-mix(in oklab, var(--color-neutral-content) 18%, transparent);
+    --color-base-content: var(--color-neutral-content);
+}
+
+/* Panels that hang off the bar (dropdowns, the catalog mega menu) are visually
+   part of the page, not the bar — put them back on the page palette. */
+.torgash-bar-panel {
+    --color-base-100: var(--torgash-page-100);
+    --color-base-200: var(--torgash-page-200);
+    --color-base-300: var(--torgash-page-300);
+    --color-base-content: var(--torgash-page-content);
+    color: var(--color-base-content);
+}
+
+/* Storefront rendering of rich-text fields authored in the admin editor.
+   The markup comes from ProseMirror at runtime, so there is nothing in a
+   template for Tailwind to scan — these have to be real CSS rules. */
+.torgash-rich > * + * { margin-top: 0.7em; }
+.torgash-rich h1 { font-size: 1.5rem; font-weight: 700; line-height: 1.25; }
+.torgash-rich h2 { font-size: 1.25rem; font-weight: 700; line-height: 1.3; }
+/* 1.125rem (18px), not 1.1rem — 17.6px was the only off-scale size on the
+   whole storefront, and an 0.4px-off heading is exactly what reads as "the
+   font looks slightly different here" without being nameable. */
+.torgash-rich h3 { font-size: 1.125rem; font-weight: 600; line-height: 1.35; }
+.torgash-rich ul { list-style: disc; padding-left: 1.5rem; }
+.torgash-rich ol { list-style: decimal; padding-left: 1.5rem; }
+.torgash-rich li > p { margin: 0; }
+.torgash-rich a { color: var(--color-primary); text-decoration: underline; }
+/* Something a module places INSIDE a text (a blog's product card) keeps its
+   own look: the text's link style is for words, not for a card's controls. */
+.torgash-rich .torgash-rich-embed a { color: inherit; text-decoration: none; }
+.torgash-rich .torgash-rich-embed a.btn-neutral { color: var(--color-neutral-content); }
+.torgash-rich blockquote { border-left: 3px solid var(--color-base-300); padding-left: 0.9rem; opacity: 0.85; }
+.torgash-rich code { background: var(--color-base-200); border-radius: 0.25rem; padding: 0.1em 0.35em; font-size: 0.9em; }
+.torgash-rich pre { background: var(--color-base-200); border-radius: 0.5rem; padding: 0.75rem 1rem; overflow-x: auto; }
+.torgash-rich pre code { background: none; padding: 0; }
+.torgash-rich hr { border: none; border-top: 1px solid var(--color-base-300); margin: 1.2em 0; }
+.torgash-rich img { max-width: 100%; height: auto; border-radius: var(--radius-lg); }
+/* An image the editor was told to draw full width. The width/height attributes
+   are still on the tag — they are the aspect ratio, and what stops the text
+   jumping as the picture arrives — so this is the one rule that overrides
+   them. Everything else about a content image is the two rules above: never
+   wider than its column, never distorted. */
+.torgash-rich img[data-size="full"] { width: 100%; }
+
+/* <x-popover>: the browser's popover, placed against its button by CSS
+   Anchor Positioning — below and centred on it, its arrow in the middle; near
+   the edge of the screen it hangs from the button's nearer edge instead, and
+   goes above when there is no room below. (It used to start at the button's
+   left edge: under a wide button the arrow pointed at the middle while the
+   panel sat off to the right.) The UA's own popover box (centred,
+   inset: 0, margin: auto) is undone first. popover-anchor.js does the same in
+   a browser that cannot. */
+.torgash-popover {
+    position: fixed;
+    inset: auto;
+    margin: 0;
+    position-area: bottom center;
+    margin-block: 0.5rem;
+    position-try-fallbacks: bottom span-left, bottom span-right, top center, top span-left, top span-right;
+    max-width: calc(100vw - 1rem);
+    /* The UA gives a popover overflow: auto, which would cut the arrow off. */
+    overflow: visible;
+    /* Its own stacking context, so the arrow (z-index: -1) is painted over
+       the panel's background but UNDER its words — in a small hint the
+       arrow's inner half would otherwise sit on the text. */
+    isolation: isolate;
+}
+.torgash-popover[data-placement="top"] {
+    position-area: top center;
+    position-try-fallbacks: top span-left, top span-right, bottom center, bottom span-left, bottom span-right;
+}
+/* A panel for a button at the edge of the page's grid (the town in the
+   header's corner) hangs from the button's own edge instead, so it stays
+   inside the grid rather than half past it. */
+.torgash-popover[data-align="start"] { position-area: bottom span-right; position-try-fallbacks: bottom span-left, top span-right; }
+.torgash-popover[data-align="end"] { position-area: bottom span-left; position-try-fallbacks: bottom span-right, top span-left; }
+/* Coming in: a short fade and a two-pixel glide towards the button
+   (@starting-style — no script). Going out is at once: a closed panel is
+   display: none whatever its classes say (below). */
+.torgash-popover { transition: opacity .15s ease-out, translate .15s ease-out; }
+@starting-style {
+    .torgash-popover:popover-open { opacity: 0; translate: 0 -4px; }
+    .torgash-popover[data-placement="top"]:popover-open { opacity: 0; translate: 0 4px; }
+}
+@media (prefers-reduced-motion: reduce) { .torgash-popover { transition: none; } }
+/* A class on the panel must never show it closed: `display` of any utility
+   beats the browser's own [popover]:not(:popover-open) { display: none }. */
+.torgash-popover:not(:popover-open) { display: none !important; }
+/* Its arrow: a square of the panel's own background and border, turned 45°,
+   half out of the edge facing the button. popover-anchor.js says which edge
+   (`data-side`: the panel is below or above its button) and where the
+   button's middle is (`--arrow-x`); before it has, there is no arrow. */
+.torgash-popover::before {
+    content: "";
+    position: absolute;
+    left: calc(var(--arrow-x, 1.25rem) - 7px);
+    width: 14px;
+    height: 14px;
+    background: inherit;
+    border: inherit;
+    border-radius: 2px;
+    rotate: 45deg;
+    z-index: -1;
+    display: none;
+}
+.torgash-popover[data-side="below"]::before { display: block; top: -8px; border-right-width: 0; border-bottom-width: 0; }
+.torgash-popover[data-side="above"]::before { display: block; bottom: -8px; border-left-width: 0; border-top-width: 0; }
+
+/* The catalogue's mega menu (mega-menu.blade.php): the same arrow, at the
+   Catalogue button's middle (`--mega-arrow`, set when it opens); none until
+   it is measured. */
+.torgash-mega-panel { position: relative; isolation: isolate; }
+.torgash-mega-panel::before {
+    content: ""; position: absolute; top: -8px; left: calc(var(--mega-arrow, -100px) - 7px);
+    width: 14px; height: 14px; background: inherit; border: inherit; border-right-width: 0; border-bottom-width: 0;
+    border-radius: 2px; rotate: 45deg; z-index: -1;
+}
+
+/* {messengers} (ContactPlaceholders): one row of equal tiles, the mark in
+   the messenger's own colour over its name. */
+.torgash-messengers { display: grid; grid-template-columns: repeat(var(--messengers, 3), minmax(0, 1fr)); gap: 0.5rem; }
+.torgash-messenger {
+    display: flex; flex-direction: column; align-items: center; gap: 0.25rem; padding: 0.5rem 0.25rem;
+    border-radius: var(--radius-field, 0.5rem); border: 1px solid var(--color-base-300);
+    font-size: 0.75rem; font-weight: 500; line-height: 1.2; text-align: center;
+    transition: background-color 0.15s, border-color 0.15s;
+}
+.torgash-messenger:hover { border-color: color-mix(in oklab, var(--brand, var(--color-primary)) 45%, transparent); background: color-mix(in oklab, var(--brand, var(--color-primary)) 8%, transparent); }
+.torgash-messenger-mark { display: grid; place-items: center; width: 2rem; height: 2rem; border-radius: 9999px; color: #fff; background: var(--brand, var(--color-primary)); }
+.torgash-messenger-mark svg { width: 1.125rem; height: 1.125rem; }
+.torgash-messenger[data-social="telegram"] { --brand: #26a5e4; }
+.torgash-messenger[data-social="whatsapp"] { --brand: #25d366; }
+.torgash-messenger[data-social="viber"] { --brand: #7360f2; }
+
+/* The header strip's drop-down (category-strip): the popover's arrow, drawn
+   the same way, at the middle of its entry (`--strip-arrow`, set by the strip's
+   script) — measured from the left, or from the right when the drop-down
+   opens leftwards. */
+.torgash-strip-panel { position: relative; isolation: isolate; }
+.torgash-strip-panel::before {
+    content: ""; position: absolute; top: -8px; left: calc(var(--strip-arrow, 1.25rem) - 7px);
+    width: 14px; height: 14px; background: inherit; border: inherit; border-right-width: 0; border-bottom-width: 0;
+    border-radius: 2px; rotate: 45deg; z-index: -1;
+}
+[data-align="right"] > * > .torgash-strip-panel::before { left: auto; right: calc(var(--strip-arrow, 1.25rem) - 7px); }
+
+/* The rating plate (torgash.blocks' rating block, from the owner's footer):
+   a tile with two blurred lights behind the number — green and blue, the
+   owner's choice. */
+.torgash-rating-glow { background-color: hsl(0deg 0% 0% / 20%); }
+/* Its white words want a dark tile: on a footer in the page's colours the
+   20% black would be a pale grey, so it takes the bar's colour instead. */
+.torgash-footer:not(.torgash-bar) .torgash-rating-glow { background-color: var(--color-neutral); }
+.torgash-rating-glow::before,
+.torgash-rating-glow::after { content: ""; position: absolute; aspect-ratio: 1; border-radius: 50%; pointer-events: none; }
+.torgash-rating-glow::before { top: -45%; left: -15%; height: 110%; background: hsl(140 100% 55%); filter: blur(25px); z-index: -2; }
+.torgash-rating-glow::after { bottom: -50%; left: -10%; height: 130%; background: hsl(200 100% 55%); filter: blur(30px); z-index: -1; }
+
+/* For the HTML of a theme's footer blocks — short markup, the shape here.
+   .torgash-squircle: the advantages' frame, one path drawn in the current
+   colour (a mask, so it takes the bar's colour); its icon sits inside.
+   .torgash-stars: a rating's {icon:star}s, filled. */
+.torgash-squircle { position: relative; display: grid; place-items: center; width: 4rem; height: 4rem; flex-shrink: 0; }
+@media (min-width: 64rem) { .torgash-squircle { width: 5rem; height: 5rem; } }
+.torgash-squircle::before {
+    content: ""; position: absolute; inset: 0; background: currentColor; opacity: .25;
+    mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 80 80'%3E%3Cpath fill='none' stroke='%23000' stroke-width='2' d='M1 40C1 1 1 1 40 1s39 0 39 39 0 39-39 39S1 79 1 40'/%3E%3C/svg%3E") center / 100% 100% no-repeat;
+}
+.torgash-squircle > svg { position: relative; width: 45%; height: 45%; }
+.torgash-stars svg { fill: currentColor; }
+
+/* The footer's bottom line (layouts/partials/footer): the signature on the
+   left, the payment marks on the right, on ONE line whether or not the shop
+   put the two blocks in a row — a block taken out of its row once dropped
+   the marks to a line of their own. Centred: one above the other. */
+.torgash-footer-bottom { display: flex; flex-direction: column; gap: 1rem; }
+@media (min-width: 48rem) {
+    .torgash-footer-bottom:not(.torgash-footer-bottom-centred) { flex-direction: row; flex-wrap: wrap; align-items: center; justify-content: space-between; }
+}
+.torgash-footer-bottom > * { min-width: 0; }
+.torgash-footer-bottom > .torgash-block-row { flex: 1 1 100%; align-items: center; }
+.torgash-footer-bottom-centred { align-items: center; text-align: center; }
+.torgash-footer-bottom-centred .torgash-block-row { display: flex; flex-direction: column; align-items: center; }
+.torgash-footer-bottom-centred .torgash-block-payments { justify-content: center; }
+/* Centred: a menu keeps the column's whole width (centring would shrink it
+   to its words and wrap every one), its columns centred within it. */
+.torgash-footer-centred :is(.torgash-block-row, .torgash-menu-columns) { align-self: stretch; }
+.torgash-footer-centred .torgash-menu-columns > div:last-child { justify-items: center; }
+.torgash-footer-centred .torgash-fold-title { justify-content: center; }
+
+/* Menus folding on a phone (footer setting footer_fold_menus): a column of
+   the `columns` look keeps its title and hides its links until the title's
+   toggle is pressed. Only where the footer asks for it, only below md —
+   everywhere else the toggle is not even drawn. */
+.torgash-fold-toggle { display: none; }
+@media (max-width: 47.99rem) {
+    .torgash-footer-fold .torgash-fold-toggle { display: inline-grid; }
+    .torgash-footer-fold [data-fold]:not([data-open]) .torgash-fold-list { display: none; }
+    .torgash-footer-fold [data-fold] .torgash-fold-title { margin-bottom: 0; }
+    .torgash-footer-fold [data-fold][data-open] .torgash-fold-title { margin-bottom: .5rem; }
+    .torgash-footer-fold .torgash-menu-columns > div:last-child { gap: .75rem; }
+}
+.torgash-fold-toggle svg { transition: rotate .2s ease-out; }
+[data-open] > .torgash-fold-title .torgash-fold-toggle svg { rotate: 180deg; }
+
+/* A brand-coloured card (the social block): the network's colour as the
+   border, the whole card in it on hover. --brand comes from the block. */
+.torgash-brand-card { border: 1px solid var(--brand, currentColor); transition: background-color .2s ease-out, color .2s ease-out; }
+.torgash-brand-card:hover { background-color: var(--brand, transparent); color: #fff; }
+
+/* A gallery inside a text (`<div data-gallery>` of images, written by the
+   editor's gallery node). Without a script it is a strip that swipes, one
+   picture to a screen; torgash.media's content-gallery.mjs then builds the
+   stage, the arrows, the "1/5" and the thumbnails out of the same images and
+   marks it `data-gallery-ready`. Real CSS for the same reason as above: the
+   markup is made at runtime, there is nothing for Tailwind to scan. */
+.torgash-rich [data-gallery] { display: flex; gap: 0.5rem; overflow-x: auto; scroll-snap-type: x mandatory; overscroll-behavior-x: contain; }
+.torgash-rich [data-gallery]:empty { display: none; }
+.torgash-rich [data-gallery] > img,
+.torgash-rich .torgash-gallery-slide { flex: 0 0 100%; height: clamp(15rem, 56vw, 32rem); scroll-snap-align: center; }
+.torgash-rich [data-gallery] > img { object-fit: contain; background: var(--color-base-200); border-radius: var(--radius-xl); }
+.torgash-rich [data-gallery][data-gallery-ready] { display: block; overflow: visible; }
+.torgash-rich .torgash-gallery-stage { position: relative; border-radius: var(--radius-xl); overflow: hidden; background: var(--color-base-200); }
+.torgash-rich .torgash-gallery-track { display: flex; overflow-x: auto; scroll-snap-type: x mandatory; overscroll-behavior-x: contain; scrollbar-width: none; }
+.torgash-rich .torgash-gallery-track::-webkit-scrollbar { display: none; }
+.torgash-rich .torgash-gallery-slide { display: flex; align-items: center; justify-content: center; padding: 0; border: 0; background: none; cursor: zoom-in; }
+.torgash-rich .torgash-gallery-slide img { width: 100%; height: 100%; object-fit: contain; border-radius: 0; }
+.torgash-rich .torgash-gallery-arrow {
+    position: absolute; top: 50%; transform: translateY(-50%);
+    display: none; align-items: center; justify-content: center;
+    width: 2.5rem; height: 2.5rem; border: 0; border-radius: var(--radius-xl); cursor: pointer;
+    color: var(--color-base-content); background: color-mix(in oklab, var(--color-base-100) 85%, transparent);
+    box-shadow: 0 1px 3px rgb(0 0 0 / 0.15);
+}
+.torgash-rich .torgash-gallery-arrow:disabled { opacity: 0.35; cursor: default; }
+.torgash-rich .torgash-gallery-arrow[data-step="-1"] { left: 0.75rem; }
+.torgash-rich .torgash-gallery-arrow[data-step="1"] { right: 0.75rem; }
+/* A phone swipes; arrows are for a pointer. */
+@media (hover: hover) and (min-width: 640px) { .torgash-rich .torgash-gallery-arrow { display: flex; } }
+.torgash-rich .torgash-gallery-count {
+    position: absolute; left: 0.75rem; bottom: 0.75rem; display: flex; align-items: center; gap: 0.375rem;
+    padding: 0.25rem 0.5rem; border-radius: var(--radius-lg); font-size: 0.75rem; font-variant-numeric: tabular-nums;
+    color: #fff; background: rgb(15 23 42 / 0.6); pointer-events: none;
+}
+.torgash-rich .torgash-gallery-thumbs { display: flex; gap: 0.5rem; margin-top: 0.5rem; padding: 2px; overflow-x: auto; scrollbar-width: none; }
+.torgash-rich .torgash-gallery-thumbs::-webkit-scrollbar { display: none; }
+.torgash-rich .torgash-gallery-thumb {
+    flex: 0 0 4rem; height: 4rem; padding: 0; overflow: hidden; cursor: pointer;
+    border: 2px solid var(--color-base-300); border-radius: var(--radius-lg); background: var(--color-base-100); opacity: 0.6;
+}
+.torgash-rich .torgash-gallery-thumb:hover,
+.torgash-rich .torgash-gallery-thumb[aria-current="true"] { opacity: 1; }
+.torgash-rich .torgash-gallery-thumb[aria-current="true"] { border-color: var(--color-primary); }
+.torgash-rich .torgash-gallery-thumb img { width: 100%; height: 100%; object-fit: cover; border-radius: 0; }
+
+/*
+ * Single focus ring on form controls.
+ *
+ * daisyUI 5 focuses .input/.select/.textarea with
+ * `outline: 2px solid; outline-offset: 2px` on top of the control's own 1px
+ * border. The 2px gap between them reads as TWO concentric rings, which looks
+ * like a rendering artefact rather than a focus state — especially on dense
+ * admin forms with a dozen fields in a column.
+ *
+ * Pulling the outline inside (negative offset) makes it land on the border
+ * instead of outside it: one crisp 2px ring, no gap, no layout shift. Colouring
+ * both the same primary also stops the ring reading as border-then-outline.
+ */
+:where(.input, .select, .textarea, .file-input):focus,
+:where(.input, .select, .textarea, .file-input):focus-within {
+    outline: 2px solid var(--color-primary);
+    outline-offset: -2px;
+    border-color: var(--color-primary);
+}
+
+/* A number input that ships its own +/- buttons (the cart buy-box stepper)
+   would otherwise show the native spinner arrows too — a second, tinier copy
+   of the same control wedged inside the field. */
+.torgash-qty {
+    appearance: textfield;
+    -moz-appearance: textfield;
+}
+.torgash-qty::-webkit-outer-spin-button,
+.torgash-qty::-webkit-inner-spin-button {
+    appearance: none;
+    margin: 0;
+}
+
+/* The browser's own "clear" cross in a search box is drawn in its own colour
+   — a blue glyph in Chrome, the wrong shade on a dark bar and on a light one
+   alike. Redrawn as an × in the text's own colour (currentColor), so it
+   belongs to whichever palette the box sits in. */
+input[type="search"]::-webkit-search-cancel-button {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 0.875rem;
+    height: 0.875rem;
+    margin-inline-start: 0.25rem;
+    background-color: currentColor;
+    opacity: 0.55;
+    cursor: pointer;
+    -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2.5' stroke-linecap='round'%3E%3Cpath d='M18 6 6 18M6 6l12 12'/%3E%3C/svg%3E") center / contain no-repeat;
+    mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2.5' stroke-linecap='round'%3E%3Cpath d='M18 6 6 18M6 6l12 12'/%3E%3C/svg%3E") center / contain no-repeat;
+}
+input[type="search"]::-webkit-search-cancel-button:hover {
+    opacity: 0.9;
+}
+
+/* Checkboxes, radios and toggles snap between states. The default slide/fade
+   reads as input lag on dense admin forms where you tick a dozen in a row. */
+.checkbox,
+.checkbox::before,
+.radio,
+.radio::before,
+.toggle,
+.toggle::before {
+    transition: none !important;
+    animation: none !important;
+}
+
+/* A checkbox is a square with soft corners. The theme's --radius-selector
+   (0.5rem, right for a toggle's pill) on a 20px box draws a circle — and a
+   circle is a radio: "pick several" looked like "pick one". */
+.checkbox { border-radius: 0.3125rem; }
+
+/* A setting the admin search jumped to (`/admin/settings/<module>#setting-<key>`)
+ * is outlined while it is the target, so the eye lands on it after the scroll.
+ * A plain rule rather than a `target:` utility: that variant is not in this
+ * build. */
+.torgash-setting:target {
+    outline: 2px solid var(--color-primary);
+    outline-offset: 0.5rem;
+    border-radius: var(--radius-field);
+}
+
+/* The admin sidebar's scroll area. Expanding sections past the window's height
+   brought a scrollbar in, the scrollbar took its width out of the menu, and
+   every item shifted sideways. The gutter is reserved from the start so
+   nothing moves, and the bar itself is thin and invisible until the pointer is
+   over the menu. */
+.torgash-sidebar-scroll {
+    scrollbar-gutter: stable;
+    scrollbar-width: thin;
+    scrollbar-color: transparent transparent;
+}
+.torgash-sidebar-scroll:hover {
+    scrollbar-color: color-mix(in oklab, currentColor 25%, transparent) transparent;
+}
+.torgash-sidebar-scroll::-webkit-scrollbar { width: 6px; }
+.torgash-sidebar-scroll::-webkit-scrollbar-thumb { background: transparent; border-radius: 3px; }
+.torgash-sidebar-scroll:hover::-webkit-scrollbar-thumb { background: color-mix(in oklab, currentColor 25%, transparent); }
+
+/* The same thin bar for a list that scrolls inside a block (a long filter
+   block, torgash.catalog), but always faintly visible: there the bar is how
+   the visitor learns there is more below. */
+.torgash-scroll-thin {
+    scrollbar-width: thin;
+    scrollbar-color: color-mix(in oklab, currentColor 18%, transparent) transparent;
+}
+.torgash-scroll-thin:hover {
+    scrollbar-color: color-mix(in oklab, currentColor 35%, transparent) transparent;
+}
+
+/* 36px is the smallest control a finger (or a hurried pointer) hits reliably,
+   and daisyUI's btn-sm is 32. A .btn is sized by --size, so .btn-touch is the
+   one knob for a small control that is still a TARGET (a card's buy button,
+   its stepper). The dark header takes it for every small button inside it —
+   a module's icon, the theme's phone block — without any of them knowing;
+   its dropdown panels are the page's own palette and are left alone. */
+.btn.btn-touch,
+.torgash-bar .btn:is(.btn-sm, .btn-xs):not(.torgash-bar-panel *) { --size: 2.25rem; }
+
+/* The phone header's icons (search, phone): a tinted square each, from the
+   bar's own text colour, so they read as buttons on any bar colour the shop
+   picks and never as two glyphs touching. */
+.btn.torgash-mobile-icon {
+    --btn-bg: color-mix(in oklab, currentColor 10%, transparent);
+    --btn-border: transparent;
+    --btn-shadow: none;
+    --btn-noise: none;
+    color: inherit;
+}
+.btn.torgash-mobile-icon:hover,
+.btn.torgash-mobile-icon:active { --btn-bg: color-mix(in oklab, currentColor 18%, transparent); }
+
+/* ---- The storefront's one scale of controls -------------------------------
+   Three heights and no more, set here rather than picked per template (that
+   is how a page got 32px toggles beside 24px ones and a 32px button beside
+   a 40px field):
+     default — 40px: a field, and a button that stands beside fields;
+     -sm     — 36px: a compact action (in a card, a row, a link-like button),
+               its field too — never under 36px, which is the touch minimum;
+     -lg     — 48px: THE action of a page (buy, place the order).
+   -xs is not used on the storefront. Text in a -sm control stays text-sm:
+   daisyUI drops it to 12px, which is why the header read smaller than the
+   page. Checkboxes, toggles and radios are ONE size, 20px — no -sm on them.
+   The admin keeps daisyUI's own scale. */
+.torgash-storefront { --size-selector: calc(1.25rem / 6); }
+.torgash-storefront .btn-sm { --size: calc(var(--size-field, 0.25rem) * 9); --fontsize: 0.875rem; }
+.torgash-storefront .input-sm { --in-size-mul: 9; --font-size-min: 0.875rem; }
+.torgash-storefront .select-sm { --sl-size-mul: 9; --font-size-min: 0.875rem; }
+.torgash-storefront .file-input-sm { --size: calc(var(--size-field, 0.25rem) * 9); font-size: 0.875rem; }
+
+/* ---- Product cards (torgash.catalog partials/product-card) ----------------
+   The grid's dividers are each cell's top and left border, dropped on the
+   first row and column. The breakpoints MIRROR the grid-cols classes in
+   product-grid.blade.php (2 / md:3 / xl:4, or xl:N by data-cols): change one,
+   change both. */
+/* The outer corner cells carry the frame's own (inner) radius for good, so a
+   lifted corner card never pokes a square corner past the rounded frame. A
+   card's shape never changes on hover. */
+.torgash-card-grid { --card-radius: calc(var(--radius-box) - 1px); }
+.torgash-card-grid > :first-child { border-top-left-radius: var(--card-radius); }
+.torgash-card-grid > * { --card-edge: 1px; border: 0 solid var(--color-base-300); border-top-width: 1px; border-left-width: var(--card-edge); }
+@media (width < 48rem) {
+    .torgash-card-grid > :nth-child(-n+2) { border-top-width: 0; }
+    .torgash-card-grid > :nth-child(2n+1) { --card-edge: 0px; }
+    .torgash-card-grid > :nth-child(2) { border-top-right-radius: var(--card-radius); }
+    .torgash-card-grid > :nth-child(2n+1):nth-last-child(-n+2) { border-bottom-left-radius: var(--card-radius); }
+    .torgash-card-grid > :nth-child(2n):last-child { border-bottom-right-radius: var(--card-radius); }
+}
+@media (48rem <= width < 80rem) {
+    .torgash-card-grid > :nth-child(-n+3) { border-top-width: 0; }
+    .torgash-card-grid > :nth-child(3n+1) { --card-edge: 0px; }
+    .torgash-card-grid > :nth-child(3) { border-top-right-radius: var(--card-radius); }
+    .torgash-card-grid > :nth-child(3n+1):nth-last-child(-n+3) { border-bottom-left-radius: var(--card-radius); }
+    .torgash-card-grid > :nth-child(3n):last-child { border-bottom-right-radius: var(--card-radius); }
+}
+/* On a computer a product block may ask for 3–6 in a row (`data-cols`,
+   its "In a row on a computer" setting); without it, four. */
+@media (width >= 80rem) {
+    .torgash-card-grid:not([data-cols]) > :nth-child(-n+4) { border-top-width: 0; }
+    .torgash-card-grid:not([data-cols]) > :nth-child(4n+1) { --card-edge: 0px; }
+    .torgash-card-grid:not([data-cols]) > :nth-child(4) { border-top-right-radius: var(--card-radius); }
+    .torgash-card-grid:not([data-cols]) > :nth-child(4n+1):nth-last-child(-n+4) { border-bottom-left-radius: var(--card-radius); }
+    .torgash-card-grid:not([data-cols]) > :nth-child(4n):last-child { border-bottom-right-radius: var(--card-radius); }
+    .torgash-card-grid[data-cols="3"] > :nth-child(-n+3) { border-top-width: 0; }
+    .torgash-card-grid[data-cols="3"] > :nth-child(3n+1) { --card-edge: 0px; }
+    .torgash-card-grid[data-cols="3"] > :nth-child(3) { border-top-right-radius: var(--card-radius); }
+    .torgash-card-grid[data-cols="3"] > :nth-child(3n+1):nth-last-child(-n+3) { border-bottom-left-radius: var(--card-radius); }
+    .torgash-card-grid[data-cols="3"] > :nth-child(3n):last-child { border-bottom-right-radius: var(--card-radius); }
+    .torgash-card-grid[data-cols="4"] > :nth-child(-n+4) { border-top-width: 0; }
+    .torgash-card-grid[data-cols="4"] > :nth-child(4n+1) { --card-edge: 0px; }
+    .torgash-card-grid[data-cols="4"] > :nth-child(4) { border-top-right-radius: var(--card-radius); }
+    .torgash-card-grid[data-cols="4"] > :nth-child(4n+1):nth-last-child(-n+4) { border-bottom-left-radius: var(--card-radius); }
+    .torgash-card-grid[data-cols="4"] > :nth-child(4n):last-child { border-bottom-right-radius: var(--card-radius); }
+    .torgash-card-grid[data-cols="5"] > :nth-child(-n+5) { border-top-width: 0; }
+    .torgash-card-grid[data-cols="5"] > :nth-child(5n+1) { --card-edge: 0px; }
+    .torgash-card-grid[data-cols="5"] > :nth-child(5) { border-top-right-radius: var(--card-radius); }
+    .torgash-card-grid[data-cols="5"] > :nth-child(5n+1):nth-last-child(-n+5) { border-bottom-left-radius: var(--card-radius); }
+    .torgash-card-grid[data-cols="5"] > :nth-child(5n):last-child { border-bottom-right-radius: var(--card-radius); }
+    .torgash-card-grid[data-cols="6"] > :nth-child(-n+6) { border-top-width: 0; }
+    .torgash-card-grid[data-cols="6"] > :nth-child(6n+1) { --card-edge: 0px; }
+    .torgash-card-grid[data-cols="6"] > :nth-child(6) { border-top-right-radius: var(--card-radius); }
+    .torgash-card-grid[data-cols="6"] > :nth-child(6n+1):nth-last-child(-n+6) { border-bottom-left-radius: var(--card-radius); }
+    .torgash-card-grid[data-cols="6"] > :nth-child(6n):last-child { border-bottom-right-radius: var(--card-radius); }
+}
+
+/* The frosted buttons in the photograph's corner (catalog.product.card_corner).
+   Any module's .btn put there looks the same without knowing it. */
+.torgash-card-corner .btn {
+    --size: 2.25rem;
+    background: color-mix(in oklab, var(--color-base-100) 72%, transparent);
+    backdrop-filter: blur(6px);
+    border-color: transparent;
+    box-shadow: 0 1px 3px rgb(0 0 0 / 0.12);
+}
+.torgash-card-corner .btn:hover { background: color-mix(in oklab, var(--color-base-100) 92%, transparent); }
+
+/* A card's price row measures itself: a phone's two columns leave a card
+   about 9rem inside, where a bold 18px "1 299 990 ₽" and the basket button
+   do not both fit. There the price is 16px; past that the row wraps
+   (product-card), never cutting the number. */
+.torgash-card-buy { container-type: inline-size; }
+@container (max-width: 10rem) {
+    .torgash-card-buy .torgash-price { font-size: 1rem; }
+}
+
+/* "…" in a card's corner (product-card): a touch screen shows the first
+   button (the heart) and this; the rest open under it. Drawn only where it
+   has something to open — two buttons or more besides itself — and never
+   with a mouse, which gets the whole corner on hover. A pressed toggle (in
+   the comparison) stays out: it is information, as on hover. */
+.torgash-corner-more { display: none; }
+@media (hover: none) {
+    .torgash-card-corner:has(> :nth-child(3)) .torgash-corner-more { display: inline-flex; order: 1; }
+    .torgash-card-corner:has(> :nth-child(3)) > :not(:first-child, .torgash-corner-more) { order: 2; }
+    .torgash-card-corner:has(> :nth-child(3)):not(.is-open) > :not(:first-child, .torgash-corner-more, :has([aria-pressed="true"])) { display: none; }
+}
+
+/* The same toggles beside a ROW (the listing's list view): no photograph to
+   sit on, so a plain frame the shape of the basket button beside them. */
+.torgash-row-corner .btn { border-color: var(--color-base-300); }
+.torgash-row-corner .btn:hover { background: var(--color-base-200); }
+
+/* A pressed toggle whose icon is a SHAPE with lines drawn inside it
+   (square-kanban, for the comparison): the shape takes the colour, the lines
+   inside take the page's own background, so it reads filled the way the
+   wishlist's heart does. On the wrapper or on the svg itself. */
+.torgash-icon-filled svg :is(rect, circle), svg.torgash-icon-filled :is(rect, circle) { fill: currentColor; }
+.torgash-icon-filled svg path, svg.torgash-icon-filled path { stroke: var(--color-base-100); }
+
+/* A toggle answering a click pops once (data-just-toggled is set only on the
+   HTMX answer, never on the page's own drawing). */
+@keyframes torgash-pop {
+    0% { transform: scale(1); }
+    40% { transform: scale(1.35); }
+    100% { transform: scale(1); }
+}
+[data-just-toggled] [aria-pressed="true"] svg { animation: torgash-pop 0.35s ease-out; }
+
+/* The short-description panel is a thing for a pointer. */
+.torgash-card-panel { display: none; }
+
+@media (hover: hover) {
+    .torgash-card { transition: filter 0.2s; }
+    .torgash-card:hover {
+        z-index: 20;
+        background: var(--color-base-100);
+        /* drop-shadow, not box-shadow: it follows the card AND the panel under
+           it as one shape. */
+        filter: drop-shadow(0 0 1px rgb(0 0 0 / 0.2)) drop-shadow(0 10px 18px rgb(0 0 0 / 0.14));
+    }
+    /* A bottom-corner card opening its panel continues straight down. */
+    .torgash-card[data-card-panel]:hover { border-bottom-left-radius: 0; border-bottom-right-radius: 0; }
+
+    [data-card-panel] .torgash-card-inline { display: none; }
+    .torgash-card-panel {
+        display: block;
+        /* Measured from the card's BORDER edge, so its left divider carries
+           straight on down the panel. */
+        position: absolute; left: calc(-1 * var(--card-edge, 0px)); right: 0; top: 100%;
+        border-left: inherit;
+        padding: 0 1rem 1rem;
+        margin-top: -0.25rem;
+        background: var(--color-base-100);
+        font-size: 0.75rem; line-height: 1.375;
+        color: color-mix(in oklab, var(--color-base-content) 60%, transparent);
+        opacity: 0; visibility: hidden; transform: translateY(-0.375rem);
+        transition: opacity 0.2s, transform 0.2s, visibility 0.2s;
+    }
+    .torgash-card:hover .torgash-card-panel { opacity: 1; visibility: visible; transform: none; }
+
+    /* The corner shows itself on hover, one button after another. What is
+       already pressed (in the wishlist) never hides: it is information, not
+       a control waiting to be offered. */
+    .torgash-card-corner > * {
+        opacity: 0; transform: translateX(0.5rem);
+        transition: opacity 0.2s, transform 0.2s;
+    }
+    .torgash-card-corner > :nth-child(2) { transition-delay: 0.04s; }
+    .torgash-card-corner > :nth-child(3) { transition-delay: 0.08s; }
+    .torgash-card:hover .torgash-card-corner > *,
+    .torgash-card:focus-within .torgash-card-corner > *,
+    .torgash-card-corner > :has([aria-pressed="true"]) { opacity: 1; transform: none; }
+}
+
+/* What of the storefront header stays on screen: what a sticky strip or a
+   corner notice stands under. The layout prints the real number from the
+   theme's settings (which rows stick); this is only the fallback. */
+:root { --torgash-header-h: 6.5rem; }
+
+/* The product page's small buy card (end of the right column): sticks
+   under the header, and under the section bar too where the page has one
+   (it is fixed under the header once stuck, about 3rem tall). */
+.torgash-buy-mini { position: sticky; top: calc(var(--torgash-header-h) + 1rem); }
+html:has([data-sections-nav]) .torgash-buy-mini { top: calc(var(--torgash-header-h) + 4.25rem); }
+
+/* A page with a bar of section links (the product page, PLAN §38) scrolls
+   to a section instead of jumping — the anchors stay plain links. */
+@media (prefers-reduced-motion: no-preference) {
+    html:has([data-sections-nav]) { scroll-behavior: smooth; }
+}
+
+/* The colour of a rating's stars. Not daisyUI's `warning`: a palette may
+   make that a pastel (torgash-light's is #FFECA8), and a pale star on white
+   reads as an empty one. A theme redefines this if it wants other stars. */
+:root { --torgash-star: #f5a524; }
+
+/* Skeletons only where a part arrives AFTER the page (<x-skeleton-card>):
+   hidden until htmx marks the element an hx-indicator names as busy. A
+   region that is waiting dims instead (`torgash-dim-when-busy`), so what
+   was there stays readable and nothing jumps. */
+.torgash-skeleton-when-busy:not(.htmx-request) { display: none !important; }
+.torgash-dim-when-busy { transition: opacity 0.15s ease; }
+.torgash-dim-when-busy.htmx-request { opacity: 0.45; pointer-events: none; }
+@media (prefers-reduced-motion: reduce) { .skeleton { animation: none; } }
+
+/* The colours of selling (PLAN §52, step 2): one ROLE per thing, so the shop
+   colours "the price" or "in stock" once and every card, row, page and list
+   follows — before this, "in stock" was the brand blue on the card and green
+   in the wishlist. Each defaults to what the templates drew, written in
+   terms of the palette, so both palettes and every untouched shop look the
+   same as before; the configurator's value (printed only when changed)
+   replaces it. In the components layer: a utility on the element still wins. */
+:root {
+    --torgash-price: var(--color-base-content);
+    --torgash-old-price: color-mix(in oklab, var(--color-base-content) 40%, transparent);
+    --torgash-discount: var(--color-error);
+    --torgash-discount-content: var(--color-error-content);
+    --torgash-in-stock: var(--color-primary);
+    --torgash-out-of-stock: color-mix(in oklab, var(--color-base-content) 50%, transparent);
+}
+@layer components {
+    .torgash-price { color: var(--torgash-price); }
+    .torgash-old-price { color: var(--torgash-old-price); text-decoration-line: line-through; }
+    /* "You save 640", a kit's lowered price: the discount as words. */
+    .torgash-discount-text { color: var(--torgash-discount); }
+    .torgash-in-stock { color: var(--torgash-in-stock); }
+    .torgash-in-stock-chip { color: var(--torgash-in-stock); background-color: color-mix(in oklab, var(--torgash-in-stock) 10%, transparent); }
+    .torgash-out-of-stock { color: var(--torgash-out-of-stock); }
+}
+/* The "−20%" badge, on daisyUI's own badge variables — UNLAYERED: daisyUI 5
+   sets `.badge { --badge-fg: base-content }` in its own layer, declared after
+   `components`, so from there it won and the text went black on red. */
+.badge.torgash-discount { --badge-color: var(--torgash-discount); --badge-fg: var(--torgash-discount-content); }
+
+/* Warning as INK — an icon or a word, not a fill. daisyUI's `warning` is a
+   fill colour, and torgash-light's is a pastel (#FFECA8) that vanishes on
+   white. So `text-warning` — always ink: a word or a bare icon, never the
+   text on a warning fill (that is `-content`) — is redrawn in the ink here,
+   once, rather than in every template that reaches for it. */
+:root { --torgash-warning-ink: #e08a00; }
+.text-warning { color: var(--torgash-warning-ink); }
+
+/* Tailwind's own corner scale on the storefront follows the theme's corner
+   settings: a template's `rounded-lg` thumbnail or `rounded-xl` panel would
+   otherwise stay at a fixed size while "Button corners" and "Panel corners"
+   change everything daisyUI draws. Proportional, so at the theme's defaults
+   (fields 8px, panels 12px) every step is exactly Tailwind's own. */
+.torgash-storefront {
+    --radius-md: calc(var(--radius-field) * 0.75);
+    --radius-lg: var(--radius-field);
+    --radius-xl: var(--radius-box);
+    --radius-2xl: calc(var(--radius-box) * 4 / 3);
+}
+
+/* The page's width — a theme setting (PLAN §37) prints a different one; the
+   layouts' containers read it as max-w-(--torgash-container). */
+:root { --torgash-container: 1500px; }
+
+/* ---- The shop's sign inside the phone's search field (mobile-header,
+   theme setting "search_mark"): a small square at the field's left end. */
+.torgash-search-mark {
+    position: absolute; left: 0.375rem; top: 50%; transform: translateY(-50%); z-index: 1;
+    width: 1.75rem; height: 1.75rem; border-radius: 0.375rem; overflow: hidden;
+    display: flex; align-items: center; justify-content: center;
+    background: var(--color-primary); color: var(--color-primary-content); font-weight: 700; font-size: 0.875rem;
+}
+.torgash-search-mark img { width: 100%; height: 100%; object-fit: cover; }
+
+/* ---- Product carousel arrows (torgash.catalog partials/product-carousel) --
+   Which kind a block shows is its own setting, one for a computer/tablet
+   and one for a phone; both kinds are in the markup and the width decides.
+   The row above the track is there only when it holds something: a heading,
+   or small arrows at this width. */
+.torgash-carousel .torgash-carousel-side,
+.torgash-carousel .torgash-carousel-head { display: none; }
+.torgash-carousel-head { gap: 0.5rem; }
+.torgash-carousel-top:not([data-has-heading]) { display: none; }
+@media (max-width: 767.98px) {
+    .torgash-carousel[data-arrows-phone="side"] .torgash-carousel-side { display: inline-flex; }
+    .torgash-carousel[data-arrows-phone="head"] .torgash-carousel-head { display: flex; }
+    .torgash-carousel[data-arrows-phone="head"] > .torgash-carousel-top { display: flex; }
+}
+@media (min-width: 768px) {
+    .torgash-carousel[data-arrows="side"] .torgash-carousel-side { display: inline-flex; }
+    .torgash-carousel[data-arrows="head"] .torgash-carousel-head { display: flex; }
+    .torgash-carousel[data-arrows="head"] > .torgash-carousel-top { display: flex; }
+}
+
+/* ---- Zone tabs (torgash.blocks views/tabs) --------------------------------
+   The names scroll sideways in a strip of their own and never wrap; the
+   panel shown is the one whose number the checked radio carries. Twelve is
+   more tabs than any row should have — a thirteenth would show no panel. */
+.torgash-tabs-bar {
+    display: flex; gap: 1.5rem; overflow-x: auto; scrollbar-width: none;
+    border-bottom: 1px solid var(--color-base-300);
+}
+.torgash-tabs-bar::-webkit-scrollbar { display: none; }
+.torgash-tab {
+    flex-shrink: 0; white-space: nowrap; cursor: pointer; padding: 0.5rem 0;
+    font-size: 1rem; font-weight: 500; opacity: 0.72;
+    border-bottom: 2px solid transparent; margin-bottom: -1px;
+    transition: opacity 0.15s, border-color 0.15s;
+}
+.torgash-tab:hover { opacity: 0.85; }
+.torgash-tab:has(:checked) { opacity: 1; border-bottom-color: currentColor; }
+.torgash-tab:has(:focus-visible) { outline: 2px solid var(--color-primary); outline-offset: 2px; border-radius: 2px; }
+.torgash-tab-panel { display: none; }
+.torgash-tabs:has(> .torgash-tabs-bar input[value="0"]:checked) > [data-tab-panel="0"],
+.torgash-tabs:has(> .torgash-tabs-bar input[value="1"]:checked) > [data-tab-panel="1"],
+.torgash-tabs:has(> .torgash-tabs-bar input[value="2"]:checked) > [data-tab-panel="2"],
+.torgash-tabs:has(> .torgash-tabs-bar input[value="3"]:checked) > [data-tab-panel="3"],
+.torgash-tabs:has(> .torgash-tabs-bar input[value="4"]:checked) > [data-tab-panel="4"],
+.torgash-tabs:has(> .torgash-tabs-bar input[value="5"]:checked) > [data-tab-panel="5"],
+.torgash-tabs:has(> .torgash-tabs-bar input[value="6"]:checked) > [data-tab-panel="6"],
+.torgash-tabs:has(> .torgash-tabs-bar input[value="7"]:checked) > [data-tab-panel="7"],
+.torgash-tabs:has(> .torgash-tabs-bar input[value="8"]:checked) > [data-tab-panel="8"],
+.torgash-tabs:has(> .torgash-tabs-bar input[value="9"]:checked) > [data-tab-panel="9"],
+.torgash-tabs:has(> .torgash-tabs-bar input[value="10"]:checked) > [data-tab-panel="10"],
+.torgash-tabs:has(> .torgash-tabs-bar input[value="11"]:checked) > [data-tab-panel="11"] { display: block; }
+
+/* A long list of a filter on a phone (catalog-filters, "filter-long"): the
+   first eight and a "Show all" — where a script runs to open the rest. A
+   search typed above it looks through the whole list. */
+.torgash-filter-more { display: none; }
+@media (max-width: 63.99rem) {
+    html.torgash-js .torgash-filter-long:not(.is-all):not(.is-searching) > [data-filter-value]:nth-of-type(n+9) { display: none; }
+    html.torgash-js .torgash-filter-more:not([hidden]) { display: block; }
+}
+
+/* ---- Catalogue filter panel (torgash.catalog partials/catalog-filters) ----
+   `.torgash-range` is the price slider: two native range inputs laid over
+   one track, the thumbs taking the pointer and the tracks letting it through,
+   so either thumb can be dragged where they overlap. The filled stretch
+   between them is the wrapper's own background, painted from --from/--to,
+   which the panel's script sets. */
+.torgash-range {
+    position: relative;
+    height: 1.25rem;
+}
+.torgash-range::before {
+    content: "";
+    position: absolute;
+    inset-inline: 0;
+    top: 50%;
+    height: 4px;
+    translate: 0 -50%;
+    border-radius: 999px;
+    background: linear-gradient(to right,
+        var(--color-base-300) var(--from),
+        var(--color-primary) var(--from) var(--to),
+        var(--color-base-300) var(--to));
+}
+.torgash-range input[type=range] {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    margin: 0;
+    background: none;
+    appearance: none;
+    pointer-events: none;
+}
+.torgash-range input[type=range]::-webkit-slider-runnable-track { background: none; }
+.torgash-range input[type=range]::-moz-range-track { background: none; }
+.torgash-range input[type=range]::-webkit-slider-thumb {
+    appearance: none;
+    pointer-events: auto;
+    width: 1.25rem;
+    height: 1.25rem;
+    border-radius: 999px;
+    background: var(--color-base-100);
+    border: 2px solid var(--color-primary);
+    box-shadow: 0 1px 3px rgb(0 0 0 / 0.15);
+    cursor: grab;
+}
+.torgash-range input[type=range]::-moz-range-thumb {
+    pointer-events: auto;
+    width: 1rem;
+    height: 1rem;
+    border-radius: 999px;
+    background: var(--color-base-100);
+    border: 2px solid var(--color-primary);
+    box-shadow: 0 1px 3px rgb(0 0 0 / 0.15);
+    cursor: grab;
+}
+.torgash-range input[type=range]:focus-visible::-webkit-slider-thumb { outline: 2px solid var(--color-primary); outline-offset: 2px; }
+
+/* "Show 12 products", floating to the RIGHT of the panel, level with the
+   block just changed — over the grid's edge, never over the panel's own
+   boxes. The script sets `top` to the changed control's MIDDLE, and the
+   bubble centres itself on it; a phone never shows it (the sheet's footer
+   is already on screen there). Above a hovered card (z-index 20, and later
+   in the page, so an equal number loses), below the sticky header (50).
+   The arrow is the BUTTON's own child painted with daisyUI's `--btn-bg`, so
+   it darkens with the button on hover instead of staying behind. */
+.torgash-filter-apply {
+    position: absolute;
+    left: calc(100% + 0.75rem);
+    z-index: 40;
+    translate: 0 -50%;
+}
+.torgash-filter-apply .btn { position: relative; }
+.torgash-filter-apply-arrow {
+    position: absolute;
+    left: -5px;
+    top: 50%;
+    width: 10px;
+    height: 10px;
+    translate: 0 -50%;
+    rotate: 45deg;
+    background: var(--btn-bg, var(--color-primary));
+    pointer-events: none;
+}
+.torgash-filter-apply.is-busy .btn { opacity: 0.85; }
+@media (width < 64rem) {
+    .torgash-filter-apply { display: none !important; }
+}
+
+/* ---- A form's problems beside its button (components/form-problems) ------
+   A soft square with the sign, the sentence beside it; the field it names
+   gets the same colour round it until it is touched. */
+.torgash-problems { display: flex; flex-direction: column; gap: 0.5rem; }
+.torgash-problem { display: flex; align-items: flex-start; gap: 0.75rem; font-size: 0.875rem; line-height: 1.375; }
+.torgash-problem > :last-child { padding-top: 0.25rem; }
+.torgash-problem-icon {
+    flex-shrink: 0; width: 1.75rem; height: 1.75rem; border-radius: 0.5rem;
+    display: flex; align-items: center; justify-content: center;
+    color: var(--torgash-attention);
+    background: color-mix(in oklab, var(--torgash-attention) 14%, transparent);
+}
+.torgash-storefront :is(.input, .select, .textarea):has(> [aria-invalid="true"]),
+.torgash-storefront :is(.input, .select, .textarea)[aria-invalid="true"] {
+    border-color: var(--torgash-attention);
+    --input-color: var(--torgash-attention);
+    /* Focused too: the field just brought up is the one still missing. */
+    outline-color: var(--torgash-attention);
+}
+.torgash-storefront .radio[aria-invalid="true"] { border-color: var(--torgash-attention); }
+
+/* ---- Corner notices (components/notice.blade.php, core) ------------------
+   Top right, just under the sticky header, beside the header's own counters,
+   which is where the eye already went when the heart was pressed. A theme
+   with a taller header moves them with --torgash-notices-top. */
+.torgash-notices {
+    position: fixed; z-index: 70;
+    top: var(--torgash-notices-top, calc(var(--torgash-header-h) + 0.75rem)); right: 1rem;
+    width: min(24rem, calc(100vw - 2rem));
+    display: flex; flex-direction: column; gap: 0.5rem;
+    pointer-events: none;
+}
+.torgash-notice {
+    pointer-events: auto;
+    position: relative; overflow: hidden;
+    display: grid; grid-template-columns: 4rem 1fr auto; align-items: start; gap: 0.875rem;
+    padding: 1rem 1rem 1.125rem;
+    background: var(--color-base-100); color: var(--color-base-content);
+    border: 1px solid var(--color-base-300);
+    border-radius: var(--radius-box);
+    box-shadow: 0 12px 32px -8px rgb(0 0 0 / 0.22), 0 2px 6px rgb(0 0 0 / 0.06);
+    animation: torgash-notice-in 0.32s cubic-bezier(0.2, 0.9, 0.25, 1.15) both;
+}
+.torgash-notice.is-leaving { animation: torgash-notice-out 0.22s ease-in forwards; }
+.torgash-notice-media {
+    width: 4rem; height: 4rem; border-radius: var(--radius-field);
+    background: var(--color-base-200);
+    display: flex; align-items: center; justify-content: center; overflow: hidden;
+}
+/* Its life: a hairline that runs out. Hover or focus holds it. */
+.torgash-notice-life {
+    position: absolute; left: 0; bottom: 0; height: 3px; width: 100%;
+    background: var(--color-primary); opacity: 0.55;
+    transform-origin: left;
+    animation: torgash-notice-life 5s linear forwards;
+}
+.torgash-notice:hover .torgash-notice-life,
+.torgash-notice:focus-within .torgash-notice-life { animation-play-state: paused; }
+@keyframes torgash-notice-in {
+    from { opacity: 0; transform: translateX(1.5rem) scale(0.97); }
+    to { opacity: 1; transform: none; }
+}
+@keyframes torgash-notice-out {
+    to { opacity: 0; transform: translateX(1.5rem); }
+}
+@keyframes torgash-notice-life {
+    from { transform: scaleX(1); }
+    to { transform: scaleX(0); }
+}
+@media (width < 40rem) {
+    .torgash-notices { right: 0.75rem; left: 0.75rem; width: auto; }
+}
+@media (prefers-reduced-motion: reduce) {
+    .torgash-notice, .torgash-notice.is-leaving { animation-duration: 0.01s; }
+}
+
+/* The three-row header's icons (layouts/partials/header-three-rows): each icon button
+   stands over its word, read from the button's own `title`, so a module's
+   counter (wishlist, comparison, the basket) is labelled without knowing this
+   header exists. */
+.torgash-header-icons > a.btn,
+.torgash-header-icons > button.btn { flex-direction: column; height: auto; min-height: 0; gap: 0.2rem; padding: 0.25rem 0.625rem; font-weight: 400; position: relative; border: 0; }
+.torgash-header-icons > a.btn::after { content: attr(title); font-size: 0.8125rem; line-height: 1; }
+/* A button that opens something (the account menu) prints its word itself. */
+.torgash-header-icon-word { font-size: 0.8125rem; line-height: 1; }
+.torgash-header-icons .torgash-cart-summary { display: none; }
+
+/* A header counter (basket, wishlist, comparison — each module draws its
+   own): a 26px icon in a thinner line, the number on its top-right corner,
+   out of the flow, and printed at zero too in a quiet grey — so neither the
+   icon nor anything beside it moves when the first product is added. The
+   ring is the BACKGROUND's colour (base-100, which `.torgash-bar` has
+   remapped to the bar), so the disc reads as cut out of the icon rather than
+   lying on top of its lines; it follows the button's hover fill. Past 9 the
+   view prints "9+" — the real number is in the link's label. */
+.torgash-counter { position: relative; display: inline-flex; }
+.torgash-counter > svg { width: 1.625rem; height: 1.625rem; stroke-width: 1.5; }
+.torgash-counter > .badge {
+    position: absolute; top: -0.625rem; right: -0.875rem;
+    height: 1.25rem; min-width: 1.25rem; padding-inline: 5px;
+    font-size: 0.75rem; font-weight: 600; line-height: 1; justify-content: center;
+    border: 0; border-radius: 999px;
+    box-shadow: 0 0 0 2px var(--color-base-100);
+}
+.btn:hover .torgash-counter > .badge { box-shadow: 0 0 0 2px var(--color-base-200); }
+/* The phone's tab bar counts the same things the header does, so its number
+   is the same disc: round whatever the theme's corners, cut out of the icon
+   by a ring of the bar's own colour. The tab's grey is a text colour, not an
+   opacity, so the disc stays as solid as the header's. */
+.torgash-tabbar-badge {
+    position: absolute; top: -0.5rem; right: -0.75rem;
+    height: 1.25rem; min-width: 1.25rem; padding-inline: 5px;
+    font-size: 0.75rem; font-weight: 600; line-height: 1; justify-content: center;
+    border: 0; border-radius: 999px;
+    box-shadow: 0 0 0 2px var(--color-base-100);
+}
+.torgash-counter > .badge.torgash-counter-zero {
+    background: color-mix(in oklab, var(--color-base-content) 22%, var(--color-base-100));
+    color: var(--color-base-content);
+}
+
+/* One size for the main header row's icons: the counters draw theirs large,
+   and the account button and the contacts block (an html block's
+   {icon_phone}) drew theirs a step smaller beside them. The FIRST icon of a
+   ghost button only — the little ▾ after a word stays little — and none
+   inside the search box, whose controls are the box's own size. */
+.torgash-header-main .btn-ghost:not(form *, .torgash-bar-panel *) > svg:first-child { width: 1.5rem; height: 1.5rem; }
+
+/* A header counter (basket, wishlist, comparison — each module draws its own)
+   is a number, not a label: tight sides, never narrower than it is tall. */
+.torgash-bar .btn > .badge,
+.torgash-header-icons .btn > .badge { padding-inline: 6px; min-width: 1.25rem; justify-content: center; }
+.torgash-category-strip { scrollbar-width: none; }
+.torgash-category-strip::-webkit-scrollbar { display: none; }
+
+/* The buy panel's small actions (cart.buy_box.links): one row of equal
+   cells, the icon over its word. Side by side as icon-and-word they did not
+   fit the panel in any language — "Add to comparison" hung alone on a second
+   line — and a cell that wraps its word to two lines always fits. Each module
+   draws a plain .btn (inside its form or a `contents` wrapper); the row, not
+   the module, decides the shape. */
+.torgash-buy-links { display: grid; grid-auto-flow: column; grid-auto-columns: minmax(0, 1fr); align-items: start; }
+.torgash-buy-links > form, .torgash-buy-links > .contents > * { min-width: 0; }
+/* Not inside a dialog drawn from the row ("Ask a question" lives in it):
+   that is a window of its own, and its close button stretched to the
+   full width squeezed the title into a column. */
+.torgash-buy-links .btn:not(dialog *) {
+    width: 100%; height: auto; min-height: 2.75rem; flex-direction: column; gap: 0.25rem;
+    padding: 0.375rem 0.25rem; font-size: 0.75rem; line-height: 1.2; font-weight: 400;
+    white-space: normal; text-align: center;
+}
+.torgash-buy-links .btn:not(dialog *) svg { width: 1.25rem; height: 1.25rem; }
+
+/* daisyUI's breadcrumbs scroll sideways when the trail is longer than a
+   phone — right — but draw a scrollbar under it, which on a storefront reads
+   as a broken line. The trail still scrolls by touch. */
+.breadcrumbs { scrollbar-width: none; }
+.breadcrumbs::-webkit-scrollbar { display: none; }
+
+/* Below lg the phone header (h-14) is what sticks (PLAN §38); the layout's
+   inline value describes the desktop header, hence the !important. */
+@media (width < 64rem) {
+    body.torgash-storefront { --torgash-header-h: 3.5rem !important; }
+}
+
+/*
+ * What only a script can open. The theme marks <html> with `.torgash-js` from
+ * its <head>; everything below applies ONLY under it, so a browser with no
+ * script (or a theme that never sets the mark) keeps every control in the
+ * page's own flow instead of behind a button that does nothing.
+ *
+ * `.torgash-sheet` is a panel that becomes a full-screen sheet on a phone
+ * (the catalogue's filters): hidden until `.is-open`, its `-footer` stuck to
+ * the bottom of the sheet, and `.torgash-sheet-hidden` for what a sheet does
+ * not carry on a phone.
+ */
+html:not(.torgash-js) .torgash-js-only { display: none !important; }
+
+@media (width < 64rem) {
+    .torgash-js .torgash-sheet {
+        position: fixed;
+        inset: 0;
+        z-index: 50;
+        width: auto;
+        overflow-y: auto;
+        overscroll-behavior: contain;
+        background: var(--color-base-200);
+        padding: 0 0.75rem 0.75rem;
+        gap: 0.5rem;
+    }
+    .torgash-js .torgash-sheet:not(.is-open),
+    .torgash-js .torgash-sheet-hidden { display: none; }
+    .torgash-js .torgash-sheet .torgash-sheet-footer {
+        position: sticky;
+        bottom: 0;
+        margin-top: auto;
+        box-shadow: 0 -4px 16px rgb(0 0 0 / 0.08);
+    }
+}
+
+/* The phone's buy strip (cart's buy box) stands over the tab bar: the page
+   keeps room for both, so the footer's last line is never under it. */
+@media (width < 64rem) {
+    body.torgash-storefront.torgash-has-buybar { padding-bottom: 8rem; }
+}
+
+/*
+ * A card's other photos (catalog's product-card, card-photos.js): invisible
+ * strips over the figure, one per photo, and thin marks just UNDER it (in the
+ * figure's own margin, on the card's plain background — over a dark or busy
+ * photo a grey mark disappears) that appear with the pointer. A screen without hover gets neither — there is no
+ * "over" to follow, and marks with nothing to do are a promise.
+ */
+.torgash-card-photos { display: none; }
+.torgash-card-marks { display: none; }
+@media (hover: hover) {
+    .torgash-card-photos { position: absolute; inset: 0; z-index: 1; display: flex; }
+    .torgash-card-photos > span { flex: 1 1 0; }
+    .torgash-card-marks {
+        position: absolute; left: 0; right: 0; bottom: -0.375rem; z-index: 2;
+        display: flex; gap: 4px; pointer-events: none;
+        opacity: 0; transition: opacity 0.15s ease;
+    }
+    .torgash-card-marks > span {
+        flex: 1 1 0; height: 3px; border-radius: 2px;
+        background: color-mix(in oklab, var(--color-base-content) 16%, transparent);
+        transition: background-color 0.12s ease;
+    }
+    .torgash-card-marks > span.is-active { background: var(--color-primary); }
+    .torgash-card:hover .torgash-card-marks { opacity: 1; }
+}
+@media (prefers-reduced-motion: reduce) {
+    .torgash-card-marks, .torgash-card-marks > span { transition: none; }
+}
+
+/* A label in the shop's OWN colours (Label::colorStyle()): a theme colour
+   follows the theme by itself, a hex pair does not, so the dark pair is a
+   second set of properties this rule swaps to — falling back to the light one
+   when the shop gave only that. */
+.torgash-label-custom {
+    background-color: var(--lbl-bg, var(--color-neutral));
+    border-color: var(--lbl-bg, var(--color-neutral));
+    color: var(--lbl-fg, var(--color-neutral-content));
+}
+[data-theme="torgash-dark"] .torgash-label-custom {
+    background-color: var(--lbl-bg-dark, var(--lbl-bg, var(--color-neutral)));
+    border-color: var(--lbl-bg-dark, var(--lbl-bg, var(--color-neutral)));
+    color: var(--lbl-fg-dark, var(--lbl-fg, var(--color-neutral-content)));
+}
+
+/* A label's hint ("French brand"): a panel in the page's colours that opens
+   under the pointer or on focus (a tap, on a phone), away from the corner the
+   label stands in — the side is chosen in label-badge.blade.php. */
+/* inline-flex, not inline-block: an inline box keeps a line of text's
+   height under the badge, and a label with a hint stood 7px further from the
+   next one than a label without. */
+.torgash-label-tip { position: relative; display: inline-flex; cursor: help; outline: none; }
+/* The corner whose hint is open comes up over its neighbours — the card's
+   own buttons (wishlist, compare) share z-10 and come later in the markup. */
+.torgash-label-corner:has(.torgash-label-tip:is(:hover, :focus, :focus-within)) { z-index: 40; }
+/* A label's height: daisyUI's sizes are for counters in a line of text, and
+   on a photo "New" read as a sliver. */
+.badge.torgash-label { padding-inline: 0.5rem; font-weight: 600; }
+.badge.torgash-label.badge-xs { --size: 1.125rem; }
+.badge.torgash-label.badge-sm { --size: 1.375rem; }
+.badge.torgash-label.badge-md { --size: 1.625rem; }
+.badge.torgash-label.badge-lg { --size: 1.875rem; }
+.torgash-label-tip-panel {
+    position: absolute; z-index: 30;
+    width: max-content; max-width: min(16rem, calc(100vw - 2rem));
+    padding: 0.625rem 0.875rem; border-radius: var(--radius-box, 0.5rem);
+    background: var(--color-base-100); color: var(--color-base-content);
+    box-shadow: 0 8px 28px rgb(0 0 0 / 0.16);
+    font-size: 0.8125rem; line-height: 1.35; font-weight: 400; text-align: left; white-space: normal;
+    /* display: none while closed, not visibility: hidden — a hidden panel
+       still takes room, and one near a phone's edge widened the whole page
+       sideways. allow-discrete keeps the fade both ways. */
+    display: none; opacity: 0; transform: translateY(-2px);
+    transition: opacity 0.15s, transform 0.15s, display 0.15s allow-discrete;
+    /* Its words can be selected and copied: the pointer may go onto it, and
+       a strip over the gap (::before) keeps it open on the way there. */
+    pointer-events: auto; cursor: text; user-select: text;
+}
+a:has([data-inert-text]:hover) { -webkit-user-drag: none; }
+.torgash-label-tip-panel::before { content: ""; position: absolute; inset-inline: 0; height: 0.625rem; }
+.torgash-label-tip-panel.top-full::before { bottom: 100%; }
+.torgash-label-tip-panel.bottom-full::before { top: 100%; }
+.torgash-label-tip:hover .torgash-label-tip-panel,
+.torgash-label-tip:focus .torgash-label-tip-panel,
+.torgash-label-tip:focus-within .torgash-label-tip-panel { display: block; opacity: 1; transform: none; }
+@starting-style {
+    .torgash-label-tip:hover .torgash-label-tip-panel,
+    .torgash-label-tip:focus .torgash-label-tip-panel,
+    .torgash-label-tip:focus-within .torgash-label-tip-panel { opacity: 0; transform: translateY(-2px); }
+}
+
+/* Admin tables scroll SIDEWAYS only. A table sits in an overflow-x-auto box so
+   a wide one can scroll across, and a box that scrolls one way scrolls both:
+   the last row's status menu then flashed a vertical scrollbar as it opened
+   and closed. Nothing in such a box is taller than the box itself — its height
+   is its content's — and every dropdown menu in it is lifted out by
+   admin-dropdowns.js, so the vertical axis has nothing to scroll. */
+.torgash-admin .overflow-x-auto { overflow-y: hidden; }
+
+/* ---- Category tiles (torgash.catalog's "Category tiles" block) ----------
+   A picture and a name per category. --tile-pic (the picture's size) and
+   --tile-gap come from the block's settings; every other size follows from
+   them. `under`: the picture on a card, the name beneath; `inside`: both on
+   one card. A grid fits as many tiles as their size allows; a strip is the
+   browser's own sideways scroll (one row, or two with .torgash-tiles-two),
+   which tiles.js gives an indicator, arrows and dragging by mouse. */
+.torgash-tiles {
+    --tile-pad-x: calc(var(--tile-pl, 16px) + var(--tile-pr, 16px)); --tile-pad-y: calc(var(--tile-pt, 16px) + var(--tile-pb, 16px));
+    --tile-box: calc(var(--tile-pic, 72px) + var(--tile-pad-y)); gap: var(--tile-gap, 1rem);
+    --tile-bg: var(--color-base-100); --tile-ink: var(--color-primary);
+    --tile-line: color-mix(in oklab, var(--color-base-300) 60%, transparent);
+}
+/* Tinted: each tile a soft colour of its own (--tile-hue, set per tile by
+   position), its icon a deeper shade of the same — and no border. */
+.torgash-tiles-tinted .torgash-tile {
+    --tile-bg: oklch(95.5% 0.035 var(--tile-hue, 250)); --tile-ink: oklch(55% 0.16 var(--tile-hue, 250)); --tile-line: transparent;
+}
+[data-theme="torgash-dark"] .torgash-tiles-tinted .torgash-tile {
+    --tile-bg: oklch(31% 0.05 var(--tile-hue, 250)); --tile-ink: oklch(82% 0.12 var(--tile-hue, 250));
+}
+.torgash-tiles-under { --tile-w: max(calc(var(--tile-pic, 72px) + var(--tile-pad-x) + 1rem), 7rem); }
+.torgash-tiles-inside { --tile-w: max(calc(var(--tile-pic, 72px) + var(--tile-pad-x) + 2rem), 8.5rem); }
+.torgash-tiles-corner { --tile-w: max(calc(var(--tile-pic, 72px) * 2 + var(--tile-pad-x)), 10rem); }
+.torgash-tiles-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(var(--tile-w), 1fr)); }
+.torgash-tiles-strip {
+    display: grid; grid-auto-flow: column; grid-auto-columns: var(--tile-w);
+    overflow-x: auto; overscroll-behavior-x: contain; scroll-snap-type: x proximity; scrollbar-width: none;
+    /* Room for the hover lift and its shadow, which overflow would clip. */
+    padding-block: 0.375rem 0.75rem; margin-block: -0.375rem -0.75rem;
+}
+.torgash-tiles-strip::-webkit-scrollbar { display: none; }
+.torgash-tiles-two { grid-template-rows: repeat(2, auto); }
+.torgash-tiles-strip.is-dragging, .torgash-tiles-strip.is-wheeling { scroll-snap-type: none; }
+/* With a mouse the row glides where the wheel or a throw takes it (tiles.js);
+   snapping would tug it to a tile's edge the moment it stops. A finger keeps
+   the snap — there it is what makes a swipe land tidily. */
+@media (hover: hover) and (pointer: fine) { .torgash-tiles-strip { scroll-snap-type: none; } }
+.torgash-tiles-strip.is-dragging { cursor: grabbing; }
+.torgash-tiles-strip.is-dragging .torgash-tile { pointer-events: none; }
+.torgash-tile { font-size: var(--tile-text, 14px); display: flex; flex-direction: column; align-items: center; gap: 0.5rem; text-align: center; min-width: 0; scroll-snap-align: start; }
+.torgash-tile-name { line-height: 1.3; overflow-wrap: anywhere; }
+.torgash-tile-pic {
+    display: flex; align-items: center; justify-content: center; flex-shrink: 0; overflow: hidden;
+    width: calc(var(--tile-pic, 72px) + var(--tile-pad-x)); height: var(--tile-box); color: var(--tile-ink);
+}
+.torgash-tile-pic img { width: var(--tile-pic, 72px); height: var(--tile-pic, 72px); object-fit: contain; }
+.torgash-tile-pic svg { width: calc(var(--tile-pic, 72px) * 0.5); height: calc(var(--tile-pic, 72px) * 0.5); }
+.torgash-tile-letter { font-weight: 700; font-size: calc(var(--tile-pic, 72px) * 0.4); }
+/* The card that moves on hover: the picture's box (under), the whole tile
+   (inside, corner). */
+.torgash-tiles-under .torgash-tile-pic, .torgash-tiles-inside .torgash-tile, .torgash-tiles-corner .torgash-tile {
+    background: var(--tile-bg); border: 1px solid var(--tile-line); border-radius: var(--radius-box, 1rem);
+}
+/* The card takes its column's whole width: a card narrower than the column
+   stood centred in it, so the first stood off the heading's edge and the
+   gaps between cards were wider than the gap the shop set. */
+.torgash-tiles-under .torgash-tile-pic { width: 100%; }
+.torgash-tiles-under .torgash-tile-pic.is-photo img { width: 100%; height: 100%; object-fit: cover; }
+.torgash-tiles-inside .torgash-tile, .torgash-tiles-corner .torgash-tile {
+    padding: var(--tile-pt, 16px) var(--tile-pr, 16px) var(--tile-pb, 16px) var(--tile-pl, 16px);
+}
+.torgash-tiles-inside .torgash-tile-pic { width: var(--tile-pic, 72px); height: var(--tile-pic, 72px); }
+.torgash-tiles-inside .torgash-tile-pic:not(.is-photo) { border-radius: 9999px; background: color-mix(in oklab, var(--tile-ink) 10%, transparent); }
+.torgash-tiles-inside .torgash-tile-pic:not(.is-photo) img { width: 60%; height: 60%; }
+/* Corner: the name at the top left, the picture large in the bottom right
+   corner, an icon tilted until the pointer comes. */
+.torgash-tiles-corner .torgash-tile {
+    position: relative; overflow: hidden; align-items: flex-start; text-align: left;
+    height: calc(var(--tile-pic, 72px) + var(--tile-pad-y) + 1.75rem);
+}
+.torgash-tiles-corner .torgash-tile-name {
+    position: relative; z-index: 1; font-weight: 600;
+    display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
+}
+.torgash-tiles-corner .torgash-tile-pic {
+    position: absolute; right: calc(var(--tile-pr, 14px) / 2); bottom: calc(var(--tile-pb, 12px) / 2); width: var(--tile-pic, 72px); height: var(--tile-pic, 72px);
+}
+.torgash-tiles-corner .torgash-tile-pic svg { width: 78%; height: 78%; stroke-width: 1.5; transform: rotate(-10deg); }
+.torgash-tiles-corner .torgash-tile-letter { font-size: calc(var(--tile-pic, 72px) * 0.7); opacity: 0.85; }
+@media (prefers-reduced-motion: no-preference) {
+    .torgash-tiles-under .torgash-tile-pic, .torgash-tiles-inside .torgash-tile, .torgash-tiles-corner .torgash-tile {
+        transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.15s;
+    }
+    .torgash-tile-pic svg, .torgash-tile-pic img { transition: transform 0.25s ease; }
+    .torgash-tiles-under .torgash-tile:hover .torgash-tile-pic, .torgash-tiles-inside .torgash-tile:hover, .torgash-tiles-corner .torgash-tile:hover {
+        transform: translateY(-3px); box-shadow: 0 10px 22px -12px color-mix(in oklab, var(--tile-ink) 55%, transparent);
+    }
+    .torgash-tile:hover .torgash-tile-pic svg, .torgash-tile:hover .torgash-tile-pic img { transform: scale(1.08); }
+    .torgash-tiles-corner .torgash-tile:hover .torgash-tile-pic svg { transform: rotate(0) scale(1.08); }
+}
+.torgash-tiles-under .torgash-tile:hover .torgash-tile-pic, .torgash-tiles-inside .torgash-tile:hover, .torgash-tiles-corner .torgash-tile:hover {
+    border-color: color-mix(in oklab, var(--tile-ink) 60%, transparent);
+}
+.torgash-tile:focus-visible { outline: none; }
+.torgash-tiles-under .torgash-tile:focus-visible .torgash-tile-pic, .torgash-tiles-inside .torgash-tile:focus-visible, .torgash-tiles-corner .torgash-tile:focus-visible {
+    outline: 2px solid var(--tile-ink); outline-offset: 2px;
+}
+.torgash-tiles-arrow {
+    position: absolute; top: calc(var(--tile-box) / 2); margin-top: -1.125rem; z-index: 1;
+    display: none; align-items: center; justify-content: center; width: 2.25rem; height: 2.25rem; border-radius: 9999px;
+    background: var(--color-base-100); border: 1px solid var(--color-base-300); box-shadow: 0 2px 6px rgb(0 0 0 / 0.12); cursor: pointer;
+}
+@media (hover: hover) and (min-width: 768px) { .torgash-tiles-arrow { display: flex; } }
+.torgash-tiles-corner ~ .torgash-tiles-arrow { top: 50%; }
+.torgash-tiles-indicator { position: relative; height: 2px; margin-top: 0.75rem; background: var(--color-base-300); overflow: hidden; }
+.torgash-tiles-indicator > span { position: absolute; inset-block: 0; left: 0; background: var(--color-primary); }
+
+/* ---- Sales on a page (torgash.promotions' "Deal with a countdown" and
+   "Current promotions" blocks) ---------------------------------------------
+   No background of their own: the band behind them is the block's SECTION
+   (zone screen), and their text takes its colour. What stands on it — the
+   timer's cells, the product and promotion cards — keeps the page's own
+   surface, readable on any tone. The main button is the shop's colour, and
+   the card surface on a band that already is the shop's colour. */
+.torgash-deal-cta { background: var(--color-primary); color: var(--color-primary-content); border-color: transparent; }
+.torgash-section.bg-primary .torgash-deal-cta { background: var(--color-base-100); color: var(--color-base-content); }
+.torgash-block-deal .btn-ghost { color: inherit; }
+.torgash-deal { display: grid; gap: 1.25rem; align-items: stretch; }
+@media (min-width: 1024px) { .torgash-deal { grid-template-columns: 17rem minmax(0, 1fr); gap: 1.75rem; } }
+.torgash-deal-lead { display: flex; flex-direction: column; gap: 0.875rem; min-width: 0; }
+.torgash-deal-offer {
+    align-self: flex-start; padding: 0.125rem 0.625rem; border-radius: 9999px; font-weight: 700; font-size: 0.875rem;
+    background: var(--color-error); color: var(--color-error-content);
+}
+/* A sale's timer on a card's photo, among the labels: a label's size, in
+   the error tint so it reads as "hurry" in both themes. */
+.torgash-countdown-pill {
+    display: inline-flex; align-items: center; gap: 0.25rem;
+    padding: 0.125rem 0.5rem; border-radius: var(--radius-selector, 0.5rem);
+    font-size: 0.75rem; line-height: 1.25rem; font-weight: 600; font-variant-numeric: tabular-nums;
+    background: color-mix(in oklab, var(--color-error) 14%, var(--color-base-100));
+    color: color-mix(in oklab, var(--color-error) 80%, var(--color-base-content));
+}
+.torgash-countdown-boxes { display: flex; gap: 0.375rem; }
+.torgash-countdown-boxes > span {
+    display: flex; flex-direction: column; align-items: center; min-width: 3.5rem; padding: 0.5rem 0.25rem 0.375rem;
+    border-radius: var(--radius-field, 0.5rem); background: var(--color-base-100); color: var(--color-base-content);
+    box-shadow: 0 1px 2px rgb(0 0 0 / 0.06);
+}
+.torgash-countdown-boxes b { font-size: 1.5rem; line-height: 1.1; font-weight: 700; font-variant-numeric: tabular-nums; }
+.torgash-countdown-boxes small { font-size: 0.6875rem; opacity: 0.6; }
+
+/* A kit's "choose options" link leads to the buy panel's questions — and means
+   nothing on a product that has none (torgash.kits' main-extra). */
+body:not(:has(#product-options)) .torgash-kit-options-link { display: none; }
+
+/* A label drawn as a TILE: a square with its picture (upload or Lucide icon)
+   and its words under it, washed with the label's tone (catalog Label::STYLES). */
+.torgash-label-tile {
+    display: inline-flex; flex-direction: column; align-items: center; justify-content: center; gap: 0.1875rem;
+    /* A square at least; wider when its words need one line ("100 Гбит/с"). */
+    min-width: var(--tile-side, 52px); max-width: calc(var(--tile-side, 52px) * 1.7);
+    height: var(--tile-side, 52px); padding: 0.25rem 0.375rem; overflow: hidden;
+    border-radius: calc(var(--radius-field, 0.5rem) + 2px);
+    background: color-mix(in oklab, var(--tile-accent, var(--color-primary)) 9%, var(--color-base-100));
+    border: 1px solid color-mix(in oklab, var(--tile-accent, var(--color-primary)) 28%, var(--color-base-300));
+    color: var(--color-base-content); box-shadow: 0 1px 2px rgb(0 0 0 / 0.05);
+}
+.torgash-label-tile-pic {
+    flex: 1 1 auto; min-height: 0; width: calc(var(--tile-side, 52px) * 0.5); max-height: 60%; object-fit: contain;
+    color: var(--tile-accent, var(--color-primary));
+}
+.torgash-label-tile-text {
+    max-width: 100%; font-size: calc(var(--tile-side, 52px) * 0.19); font-weight: 600; line-height: 1.05;
+    text-align: center; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+
+/* A label in a product-page row with a picture: the picture over its words
+   ("RAM" icon, "32 GB" under it) — a pictogram (catalog's partials/label-row). */
+.torgash-pictogram { display: inline-flex; flex-direction: column; align-items: center; gap: 0.25rem; max-width: 4.5rem; }
+.torgash-pictogram-text { font-size: 0.6875rem; line-height: 1.15; text-align: center; opacity: 0.75; }
+
+/* A payment or delivery method's logo in a list (motivation column): one
+   slot for every row, white so a logo drawn for white sits right in the dark
+   theme too. */
+.torgash-method-logo {
+    display: inline-grid; place-items: center; flex-shrink: 0; width: 2.75rem; height: 1.75rem; padding: 0.125rem 0.25rem;
+    border-radius: var(--radius-md); background: #fff; border: 1px solid color-mix(in oklab, var(--color-base-300) 80%, transparent);
+}
+.torgash-method-logo img { max-width: 100%; max-height: 100%; object-fit: contain; border-radius: 0; }
+.torgash-method-logo svg { color: #0f172a; }
+
+/* A sale on the product page (torgash.promotions' product-note): a panel
+   washed with the sale's own hue, a tile with its offer or banner, the time
+   left as cells of the sale's colour with white figures, and a bar of how
+   much of the sale has gone. Every colour is the hue's (`--promo-hue`), so
+   two sales on one page stay told apart. */
+.torgash-promo-note {
+    position: relative; overflow: hidden; padding: 0.875rem; border-radius: var(--radius-box, 1rem);
+    background:
+        radial-gradient(120% 140% at 100% 0%, color-mix(in oklab, oklch(70% 0.16 var(--promo-hue, 25)) 16%, transparent), transparent 60%),
+        color-mix(in oklab, oklch(70% 0.14 var(--promo-hue, 25)) 7%, var(--color-base-100));
+    border: 1px solid color-mix(in oklab, oklch(62% 0.16 var(--promo-hue, 25)) 24%, transparent);
+}
+.torgash-promo-note-tile {
+    display: grid; place-items: center; flex-shrink: 0; width: 3.25rem; height: 3.25rem; overflow: hidden;
+    border-radius: calc(var(--radius-field, 0.5rem) + 4px); color: #fff;
+    background: linear-gradient(135deg, oklch(72% 0.16 var(--promo-hue, 25)), oklch(50% 0.18 calc(var(--promo-hue, 25) + 35)));
+    box-shadow: 0 6px 14px -6px oklch(50% 0.18 var(--promo-hue, 25) / 0.6), inset 0 1px 0 rgb(255 255 255 / 0.25);
+}
+.torgash-promo-note-tile b { font-size: 1.0625rem; font-weight: 800; letter-spacing: -0.02em; line-height: 1.05; text-align: center; padding: 0 0.125rem; }
+.torgash-promo-note-tile b.is-long { font-size: 0.75rem; }
+.torgash-promo-note-tile.is-picture { background: var(--color-base-100); box-shadow: 0 1px 3px rgb(0 0 0 / 0.12); }
+.torgash-promo-note-tile img { width: 100%; height: 100%; object-fit: cover; }
+.torgash-promo-note-more {
+    display: inline-flex; align-items: center; gap: 0.125rem; margin-top: 0.125rem; font-size: 0.875rem; font-weight: 500; cursor: pointer;
+    color: oklch(48% 0.16 var(--promo-hue, 25));
+}
+.torgash-promo-note-more:hover { text-decoration: underline; }
+.torgash-promo-note-ink { color: oklch(48% 0.16 var(--promo-hue, 25)); }
+[data-theme="torgash-dark"] :is(.torgash-promo-note-more, .torgash-promo-note-ink) { color: oklch(78% 0.13 var(--promo-hue, 25)); }
+.torgash-promo-note-clock { margin-top: 0.875rem; padding-top: 0.75rem; border-top: 1px dashed color-mix(in oklab, oklch(62% 0.16 var(--promo-hue, 25)) 30%, transparent); }
+/* The words keep at least 5.5rem; where the cells leave less (a narrow
+   column, a phone) the cells go to a line of their own instead of squeezing
+   "Until the sale ends" to a word per line. */
+.torgash-promo-note-time { display: flex; flex-wrap: wrap; align-items: center; gap: 0.5rem 0.75rem; }
+.torgash-promo-note-time > span:first-child { flex: 1 0 5.5rem; display: inline-flex; align-items: center; gap: 0.375rem; font-weight: 500; }
+/* The cells: the sale's colour, white figures, the word under each. */
+.torgash-promo-note .torgash-countdown-boxes { gap: 0.3125rem; }
+.torgash-promo-note .torgash-countdown-boxes > span {
+    min-width: 2.75rem; padding: 0.3125rem 0.25rem 0.25rem; border-radius: var(--radius-field, 0.5rem); color: #fff;
+    background: linear-gradient(180deg, oklch(60% 0.17 var(--promo-hue, 25)), oklch(50% 0.18 calc(var(--promo-hue, 25) + 20)));
+    box-shadow: 0 3px 8px -4px oklch(50% 0.18 var(--promo-hue, 25) / 0.7), inset 0 1px 0 rgb(255 255 255 / 0.2);
+}
+.torgash-promo-note .torgash-countdown-boxes b { font-size: 1.125rem; }
+.torgash-promo-note .torgash-countdown-boxes small { font-size: 0.625rem; opacity: 0.8; }
+.torgash-promo-note-bar {
+    height: 0.375rem; margin-top: 0.75rem; overflow: hidden; border-radius: 9999px;
+    background: color-mix(in oklab, oklch(62% 0.16 var(--promo-hue, 25)) 16%, transparent);
+}
+.torgash-promo-note-bar > span {
+    display: block; height: 100%; border-radius: 9999px;
+    background: linear-gradient(90deg, oklch(72% 0.15 var(--promo-hue, 25)), oklch(52% 0.18 calc(var(--promo-hue, 25) + 35)));
+}
+.torgash-promo-note-hero {
+    position: relative; display: flex; align-items: flex-end; min-height: 8rem; padding: 1rem; overflow: hidden;
+    border-radius: var(--radius-box, 1rem); color: #fff;
+    background: linear-gradient(135deg, oklch(72% 0.15 var(--promo-hue, 25)), oklch(52% 0.17 calc(var(--promo-hue, 25) + 35)));
+}
+.torgash-promo-note-hero b { position: relative; z-index: 1; font-size: 2.5rem; font-weight: 800; line-height: 1; letter-spacing: -0.02em; }
+
+.torgash-promos-track { display: grid; gap: 0.75rem; }
+@media (min-width: 768px) { .torgash-promos-track { gap: 1rem; } }
+.torgash-promo-card {
+    display: flex; flex-direction: column; min-width: 0; overflow: hidden;
+    border-radius: var(--radius-box, 1rem); background: var(--color-base-100); color: var(--color-base-content);
+    border: 1px solid color-mix(in oklab, var(--color-base-300) 70%, transparent);
+}
+/* The sale's own page: the same art, larger, beside its words. */
+.torgash-promo-hero .torgash-promo-art { padding: 1.5rem; }
+.torgash-promo-hero .torgash-promo-offer { font-size: clamp(2.75rem, 6vw, 4.5rem); }
+.torgash-promo-hero .torgash-promo-icon { width: 10rem; height: 10rem; right: -1rem; top: -1rem; }
+@media (min-width: 768px) { .torgash-promo-hero .torgash-promo-pic { aspect-ratio: auto; height: 100%; min-height: 15rem; } }
+.torgash-promo-card.is-ended { opacity: 0.6; }
+.torgash-promo-card.is-ended .torgash-promo-pic { filter: grayscale(1); }
+.torgash-promo-pic { position: relative; display: block; aspect-ratio: 16 / 11; overflow: hidden; background: var(--color-base-200); }
+.torgash-promo-pic img { width: 100%; height: 100%; object-fit: cover; }
+.torgash-promo-art {
+    position: absolute; inset: 0; display: flex; align-items: flex-end; padding: 0.875rem; color: #fff;
+    background: linear-gradient(135deg, oklch(72% 0.15 var(--promo-hue, 25)), oklch(52% 0.17 calc(var(--promo-hue, 25) + 35)));
+}
+.torgash-promo-offer { position: relative; z-index: 1; font-size: clamp(1.75rem, 3.2vw, 2.5rem); font-weight: 800; line-height: 1; letter-spacing: -0.02em; }
+.torgash-promo-icon { position: absolute; right: -0.75rem; top: -0.5rem; width: 6.5rem; height: 6.5rem; opacity: 0.22; transform: rotate(-12deg); }
+.torgash-promo-chip {
+    position: absolute; left: 0.625rem; bottom: 0.625rem; padding: 0.125rem 0.5rem; border-radius: 9999px;
+    font-size: 0.8125rem; font-weight: 700; background: var(--color-error); color: var(--color-error-content);
+}
+.torgash-promo-when {
+    position: absolute; left: 0.5rem; top: 0.5rem; max-width: calc(100% - 1rem); padding: 0.125rem 0.5rem; border-radius: 9999px;
+    font-size: 0.6875rem; font-weight: 600; line-height: 1.3; background: rgb(0 0 0 / 0.45); color: #fff;
+    /* Wraps rather than cutting "every day 21:00–…" off: the hours ARE the news. */
+    border-radius: 0.625rem;
+}
+.torgash-promo-body { display: flex; flex-wrap: wrap; gap: 0.5rem 0.75rem; align-items: flex-start; padding: 0.75rem; font-size: 0.875rem; }
+/* The name takes the rest of the line, or a line of its own when the card is too narrow to share. */
+.torgash-promo-name { flex: 1 1 7rem; }
+.torgash-promo-days {
+    display: flex; flex-direction: column; align-items: center; flex-shrink: 0; min-width: 3.25rem; padding: 0.25rem 0.375rem;
+    border-radius: var(--radius-field, 0.5rem); border: 1px solid var(--color-base-300); line-height: 1.1;
+}
+.torgash-promo-days b { font-size: 1.25rem; font-weight: 800; font-variant-numeric: tabular-nums; }
+.torgash-promo-days small { font-size: 0.625rem; opacity: 0.6; text-align: center; }
+@media (prefers-reduced-motion: no-preference) {
+    .torgash-promo-card { transition: transform 0.2s ease, box-shadow 0.2s ease; }
+    .torgash-promo-pic img, .torgash-promo-icon { transition: transform 0.3s ease; }
+    .torgash-promo-card:hover { transform: translateY(-3px); box-shadow: 0 12px 24px -14px rgb(0 0 0 / 0.35); }
+    .torgash-promo-card:hover .torgash-promo-pic img { transform: scale(1.04); }
+    .torgash-promo-card:hover .torgash-promo-icon { transform: rotate(0) scale(1.06); }
+}
+
+/* ---- Latest articles (torgash.blog's block) ----------------------------- */
+.torgash-blog-tile { display: flex; flex-direction: column; gap: 0.625rem; min-width: 0; }
+.torgash-blog-cover {
+    position: relative; display: grid; place-items: center; aspect-ratio: 16 / 10; overflow: hidden;
+    border-radius: var(--radius-box, 1rem); background: var(--color-base-200);
+}
+.torgash-blog-cover.is-large { aspect-ratio: 16 / 10.5; }
+.torgash-blog-cover img { width: 100%; height: 100%; object-fit: cover; }
+.torgash-blog-date {
+    position: absolute; left: 0.5rem; bottom: 0.5rem; padding: 0.0625rem 0.5rem; border-radius: 9999px;
+    font-size: 0.6875rem; font-weight: 600; background: rgb(0 0 0 / 0.5); color: #fff;
+}
+@media (prefers-reduced-motion: no-preference) {
+    .torgash-blog-cover img { transition: transform 0.3s ease; }
+    .torgash-blog-tile:hover .torgash-blog-cover img { transform: scale(1.04); }
+}
+
+/* ---- Banners (torgash.banners, PLAN §51) ---------------------------------
+   Only how the strip WORKS — what Embla needs and what a page without its
+   script falls back to. How banners and frames LOOK is their templates' CSS
+   (Content → Banners → Templates), printed on the pages that show them.
+   Without a script the strip is a row that scrolls by touch; `is-ready`,
+   set once Embla runs, hides the overflow. How many slides are in view is
+   the slider's setting per width (--per-view-phone below 768px,
+   --per-view-tablet to 1024px, --per-view above); the gap is the
+   frame's CSS (--slider-gap). */
+/* A banner never wider than its slide: a template drawing an upright card
+   by `aspect-ratio` with a min-height took its WIDTH from that height on a
+   phone (287px in a 262px slide) and lay over its neighbour. */
+.torgash-banner { height: 100%; }
+.torgash-slide .torgash-banner > * { max-width: 100%; }
+.torgash-slider-viewport { overflow-x: auto; scroll-snap-type: x mandatory; scrollbar-width: none; border-radius: var(--radius-box, 1rem); height: 100%; }
+.torgash-slider-viewport::-webkit-scrollbar { display: none; }
+.torgash-slider-track { display: flex; height: 100%; margin-left: calc(var(--slider-gap, 0px) * -1); }
+.torgash-slide {
+    flex: 0 0 calc(100% / var(--per-view-phone, 1)); min-width: 0;
+    padding-left: var(--slider-gap, 0px); scroll-snap-align: start;
+}
+@media (min-width: 768px) { .torgash-slide { flex-basis: calc(100% / var(--per-view-tablet, var(--per-view, 1))); } }
+@media (min-width: 1024px) { .torgash-slide { flex-basis: calc(100% / var(--per-view, 1)); } }
+.torgash-slider.is-ready .torgash-slider-viewport { overflow: hidden; scroll-snap-type: none; }
+/* While it moves (slider.js): no hover inside, so cards passing under a still
+   cursor do not lean in and out one after another. */
+.torgash-slider.is-moving .torgash-slider-track { pointer-events: none; }
+.torgash-slider-dot, .torgash-slider-arrow { cursor: pointer; }
+.torgash-slider-dot:focus-visible, .torgash-slider-arrow:focus-visible { outline: 2px solid var(--color-primary); outline-offset: 2px; }
+.torgash-slider-progress { display: block; height: 2px; background: rgb(0 0 0 / 0.1); }
+.torgash-slider-progress > span { display: block; height: 100%; background: var(--color-primary); transition: width 0.4s; }
+/* A row of blocks lines its columns up at the top; a column of banners takes
+   the row's height instead, so the cards beside a slider end where it ends. */
+.torgash-block-row > div:has(> .torgash-block-banners) { align-self: stretch; }
+
+/* ---- A block's section (torgash.blocks Section, PLAN §51) -----------------
+   `band` and `full` step out of the page's container to the screen's edges
+   (the container is centred, so half of it minus half the screen is how far
+   out the edge is); `band` keeps its content the page's width inside, with
+   the page's own side padding, `full` lets it run edge to edge. The page
+   clips sideways (`clip`, not `hidden`: it makes no scroll box, so sticky
+   headers keep sticking) — 100vw counts the scrollbar, and a band one
+   scrollbar wider than the window must not scroll the whole page. */
+html { overflow-x: clip; }
+.torgash-section { margin-bottom: 1.5rem; }
+.torgash-section-band, .torgash-section-full { margin-inline: calc(50% - 50vw + var(--torgash-scrollbar, 0px) / 2); }
+.torgash-section-band > .torgash-section-inner {
+    max-width: var(--torgash-container, 1500px); margin-inline: auto; padding-inline: 1rem;
+}
+@media (min-width: 1024px) { .torgash-section-band > .torgash-section-inner { padding-inline: 1.5rem; } }
+.torgash-section-page { border-radius: var(--radius-box, 1rem); }
+.torgash-section-page > .torgash-section-inner { padding-inline: 1rem; }
+.torgash-section-page:not([class*="bg-"]):not([style]) > .torgash-section-inner { padding-inline: 0; }
+/* A section's tone colours its TEXT, and text inherits: a product card on a
+   dark band would print light words on its own white surface. Whatever
+   stands on the page's surface takes the page's text back. In the base
+   layer, so a text utility on the element itself still wins. */
+@layer base {
+    .torgash-section :where(.bg-base-100, .bg-base-200) { color: var(--color-base-content); }
+}
+
+/* What every Lucide file says on its own <svg> tag, said once: <x-icon>
+   prints only the viewBox and this class. A page draws four hundred icons,
+   and the same 170 bytes on each were a third of the home page's HTML.
+   In the base layer, so `fill-current` & co. on an icon still win — as
+   they did over the presentation attributes this replaces. */
+@layer base {
+    svg.lucide { fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+}
+
+/* A brand's logo is the brand's file, usually dark ink on nothing: on the dark
+   theme it would vanish, so there it stands on a small light plate of its own
+   rather than being recoloured (a logo is not ours to invert). */
+[data-theme="torgash-dark"] .torgash-brand-logo {
+    background: #fff; border-radius: var(--radius-field, 0.375rem); padding: 0.125rem 0.375rem; box-sizing: content-box;
+}
+
+/* The product page on a phone is ONE flex column ordered by `order-*`: photo
+   → buy panel → the wide row (a kit) → description. In the HTML the left
+   column's pieces come BEFORE the buy panel, and a slow connection paints the
+   page while it is still arriving — so the kit and the description were drawn
+   right under the photo, and the buy panel, landing a moment later, pushed
+   them down (PageSpeed, mobile: CLS 0.17). Until the panel is in the
+   document, nothing of the left column but the gallery is drawn; then it
+   appears beneath the panel, where it stays. :has() is re-evaluated as the
+   parser adds elements, which is what makes this work mid-stream. */
+@media (width < 64rem) {
+    .torgash-product-layout:not(:has(#product-buy-panel)) > :first-child > :not(:first-child) { display: none; }
+}
+
+/* Readable grey on the storefront (audit 2026-10-15: secondary text measured
+   2.5-3.8:1 against WCAG's 4.5). Secondary text is drawn with
+   opacity-40/50/60 in hundreds of places; on the storefront those read at
+   72%. An INACTIVE choice that must look switched off says `torgash-faded`
+   instead (WCAG exempts it). Coloured words keep the brand colour exactly as
+   the theme gives it. */
+.torgash-storefront :is(.opacity-40, .opacity-50, .opacity-60):not(.torgash-faded) { opacity: 0.72; }
+.torgash-faded { opacity: 0.5; }
+
+/* code-editor.js: a textarea over its own coloured copy. The field's text is
+   transparent (its caret and selection are not); the <pre> under it is
+   positioned and scrolled to match it letter for letter. */
+.ce-wrap { position: relative; }
+.ce-view {
+    position: absolute; inset: 0; margin: 0; overflow: hidden; pointer-events: none;
+    white-space: pre; border-style: solid; border-color: transparent;
+    color: var(--color-base-content);
+}
+.ce-area {
+    position: relative; z-index: 1; background: transparent !important;
+    color: transparent; caret-color: var(--color-base-content);
+    white-space: pre; overflow: auto; resize: vertical;
+}
+.ce-area::selection { color: transparent; background: color-mix(in oklab, var(--color-primary) 30%, transparent); }
+/* Each mixed with the text colour, so a pale theme colour still reads on its page. */
+.ce-tag { color: color-mix(in oklab, var(--color-primary) 75%, var(--color-base-content)); }
+.ce-attr { color: color-mix(in oklab, var(--color-secondary) 70%, var(--color-base-content)); }
+.ce-string { color: color-mix(in oklab, var(--color-success) 65%, var(--color-base-content)); }
+.ce-value { color: color-mix(in oklab, var(--color-error) 70%, var(--color-base-content)); font-weight: 600; }
+.ce-section { color: color-mix(in oklab, var(--color-warning) 55%, var(--color-base-content)); font-weight: 700; }
+.ce-comment, .ce-cdata { color: color-mix(in oklab, var(--color-base-content) 50%, transparent); font-style: italic; }

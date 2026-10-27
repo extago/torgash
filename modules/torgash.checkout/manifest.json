@@ -1,0 +1,162 @@
+{
+    "id": "torgash.checkout",
+    "name": "Checkout",
+    "version": "1.0.0",
+    "icon": "clipboard-check",
+    "description": "Guest checkout flow and order capture.",
+    "provider": "Torgash\\Checkout\\CheckoutServiceProvider",
+    "autoload": {
+        "Torgash\\Checkout\\": "src/"
+    },
+    "requires": {
+        "core": ">=0.1",
+        "modules": [
+            "torgash.cart",
+            "torgash.catalog",
+            "torgash.media"
+        ]
+    },
+    "settings": [
+        {
+            "key": "one_click",
+            "type": "checkbox",
+            "default": false,
+            "label": "Buying in one click",
+            "help": "A \"Buy in one click\" button on the product page: a phone number places a real order, and the manager rings back to agree the rest. Tick the delivery method and the payment method it uses on their own forms — the button stays hidden until both are chosen, because an order has to be placed with methods that really exist."
+        },
+        {
+            "key": "one_click_cart",
+            "type": "checkbox",
+            "default": false,
+            "label": "Buying the whole cart in one click",
+            "help": "The same button on the cart page, for everything in the basket: a phone number places the order and empties the basket. It uses the delivery and payment methods ticked for buying in one click, and is not shown while a line fails the statuses below."
+        },
+        {
+            "key": "one_click_audience",
+            "type": "select",
+            "default": "everyone",
+            "options": {
+                "everyone": "Everybody",
+                "guests": "Only guests",
+                "signed_in": "Only customers who are signed in"
+            },
+            "label": "Who is offered buying in one click",
+            "help": "Only guests — for a shop that wants its registered customers to use the full checkout, with their saved addresses and details. Applies to the product page and the cart alike."
+        },
+        {
+            "key": "one_click_statuses",
+            "type": "checkboxes",
+            "default": [],
+            "options": {},
+            "label": "Offer it only for these availability statuses",
+            "help": "Nothing ticked — every product that can be bought. A product that cannot be bought never shows the button: the order would be refused after the customer typed their number."
+        },
+        {
+            "key": "client_facts",
+            "type": "checkboxes",
+            "default": [
+                "ip_address",
+                "user_agent",
+                "languages"
+            ],
+            "options": {},
+            "label": "What an order writes down about the buyer's browser",
+            "help": "Recorded once, when the order is placed, and shown on the order card — the address is what makes several orders from one place visible. Unticking stops recording from now on; orders placed before keep what they have. The language the order was placed in is always kept: the letters are written in it."
+        },
+        {
+            "key": "order_contact",
+            "type": "select",
+            "default": "email",
+            "options": {
+                "email": "Email",
+                "phone": "Phone",
+                "either": "Email or phone — either will do",
+                "both": "Both email and phone"
+            },
+            "label": "An order must have",
+            "help": "What a guest must give at checkout. \"Phone\" lets somebody order with a number alone — no email, no letters, the shop rings them. No code is asked for either unless \"Confirm the contact by a code\" includes checkout. A signed-in customer's account already says who they are.",
+            "keywords": {
+                "en": "checkout required email phone guest contact",
+                "ru": "оформление обязательный email телефон гость контакт почта"
+            }
+        },
+        {
+            "key": "postal_code",
+            "type": "select",
+            "default": "optional",
+            "options": {
+                "hidden": "Not asked",
+                "optional": "Asked, may be left empty",
+                "required": "Asked and required"
+            },
+            "label": "Postal code at checkout",
+            "help": "Not asked — for a shop whose deliveries never need one. A delivery zone that matches by postal code then has nothing to match on, so keep it asked if you use such zones."
+        },
+        {
+            "key": "existing_account",
+            "type": "select",
+            "default": "sign_in",
+            "options": {
+                "sign_in": "Ask them to sign in — a code to that email, right in the form",
+                "allow": "Let them order as a guest"
+            },
+            "label": "A guest types the email of an existing account",
+            "help": "Signing in: the form says the address already has an account and sends a code to it; the order is placed only once they are in, so it lands in their history. A guest order to somebody else's address is how orders end up in the wrong inbox. As a guest: the order is placed, not attached to the account."
+        },
+        {
+            "key": "business_orders",
+            "type": "checkbox",
+            "default": false,
+            "label": "Orders for a company",
+            "help": "A \"Private person / Company\" switch in the recipient step. A company gives its name (required) and its tax code; both are kept on the order, printed on the invoice and sent to 1C as the counterparty's official name and tax number."
+        },
+        {
+            "key": "cancel_unpaid_after_hours",
+            "type": "number",
+            "default": 0,
+            "label": "Cancel unpaid orders after, hours",
+            "help": "An order sent to an online payment and left in \"Awaiting payment\" is moved to the status below once it has waited this long with no money arriving. It holds no stock, so nothing is released — this only keeps the orders list clear of bank pages nobody finished. 0 turns it off. Offline methods (cash, transfer) are never touched. Checked hourly."
+        },
+        {
+            "key": "cancel_unpaid_status",
+            "type": "select",
+            "default": "cancelled",
+            "options": {
+                "cancelled": "Cancelled",
+                "failed": "Failed",
+                "declined": "Declined"
+            },
+            "label": "… into this status",
+            "help": "Where an abandoned unpaid order lands. All three release stock and sit outside the working statuses. Delete the chosen one and nothing is cancelled until you pick another."
+        }
+    ],
+    "permissions": [
+        {
+            "name": "orders.manage",
+            "label": "Manage orders and order statuses"
+        }
+    ],
+    "admin_menu": [
+        {
+            "label": "Orders",
+            "url": "/admin/orders",
+            "group": "sales",
+            "icon": "shopping-bag",
+            "position": 20
+        },
+        {
+            "label": "Payment",
+            "url": "/admin/payments/methods",
+            "group": "sales",
+            "icon": "credit-card",
+            "position": 22
+        },
+        {
+            "label": "Coupons",
+            "url": "/admin/checkout/coupons",
+            "group": "marketing",
+            "icon": "tag",
+            "position": 2
+        }
+    ]
+}

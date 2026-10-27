@@ -1,0 +1,25 @@
+{
+    "id": "torgash.hello",
+    "name": "Hello",
+    "version": "1.0.0",
+    "icon": "hand",
+    "description": "Reference module demonstrating routes, views, theme overrides, hooks, settings, translations and migrations.",
+    "provider": "Torgash\\Hello\\HelloServiceProvider",
+    "autoload": {
+        "Torgash\\Hello\\": "src/"
+    },
+    "requires": {
+        "core": ">=0.1",
+        "modules": []
+    },
+    "settings": [
+        {
+            "key": "greeting",
+            "type": "text",
+            "default": "Hello from Torgash!",
+            "label": "Greeting text"
+        }
+    ],
+    "permissions": [],
+    "admin_menu": []
+}

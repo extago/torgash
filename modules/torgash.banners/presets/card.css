@@ -1,0 +1,34 @@
+/* Card with chips — an upright card,
+   the picture filling it, the words over its top, small glass links at the
+   bottom; the picture leans in a little on hover. */
+.hb-card {
+    position: relative; overflow: hidden; width: 100%; height: 100%; min-height: 26rem;
+    aspect-ratio: 100 / 145; border-radius: var(--radius-box, 0.5rem);
+    background: #000; color: #fff;
+}
+.hb-card-light { background: #f5f5f7; color: #161d27; }
+.hb-card-cover {
+    position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover;
+    transition: transform 0.1s ease-out;
+}
+.hb-card:hover .hb-card-cover { transform: scale(1.05); }
+.hb-card-content { position: relative; z-index: 1; display: grid; gap: 0.9rem; align-content: start; padding: 1.875rem; pointer-events: none; }
+.hb-card-logo { max-width: 12.5rem; max-height: 1.25rem; width: auto; }
+.hb-card-type { font-size: 0.75rem; }
+.hb-card-title { font-size: 1.25rem; font-weight: 700; line-height: 1.3; }
+.hb-card-title s { text-decoration: none; opacity: 0.5; }
+.hb-card-text { font-size: 0.875rem; line-height: 1.5; }
+.hb-card-notice { font-size: 1rem; font-weight: 700; }
+a.hb-card-link { position: absolute; inset: 0; z-index: 2; }
+.hb-card-chips {
+    position: absolute; z-index: 3; left: 0; right: 0; bottom: 0; padding: 1.875rem;
+    display: flex; flex-wrap: wrap-reverse; gap: 0.5rem;
+}
+.hb-card-chips > a {
+    font-size: 0.75rem; padding: 0.25rem 0.625rem; border-radius: 0.25rem; text-decoration: none;
+    color: #fff; background: hsl(0 0% 100% / 0.25); backdrop-filter: blur(5px); transition: all 0.15s ease-out;
+}
+.hb-card-light .hb-card-chips > a { background: hsl(215 30% 10% / 0.35); }
+.hb-card-chips > a:hover { color: #161d27; background: #fff; }
+/* In a cell of the catalogue's grid the card takes the row's height, not its own proportions. */
+.torgash-listing-insert .hb-card { min-height: 0; aspect-ratio: auto; }

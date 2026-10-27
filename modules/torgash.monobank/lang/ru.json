@@ -1,0 +1,20 @@
+{
+    "monobank Acquiring": "monobank Эквайринг",
+    "Order :number": "Заказ №:number",
+    "Delivery": "Доставка",
+    "pcs": "шт",
+    "Invoice created": "Счёт выставлен",
+    "Invoice refused: :error": "Счёт не выставлен: :error",
+    "Invoice removed": "Счёт снят",
+    "X-Token": "X-Token",
+    "From web.monobank.ua. A personal-account test token works against the same endpoints with play money — use one until you have seen a payment go through.": "Из личного кабинета web.monobank.ua. Тестовый токен физического лица работает с теми же адресами на игрушечных деньгах — используйте его, пока не увидите первый успешный платёж.",
+    "Authorize first, take the money later": "Сначала холд, деньги списать позже",
+    "Two-phase: the card is held and nothing is taken until you press Capture on the order. Use it when you cannot promise the goods are in stock.": "Двухфазный платёж: сумма замораживается на карте и не списывается, пока вы не нажмёте «Списать холд» на заказе. Нужен, когда наличие товара не гарантировано.",
+    "Invoice is valid for, hours": "Счёт действителен, часов",
+    "After this the invoice expires and the customer needs a new one — which the Pay link on their order gives them. Default 24, maximum 720.": "После этого счёт протухает и покупателю нужен новый — его выдаёт кнопка «Оплатить» на его заказе. По умолчанию 24, максимум 720.",
+    "Monobank holds the money only in hryvnia, and this order is charged in :currency. Turn \"Hold the money\" off on this payment method, or let the customer pay in UAH.": "Монобанк держит деньги только в гривне, а этот заказ оплачивается в :currency. Выключите «Держать деньги» в этом способе оплаты или дайте покупателю платить в гривне.",
+    "the bank answered :status": "банк ответил :status",
+    "Holding the money works only in hryvnia. Orders in any other currency will not be payable with this method while \"Authorize first\" is on.": "Холд работает только в гривне. Пока включён «сначала холд», заказы в любой другой валюте этим способом оплатить не получится.",
+    "Monobank cannot charge in :currency. Give this payment method a currency it takes: :list.": "Монобанк не умеет списывать в :currency. Этому способу оплаты нужна валюта из списка: :list.",
+    "Card payments through monobank's internet acquiring: an invoice per order, the customer pays on monobank's page, and a signed webhook tells the shop what happened. Supports two-phase holds, full and partial refunds, and re-asking the bank from the order screen.": "Оплата картой через интернет-эквайринг monobank: счёт на заказ, оплата на странице банка и подписанный вебхук с результатом. Поддерживает двухфазный холд, полный и частичный возврат и перезапрос статуса с карточки заказа."
+}

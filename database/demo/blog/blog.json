@@ -1,0 +1,56 @@
+{
+    "rubrics": [
+        {"slug": "demo-guides", "name": {"en": "Buying guides", "ru": "Как выбрать"}, "icon": "compass", "color": "#2563eb"},
+        {"slug": "demo-news", "name": {"en": "Shop news", "ru": "Новости магазина"}, "icon": "megaphone", "color": "#ea580c"}
+    ],
+    "posts": [
+        {
+            "slug": "demo-how-to-choose-a-phone",
+            "rubrics": ["demo-guides"],
+            "days_ago": 21,
+            "products": ["IP16P-256-BT", "S25U-256-BK", "PIXEL9P-128"],
+            "title": {"en": "How to choose a phone in five questions", "ru": "Как выбрать телефон: пять вопросов"},
+            "lead": {"en": "Forget the spec sheet for a minute: five questions decide which phone you will still like in two years.", "ru": "Забудьте на минуту о таблице характеристик: пять вопросов решают, какой телефон понравится вам и через два года."},
+            "body": {
+                "en": "<h2>1. Which system do you already live in?</h2><p>If your laptop, watch and earbuds are Apple, an iPhone saves you a dozen small irritations a day. Android gives more choice of shape and price.</p>{product:IP16P-256-BT}<h2>2. How much do you photograph?</h2><p>A zoom lens matters more than megapixels: it is what makes a portrait or a stage from row twenty look sharp.</p>{product:S25U-256-BK}<h2>3. One hand or two?</h2><p>A 6.9-inch screen is a pleasure for films and a nuisance in a pocket. Hold it in the shop before you decide.</p><h2>4. How long will you keep it?</h2><p>Count the years of updates the maker promises — seven years is no longer rare.</p>{product:PIXEL9P-128}<h2>5. How much storage?</h2><p>128 GB is enough for a phone that streams; if you film in 4K, take 256 GB or more.</p>",
+                "ru": "<h2>1. В какой системе вы уже живёте?</h2><p>Если ноутбук, часы и наушники — Apple, iPhone избавит от десятка мелких неудобств в день. Android даёт больше выбора формы и цены.</p>{product:IP16P-256-BT}<h2>2. Сколько вы снимаете?</h2><p>Телеобъектив важнее мегапикселей: именно он делает портрет или сцену с двадцатого ряда резкими.</p>{product:S25U-256-BK}<h2>3. Одна рука или две?</h2><p>Экран 6,9 дюйма — удовольствие для фильмов и неудобство в кармане. Подержите телефон в магазине, прежде чем решать.</p><h2>4. Как долго будете им пользоваться?</h2><p>Считайте годы обновлений, которые обещает производитель, — семь лет уже не редкость.</p>{product:PIXEL9P-128}<h2>5. Сколько памяти?</h2><p>128 ГБ хватит телефону, который всё смотрит онлайн; если снимаете 4K — берите от 256 ГБ.</p>"
+            }
+        },
+        {
+            "slug": "demo-noise-cancelling-headphones",
+            "rubrics": ["demo-guides"],
+            "days_ago": 14,
+            "products": ["WH1000XM6", "BOSE-QCU", "AIRPODS-PRO2"],
+            "title": {"en": "Noise-cancelling headphones: over-ear or in-ear?", "ru": "Наушники с шумоподавлением: накладные или вкладыши?"},
+            "lead": {"en": "Both silence a plane. They differ in what else they are good for.", "ru": "И те и другие заглушат самолёт. Различаются они тем, для чего ещё годятся."},
+            "body": {
+                "en": "<h2>Over-ear</h2><p>The best silence and the longest battery — 30 hours and more. The price is size: they live in a case, not a pocket.</p>{product:WH1000XM6}<p>Comfort is personal: some heads prefer the softer clamp of the Bose.</p>{product:BOSE-QCU}<h2>In-ear</h2><p>Always with you, good enough cancelling for the metro and the office, and calls sound better than you expect.</p>{product:AIRPODS-PRO2}<h2>So which?</h2><p>Fly often — over-ear. Commute and sport — in-ear. Many people end up with both.</p>",
+                "ru": "<h2>Накладные</h2><p>Лучшая тишина и самая долгая батарея — от 30 часов. Плата — размер: живут в чехле, а не в кармане.</p>{product:WH1000XM6}<p>Удобство — дело личное: кому-то мягче сидят Bose.</p>{product:BOSE-QCU}<h2>Вкладыши</h2><p>Всегда с собой, шумодава хватает для метро и офиса, а звонки звучат лучше, чем ожидаешь.</p>{product:AIRPODS-PRO2}<h2>Так какие?</h2><p>Часто летаете — накладные. Дорога и спорт — вкладыши. Многие в итоге берут и те и другие.</p>"
+            }
+        },
+        {
+            "slug": "demo-home-wifi-without-dead-zones",
+            "rubrics": ["demo-guides"],
+            "days_ago": 7,
+            "products": ["DECO-BE65-2", "UX7"],
+            "title": {"en": "Home Wi-Fi without dead zones", "ru": "Домашний Wi-Fi без мёртвых зон"},
+            "lead": {"en": "One router in the hallway cannot reach the far bedroom. Two small ones can.", "ru": "Один роутер в прихожей не добьёт до дальней спальни. Два маленьких — добьют."},
+            "body": {
+                "en": "<p>A wall of brick or concrete takes most of a Wi-Fi signal. A stronger router helps less than a second one placed halfway.</p><h2>A mesh system</h2><p>Two or three units make one network; the phone moves between them by itself.</p>{product:DECO-BE65-2}<h2>When you want to manage it</h2><p>A small gateway with its own app shows who is on the network and what slows it down.</p>{product:UX7}",
+                "ru": "<p>Кирпичная или бетонная стена съедает большую часть сигнала Wi-Fi. Мощный роутер помогает меньше, чем второй, поставленный на полпути.</p><h2>Mesh-система</h2><p>Два-три модуля образуют одну сеть, телефон сам переходит между ними.</p>{product:DECO-BE65-2}<h2>Когда хочется управлять</h2><p>Небольшой шлюз со своим приложением показывает, кто в сети и что её тормозит.</p>{product:UX7}"
+            }
+        },
+        {
+            "slug": "demo-smartphone-week",
+            "rubrics": ["demo-news"],
+            "days_ago": 1,
+            "products": ["IP16-128-UM", "A56-128", "NOTHING-3A"],
+            "title": {"en": "Smartphone week: 10% off every phone", "ru": "Неделя смартфонов: −10% на все телефоны"},
+            "lead": {"en": "Seven days, every smartphone in the catalogue, no coupon needed.", "ru": "Семь дней, все смартфоны каталога, купон не нужен."},
+            "body": {
+                "en": "<p>The discount is already in the price — you will see the old one crossed out. It adds up with the kits: a case and a charger bought with a phone are cheaper still.</p><p>And a coupon on top: <strong>DEMO10</strong> at checkout.</p>",
+                "ru": "<p>Скидка уже в цене — старая будет зачёркнута. Она складывается с комплектами: чехол и зарядка вместе с телефоном выходят ещё дешевле.</p><p>И купон сверху: <strong>DEMO10</strong> при оформлении.</p>"
+            }
+        }
+    ]
+}

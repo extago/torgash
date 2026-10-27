@@ -1,0 +1,61 @@
+[
+    {
+        "code": "demo-warranty",
+        "admin_name": "Extended warranty (demo)",
+        "name": {"en": "Extended warranty", "ru": "Расширенная гарантия"},
+        "hint": {"en": "On top of the maker's own. A fee plus a share of the price.", "ru": "Сверх гарантии производителя. Сбор плюс доля от цены."},
+        "type": "radio",
+        "categories": ["smartphones", "laptops", "tablets", "tv", "cameras", "consoles"],
+        "choices": [
+            {"name": {"en": "Maker's warranty only", "ru": "Только гарантия производителя"}, "rule": "free", "default": true},
+            {"name": {"en": "+1 year", "ru": "+1 год"}, "rule": "fixed_plus_percent", "amount": 19, "percent": 5},
+            {"name": {"en": "+2 years", "ru": "+2 года"}, "rule": "fixed_plus_percent", "amount": 29, "percent": 9}
+        ]
+    },
+    {
+        "code": "demo-tv-setup",
+        "admin_name": "TV installation (demo)",
+        "name": {"en": "Installation", "ru": "Установка"},
+        "type": "checkboxes",
+        "categories": ["tv"],
+        "choices": [
+            {"name": {"en": "Wall mounting", "ru": "Монтаж на стену"}, "rule": "fixed", "amount": 79},
+            {"name": {"en": "Setup: channels, apps, picture", "ru": "Настройка: каналы, приложения, картинка"}, "rule": "fixed_plus_percent", "amount": 25, "percent": 2}
+        ]
+    },
+    {
+        "code": "demo-gift-wrap",
+        "admin_name": "Gift wrapping (demo)",
+        "name": {"en": "Gift wrapping", "ru": "Подарочная упаковка"},
+        "type": "checkboxes",
+        "categories": ["smartphones", "tablets", "audio", "smart-watches", "gaming", "accessories", "action-cameras"],
+        "choices": [
+            {"name": {"en": "Wrap it as a gift, with a card", "ru": "Упаковать в подарок, с открыткой"}, "rule": "fixed", "amount": 7}
+        ]
+    },
+    {
+        "code": "demo-x1-memory",
+        "product": "X1C-G13",
+        "admin_name": "ThinkPad X1: memory (demo)",
+        "name": {"en": "Memory and storage", "ru": "Память и накопитель"},
+        "type": "select",
+        "required": true,
+        "choices": [
+            {"name": {"en": "32 GB / 1 TB, as listed", "ru": "32 ГБ / 1 ТБ, как в описании"}, "rule": "free", "default": true},
+            {"name": {"en": "64 GB / 1 TB", "ru": "64 ГБ / 1 ТБ"}, "rule": "fixed", "amount": 280},
+            {"name": {"en": "64 GB / 2 TB", "ru": "64 ГБ / 2 ТБ"}, "rule": "fixed", "amount": 450}
+        ]
+    },
+    {
+        "code": "demo-x1-extras",
+        "product": "X1C-G13",
+        "admin_name": "ThinkPad X1: to the order (demo)",
+        "name": {"en": "Add to the order", "ru": "Добавить к заказу"},
+        "hint": {"en": "Real products: they leave the warehouse as their own lines.", "ru": "Настоящие товары: уходят со склада отдельными строками."},
+        "type": "checkboxes",
+        "choices": [
+            {"kind": "product", "product": "ANKER-NANO-65", "rule": "product_price", "percent": -10},
+            {"kind": "product", "product": "ANKER-USBC-2M", "rule": "product_price"}
+        ]
+    }
+]

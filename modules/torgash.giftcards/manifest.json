@@ -1,0 +1,97 @@
+{
+    "id": "torgash.giftcards",
+    "name": "Gift cards",
+    "version": "1.0.0",
+    "icon": "gift",
+    "color": "#db2777",
+    "section": "marketing",
+    "description": "Gift cards with a balance: sold as a product (a fixed amount or one the customer types, to themselves or to somebody else, on a date of their choosing), issued by hand one at a time or in a batch for printing, and spent in the same box as a coupon. A card is money paid in advance, not a discount: it pays part or all of an order beside the ordinary payment method, a refund goes back onto it first, and every movement of its balance is a line in its own history.",
+    "provider": "Torgash\\Giftcards\\GiftcardsServiceProvider",
+    "autoload": {
+        "Torgash\\Giftcards\\": "src/"
+    },
+    "requires": {
+        "core": ">=0.1",
+        "modules": [
+            "torgash.catalog",
+            "torgash.cart",
+            "torgash.checkout"
+        ]
+    },
+    "settings": [
+        {
+            "key": "expiry_months",
+            "type": "number",
+            "default": 12,
+            "label": "A new card is valid for, months",
+            "help": "Counted from the order that bought it, or from the day it was issued by hand. 0 — cards do not expire. A card's own date can be changed on its page."
+        },
+        {
+            "key": "min_amount",
+            "type": "number",
+            "default": 100,
+            "label": "Smallest amount a customer may type",
+            "help": "In the shop's currency, for a gift card product that takes an amount of the customer's choosing. A product can narrow it on its own tab."
+        },
+        {
+            "key": "max_amount",
+            "type": "number",
+            "default": 50000,
+            "label": "Largest amount a customer may type",
+            "help": "0 — no limit."
+        },
+        {
+            "key": "pays_shipping",
+            "type": "checkbox",
+            "default": true,
+            "label": "A card may pay for delivery",
+            "help": "Off — a card pays only for the goods, and delivery is paid the ordinary way. A card issued by hand can say otherwise."
+        },
+        {
+            "key": "return_statuses",
+            "type": "checkboxes",
+            "default": [
+                "cancelled",
+                "declined",
+                "failed"
+            ],
+            "label": "Put the money back onto the card when an order moves into",
+            "help": "What a card paid for an order goes back onto it by itself when the order enters one of these statuses. Nothing ticked — only by a refund. Money paid through a bank is refunded by a manager, as before.",
+            "options": {}
+        },
+        {
+            "key": "void_on_refund",
+            "type": "checkbox",
+            "default": true,
+            "label": "Cancel a sold card when its order is refunded",
+            "help": "What is left on a card bought by an order that is then refunded in full is written off. Whatever was already spent stays spent."
+        },
+        {
+            "key": "cards_buy_cards",
+            "type": "checkbox",
+            "default": false,
+            "label": "A card may pay for another gift card",
+            "help": "Off by default: buying cards with cards turns a promotional card into cash."
+        }
+    ],
+    "permissions": [
+        {
+            "name": "giftcards.manage",
+            "label": "Manage gift cards"
+        }
+    ],
+    "admin_menu": [
+        {
+            "label": "Gift cards",
+            "url": "/admin/giftcards",
+            "icon": "gift",
+            "group": "marketing",
+            "position": 25,
+            "can": "giftcards.manage",
+            "keywords": {
+                "en": "gift certificate voucher balance prepaid card",
+                "ru": "подарочный сертификат ваучер баланс подарочная карта"
+            }
+        }
+    ]
+}

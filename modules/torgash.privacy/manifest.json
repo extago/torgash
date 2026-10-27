@@ -1,0 +1,95 @@
+{
+    "id": "torgash.privacy",
+    "name": "Personal data",
+    "version": "1.0.0",
+    "icon": "shield-user",
+    "description": "Personal data the way the law of your market wants it: a cookie banner that holds counters and pixels back until the visitor agrees, Google Consent Mode, a record of every consent, how long IP addresses are kept, and a customer's own data — downloaded or erased on request. Presets for the EU, the US, Russia and Ukraine.",
+    "provider": "Torgash\\Privacy\\PrivacyServiceProvider",
+    "autoload": {
+        "Torgash\\Privacy\\": "src/"
+    },
+    "requires": {
+        "core": ">=0.1",
+        "modules": []
+    },
+    "section": "sales",
+    "settings": [
+        {
+            "key": "regime",
+            "type": "select",
+            "default": "eu",
+            "options": {
+                "eu": "European Union (GDPR)",
+                "us": "United States (CCPA and the like)",
+                "ru": "Russia (152-FZ)",
+                "ua": "Ukraine",
+                "custom": "My own settings"
+            },
+            "label": "Whose law",
+            "help": "Fills in the settings below the way that law asks; change any of them afterwards. Set on Personal data → Settings."
+        },
+        {
+            "key": "consent_mode",
+            "type": "select",
+            "default": "opt_in",
+            "options": {
+                "opt_in": "Ask first — nothing but the necessary until the visitor agrees",
+                "opt_out": "Allowed until the visitor says no",
+                "off": "Do not ask — everything runs"
+            },
+            "label": "Cookies and counters"
+        },
+        {
+            "key": "banner_style",
+            "type": "select",
+            "default": "bar",
+            "options": {
+                "bar": "A strip along the bottom",
+                "corner": "A card in the corner"
+            },
+            "label": "The cookie banner"
+        },
+        {
+            "key": "policy_url",
+            "type": "text",
+            "default": "",
+            "label": "Privacy policy page",
+            "help": "An address on this site, e.g. /privacy. Linked from the banner and from the consent boxes."
+        },
+        {
+            "key": "consent_doc_url",
+            "type": "text",
+            "default": "",
+            "label": "Consent to processing (a separate document)",
+            "help": "Russia asks for the consent as a document of its own since 1 September 2025. Empty — not linked."
+        },
+        {
+            "key": "respect_gpc",
+            "type": "checkbox",
+            "default": true,
+            "label": "Honour the browser's Global Privacy Control",
+            "help": "A browser that sends it has said no to selling or sharing — advertising code waits as if the visitor had refused."
+        },
+        {
+            "key": "google_consent_mode",
+            "type": "checkbox",
+            "default": true,
+            "label": "Google Consent Mode v2",
+            "help": "Tells Google tags what the visitor allowed. Without it Google stops building remarketing audiences from visitors in the EU."
+        },
+        {
+            "key": "answer_days",
+            "type": "number",
+            "default": 30,
+            "label": "Answer a request within, days",
+            "help": "The deadline shown on a customer's request to download or erase their data."
+        }
+    ],
+    "permissions": [
+        {"name": "privacy.manage", "label": "Manage personal data: settings, requests, consents"}
+    ],
+    "admin_menu": [
+        {"label": "Personal data", "url": "/admin/privacy/requests", "group": "customers", "icon": "shield-user", "position": 40, "can": "privacy.manage",
+            "keywords": {"en": "gdpr privacy cookies consent erase export personal data ccpa", "ru": "gdpr персональные данные куки cookie согласие удалить выгрузить приватность 152-фз"}}
+    ]
+}

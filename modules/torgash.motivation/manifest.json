@@ -1,0 +1,42 @@
+{
+    "id": "torgash.motivation",
+    "name": "Product info blocks",
+    "version": "1.0.0",
+    "icon": "megaphone",
+    "description": "Accordion cards under the buy box — delivery, payment, warranty, whatever convinces the shopper.",
+    "provider": "Torgash\\Motivation\\MotivationServiceProvider",
+    "autoload": {
+        "Torgash\\Motivation\\": "src/"
+    },
+    "requires": {
+        "core": ">=0.1",
+        "modules": [
+            "torgash.catalog",
+            "torgash.media"
+        ]
+    },
+    "settings": [
+        {
+            "key": "remember_state",
+            "type": "checkbox",
+            "default": true,
+            "label": "Remember open/closed state",
+            "help": "Per visitor, via localStorage — a card the shopper closed stays closed on the next product page too."
+        }
+    ],
+    "permissions": [
+        {
+            "name": "motivation.manage",
+            "label": "Manage product info blocks"
+        }
+    ],
+    "admin_menu": [
+        {
+            "label": "Product info blocks",
+            "url": "/admin/motivation",
+            "icon": "megaphone",
+            "group": "marketing",
+            "position": 20
+        }
+    ]
+}

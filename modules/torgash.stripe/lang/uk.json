@@ -1,0 +1,19 @@
+{
+    "Stripe": "Stripe",
+    "Order :number": "Замовлення №:number",
+    "Secret key": "Секретний ключ",
+    "dashboard.stripe.com → Developers → API keys. sk_test_… while testing, sk_live_… for real money.": "dashboard.stripe.com → Developers → API keys. sk_test_… для перевірки, sk_live_… для справжніх грошей.",
+    "Webhook signing secret": "Секрет підпису вебхука",
+    "whsec_…, shown when you add this shop's webhook endpoint in Stripe. Without it no webhook can be trusted and no order is ever marked paid by itself.": "whsec_… — Stripe показує його, коли ви додаєте адресу вебхука цього магазину. Без нього жодному вебхуку не можна вірити, і жодне замовлення не стане оплаченим само.",
+    "Authorize first, take the money later": "Спершу холд, гроші списати пізніше",
+    "The card is held and nothing is taken until you press Capture on the order. Stripe lets a hold stand for about seven days.": "Сума заморожується на картці й не списується, поки ви не натиснете «Списати холд» на замовленні. Stripe тримає холд близько семи днів.",
+    "The secret key is a TEST key, and test mode is off: every payment will be play money. Paste the live key, or turn test mode on so the screen says so.": "Секретний ключ — ТЕСТОВИЙ, а тестовий режим вимкнено: усі платежі будуть іграшковими. Вставте бойовий ключ або ввімкніть тестовий режим, щоб екран казав правду.",
+    "The secret key is a LIVE key, and test mode is on: payments are real money. Turn test mode off, or paste the test key.": "Секретний ключ — БОЙОВИЙ, а тестовий режим увімкнено: платежі справжні. Вимкніть тестовий режим або вставте тестовий ключ.",
+    "No webhook signing secret: Stripe's notifications cannot be verified, so no order is ever marked paid by itself.": "Не задано секрету підпису вебхука: сповіщення Stripe не можна перевірити, тому жодне замовлення не стане оплаченим само.",
+    "Stripe bills :currency in whole units, and this shop counts in hundredths. Give this payment method another currency to charge in.": "Stripe виставляє :currency в цілих одиницях, а магазин рахує в сотих. Задайте цьому способу оплати іншу валюту списання.",
+    "The Stripe secret key is not set on this payment method.": "Для цього способу оплати не задано секретного ключа Stripe.",
+    "Checkout session created": "Сесію оплати створено",
+    "Checkout session expired": "Сесію оплати закрито",
+    "Stripe answered :status": "Stripe відповів :status",
+    "Card, Apple Pay, Google Pay and the rest of Stripe's methods through Stripe Checkout: the customer pays on Stripe's page and a signed webhook tells the shop what happened. Supports authorize-then-capture with a separate release of the hold, full and partial refunds, and re-asking Stripe from the order screen.": "Оплата карткою, Apple Pay, Google Pay та іншими методами Stripe через Stripe Checkout: покупець платить на сторінці Stripe, а підписаний вебхук повідомляє магазину результат. Підтримує холд зі списанням і окремим зняттям холду, повне й часткове повернення та перезапит статусу з картки замовлення."
+}

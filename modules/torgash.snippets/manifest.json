@@ -1,0 +1,30 @@
+{
+    "id": "torgash.snippets",
+    "name": "Code snippets",
+    "version": "1.0.0",
+    "icon": "code",
+    "description": "Analytics counters, pixels, chat widgets and verification tags — a piece of code, a place on the page, and the rules for when it is shown. A separate module from SEO on purpose: every shop puts counters in, and they must not leave with an SEO module somebody uninstalled.",
+    "provider": "Torgash\\Snippets\\SnippetsServiceProvider",
+    "autoload": {
+        "Torgash\\Snippets\\": "src/"
+    },
+    "requires": {
+        "core": ">=0.1"
+    },
+    "permissions": [
+        {
+            "name": "snippets.manage",
+            "label": "Manage code snippets"
+        }
+    ],
+    "admin_menu": [
+        {
+            "label": "Code snippets",
+            "url": "/admin/snippets",
+            "icon": "code",
+            "group": "marketing",
+            "position": 21
+        }
+    ],
+    "settings": []
+}

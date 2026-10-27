@@ -1,0 +1,18 @@
+{
+    "kind": "banner",
+    "label": "Card with chips",
+    "fields": [
+        {"key": "eyebrow", "type": "text", "label": "Above the heading"},
+        {"key": "logo", "type": "image", "label": "Logo", "help": "About 200 × 20, instead of the line above the heading."},
+        {"key": "title", "type": "rich", "label": "Heading"},
+        {"key": "text", "type": "rich", "label": "Text"},
+        {"key": "notice", "type": "rich", "label": "In bold under the text"},
+        {"key": "chips", "type": "links", "label": "Links at the bottom", "help": "Small links over the picture: the models, the colours."},
+        {"key": "link", "type": "link", "label": "Link", "help": "The whole card is the link."},
+        {"key": "cover", "type": "image", "label": "Picture", "help": "Upright, about 600 × 870; the product in the lower half — the words stand over the top."},
+        {"key": "scheme", "type": "select", "label": "Text", "options": [
+            {"value": "dark", "label": "White text on a dark picture"},
+            {"value": "light", "label": "Dark text on a light picture"}
+        ]}
+    ]
+}

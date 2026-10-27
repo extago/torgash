@@ -1,0 +1,54 @@
+{
+    "id": "torgash.comments",
+    "name": "Comments",
+    "version": "1.0.0",
+    "icon": "message-square",
+    "description": "Comments on whatever a module registers as commentable — a page today, a product tomorrow. One table with a target registry rather than a comment system per entity. Placed as a block, so where comments appear is the merchant's choice; premoderated by default, and guarded by the same core FormGuard that protects the enquiry forms.",
+    "provider": "Torgash\\Comments\\CommentsServiceProvider",
+    "autoload": {
+        "Torgash\\Comments\\": "src/"
+    },
+    "requires": {
+        "core": ">=0.1",
+        "modules": [
+            "torgash.blocks"
+        ]
+    },
+    "permissions": [
+        {
+            "name": "comments.moderate",
+            "label": "Moderate comments"
+        }
+    ],
+    "admin_menu": [
+        {
+            "label": "Comments",
+            "url": "/admin/comments",
+            "icon": "message-square",
+            "group": "content",
+            "position": 9
+        }
+    ],
+    "settings": [
+        {
+            "key": "premoderate",
+            "type": "checkbox",
+            "default": true,
+            "label": "Check comments before publishing",
+            "help": "On by default, and worth leaving on: a shop that finds casino adverts under its terms of sale switches comments off for good, which is the same outcome as never having them."
+        },
+        {
+            "key": "registered_only",
+            "type": "checkbox",
+            "default": false,
+            "label": "Only signed-in customers may comment"
+        },
+        {
+            "key": "notify_email",
+            "type": "text",
+            "default": "",
+            "label": "Tell this address about new comments",
+            "help": "Empty means the storefront's own contact address. A comment waiting for moderation that nobody knows about is the reason this is sent by the module itself rather than left to a rule."
+        }
+    ]
+}

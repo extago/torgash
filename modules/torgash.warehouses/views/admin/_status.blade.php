@@ -1,0 +1,23 @@
+{{-- One warehouse's on/off, switched in place — the categories list's control. --}}
+<td id="warehouse-status-{{ $warehouse->id }}">
+    <div class="dropdown dropdown-end">
+        <div tabindex="0" role="button" @class(['badge badge-sm gap-1 cursor-pointer', 'badge-success' => $warehouse->enabled, 'badge-ghost' => ! $warehouse->enabled])
+             title="{{ __('Change status') }}">
+            {{ $warehouse->enabled ? __('Enabled') : __('Disabled') }}
+            <x-icon name="chevron-down" size="sm" />
+        </div>
+        <ul tabindex="0" class="dropdown-content menu menu-sm bg-base-100 rounded-box shadow-md w-40 mt-1 p-1 z-50 border border-base-300">
+            @foreach ([1 => __('Enabled'), 0 => __('Disabled')] as $value => $text)
+                <li>
+                    <button type="button"
+                            hx-patch="{{ route('admin.warehouses.status', $warehouse) }}"
+                            hx-vals='@json(['enabled' => $value])'
+                            hx-target="#warehouse-status-{{ $warehouse->id }}" hx-swap="outerHTML"
+                            @class(['font-semibold text-primary' => (int) $warehouse->enabled === $value])>
+                        {{ $text }}
+                    </button>
+                </li>
+            @endforeach
+        </ul>
+    </div>
+</td>

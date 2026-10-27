@@ -1,0 +1,20 @@
+{
+    "id": "torgash.clash",
+    "name": "Clash",
+    "version": "1.0.0",
+    "description": {
+        "en": "Test-only module shipping a migration whose FILENAME collides with the fixture module's. Laravel matches migrations by filename alone, so installing both must be refused.",
+        "ru": "Модуль только для тестов: его миграция называется так же, как у фикстуры. Laravel различает миграции только по имени файла, поэтому установка второго должна быть отклонена."
+    },
+    "provider": "Tests\\Fixtures\\ClashServiceProvider",
+    "autoload": {
+        "Tests\\Fixtures\\": "src/"
+    },
+    "requires": {
+        "core": ">=0.1",
+        "modules": []
+    },
+    "settings": [],
+    "permissions": [],
+    "admin_menu": []
+}

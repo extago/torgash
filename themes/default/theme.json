@@ -1,0 +1,1810 @@
+{
+    "name": "Torgash Default",
+    "parent": null,
+    "version": "1.0.0",
+    "author": {
+        "name": "Torgash",
+        "url": "https://torgash.local"
+    },
+    "description": "The engine's own storefront theme. Colours, fonts, the header and the blocks are all set in the configurator.",
+    "preview": "preview.jpg",
+    "setting_sections": {
+        "general": "General",
+        "colours": "Colours",
+        "text": "Fonts",
+        "shapes": "Width and corners",
+        "header": "Header",
+        "cards": "Product cards",
+        "footer": "Footer",
+        "mobile": "Phone",
+        "code": "Your own CSS"
+    },
+    "setting_section_meta": {
+        "general": {
+            "icon": "sliders-horizontal"
+        },
+        "colours": {
+            "icon": "palette"
+        },
+        "text": {
+            "icon": "type"
+        },
+        "shapes": {
+            "icon": "square-round-corner"
+        },
+        "header": {
+            "icon": "panel-top"
+        },
+        "cards": {
+            "icon": "layout-grid"
+        },
+        "footer": {
+            "icon": "panel-bottom"
+        },
+        "mobile": {
+            "icon": "smartphone",
+            "device": "phone"
+        },
+        "code": {
+            "icon": "code-xml"
+        }
+    },
+    "settings": [
+        {
+            "key": "mode",
+            "section": "general",
+            "type": "segmented",
+            "default": "auto",
+            "label": "Colour scheme",
+            "help": "What a visitor sees first. Their own choice with the sun/moon switch still wins.",
+            "options": {
+                "auto": "Automatic",
+                "light": "Always light",
+                "dark": "Always dark"
+            }
+        },
+        {
+            "key": "logo",
+            "section": "general",
+            "type": "image",
+            "default": "",
+            "label": "Logo",
+            "help": "On a light background. Without one the shop's name is written in its place. A wide picture about 80 px high reads best."
+        },
+        {
+            "key": "logo_on_dark",
+            "section": "general",
+            "type": "image",
+            "default": "",
+            "label": "Logo on a dark background",
+            "help": "For the dark header and the footer. Empty — the logo above is used there too."
+        },
+        {
+            "key": "no_image",
+            "section": "general",
+            "type": "image",
+            "default": "",
+            "label": "Picture for a product with no photo",
+            "help": "Your own placeholder — a logo on a plain background works well; square is best. Without one a quiet frame in the page's own colours is drawn. Never sent to feeds: a marketplace rejects placeholders."
+        },
+        {
+            "key": "primary",
+            "section": "colours",
+            "type": "color",
+            "default": "#13b3f8",
+            "label": "Base colour",
+            "swatches": [
+                "#e53935",
+                "#ef6351",
+                "#f97316",
+                "#f59e0b",
+                "#eab308",
+                "#84cc16",
+                "#22a34a",
+                "#10b981",
+                "#14b8a6",
+                "#13b3f8",
+                "#1e90e0",
+                "#3b82f6",
+                "#4f46e5",
+                "#7c3aed",
+                "#9333ea",
+                "#c026d3",
+                "#db2777",
+                "#e11d48"
+            ],
+            "css": "--color-primary",
+            "group": "Brand colours",
+            "dark": "#13b3f8",
+            "role": "brand",
+            "contrast": "fill",
+            "ink_field": "button_text"
+        },
+        {
+            "key": "button_text",
+            "section": "colours",
+            "type": "segmented",
+            "default": "white",
+            "label": "Button text colour",
+            "options": {
+                "white": "White",
+                "black": "Black"
+            },
+            "css": "--color-primary-content",
+            "css_map": {
+                "white": "#ffffff",
+                "black": "#18181b"
+            },
+            "group": "Brand colours"
+        },
+        {
+            "key": "secondary",
+            "section": "colours",
+            "type": "color",
+            "group": "Brand colours",
+            "default": "#a56ffd",
+            "dark": "#a56ffd",
+            "role": "brand",
+            "label": "Second colour",
+            "css": "--color-secondary",
+            "contrast": "fill",
+            "on": "--color-secondary-content",
+            "help": "Badges and accents that are not the main action.",
+            "swatches": [
+                "#a56ffd",
+                "#7c3aed",
+                "#ec4899",
+                "#f97316",
+                "#14b8a6",
+                "#64748b"
+            ],
+            "on_default": {
+                "light": "#ffffff",
+                "dark": "#ffffff"
+            }
+        },
+        {
+            "key": "accent",
+            "section": "colours",
+            "type": "color",
+            "group": "Brand colours",
+            "default": "#f5b400",
+            "dark": "#f5b400",
+            "role": "brand",
+            "label": "Accent colour",
+            "css": "--color-accent",
+            "contrast": "fill",
+            "on": "--color-accent-content",
+            "help": "A third colour for highlights: a badge, a marker.",
+            "swatches": [
+                "#f5b400",
+                "#f59e0b",
+                "#fb7185",
+                "#22d3ee",
+                "#a3e635",
+                "#e879f9"
+            ],
+            "on_default": {
+                "light": "#2b1e00",
+                "dark": "#2b1e00"
+            }
+        },
+        {
+            "key": "bar_color",
+            "section": "colours",
+            "type": "color",
+            "default": "#29303d",
+            "label": "Header and footer colour",
+            "help": "The dark bars: the header in its dark style, the footer, the phone's header. Their text takes white or dark by itself, whichever reads.",
+            "swatches": [
+                "#29303d",
+                "#111827",
+                "#1e293b",
+                "#18181b",
+                "#1c1917",
+                "#172554",
+                "#052e16",
+                "#3b0764",
+                "#4c0519"
+            ],
+            "css": "--color-neutral",
+            "group": "Header and footer",
+            "dark": "#1c2230",
+            "role": "surface",
+            "contrast": "fill",
+            "on": "--color-neutral-content",
+            "on_default": {
+                "light": "#e7e9ee",
+                "dark": "#e7e9ee"
+            }
+        },
+        {
+            "key": "success",
+            "section": "colours",
+            "type": "color",
+            "group": "States",
+            "default": "#00b259",
+            "dark": "#00b259",
+            "role": "brand",
+            "label": "Success",
+            "css": "--color-success",
+            "contrast": "fill",
+            "on": "--color-success-content",
+            "help": "\"In the basket\", \"Saved\", a paid order.",
+            "swatches": [
+                "#00b259",
+                "#16a34a",
+                "#22c55e",
+                "#10b981",
+                "#059669"
+            ],
+            "on_default": {
+                "light": "#ffffff",
+                "dark": "#ffffff"
+            }
+        },
+        {
+            "key": "warning",
+            "section": "colours",
+            "type": "color",
+            "group": "States",
+            "default": "#ffeca8",
+            "dark": "#ffd75e",
+            "role": "brand",
+            "label": "Warning",
+            "css": "--color-warning",
+            "contrast": "fill",
+            "on": "--color-warning-content",
+            "swatches": [
+                "#ffeca8",
+                "#ffd75e",
+                "#fde68a",
+                "#fbbf24",
+                "#f59e0b"
+            ],
+            "on_default": {
+                "light": "#2b2100",
+                "dark": "#2b2100"
+            }
+        },
+        {
+            "key": "error",
+            "section": "colours",
+            "type": "color",
+            "group": "States",
+            "default": "#ff4f64",
+            "dark": "#ff4f64",
+            "role": "brand",
+            "label": "Error",
+            "css": "--color-error",
+            "contrast": "fill",
+            "on": "--color-error-content",
+            "help": "A field the form could not take, a refused payment.",
+            "swatches": [
+                "#ff4f64",
+                "#ef4444",
+                "#e11d48",
+                "#dc2626",
+                "#f43f5e"
+            ],
+            "on_default": {
+                "light": "#ffffff",
+                "dark": "#ffffff"
+            }
+        },
+        {
+            "key": "info",
+            "section": "colours",
+            "type": "color",
+            "group": "States",
+            "default": "#2ab0ed",
+            "dark": "#2ab0ed",
+            "role": "brand",
+            "label": "Information",
+            "css": "--color-info",
+            "contrast": "fill",
+            "on": "--color-info-content",
+            "swatches": [
+                "#2ab0ed",
+                "#0ea5e9",
+                "#3b82f6",
+                "#06b6d4",
+                "#6366f1"
+            ],
+            "on_default": {
+                "light": "#191b1e",
+                "dark": "#191b1e"
+            }
+        },
+        {
+            "key": "price_color",
+            "section": "colours",
+            "type": "color",
+            "group": "Prices and stock",
+            "default": "#191b1e",
+            "dark": "#e7e9ee",
+            "role": "text",
+            "label": "Price",
+            "css": "--torgash-price",
+            "contrast": "text",
+            "help": "The price on cards, rows and the product page."
+        },
+        {
+            "key": "old_price_color",
+            "section": "colours",
+            "type": "color",
+            "group": "Prices and stock",
+            "default": "#a3a4a5",
+            "dark": "#6f747d",
+            "role": "",
+            "label": "Old price",
+            "css": "--torgash-old-price",
+            "contrast": "text",
+            "help": "The struck-through price beside a discount. Paler than the price on purpose."
+        },
+        {
+            "key": "discount_color",
+            "section": "colours",
+            "type": "color",
+            "group": "Prices and stock",
+            "default": "#ff4f64",
+            "dark": "#ff4f64",
+            "role": "brand",
+            "label": "Discount",
+            "css": "--torgash-discount",
+            "contrast": "fill",
+            "on": "--torgash-discount-content",
+            "on_default": {
+                "light": "#ffffff",
+                "dark": "#ffffff"
+            },
+            "help": "The \"−20%\" badge, \"You save\" and a set's lowered price."
+        },
+        {
+            "key": "in_stock_color",
+            "section": "colours",
+            "type": "color",
+            "group": "Prices and stock",
+            "default": "#13b3f8",
+            "dark": "#13b3f8",
+            "role": "text",
+            "label": "In stock",
+            "css": "--torgash-in-stock",
+            "contrast": "text",
+            "help": "Until you change it, it follows the base colour."
+        },
+        {
+            "key": "out_of_stock_color",
+            "section": "colours",
+            "type": "color",
+            "group": "Prices and stock",
+            "default": "#8c8d8f",
+            "dark": "#81868f",
+            "role": "",
+            "label": "Out of stock",
+            "css": "--torgash-out-of-stock",
+            "contrast": "text"
+        },
+        {
+            "key": "star_color",
+            "section": "colours",
+            "type": "color",
+            "group": "Prices and stock",
+            "default": "#f5a524",
+            "dark": "#f5a524",
+            "role": "brand",
+            "label": "Rating stars",
+            "css": "--torgash-star",
+            "contrast": "none",
+            "swatches": [
+                "#f5a524",
+                "#facc15",
+                "#f59e0b",
+                "#fb923c",
+                "#ef4444"
+            ]
+        },
+        {
+            "key": "page_bg",
+            "section": "colours",
+            "type": "segmented",
+            "default": "grey",
+            "label": "Page background",
+            "help": "Behind the panels and cards, in the light scheme. The dark scheme keeps its own.",
+            "options": {
+                "grey": "Light grey",
+                "white": "White",
+                "warm": "Warm"
+            },
+            "css": "--torgash-page-bg",
+            "css_map": {
+                "grey": "#f5f6f9",
+                "white": "#ffffff",
+                "warm": "#f6f3ee"
+            },
+            "style": ":root[data-theme=\"torgash-light\"] body.torgash-storefront { background-color: var(--torgash-page-bg); } @media (prefers-color-scheme: light) { :root:not([data-theme]) body.torgash-storefront { background-color: var(--torgash-page-bg); } }",
+            "group": "Page"
+        },
+        {
+            "key": "dark_tone",
+            "section": "colours",
+            "type": "segmented",
+            "group": "Page",
+            "default": "slate",
+            "scheme": true,
+            "label": "Dark scheme tone",
+            "help": "What the dark scheme’s panels, page and lines are tinted with. A dark colour typed for one of them still wins.",
+            "options": {
+                "slate": "Blue-grey",
+                "neutral": "Graphite",
+                "warm": "Warm",
+                "brand": "From the base colour"
+            },
+            "dark_surfaces": {
+                "slate": {
+                    "--color-base-100": "#1c2230",
+                    "--torgash-page-100": "#1c2230",
+                    "--color-base-200": "#12161e",
+                    "--torgash-page-200": "#12161e",
+                    "--color-base-300": "#262d3d",
+                    "--torgash-page-300": "#262d3d",
+                    "--color-base-content": "#e7e9ee",
+                    "--torgash-page-content": "#e7e9ee",
+                    "--color-neutral": "#1c2230"
+                },
+                "neutral": {
+                    "--color-base-100": "#1d1d20",
+                    "--torgash-page-100": "#1d1d20",
+                    "--color-base-200": "#131315",
+                    "--torgash-page-200": "#131315",
+                    "--color-base-300": "#2b2b2f",
+                    "--torgash-page-300": "#2b2b2f",
+                    "--color-base-content": "#e8e8ea",
+                    "--torgash-page-content": "#e8e8ea",
+                    "--color-neutral": "#18181b"
+                },
+                "warm": {
+                    "--color-base-100": "#221f1c",
+                    "--torgash-page-100": "#221f1c",
+                    "--color-base-200": "#171513",
+                    "--torgash-page-200": "#171513",
+                    "--color-base-300": "#312d29",
+                    "--torgash-page-300": "#312d29",
+                    "--color-base-content": "#ece8e3",
+                    "--torgash-page-content": "#ece8e3",
+                    "--color-neutral": "#1f1c19"
+                },
+                "brand": "primary"
+            }
+        },
+        {
+            "key": "text_color",
+            "section": "colours",
+            "type": "color",
+            "group": "Page",
+            "default": "#191b1e",
+            "dark": "#e7e9ee",
+            "role": "text",
+            "label": "Text colour",
+            "css": [
+                "--color-base-content",
+                "--torgash-page-content"
+            ],
+            "contrast": "text",
+            "help": "The words on the page. Its dark twin rises until it reads on the dark page."
+        },
+        {
+            "key": "card_color",
+            "section": "colours",
+            "type": "color",
+            "group": "Page",
+            "default": "#ffffff",
+            "dark": "#1c2230",
+            "role": "surface",
+            "label": "Panels and cards",
+            "css": [
+                "--color-base-100",
+                "--torgash-page-100"
+            ],
+            "contrast": "surface"
+        },
+        {
+            "key": "border_color",
+            "section": "colours",
+            "type": "color",
+            "group": "Page",
+            "default": "#eaecf2",
+            "dark": "#262d3d",
+            "role": "surface",
+            "label": "Lines and borders",
+            "css": [
+                "--color-base-300",
+                "--torgash-page-300"
+            ],
+            "contrast": "none"
+        },
+        {
+            "key": "page_background",
+            "section": "colours",
+            "type": "background",
+            "group": "Backgrounds",
+            "default": "",
+            "label": "Page: gradient or picture",
+            "selector": "body.torgash-storefront",
+            "help": "Behind the panels and cards. A picture covers the page; the colour above stays under it.",
+            "tint_from": "card_color"
+        },
+        {
+            "key": "header_background",
+            "section": "colours",
+            "type": "background",
+            "group": "Backgrounds",
+            "default": "",
+            "label": "Header: gradient or picture",
+            "selector": ".torgash-header-bar",
+            "help": "Each row of the header — the strip and the main row draw it on their own.",
+            "tint_from": "bar_color"
+        },
+        {
+            "key": "footer_background",
+            "section": "colours",
+            "type": "background",
+            "group": "Backgrounds",
+            "default": "",
+            "label": "Footer: gradient or picture",
+            "selector": ".torgash-footer",
+            "help": "Behind the footer's columns.",
+            "tint_from": "bar_color"
+        },
+        {
+            "key": "font",
+            "section": "text",
+            "type": "segmented",
+            "default": "finlandica",
+            "label": "Font",
+            "options": {
+                "finlandica": "Finlandica Text",
+                "golos": "Golos Text",
+                "manrope": "Manrope",
+                "rubik": "Rubik",
+                "system": "The device's own"
+            },
+            "css": "--font-sans",
+            "css_map": {
+                "finlandica": "\"Finlandica Text\", ui-sans-serif, system-ui, sans-serif",
+                "golos": "\"Golos Text\", ui-sans-serif, system-ui, sans-serif",
+                "manrope": "\"Manrope\", ui-sans-serif, system-ui, sans-serif",
+                "rubik": "\"Rubik\", ui-sans-serif, system-ui, sans-serif",
+                "system": "ui-sans-serif, system-ui, -apple-system, \"Segoe UI\", Roboto, sans-serif"
+            },
+            "fonts": {
+                "golos": [
+                    {
+                        "family": "Golos Text",
+                        "file": "fonts/golos-text-cyrillic-wght-normal.woff2",
+                        "range": "U+0301, U+0400-045F, U+0490-0491, U+04B0-04B1, U+2116"
+                    },
+                    {
+                        "family": "Golos Text",
+                        "file": "fonts/golos-text-latin-wght-normal.woff2",
+                        "range": "U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD"
+                    }
+                ],
+                "manrope": [
+                    {
+                        "family": "Manrope",
+                        "file": "fonts/manrope-cyrillic-wght-normal.woff2",
+                        "range": "U+0301, U+0400-045F, U+0490-0491, U+04B0-04B1, U+2116"
+                    },
+                    {
+                        "family": "Manrope",
+                        "file": "fonts/manrope-latin-wght-normal.woff2",
+                        "range": "U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD"
+                    }
+                ],
+                "rubik": [
+                    {
+                        "family": "Rubik",
+                        "file": "fonts/rubik-cyrillic-wght-normal.woff2",
+                        "range": "U+0301, U+0400-045F, U+0490-0491, U+04B0-04B1, U+2116"
+                    },
+                    {
+                        "family": "Rubik",
+                        "file": "fonts/rubik-latin-wght-normal.woff2",
+                        "range": "U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD"
+                    }
+                ]
+            }
+        },
+        {
+            "key": "heading_font",
+            "section": "text",
+            "type": "segmented",
+            "default": "same",
+            "label": "Headings font",
+            "help": "A second font for the headings and the product names on their own pages; the rest stays in the font above.",
+            "options": {
+                "same": "Same as the text",
+                "finlandica": "Finlandica Text",
+                "golos": "Golos Text",
+                "manrope": "Manrope",
+                "rubik": "Rubik",
+                "system": "The device's own"
+            },
+            "css": "--torgash-heading-font",
+            "css_map": {
+                "finlandica": "\"Finlandica Text\", ui-sans-serif, system-ui, sans-serif",
+                "golos": "\"Golos Text\", ui-sans-serif, system-ui, sans-serif",
+                "manrope": "\"Manrope\", ui-sans-serif, system-ui, sans-serif",
+                "rubik": "\"Rubik\", ui-sans-serif, system-ui, sans-serif",
+                "system": "ui-sans-serif, system-ui, -apple-system, \"Segoe UI\", Roboto, sans-serif"
+            },
+            "style": ".torgash-storefront :is(h1, h2, h3, .card-title) { font-family: var(--torgash-heading-font); }",
+            "fonts": {
+                "golos": [
+                    {
+                        "family": "Golos Text",
+                        "file": "fonts/golos-text-cyrillic-wght-normal.woff2",
+                        "range": "U+0301, U+0400-045F, U+0490-0491, U+04B0-04B1, U+2116"
+                    },
+                    {
+                        "family": "Golos Text",
+                        "file": "fonts/golos-text-latin-wght-normal.woff2",
+                        "range": "U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD"
+                    }
+                ],
+                "manrope": [
+                    {
+                        "family": "Manrope",
+                        "file": "fonts/manrope-cyrillic-wght-normal.woff2",
+                        "range": "U+0301, U+0400-045F, U+0490-0491, U+04B0-04B1, U+2116"
+                    },
+                    {
+                        "family": "Manrope",
+                        "file": "fonts/manrope-latin-wght-normal.woff2",
+                        "range": "U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD"
+                    }
+                ],
+                "rubik": [
+                    {
+                        "family": "Rubik",
+                        "file": "fonts/rubik-cyrillic-wght-normal.woff2",
+                        "range": "U+0301, U+0400-045F, U+0490-0491, U+04B0-04B1, U+2116"
+                    },
+                    {
+                        "family": "Rubik",
+                        "file": "fonts/rubik-latin-wght-normal.woff2",
+                        "range": "U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD"
+                    }
+                ]
+            }
+        },
+        {
+            "key": "font_size",
+            "section": "text",
+            "type": "segmented",
+            "default": "16",
+            "label": "Text size",
+            "options": {
+                "15": "15 px",
+                "16": "16 px",
+                "17": "17 px"
+            },
+            "css": "--torgash-font-size",
+            "unit": "px",
+            "style": "body.torgash-storefront { font-size: var(--torgash-font-size); }"
+        },
+        {
+            "key": "heading_weight",
+            "section": "text",
+            "type": "segmented",
+            "default": "700",
+            "label": "Headings",
+            "options": {
+                "700": "Bold",
+                "600": "Semibold",
+                "500": "Medium",
+                "400": "Normal"
+            },
+            "css": "--torgash-heading-weight",
+            "style": ".torgash-storefront main :is(h1, h2) { font-weight: var(--torgash-heading-weight); }"
+        },
+        {
+            "key": "width",
+            "section": "shapes",
+            "type": "number",
+            "default": "1500",
+            "label": "Site width",
+            "help": "The widest the page gets on a large screen, in pixels: 1024–1920.",
+            "min": 1024,
+            "max": 1920,
+            "step": 4,
+            "css": "--torgash-container",
+            "unit": "px"
+        },
+        {
+            "key": "radius_button",
+            "section": "shapes",
+            "type": "number",
+            "default": "8",
+            "label": "Button corners",
+            "min": 0,
+            "max": 32,
+            "step": 1,
+            "css": "--radius-field",
+            "unit": "px"
+        },
+        {
+            "key": "radius_badge",
+            "section": "shapes",
+            "type": "number",
+            "default": "8",
+            "label": "Badge corners",
+            "min": 0,
+            "max": 32,
+            "step": 1,
+            "css": "--radius-selector",
+            "unit": "px"
+        },
+        {
+            "key": "radius_box",
+            "section": "shapes",
+            "type": "number",
+            "default": "12",
+            "label": "Panel corners",
+            "min": 0,
+            "max": 32,
+            "step": 1,
+            "css": "--radius-box",
+            "unit": "px"
+        },
+        {
+            "key": "radius_image",
+            "section": "shapes",
+            "type": "number",
+            "default": "0",
+            "label": "Picture corners",
+            "min": 0,
+            "max": 32,
+            "step": 1,
+            "css": "--torgash-radius-image",
+            "unit": "px",
+            "style": ".torgash-card figure, .torgash-card figure > img { border-radius: var(--torgash-radius-image); }"
+        },
+        {
+            "key": "header",
+            "section": "header",
+            "type": "segmented",
+            "default": "two_rows",
+            "label": "Header layout",
+            "help": "Two rows: a thin strip and a compact main row. Three rows: a taller main row with the icons signed, the strip of links above it.",
+            "options": {
+                "two_rows": "Two rows",
+                "three_rows": "Three rows"
+            },
+            "renamed": {
+                "dark": "two_rows",
+                "light": "three_rows"
+            }
+        },
+        {
+            "key": "header_palette",
+            "section": "header",
+            "type": "segmented",
+            "default": "dark",
+            "label": "Header colours",
+            "help": "Dark takes the header and footer colour (Colours). Light takes the page's own, with a line under each row.",
+            "options": {
+                "dark": "Dark bar",
+                "light": "The page's colours"
+            },
+            "follows": {
+                "key": "header",
+                "map": {
+                    "dark": "dark",
+                    "light": "light"
+                }
+            }
+        },
+        {
+            "key": "header_contacts",
+            "section": "header",
+            "type": "segmented",
+            "default": "main",
+            "label": "Phone and contacts",
+            "help": "Where the block of the zone \"Header — after the search box\" stands: in the main row, or up in the thin strip beside the language and currency.",
+            "options": {
+                "main": "After the search",
+                "strip": "In the top strip"
+            }
+        },
+        {
+            "key": "logo_height",
+            "section": "header",
+            "type": "segmented",
+            "default": "auto",
+            "label": "Logo height on a computer",
+            "help": "For an uploaded logo. \"The header's own\" keeps the size the header style draws.",
+            "options": {
+                "auto": "The header's own",
+                "28": "28",
+                "36": "36",
+                "44": "44",
+                "52": "52",
+                "60": "60"
+            },
+            "css": "--torgash-logo-h",
+            "css_map": {
+                "28": "28px",
+                "36": "36px",
+                "44": "44px",
+                "52": "52px",
+                "60": "60px"
+            },
+            "style": "@media (min-width: 1024px) { .torgash-storefront header img.torgash-logo { height: var(--torgash-logo-h); max-width: 16rem; } }"
+        },
+        {
+            "key": "account_menu",
+            "section": "header",
+            "type": "segmented",
+            "default": "compact",
+            "label": "Account menu in the header",
+            "help": "Short shows the orders, the wishlist and whatever has a number on it (unread replies, bonus points); the rest of the account opens under \"All sections\". The account page itself always lists everything.",
+            "options": {
+                "compact": "Short",
+                "full": "Every section"
+            }
+        },
+        {
+            "key": "header_sticky",
+            "section": "header",
+            "type": "checkbox",
+            "default": true,
+            "label": "Keep the header on screen while scrolling"
+        },
+        {
+            "key": "header_sticky_rows",
+            "section": "header",
+            "type": "segmented",
+            "default": "main",
+            "label": "What stays on screen",
+            "help": "The main row is the logo, the search and the basket; the thin strip above it (town, language, currency) scrolls away with the page.",
+            "options": {
+                "main": "The main row",
+                "all": "The whole header"
+            }
+        },
+        {
+            "key": "brands_button",
+            "section": "header",
+            "type": "checkbox",
+            "default": false,
+            "label": "The \"Brands\" button beside the catalogue",
+            "help": "Off — the search gets the room. Brands are one link away in the top strip either way."
+        },
+        {
+            "key": "catalog_button",
+            "section": "header",
+            "type": "checkbox",
+            "default": true,
+            "label": "The \"Catalogue\" button in the header",
+            "help": "Off — when the strip under the header already holds the catalogue's departments."
+        },
+        {
+            "key": "quiet_checkout_header",
+            "section": "header",
+            "type": "checkbox",
+            "default": true,
+            "label": "A quiet header on the cart and checkout pages",
+            "help": "The town, the logo and the contacts — no search, catalogue or menus, so nothing leads away from paying."
+        },
+        {
+            "key": "category_strip",
+            "section": "header",
+            "type": "checkbox",
+            "default": false,
+            "label": "A strip of top categories under the header",
+            "help": "A category that has subcategories opens them on hover. What does not fit in one row goes on to the next page of the strip (the \"› 1/2\" button)."
+        },
+        {
+            "key": "category_strip_sticky",
+            "section": "header",
+            "type": "checkbox",
+            "default": false,
+            "label": "The strip stays on screen too"
+        },
+        {
+            "key": "catalog_menu",
+            "section": "header",
+            "type": "select",
+            "default": "catalog",
+            "label": "The \"Catalogue\" button opens",
+            "help": "A menu from Appearance → Menus. A category item there can open into its subcategories and show only those with something to buy.",
+            "options": {
+                "": "The categories, automatically"
+            },
+            "options_from": "menus"
+        },
+        {
+            "key": "catalog_menu_column_limit",
+            "section": "header",
+            "type": "number",
+            "default": 5,
+            "label": "Links under a heading in the Catalogue menu",
+            "help": "A subcategory with subcategories of its own is a column: its name as the heading, its children under it. Past this many, \"More\" opens the rest. 0 — all of them."
+        },
+        {
+            "key": "strip_menu",
+            "section": "header",
+            "type": "select",
+            "default": "",
+            "label": "The strip under the header shows",
+            "options": {
+                "": "The top categories, automatically"
+            },
+            "options_from": "menus"
+        },
+        {
+            "key": "show_language",
+            "section": "header",
+            "type": "checkbox",
+            "default": true,
+            "label": "Language switch in the header",
+            "help": "Drawn only when the storefront has more than one language."
+        },
+        {
+            "key": "show_currency",
+            "section": "header",
+            "type": "checkbox",
+            "default": true,
+            "label": "Currency switch in the header",
+            "help": "Drawn only when there is more than one currency."
+        },
+        {
+            "key": "show_mode_switch",
+            "section": "header",
+            "type": "checkbox",
+            "default": true,
+            "label": "Light/dark switch in the header"
+        },
+        {
+            "key": "card_image",
+            "section": "cards",
+            "type": "segmented",
+            "default": "square",
+            "label": "Picture shape",
+            "help": "The frame a product's photo is shown in, in every grid and carousel.",
+            "options": {
+                "square": "Square",
+                "portrait": "Portrait 3:4",
+                "landscape": "Landscape 4:3"
+            },
+            "css": "--torgash-card-ratio",
+            "css_map": {
+                "square": "1 / 1",
+                "portrait": "3 / 4",
+                "landscape": "4 / 3"
+            },
+            "style": ".torgash-card figure { aspect-ratio: var(--torgash-card-ratio); }"
+        },
+        {
+            "key": "card_image_fit",
+            "section": "cards",
+            "type": "segmented",
+            "default": "contain",
+            "label": "Photo in the frame",
+            "help": "\"Whole\" never crops a product; \"Fill\" crops the edges so every card is covered — good for photos shot on a background.",
+            "options": {
+                "contain": "Whole",
+                "cover": "Fill"
+            },
+            "css": "--torgash-card-fit",
+            "css_map": {
+                "contain": "contain",
+                "cover": "cover"
+            },
+            "style": ".torgash-card figure > img { width: 100%; height: 100%; object-fit: var(--torgash-card-fit); }"
+        },
+        {
+            "key": "card_image_backdrop",
+            "section": "cards",
+            "type": "segmented",
+            "default": "soft",
+            "label": "Behind the photo",
+            "help": "What fills the frame around a photo that does not cover it. \"Like the page\" suits photos shot on white.",
+            "options": {
+                "soft": "Grey",
+                "page": "Like the page",
+                "white": "White"
+            },
+            "css": "--torgash-card-backdrop",
+            "css_map": {
+                "soft": "var(--color-base-200)",
+                "page": "transparent",
+                "white": "#fff"
+            },
+            "style": ".torgash-card figure { background: var(--torgash-card-backdrop); }"
+        },
+        {
+            "key": "catalog_columns",
+            "section": "cards",
+            "type": "segmented",
+            "default": "4",
+            "label": "Products in a row in the catalogue",
+            "help": "On a wide screen, beside the filters. Smaller screens fit as many as they can.",
+            "options": {
+                "3": "3",
+                "4": "4",
+                "5": "5"
+            }
+        },
+        {
+            "key": "mobile_header",
+            "section": "mobile",
+            "type": "select",
+            "default": "search",
+            "label": "The phone's header",
+            "help": "One row at the top of a phone screen. With the logo the search is one tap further away, the price of naming the shop on every screen.",
+            "options": {
+                "search": "The menu and the search field",
+                "search_mark": "The search field with the shop's sign in it",
+                "logo": "The logo and icons; the magnifier opens the search"
+            }
+        },
+        {
+            "key": "mobile_mark",
+            "section": "mobile",
+            "type": "image",
+            "default": "",
+            "label": "The shop's sign in the search field",
+            "help": "A square picture, 64 px or more. Empty — the first letter of the shop's name. Used by \"The search field with the shop's sign in it\"."
+        },
+        {
+            "key": "mobile_header_phone",
+            "section": "mobile",
+            "type": "checkbox",
+            "default": true,
+            "label": "Phone icon in the header with the logo",
+            "help": "Dials the shop's phone from Settings → Contacts; not drawn when there is none."
+        },
+        {
+            "key": "tabbar_menu",
+            "section": "mobile",
+            "type": "select",
+            "default": "tabbar",
+            "label": "The bottom bar shows",
+            "help": "A menu from Appearance → Menus: shortcuts (the basket with its count, \"open the catalogue\"), pages and categories. The first five with an address are drawn; an entry without an icon gets a circle.",
+            "options": {
+                "": "Automatically: what the modules add"
+            },
+            "options_from": "menus"
+        },
+        {
+            "key": "footer_layout",
+            "section": "footer",
+            "type": "segmented",
+            "default": "columns",
+            "label": "Footer layout",
+            "help": "Columns: the bands and the columns side by side. Compact: no advantages band and less air. Centred: everything in one column down the middle.",
+            "options": {
+                "columns": "Columns",
+                "compact": "Compact",
+                "centred": "Centred"
+            }
+        },
+        {
+            "key": "footer_palette",
+            "section": "footer",
+            "type": "segmented",
+            "default": "dark",
+            "label": "Footer colours",
+            "help": "Dark takes the colour of the header bar (Colours). Light takes the page's own, with a line above. A signature written with {logo_dark} wants {logo} on a light footer.",
+            "options": {
+                "dark": "Dark bar",
+                "light": "The page's colours"
+            }
+        },
+        {
+            "key": "footer_columns",
+            "section": "footer",
+            "type": "segmented",
+            "default": "equal",
+            "label": "Column widths",
+            "help": "On a computer, for the columns layouts. The columns are the zones that have blocks in them.",
+            "options": {
+                "equal": "Equal",
+                "first": "The first wider",
+                "middle": "The middle wider"
+            }
+        },
+        {
+            "key": "footer_dividers",
+            "section": "footer",
+            "type": "checkbox",
+            "default": true,
+            "label": "Lines between the columns and the bands"
+        },
+        {
+            "key": "footer_bottom",
+            "section": "footer",
+            "type": "segmented",
+            "default": "spread",
+            "label": "The bottom line",
+            "help": "The shop's signature and the payment marks. The centred layout always centres it.",
+            "options": {
+                "spread": "Signature left, payments right",
+                "centred": "Centred"
+            }
+        },
+        {
+            "key": "footer_fold_menus",
+            "section": "footer",
+            "type": "checkbox",
+            "default": true,
+            "label": "Fold the menus on a phone",
+            "help": "Each menu column shows its title; the links open with the arrow beside it. Off — every link is on show, one long list."
+        },
+        {
+            "key": "custom_css",
+            "section": "code",
+            "type": "code",
+            "default": "",
+            "label": "Your own CSS",
+            "help": "Printed after the theme's own styles, so it can change anything. Your own JavaScript goes into Code snippets (category \"Necessary\"), where consent is respected."
+        }
+    ],
+    "presets": [
+        {
+            "key": "classic",
+            "name": "Classic",
+            "description": "The theme as it ships: the dark bar, sky blue, Finlandica Text.",
+            "preview": "presets/classic.jpg",
+            "settings": {}
+        },
+        {
+            "key": "light",
+            "name": "Bright",
+            "description": "The light three-row header with a strip of categories, Golos Text.",
+            "preview": "presets/light.jpg",
+            "settings": {
+                "header": "light",
+                "category_strip": true,
+                "font": "golos"
+            }
+        },
+        {
+            "key": "soft",
+            "name": "Soft",
+            "description": "Violet, round corners everywhere, Manrope, lighter headings — and the home page's products as carousels.",
+            "preview": "presets/soft.jpg",
+            "settings": {
+                "header": "light",
+                "category_strip": true,
+                "primary": "#7c3aed",
+                "font": "manrope",
+                "heading_weight": "600",
+                "radius_button": "24",
+                "radius_badge": "24",
+                "radius_box": "24",
+                "radius_image": "16"
+            },
+            "blocks": {
+                "storefront.home.products": [
+                    {
+                        "type": "products",
+                        "title": "Popular",
+                        "tabs": "home",
+                        "settings": {
+                            "heading": {
+                                "en": "Popular",
+                                "ru": "Популярное"
+                            },
+                            "source": "all",
+                            "sort": "popular",
+                            "limit": 12,
+                            "layout": "carousel",
+                            "reveal": 0,
+                            "link_all": false
+                        }
+                    },
+                    {
+                        "type": "products",
+                        "title": "New arrivals",
+                        "tabs": "home",
+                        "settings": {
+                            "heading": {
+                                "en": "New arrivals",
+                                "ru": "Новинки"
+                            },
+                            "source": "all",
+                            "sort": "newest",
+                            "limit": 12,
+                            "layout": "carousel",
+                            "reveal": 0,
+                            "link_all": false
+                        }
+                    },
+                    {
+                        "type": "products",
+                        "title": "On sale",
+                        "tabs": "home",
+                        "settings": {
+                            "heading": {
+                                "en": "On sale",
+                                "ru": "Со скидкой"
+                            },
+                            "source": "flag:on_sale",
+                            "sort": "popular",
+                            "limit": 12,
+                            "layout": "carousel",
+                            "reveal": 0,
+                            "link_all": true
+                        }
+                    }
+                ]
+            }
+        },
+        {
+            "key": "strict",
+            "name": "Strict",
+            "description": "Square corners, the device's own font, a narrower page, blue.",
+            "preview": "presets/strict.jpg",
+            "settings": {
+                "primary": "#3b82f6",
+                "font": "system",
+                "width": "1296",
+                "radius_button": "0",
+                "radius_badge": "0",
+                "radius_box": "0",
+                "radius_image": "0"
+            }
+        }
+    ],
+    "colour_schemes": [
+        {
+            "key": "sky",
+            "name": "Sky",
+            "colours": {}
+        },
+        {
+            "key": "ocean",
+            "name": "Ocean",
+            "colours": {
+                "primary": "#1e90e0",
+                "bar_color": "#0f2a44",
+                "accent": "#f59e0b"
+            }
+        },
+        {
+            "key": "forest",
+            "name": "Forest",
+            "colours": {
+                "primary": "#16a34a",
+                "bar_color": "#14291f",
+                "secondary": "#0d9488",
+                "accent": "#eab308",
+                "dark_tone": "brand"
+            }
+        },
+        {
+            "key": "violet",
+            "name": "Violet",
+            "colours": {
+                "primary": "#7c3aed",
+                "bar_color": "#1e1b3a",
+                "secondary": "#ec4899",
+                "accent": "#f59e0b",
+                "dark_tone": "brand"
+            }
+        },
+        {
+            "key": "coral",
+            "name": "Coral",
+            "colours": {
+                "primary": "#f43f5e",
+                "bar_color": "#2a1d24",
+                "secondary": "#f97316",
+                "accent": "#f5b400",
+                "discount_color": "#e11d48",
+                "dark_tone": "warm"
+            }
+        },
+        {
+            "key": "graphite",
+            "name": "Graphite",
+            "colours": {
+                "primary": "#27272a",
+                "bar_color": "#09090b",
+                "secondary": "#71717a",
+                "accent": "#f5b400",
+                "in_stock_color": "#16a34a",
+                "dark_tone": "neutral"
+            }
+        },
+        {
+            "key": "daylight",
+            "name": "Daylight",
+            "colours": {
+                "primary": "#f97316",
+                "bar_color": "#f5f6f9",
+                "accent": "#13b3f8",
+                "dark_tone": "neutral"
+            }
+        }
+    ],
+    "zones": [
+        {
+            "name": "storefront.page.top",
+            "group": "header",
+            "label": "Above the whole site, before the header",
+            "shape": "wide"
+        },
+        {
+            "name": "storefront.header.top_start",
+            "group": "header",
+            "label": "Header — top strip, after the town",
+            "shape": "inline",
+            "default_blocks": [
+                {
+                    "type": "menu",
+                    "title": "Top strip menu",
+                    "settings": {
+                        "menu": "top",
+                        "look": "inline",
+                        "depth": 2,
+                        "icons": true,
+                        "badges": true,
+                        "heading": {
+                            "en": "Information",
+                            "ru": "Информация"
+                        }
+                    }
+                }
+            ]
+        },
+        {
+            "name": "storefront.header.top_end",
+            "group": "header",
+            "label": "Header — top strip, before the language and currency",
+            "shape": "inline"
+        },
+        {
+            "name": "storefront.header.after_search",
+            "group": "header",
+            "label": "Header — after the search box",
+            "shape": "inline",
+            "default_blocks": [
+                {
+                    "type": "html",
+                    "title": "Contacts",
+                    "settings": {
+                        "hide_if_empty": "phone",
+                        "html": "<div class=\"shrink-0 hidden md:block\">\n  <button type=\"button\" popovertarget=\"contacts-menu\" style=\"anchor-name: --contacts-menu\" class=\"btn btn-ghost btn-sm gap-1.5 normal-case\">\n    {icon_phone}\n    <span class=\"hidden xl:inline font-semibold whitespace-nowrap\">{phone}</span>\n    <span class=\"opacity-50\">{icon_chevron-down}</span>\n  </button>\n  <div id=\"contacts-menu\" popover style=\"position-anchor: --contacts-menu\" data-placement=\"bottom\" class=\"torgash-popover torgash-bar-panel bg-base-100 text-base-content border border-base-300 rounded-box shadow-lg w-72 p-4\">\n    <div class=\"flex flex-col gap-3\">\n      <div class=\"flex items-center gap-3\">\n        <span class=\"h-10 w-10 rounded-xl bg-primary/10 text-primary flex items-center justify-center shrink-0\">{icon_phone}</span>\n        <span>\n          <span class=\"block text-xs uppercase tracking-wide opacity-50\">{label_phone}</span>\n          <a class=\"block text-lg font-bold\" href=\"{phone_link}\">{phone}</a>\n        </span>\n      </div>\n      {phones}\n      {messengers}\n      <a class=\"btn btn-primary w-full gap-2\" href=\"{callback_link}\">{icon_phone} {label_callback}</a>\n      {email_row}\n      {hours_row}\n      {socials}\n    </div>\n  </div>\n</div>"
+                    }
+                }
+            ]
+        },
+        {
+            "name": "storefront.home.top",
+            "group": "home",
+            "label": "Homepage — above everything"
+        },
+        {
+            "name": "storefront.home.content",
+            "group": "home",
+            "label": "Homepage — above the products",
+            "default_blocks": [
+                {
+                    "type": "category_tiles",
+                    "title": "Categories",
+                    "settings": {
+                        "heading": {
+                            "en": "Shop by category",
+                            "ru": "Категории"
+                        },
+                        "categories": [],
+                        "layout": "strip",
+                        "look": "corner",
+                        "colors": "tinted",
+                        "picture": "auto",
+                        "picture_size": 72,
+                        "padding": "",
+                        "gap_size": 16,
+                        "text_size": 14,
+                        "indicator": true,
+                        "arrows": false
+                    }
+                }
+            ]
+        },
+        {
+            "name": "cart.page.bottom",
+            "group": "cart",
+            "label": "Cart page — under the cart",
+            "default_blocks": [
+                {
+                    "type": "products",
+                    "title": "You may also like",
+                    "settings": {
+                        "heading": {
+                            "en": "You may also like",
+                            "ru": "Вам может понравиться"
+                        },
+                        "source": "all",
+                        "sort": "popular",
+                        "limit": 12,
+                        "layout": "carousel",
+                        "reveal": 0,
+                        "link_all": false
+                    }
+                }
+            ]
+        },
+        {
+            "name": "catalog.product.bottom",
+            "group": "product",
+            "label": "Product page — at the very bottom",
+            "default_blocks": [
+                {
+                    "type": "products",
+                    "title": "Similar products",
+                    "tabs": "product",
+                    "settings": {
+                        "heading": {
+                            "en": "Similar products",
+                            "ru": "Похожие товары"
+                        },
+                        "source": "similar",
+                        "sort": "popular",
+                        "limit": 12,
+                        "layout": "carousel",
+                        "per_row": "5",
+                        "reveal": 0,
+                        "link_all": false
+                    }
+                },
+                {
+                    "type": "products",
+                    "title": "Bestsellers",
+                    "tabs": "product",
+                    "settings": {
+                        "heading": {
+                            "en": "Bestsellers",
+                            "ru": "Хиты продаж"
+                        },
+                        "source": "all",
+                        "sort": "popular",
+                        "limit": 12,
+                        "layout": "carousel",
+                        "per_row": "5",
+                        "reveal": 0,
+                        "link_all": false
+                    }
+                },
+                {
+                    "type": "products",
+                    "title": "Viewed recently",
+                    "tabs": "product",
+                    "settings": {
+                        "heading": {
+                            "en": "Viewed recently",
+                            "ru": "Вы недавно смотрели"
+                        },
+                        "source": "viewed",
+                        "sort": "",
+                        "limit": 12,
+                        "layout": "carousel",
+                        "per_row": "5",
+                        "reveal": 0,
+                        "link_all": false
+                    }
+                }
+            ]
+        },
+        {
+            "name": "storefront.home.products",
+            "group": "home",
+            "label": "Homepage — products",
+            "default_blocks": [
+                {
+                    "type": "products",
+                    "title": "Popular",
+                    "tabs": "home",
+                    "settings": {
+                        "heading": {
+                            "en": "Popular",
+                            "ru": "Популярное"
+                        },
+                        "source": "all",
+                        "sort": "popular",
+                        "limit": 8,
+                        "layout": "grid",
+                        "reveal": 0,
+                        "link_all": false
+                    }
+                },
+                {
+                    "type": "products",
+                    "title": "New arrivals",
+                    "tabs": "home",
+                    "settings": {
+                        "heading": {
+                            "en": "New arrivals",
+                            "ru": "Новинки"
+                        },
+                        "source": "all",
+                        "sort": "newest",
+                        "limit": 8,
+                        "layout": "grid",
+                        "reveal": 0,
+                        "link_all": false
+                    }
+                },
+                {
+                    "type": "products",
+                    "title": "On sale",
+                    "tabs": "home",
+                    "settings": {
+                        "heading": {
+                            "en": "On sale",
+                            "ru": "Со скидкой"
+                        },
+                        "source": "flag:on_sale",
+                        "sort": "popular",
+                        "limit": 8,
+                        "layout": "grid",
+                        "reveal": 0,
+                        "link_all": true
+                    }
+                }
+            ]
+        },
+        {
+            "name": "storefront.home.bottom",
+            "group": "home",
+            "label": "Homepage — below everything"
+        },
+        {
+            "name": "storefront.footer.before",
+            "group": "footer",
+            "label": "Footer — the advantages band",
+            "default_blocks": [
+                {
+                    "type": "html",
+                    "title": "Advantages",
+                    "settings": {
+                        "html": {
+                            "en": "<div class=\"grid gap-6 md:grid-cols-3\">\n  <div class=\"flex gap-4 items-start\">\n    <span class=\"torgash-squircle\">{icon:shield-check}</span>\n    <div class=\"flex flex-col gap-2 min-w-0\">\n      <div class=\"font-semibold\">Guarantee</div>\n      <p class=\"text-sm opacity-80 leading-relaxed\">We take a product back with no questions asked if it does not work as it should.</p>\n      <a href=\"#\" class=\"btn btn-sm w-fit bg-current/10 border-0 hover:bg-current/20 font-normal\">About the guarantee</a>\n    </div>\n  </div>\n  <div class=\"flex gap-4 items-start\">\n    <span class=\"torgash-squircle\">{icon:credit-card}</span>\n    <div class=\"flex flex-col gap-2 min-w-0\">\n      <div class=\"font-semibold\">Ways to pay</div>\n      <p class=\"text-sm opacity-80 leading-relaxed\">We accept many ways to pay and keep payment data safe.</p>\n      <a href=\"#\" class=\"btn btn-sm w-fit bg-current/10 border-0 hover:bg-current/20 font-normal\">About payment</a>\n    </div>\n  </div>\n  <div class=\"flex gap-4 items-start\">\n    <span class=\"torgash-squircle\">{icon:clipboard-check}</span>\n    <div class=\"flex flex-col gap-2 min-w-0\">\n      <div class=\"font-semibold\">Quality control</div>\n      <p class=\"text-sm opacity-80 leading-relaxed\">Every product is checked on a bench and packed with care before it ships.</p>\n      <a href=\"#\" class=\"btn btn-sm w-fit bg-current/10 border-0 hover:bg-current/20 font-normal\">How we check</a>\n    </div>\n  </div>\n</div>",
+                            "ru": "<div class=\"grid gap-6 md:grid-cols-3\">\n  <div class=\"flex gap-4 items-start\">\n    <span class=\"torgash-squircle\">{icon:shield-check}</span>\n    <div class=\"flex flex-col gap-2 min-w-0\">\n      <div class=\"font-semibold\">Гарантия</div>\n      <p class=\"text-sm opacity-80 leading-relaxed\">Вернём деньги без вопросов, если товар работает не так, как должен.</p>\n      <a href=\"#\" class=\"btn btn-sm w-fit bg-current/10 border-0 hover:bg-current/20 font-normal\">О гарантии</a>\n    </div>\n  </div>\n  <div class=\"flex gap-4 items-start\">\n    <span class=\"torgash-squircle\">{icon:credit-card}</span>\n    <div class=\"flex flex-col gap-2 min-w-0\">\n      <div class=\"font-semibold\">Способы оплаты</div>\n      <p class=\"text-sm opacity-80 leading-relaxed\">Принимаем разные способы оплаты и гарантируем безопасность платёжных данных.</p>\n      <a href=\"#\" class=\"btn btn-sm w-fit bg-current/10 border-0 hover:bg-current/20 font-normal\">Об оплате</a>\n    </div>\n  </div>\n  <div class=\"flex gap-4 items-start\">\n    <span class=\"torgash-squircle\">{icon:clipboard-check}</span>\n    <div class=\"flex flex-col gap-2 min-w-0\">\n      <div class=\"font-semibold\">Контроль качества</div>\n      <p class=\"text-sm opacity-80 leading-relaxed\">Каждый товар перед отправкой проверяется на стенде и надёжно упаковывается.</p>\n      <a href=\"#\" class=\"btn btn-sm w-fit bg-current/10 border-0 hover:bg-current/20 font-normal\">Как мы проверяем</a>\n    </div>\n  </div>\n</div>"
+                        }
+                    }
+                }
+            ]
+        },
+        {
+            "name": "storefront.footer.about",
+            "group": "footer",
+            "label": "Footer — left column (rating, contacts)",
+            "shape": "narrow",
+            "default_blocks": [
+                {
+                    "type": "html",
+                    "title": "Rating and contacts",
+                    "settings": {
+                        "html": {
+                            "en": "<div class=\"flex flex-col gap-6\">\n<a href=\"https://www.google.com/maps\" target=\"_blank\" rel=\"noopener\"\n   class=\"torgash-rating-glow relative isolate overflow-hidden flex items-center gap-5 rounded-box px-5 py-5 text-white\">\n  <span class=\"text-5xl font-bold tabular-nums leading-[0.85]\">4.8</span>\n  <span class=\"flex flex-col gap-2.5\">\n    <span class=\"torgash-stars flex gap-0.5\">{icon:star}{icon:star}{icon:star}{icon:star}{icon:star}</span>\n    <span class=\"text-sm\">Our rating on Google Maps</span>\n  </span>\n</a>\n<div class=\"flex flex-col gap-3 text-sm\">\n  <div class=\"text-xs opacity-60\">For questions and suggestions</div>\n  <div class=\"flex items-center gap-3 flex-wrap\">[<span class=\"w-8 h-8 shrink-0 rounded-lg bg-current/10 grid place-items-center opacity-70\">{icon:phone}</span>{phone_actions}][<span class=\"opacity-50 w-full pl-11\">{hours}</span>]</div>\n  [<div class=\"flex items-center gap-3\"><span class=\"w-8 h-8 shrink-0 rounded-lg bg-current/10 grid place-items-center opacity-70\">{icon:mail}</span>{email_actions}</div>]\n  [<div class=\"text-xs opacity-60 mt-3\">Legal address</div><div class=\"flex items-center gap-3\"><span class=\"w-8 h-8 shrink-0 rounded-lg bg-current/10 grid place-items-center opacity-70\">{icon:map-pin}</span><span>{address}</span></div>]\n</div>\n</div>",
+                            "ru": "<div class=\"flex flex-col gap-6\">\n<a href=\"https://www.google.com/maps\" target=\"_blank\" rel=\"noopener\"\n   class=\"torgash-rating-glow relative isolate overflow-hidden flex items-center gap-5 rounded-box px-5 py-5 text-white\">\n  <span class=\"text-5xl font-bold tabular-nums leading-[0.85]\">4.8</span>\n  <span class=\"flex flex-col gap-2.5\">\n    <span class=\"torgash-stars flex gap-0.5\">{icon:star}{icon:star}{icon:star}{icon:star}{icon:star}</span>\n    <span class=\"text-sm\">Наш рейтинг на Google Картах</span>\n  </span>\n</a>\n<div class=\"flex flex-col gap-3 text-sm\">\n  <div class=\"text-xs opacity-60\">Для общих вопросов и предложений</div>\n  <div class=\"flex items-center gap-3 flex-wrap\">[<span class=\"w-8 h-8 shrink-0 rounded-lg bg-current/10 grid place-items-center opacity-70\">{icon:phone}</span>{phone_actions}][<span class=\"opacity-50 w-full pl-11\">{hours}</span>]</div>\n  [<div class=\"flex items-center gap-3\"><span class=\"w-8 h-8 shrink-0 rounded-lg bg-current/10 grid place-items-center opacity-70\">{icon:mail}</span>{email_actions}</div>]\n  [<div class=\"text-xs opacity-60 mt-3\">Юридический адрес</div><div class=\"flex items-center gap-3\"><span class=\"w-8 h-8 shrink-0 rounded-lg bg-current/10 grid place-items-center opacity-70\">{icon:map-pin}</span><span>{address}</span></div>]\n</div>\n</div>"
+                        }
+                    }
+                }
+            ]
+        },
+        {
+            "name": "storefront.footer.columns",
+            "group": "footer",
+            "label": "Footer — middle column (menus)",
+            "shape": "narrow",
+            "default_blocks": [
+                {
+                    "type": "menu",
+                    "title": "For customers",
+                    "row": "footer-menus",
+                    "width": "1/2",
+                    "settings": {
+                        "menu": "footer-buyers",
+                        "look": "columns",
+                        "depth": 2,
+                        "icons": false,
+                        "badges": true,
+                        "heading": {
+                            "en": "",
+                            "ru": ""
+                        }
+                    }
+                },
+                {
+                    "type": "menu",
+                    "title": "The company",
+                    "row": "footer-menus",
+                    "width": "1/2",
+                    "settings": {
+                        "menu": "footer-company",
+                        "look": "columns",
+                        "depth": 2,
+                        "icons": false,
+                        "badges": true,
+                        "heading": {
+                            "en": "",
+                            "ru": ""
+                        }
+                    }
+                }
+            ]
+        },
+        {
+            "name": "storefront.footer.side",
+            "group": "footer",
+            "label": "Footer — right column (social networks)",
+            "shape": "narrow",
+            "default_blocks": [
+                {
+                    "type": "html",
+                    "title": "Social networks",
+                    "settings": {
+                        "html": {
+                            "en": "<div class=\"flex flex-col gap-3\">\n  <div class=\"text-xs opacity-60\">Follow us</div>\n  <div class=\"grid gap-3 sm:grid-cols-2\">\n    <a href=\"https://t.me/\" target=\"_blank\" rel=\"noopener\" data-social=\"telegram\" style=\"--brand: #26A5E4\"\n       class=\"torgash-brand-card flex items-center gap-3 rounded-box px-4 py-3\">\n      <span class=\"w-7 h-7 shrink-0 rounded-full bg-current/10 grid place-items-center\">{mark:telegram}</span>\n      <span class=\"flex flex-col leading-tight\">\n        <span class=\"font-semibold text-sm\">Telegram</span>\n        <span class=\"text-xs opacity-60\" data-social-count></span>\n      </span>\n    </a>\n    <a href=\"https://vk.com/\" target=\"_blank\" rel=\"noopener\" data-social=\"vk\" style=\"--brand: #0077FF\"\n       class=\"torgash-brand-card flex items-center gap-3 rounded-box px-4 py-3\">\n      <span class=\"w-7 h-7 shrink-0 rounded-full bg-current/10 grid place-items-center\">{mark:vk}</span>\n      <span class=\"flex flex-col leading-tight\">\n        <span class=\"font-semibold text-sm\">VKontakte</span>\n        <span class=\"text-xs opacity-60\" data-social-count></span>\n      </span>\n    </a>\n  </div>\n</div>",
+                            "ru": "<div class=\"flex flex-col gap-3\">\n  <div class=\"text-xs opacity-60\">Мы в соцсетях</div>\n  <div class=\"grid gap-3 sm:grid-cols-2\">\n    <a href=\"https://t.me/\" target=\"_blank\" rel=\"noopener\" data-social=\"telegram\" style=\"--brand: #26A5E4\"\n       class=\"torgash-brand-card flex items-center gap-3 rounded-box px-4 py-3\">\n      <span class=\"w-7 h-7 shrink-0 rounded-full bg-current/10 grid place-items-center\">{mark:telegram}</span>\n      <span class=\"flex flex-col leading-tight\">\n        <span class=\"font-semibold text-sm\">Telegram</span>\n        <span class=\"text-xs opacity-60\" data-social-count></span>\n      </span>\n    </a>\n    <a href=\"https://vk.com/\" target=\"_blank\" rel=\"noopener\" data-social=\"vk\" style=\"--brand: #0077FF\"\n       class=\"torgash-brand-card flex items-center gap-3 rounded-box px-4 py-3\">\n      <span class=\"w-7 h-7 shrink-0 rounded-full bg-current/10 grid place-items-center\">{mark:vk}</span>\n      <span class=\"flex flex-col leading-tight\">\n        <span class=\"font-semibold text-sm\">ВКонтакте</span>\n        <span class=\"text-xs opacity-60\" data-social-count></span>\n      </span>\n    </a>\n  </div>\n</div>"
+                        }
+                    }
+                }
+            ]
+        },
+        {
+            "name": "storefront.footer.stores",
+            "group": "footer",
+            "label": "Footer — our stores",
+            "default_blocks": [
+                {
+                    "type": "stores",
+                    "title": "Our stores",
+                    "settings": {
+                        "heading": {
+                            "en": "Stores in :city",
+                            "ru": "Магазины в :city"
+                        }
+                    }
+                }
+            ]
+        },
+        {
+            "name": "storefront.footer.bottom",
+            "group": "footer",
+            "label": "Footer — the bottom line",
+            "default_blocks": [
+                {
+                    "type": "html",
+                    "title": "Shop signature",
+                    "row": "footer-bottom",
+                    "width": "1/2",
+                    "settings": {
+                        "html": {
+                            "en": "<div class=\"flex items-center gap-3\">\n  {logo_dark}\n  <div class=\"flex flex-col gap-0.5\">\n    <span class=\"text-sm uppercase\">{storefront} © 2015 – {year}</span>\n    <span class=\"text-xs opacity-70\">Spare parts for phones and laptops</span>\n  </div>\n</div>",
+                            "ru": "<div class=\"flex items-center gap-3\">\n  {logo_dark}\n  <div class=\"flex flex-col gap-0.5\">\n    <span class=\"text-sm uppercase\">{storefront} © 2015 – {year}</span>\n    <span class=\"text-xs opacity-70\">Интернет-магазин запчастей для телефонов и ноутбуков</span>\n  </div>\n</div>"
+                        }
+                    }
+                },
+                {
+                    "type": "payments",
+                    "title": "Payment logos",
+                    "row": "footer-bottom",
+                    "width": "1/2",
+                    "settings": {
+                        "items": "visa\nmastercard\napplepay\ngooglepay"
+                    }
+                }
+            ]
+        },
+        {
+            "name": "storefront.footer.credits",
+            "group": "footer",
+            "label": "Footer — the very bottom (credits)"
+        },
+        {
+            "name": "storefront.page.bottom",
+            "group": "footer",
+            "label": "Below the whole site, after the footer",
+            "shape": "wide"
+        },
+        {
+            "name": "storefront.mobile.menu",
+            "group": "mobile",
+            "label": "Phone menu (the drawer)",
+            "shape": "drawer",
+            "default_blocks": [
+                {
+                    "type": "account",
+                    "title": "Account",
+                    "settings": {
+                        "note": {
+                            "en": "Sign in to see your orders and your prices",
+                            "ru": "Войдите, чтобы видеть свои заказы и цены"
+                        },
+                        "style": "dark"
+                    }
+                },
+                {
+                    "type": "town",
+                    "title": "Your town",
+                    "settings": {}
+                },
+                {
+                    "type": "menu",
+                    "title": "Catalogue",
+                    "settings": {
+                        "menu": "catalog",
+                        "look": "drawer",
+                        "depth": 2,
+                        "icons": true,
+                        "badges": true,
+                        "heading": {
+                            "en": "",
+                            "ru": ""
+                        }
+                    }
+                },
+                {
+                    "type": "menu",
+                    "title": "Shop links",
+                    "settings": {
+                        "menu": "mobile-links",
+                        "look": "rows",
+                        "depth": 1,
+                        "icons": true,
+                        "badges": true,
+                        "heading": {
+                            "en": "",
+                            "ru": ""
+                        }
+                    }
+                },
+                {
+                    "type": "locale",
+                    "title": "Language and currency",
+                    "settings": {
+                        "currencies": true
+                    }
+                },
+                {
+                    "type": "html",
+                    "title": "Contacts",
+                    "settings": {
+                        "hide_if_empty": "phone",
+                        "html": {
+                            "en": "<div class=\"px-5 py-4 flex flex-col gap-2 text-sm border-t border-base-300\">\n  <a class=\"text-lg font-bold\" href=\"{phone_link}\">{phone}</a>\n  {phones}\n      {messengers}\n  {email_row}\n  {hours_row}\n  {socials}\n</div>",
+                            "ru": "<div class=\"px-5 py-4 flex flex-col gap-2 text-sm border-t border-base-300\">\n  <a class=\"text-lg font-bold\" href=\"{phone_link}\">{phone}</a>\n  {phones}\n      {messengers}\n  {email_row}\n  {hours_row}\n  {socials}\n</div>"
+                        }
+                    }
+                }
+            ]
+        },
+        {
+            "name": "storefront.mobile.contacts",
+            "group": "mobile",
+            "label": "Phone contacts (the sheet behind the phone icon)",
+            "shape": "drawer",
+            "default_blocks": [
+                {
+                    "type": "html",
+                    "title": "Contacts",
+                    "settings": {
+                        "hide_if_empty": "phone",
+                        "html": {
+                            "en": "<div class=\"flex flex-col gap-4\">\n  <div class=\"flex items-center gap-3\">\n    <span class=\"h-12 w-12 rounded-2xl bg-primary/10 text-primary flex items-center justify-center shrink-0\">{icon:phone}</span>\n    <span class=\"min-w-0\">\n      <span class=\"block text-xs uppercase tracking-wide opacity-50\">{label_phone}</span>\n      <a class=\"block text-xl font-bold\" href=\"{phone_link}\">{phone}</a>\n    </span>\n  </div>\n  <a class=\"btn btn-primary btn-lg w-full gap-2\" href=\"{phone_link}\">{icon:phone} Call</a>\n  <a class=\"btn btn-outline w-full gap-2\" href=\"{callback_link}\">{label_callback}</a>\n  {phones}\n      {messengers}\n  <div class=\"flex flex-col gap-2\">{email_row}{hours_row}</div>\n  {socials}\n</div>",
+                            "ru": "<div class=\"flex flex-col gap-4\">\n  <div class=\"flex items-center gap-3\">\n    <span class=\"h-12 w-12 rounded-2xl bg-primary/10 text-primary flex items-center justify-center shrink-0\">{icon:phone}</span>\n    <span class=\"min-w-0\">\n      <span class=\"block text-xs uppercase tracking-wide opacity-50\">{label_phone}</span>\n      <a class=\"block text-xl font-bold\" href=\"{phone_link}\">{phone}</a>\n    </span>\n  </div>\n  <a class=\"btn btn-primary btn-lg w-full gap-2\" href=\"{phone_link}\">{icon:phone} Позвонить</a>\n  <a class=\"btn btn-outline w-full gap-2\" href=\"{callback_link}\">{label_callback}</a>\n  {phones}\n      {messengers}\n  <div class=\"flex flex-col gap-2\">{email_row}{hours_row}</div>\n  {socials}\n</div>"
+                        }
+                    }
+                }
+            ]
+        }
+    ]
+}

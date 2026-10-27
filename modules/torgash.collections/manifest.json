@@ -1,0 +1,38 @@
+{
+    "id": "torgash.collections",
+    "name": "Collections",
+    "version": "1.0.0",
+    "icon": "layers",
+    "description": "Pages of products gathered by conditions — the catalogue's own filter, saved: categories with their subcategories, characteristic values (the brand among them), the filter's yes/no boxes (in stock, on sale…), a price range — plus products picked by hand and products left out. Each collection has its address, cover, text and dates; the page is the catalogue's listing with its filters and sorts. A list of all collections, a block of collection tiles, and \"products of a collection\" in any product block.",
+    "provider": "Torgash\\Collections\\CollectionsServiceProvider",
+    "autoload": {
+        "Torgash\\Collections\\": "src/"
+    },
+    "requires": {
+        "core": ">=0.2",
+        "modules": [
+            "torgash.catalog",
+            "torgash.media"
+        ]
+    },
+    "permissions": [
+        {
+            "name": "collections.manage",
+            "label": "Make product collections"
+        }
+    ],
+    "admin_menu": [
+        {
+            "label": "Collections",
+            "url": "/admin/collections",
+            "icon": "layers",
+            "group": "marketing",
+            "position": 45,
+            "keywords": {
+                "en": "collection selection lookbook capsule set products",
+                "ru": "подборка коллекция образ капсула набор товаров"
+            }
+        }
+    ],
+    "settings": []
+}

@@ -1,0 +1,69 @@
+[
+    {
+        "slug": "demo-deal-of-the-day",
+        "name": {
+            "en": "Deal of the day",
+            "ru": "Товар дня"
+        },
+        "description": {
+            "en": "One product a day at its best price — the timer says how long is left.",
+            "ru": "Один товар в день по лучшей цене — таймер показывает, сколько осталось."
+        },
+        "zone": "catalog",
+        "every_day": true,
+        "tint": "orange",
+        "badge": "icon",
+        "badge_icon": "timer",
+        "tiers": [
+            {
+                "discount": "percent",
+                "value": 15,
+                "products": [
+                    "HERO13"
+                ]
+            }
+        ]
+    },
+    {
+        "slug": "demo-smartphone-week",
+        "name": {
+            "en": "Smartphone week",
+            "ru": "Неделя смартфонов"
+        },
+        "description": {
+            "en": "10% off every smartphone for seven days.",
+            "ru": "Скидка 10% на все смартфоны семь дней."
+        },
+        "zone": "catalog",
+        "days": 7,
+        "tint": "blue",
+        "tiers": [
+            {
+                "discount": "percent",
+                "value": 10,
+                "categories": [
+                    "smartphones"
+                ]
+            }
+        ]
+    },
+    {
+        "slug": "demo-free-delivery",
+        "name": {
+            "en": "Free delivery for big orders",
+            "ru": "Бесплатная доставка крупных заказов"
+        },
+        "description": {
+            "en": "A big enough order travels free.",
+            "ru": "Достаточно крупный заказ доставим бесплатно."
+        },
+        "zone": "cart",
+        "tint": "green",
+        "tiers": [
+            {
+                "discount": "free_shipping",
+                "subtotal": 300
+            }
+        ]
+    }
+]

@@ -1,0 +1,77 @@
+[
+    {"product": "IP16P-256-BT", "reviews": [
+        {"author": "Alex M.", "days_ago": 34, "rating": 5, "recommend": "yes",
+         "text": {"en": "Moved from an iPhone 12 and the difference is obvious: the screen is brighter outdoors and the phone simply never stutters.", "ru": "Перешёл с iPhone 12 — разница заметна сразу: экран ярче на улице, телефон вообще не задумывается."},
+         "pros": {"en": "Camera at night, the titanium frame feels great", "ru": "Камера ночью, титановая рамка приятная на ощупь"},
+         "cons": {"en": "No charger in the box", "ru": "Зарядки в комплекте нет"},
+         "scores": {"quality": 5, "value": 4, "demo-camera": 5, "demo-battery": 4},
+         "reply": {"en": "Thank you, Alex! A 35 W charger is in the set with this phone — cheaper together.", "ru": "Спасибо, Алексей! Зарядка 35 Вт есть в комплекте с этим телефоном — вместе дешевле."}},
+        {"author": "Irina", "days_ago": 18, "rating": 4, "recommend": "yes",
+         "text": {"en": "A great phone, but heavier than I expected. The camera button took a week to get used to.", "ru": "Отличный телефон, но тяжелее, чем ожидала. К кнопке камеры привыкала неделю."},
+         "scores": {"quality": 5, "value": 3, "demo-camera": 5, "demo-battery": 4}},
+        {"author": "Dmitry K.", "days_ago": 6, "rating": 5, "recommend": "yes",
+         "text": {"en": "Delivered the next day, sealed, and the serial number checks out on the maker's site.", "ru": "Привезли на следующий день, запечатанный, серийный номер пробивается на сайте производителя."},
+         "scores": {"quality": 5, "value": 5, "demo-camera": 5, "demo-battery": 5}}
+    ]},
+    {"product": "S25U-256-BK", "reviews": [
+        {"author": "Sergey", "days_ago": 25, "rating": 5, "recommend": "yes",
+         "text": {"en": "The zoom is the reason I bought it, and it does not disappoint. The pen is handy for notes.", "ru": "Купил ради зума — не разочаровал. Перо удобно для заметок."},
+         "pros": {"en": "Zoom, screen, the battery lasts two days", "ru": "Зум, экран, батарея на два дня"},
+         "cons": {"en": "Big for one hand", "ru": "Крупный для одной руки"},
+         "scores": {"quality": 5, "value": 4, "demo-camera": 5, "demo-battery": 5}},
+        {"author": "Olga P.", "days_ago": 9, "rating": 3, "recommend": "neutral",
+         "text": {"en": "A good phone, but the corners are sharp and a case is a must. Software updates are fine.", "ru": "Хороший телефон, но углы острые, без чехла неудобно. С обновлениями всё в порядке."},
+         "scores": {"quality": 4, "value": 3, "demo-camera": 4, "demo-battery": 4}}
+    ]},
+    {"product": "MBA13-M4-16", "reviews": [
+        {"author": "Maria", "days_ago": 40, "rating": 5, "recommend": "yes",
+         "text": {"en": "Silent, light, and the battery really lasts the whole working day with room to spare.", "ru": "Бесшумный, лёгкий, батареи реально хватает на рабочий день с запасом."},
+         "scores": {"quality": 5, "value": 5, "demo-battery": 5}},
+        {"author": "Pavel", "days_ago": 12, "rating": 4, "recommend": "yes",
+         "text": {"en": "Fast for photo editing. Two ports are few — I bought a hub straight away.", "ru": "Шустрый для обработки фото. Два порта — маловато, сразу докупил хаб."},
+         "pros": {"en": "Speed, screen", "ru": "Скорость, экран"},
+         "cons": {"en": "Only two USB-C ports", "ru": "Всего два порта USB-C"},
+         "scores": {"quality": 5, "value": 4, "demo-battery": 5}}
+    ]},
+    {"product": "AIRPODS-PRO2", "reviews": [
+        {"author": "Anna S.", "days_ago": 50, "rating": 5, "recommend": "yes",
+         "text": {"en": "The noise cancelling is worth it on the metro. They switch between the phone and the laptop by themselves.", "ru": "Шумодав в метро того стоит. Сами переключаются между телефоном и ноутбуком."},
+         "scores": {"quality": 5, "value": 4, "demo-sound": 5, "demo-battery": 4}},
+        {"author": "Viktor", "days_ago": 21, "rating": 4, "recommend": "yes",
+         "text": {"en": "Good sound for earbuds; with Android half the features are missing, keep that in mind.", "ru": "Хороший звук для вкладышей; с Android половины функций нет, учтите."},
+         "scores": {"quality": 4, "value": 3, "demo-sound": 4, "demo-battery": 4}}
+    ]},
+    {"product": "WH1000XM6", "reviews": [
+        {"author": "Nikolai", "days_ago": 15, "rating": 5, "recommend": "yes",
+         "text": {"en": "The best cancelling I have tried, a flight goes by in silence. They fold now, unlike the previous ones.", "ru": "Лучшее шумоподавление из всего, что пробовал, перелёт проходит в тишине. Теперь складываются, в отличие от прошлых."},
+         "scores": {"quality": 5, "value": 4, "demo-sound": 5, "demo-battery": 5},
+         "reply": {"en": "Thank you for the review — have a good flight!", "ru": "Спасибо за отзыв — хороших перелётов!"}},
+        {"author": "Elena V.", "days_ago": 4, "rating": 4, "recommend": "yes",
+         "text": {"en": "Comfortable, the sound is warm. In summer the ears get hot after a couple of hours.", "ru": "Удобные, звук тёплый. Летом через пару часов уши потеют."},
+         "scores": {"quality": 4, "value": 4, "demo-sound": 5, "demo-battery": 5}}
+    ]},
+    {"product": "HERO13", "reviews": [
+        {"author": "Roman", "days_ago": 28, "rating": 5, "recommend": "yes",
+         "text": {"en": "Took it skiing: the stabilisation is magic, the footage looks like a gimbal shot.", "ru": "Брал на лыжи: стабилизация — магия, видео как со стабилизатора."},
+         "scores": {"quality": 5, "value": 4}},
+        {"author": "Kirill", "days_ago": 10, "rating": 3, "recommend": "neutral",
+         "text": {"en": "Gets warm in 5K and the battery runs out quickly in the cold. Take a spare one.", "ru": "В 5K греется, на холоде батарея садится быстро. Берите запасную."},
+         "scores": {"quality": 4, "value": 3}}
+    ]},
+    {"product": "PS5PRO", "reviews": [
+        {"author": "Artem", "days_ago": 33, "rating": 5, "recommend": "yes",
+         "text": {"en": "On a 4K TV the difference from the ordinary PS5 is visible in every game that supports it.", "ru": "На 4K-телевизоре разница с обычной PS5 видна в каждой игре с поддержкой."},
+         "scores": {"quality": 5, "value": 3}},
+        {"author": "Maxim", "days_ago": 7, "rating": 4, "recommend": "yes",
+         "text": {"en": "Quiet and fast. There is no disc drive — buy one if you have discs.", "ru": "Тихая и быстрая. Дисковода нет — если есть диски, докупайте."},
+         "scores": {"quality": 5, "value": 3}}
+    ]},
+    {"product": "LG-C4-55", "reviews": [
+        {"author": "Tatiana", "days_ago": 45, "rating": 5, "recommend": "yes",
+         "text": {"en": "Real black, films look amazing in the evening. The installers hung it in half an hour.", "ru": "Настоящий чёрный, фильмы вечером смотрятся потрясающе. Монтажники повесили за полчаса."},
+         "scores": {"quality": 5, "value": 4, "demo-sound": 3}},
+        {"author": "Igor", "days_ago": 14, "rating": 4, "recommend": "yes",
+         "text": {"en": "The picture is excellent; the built-in sound is so-so, a soundbar is worth adding.", "ru": "Картинка отличная, встроенный звук так себе — стоит добавить саундбар."},
+         "scores": {"quality": 5, "value": 4, "demo-sound": 3}}
+    ]}
+]

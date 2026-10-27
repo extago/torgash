@@ -1,0 +1,1 @@
+@include('errors.frame', ['code' => 419, 'title' => __('The form has expired'), 'text' => __('The page was open for a long time, and for your safety the form stopped being accepted. Go back, refresh the page and send it again.'), 'actions' => ['form', 'home']])

@@ -1,0 +1,43 @@
+{
+    "id": "torgash.promotions",
+    "name": "Promotions",
+    "version": "1.0.0",
+    "icon": "percent",
+    "description": "Automatic, no-code discounts — catalog-zone (a product's own price drops when it matches a rule) and cart-zone (an order-level discount or free shipping). A promotion is a container of ordered tiers, each its own condition scope and discount, so one sale event can have several discount depths without needing a promotion per depth. Coupon codes stay torgash.checkout's own separate, simpler feature.",
+    "provider": "Torgash\\Promotions\\PromotionsServiceProvider",
+    "autoload": {
+        "Torgash\\Promotions\\": "src/"
+    },
+    "requires": {
+        "core": ">=0.1",
+        "modules": [
+            "torgash.catalog",
+            "torgash.checkout",
+            "torgash.media"
+        ]
+    },
+    "permissions": [
+        {
+            "name": "promotions.manage",
+            "label": "Manage promotions"
+        }
+    ],
+    "admin_menu": [
+        {
+            "label": "Promotions",
+            "url": "/admin/promotions",
+            "group": "marketing",
+            "icon": "percent",
+            "position": 1
+        }
+    ],
+    "settings": [
+        {
+            "key": "card_countdown",
+            "type": "checkbox",
+            "default": true,
+            "label": "Countdown on product cards",
+            "help": "A small timer among the labels on the card's photo, for a product in a running sale that has \"Show a countdown\" ticked and an end. On the product page the full countdown under the price is always there."
+        }
+    ]
+}

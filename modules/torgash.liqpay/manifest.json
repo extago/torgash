@@ -1,0 +1,22 @@
+{
+    "id": "torgash.liqpay",
+    "name": "LiqPay",
+    "version": "1.0.0",
+    "regions": ["UA"],
+    "icon": "credit-card",
+    "section": "sales",
+    "description": "Card, Apple Pay, Google Pay and Privat24 payments through LiqPay (PrivatBank): the customer pays on LiqPay's page and a signed callback tells the shop what happened. Supports two-phase holds, full and partial refunds, the sandbox, and re-asking LiqPay from the order screen.",
+    "provider": "Torgash\\LiqPay\\LiqPayServiceProvider",
+    "autoload": {
+        "Torgash\\LiqPay\\": "src/"
+    },
+    "requires": {
+        "core": ">=0.1",
+        "modules": [
+            "torgash.payments"
+        ]
+    },
+    "settings": [],
+    "permissions": [],
+    "admin_menu": []
+}

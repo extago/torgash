@@ -1,0 +1,53 @@
+{
+    "id": "torgash.taxes",
+    "name": "Taxes",
+    "version": "1.0.0",
+    "icon": "receipt",
+    "description": "VAT and sales tax. A tax is either included in the price (the CIS way — the price on the shelf is final and the tax is extracted from it for the invoice) or added on top at checkout (the US way); that is one checkbox per tax, so a shop can have both. Products carry their own taxes when they differ from the default.",
+    "provider": "Torgash\\Taxes\\TaxesServiceProvider",
+    "autoload": {
+        "Torgash\\Taxes\\": "src/"
+    },
+    "requires": {
+        "core": ">=0.1",
+        "modules": [
+            "torgash.catalog",
+            "torgash.checkout"
+        ]
+    },
+    "settings": [
+        {
+            "key": "display_with_tax",
+            "type": "checkbox",
+            "default": false,
+            "label": "Show storefront prices with tax",
+            "help": "Only affects taxes that are ADDED to the price: the catalogue then shows what the customer will pay. Taxes already included in the price are shown as they are stored, whatever this is set to."
+        },
+        {
+            "key": "rounding",
+            "type": "select",
+            "default": "line",
+            "options": {
+                "line": "Per line — round the tax of the whole line",
+                "unit": "Per unit — round the tax of one item, then multiply"
+            },
+            "label": "Where to round",
+            "help": "Both are legal in different places and differ by a cent on odd quantities. Per line is the safer default: the total matches the sum shown on the invoice."
+        }
+    ],
+    "permissions": [
+        {
+            "name": "taxes.manage",
+            "label": "Manage taxes"
+        }
+    ],
+    "admin_menu": [
+        {
+            "label": "Taxes",
+            "url": "/admin/taxes",
+            "group": "sales",
+            "icon": "receipt",
+            "position": 60
+        }
+    ]
+}

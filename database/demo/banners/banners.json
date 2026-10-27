@@ -1,0 +1,136 @@
+{
+    "sliders": [
+        {
+            "name": "Demo: home page slider",
+            "frame": "slider",
+            "settings": {
+                "autoplay": 6,
+                "loop": true,
+                "per_view": 1
+            },
+            "zone": "storefront.home.top",
+            "banners": [
+                {
+                    "name": "Demo: deal of the day",
+                    "template": "hero",
+                    "values": {
+                        "eyebrow": {
+                            "en": "Deal of the day",
+                            "ru": "Товар дня"
+                        },
+                        "title": {
+                            "en": "GoPro HERO13 <b>−15%</b>",
+                            "ru": "GoPro HERO13 <b>−15%</b>"
+                        },
+                        "text": {
+                            "en": "Until midnight — the timer is on the product page.",
+                            "ru": "До полуночи — таймер на странице товара."
+                        },
+                        "button": {
+                            "en": "See the deal",
+                            "ru": "Смотреть"
+                        },
+                        "link": "/sale/demo-deal-of-the-day",
+                        "background": "#1f2a44",
+                        "scheme": "dark"
+                    }
+                },
+                {
+                    "name": "Demo: smartphone week",
+                    "template": "hero",
+                    "values": {
+                        "eyebrow": {
+                            "en": "Seven days only",
+                            "ru": "Только семь дней"
+                        },
+                        "title": {
+                            "en": "Smartphone week",
+                            "ru": "Неделя смартфонов"
+                        },
+                        "text": {
+                            "en": "10% off every phone, and kits are cheaper still.",
+                            "ru": "−10% на все телефоны, а комплекты — ещё дешевле."
+                        },
+                        "button": {
+                            "en": "Choose a phone",
+                            "ru": "Выбрать телефон"
+                        },
+                        "link": "/catalog/smartphones",
+                        "background": "#e8f0ff",
+                        "scheme": "light"
+                    }
+                },
+                {
+                    "name": "Demo: buying guides",
+                    "template": "hero",
+                    "values": {
+                        "eyebrow": {
+                            "en": "From the blog",
+                            "ru": "Из блога"
+                        },
+                        "title": {
+                            "en": "Not sure which to take?",
+                            "ru": "Не знаете, что выбрать?"
+                        },
+                        "text": {
+                            "en": "Short guides to phones, headphones and home Wi-Fi.",
+                            "ru": "Короткие гиды по телефонам, наушникам и домашнему Wi-Fi."
+                        },
+                        "button": {
+                            "en": "Read",
+                            "ru": "Читать"
+                        },
+                        "link": "/blog",
+                        "background": "#fff4e5",
+                        "scheme": "light"
+                    }
+                }
+            ],
+            "row": "demo-hero",
+            "width": "2/3"
+        },
+        {
+            "name": "Demo: beside the slider",
+            "frame": "stack",
+            "settings": {},
+            "zone": "storefront.home.top",
+            "banners": [
+                {
+                    "name": "Demo: free delivery",
+                    "template": "info",
+                    "values": {
+                        "icon": "truck",
+                        "title": {
+                            "en": "Free delivery",
+                            "ru": "Бесплатная доставка"
+                        },
+                        "text": {
+                            "en": "For a big enough order.",
+                            "ru": "Для достаточно крупного заказа."
+                        },
+                        "link": "/delivery",
+                        "tone": "light"
+                    }
+                },
+                {
+                    "name": "Demo: coupon",
+                    "template": "info",
+                    "values": {
+                        "icon": "ticket-percent",
+                        "title": {
+                            "en": "−10% with DEMO10",
+                            "ru": "−10% с купоном DEMO10"
+                        },
+                        "text": {
+                            "en": "Type it at checkout.",
+                            "ru": "Введите при оформлении."
+                        },
+                        "link": "/payment",
+                        "tone": "primary"
+                    }
+                }
+            ],
+            "row": "demo-hero"
+        }
+    ]
+}

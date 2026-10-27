@@ -1,0 +1,112 @@
+<?php
+
+/*
+ * Torgash update rollback (PLAN §45.7а).
+ *
+ * Plain PHP on purpose: it is copied out of the code it rolls back, into
+ * storage/app/update/, before anything is replaced — so it still runs when the
+ * new code does not load at all. It puts the previous version's paths back,
+ * then lets that OLD code restore the database from the backup made just
+ * before the update and switch the shop back on.
+ *
+ *     php storage/app/update/rollback.php storage/app/update/<version>/plan.json [--code-only]
+ */
+
+$planFile = $argv[1] ?? '';
+$codeOnly = in_array('--code-only', $argv, true);
+
+if ($planFile === '' || ! is_file($planFile)) {
+    fwrite(STDERR, "Usage: php rollback.php <plan.json> [--code-only]\n");
+    exit(2);
+}
+
+$plan = json_decode((string) file_get_contents($planFile), true);
+if (! is_array($plan) || empty($plan['root']) || empty($plan['run'])) {
+    fwrite(STDERR, "The plan cannot be read: $planFile\n");
+    exit(2);
+}
+
+// Twice would move the restored version out again.
+if (($plan['state'] ?? '') === 'rolled back') {
+    echo "This update was already rolled back.\n";
+    exit(0);
+}
+
+$root = rtrim($plan['root'], '/\\');
+$previous = rtrim($plan['run'], '/\\').'/previous';
+$failed = rtrim($plan['run'], '/\\').'/failed-'.gmdate('YmdHis');
+
+$move = function (string $from, string $to): void {
+    if (! file_exists($from)) {
+        return;
+    }
+    if (! is_dir(dirname($to))) {
+        mkdir(dirname($to), 0755, true);
+    }
+    if (! rename($from, $to)) {
+        throw new RuntimeException("Could not move $from to $to");
+    }
+};
+
+try {
+    // Only the paths the update STARTED to replace — each is written into
+    // the plan before its first move, so a swap that died half way is undone
+    // exactly as far as it went. A path the old version did not have is the
+    // new version's alone and simply leaves.
+    foreach (array_reverse($plan['swapped'] ?? []) as $path) {
+        $move($root.'/'.$path, $failed.'/'.$path);
+        $move($previous.'/'.$path, $root.'/'.$path);
+    }
+} catch (Throwable $e) {
+    fwrite(STDERR, 'Rollback stopped: '.$e->getMessage()."\n");
+    exit(1);
+}
+
+echo "Code of Torgash {$plan['from']} is back.\n";
+
+$plan['state'] = 'rolled back';
+file_put_contents($planFile, json_encode($plan, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES));
+
+if ($codeOnly) {
+    exit(0);
+}
+
+// The provider list of the version that was there — never the new one's.
+foreach (['packages.php', 'services.php', 'config.php', 'events.php'] as $cache) {
+    @unlink($root.'/bootstrap/cache/'.$cache);
+}
+foreach (glob($root.'/bootstrap/cache/routes-*.php') ?: [] as $cache) {
+    @unlink($cache);
+}
+
+// How to start PHP, as the plan wrote it: a list now (`frankenphp php-cli`
+// under FrankenPHP — App\Core\Support\Php), a string from an older Updater.
+// Never this script's own PHP_BINARY alone: under FrankenPHP that is not a PHP.
+$php = $plan['php'] ?? (getenv('PHP_BINARY') ?: PHP_BINARY);
+$php = implode(' ', array_map('escapeshellarg', (array) $php));
+$artisan = escapeshellarg($root.'/artisan');
+$run = function (string $args) use ($php, $artisan): int {
+    passthru($php.' '.$artisan.' '.$args, $code);
+
+    return $code;
+};
+
+$run('package:discover');
+// Compiled views are NOT stale to Blade: it compares modification times, and
+// the files just put back are older than what the new version compiled. Left
+// alone, the old code would keep serving the new version's templates. The
+// old version's own refresh does the rest (opcache, workers, stylesheet);
+// one without it still gets its views cleared.
+if ($run('torgash:refresh') !== 0) {
+    $run('view:clear');
+}
+if (! empty($plan['backup'])) {
+    if ($run('torgash:backup-restore '.escapeshellarg($plan['backup']).' --no-files --force') !== 0) {
+        fwrite(STDERR, "The database was NOT restored. Run: php artisan torgash:backup-restore {$plan['backup']} --no-files --force\n");
+        exit(1);
+    }
+}
+$run('up');
+
+echo "Torgash {$plan['from']} is running again.\n";
+exit(0);

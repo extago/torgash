@@ -1,0 +1,64 @@
+{
+    "id": "torgash.video",
+    "name": "Video",
+    "version": "1.0.0",
+    "icon": "clapperboard",
+    "section": "content",
+    "description": "Videos beside a product's photos: YouTube, Vimeo, VK Video, Bilibili, the embed code of any site you allow, or a file of your own. The poster is kept by the shop, and the player loads only when the visitor presses play.",
+    "provider": "Torgash\\Video\\VideoServiceProvider",
+    "autoload": {
+        "Torgash\\Video\\": "src/"
+    },
+    "requires": {
+        "core": ">=0.1",
+        "modules": [
+            "torgash.catalog",
+            "torgash.media"
+        ]
+    },
+    "settings": [
+        {
+            "key": "allowed_hosts",
+            "type": "textarea",
+            "default": "rutube.ru\nok.ru",
+            "label": "Sites whose embed code is accepted",
+            "help": "One domain per line; its subdomains are included. YouTube, Vimeo, VK Video and Bilibili are recognised by themselves and need no line here. Embed code from any other site is refused: the right to edit products is not the right to put somebody's script on the storefront."
+        },
+        {
+            "key": "file_max_mb",
+            "type": "number",
+            "default": 200,
+            "label": "Largest video file, MB",
+            "help": "For a file of the shop's own (mp4 or webm). It is uploaded in pieces, so the server's own upload limit does not cap it; the disk the shop's files are on does."
+        },
+        {
+            "key": "ffmpeg_path",
+            "type": "text",
+            "default": "",
+            "label": "Where ffmpeg is",
+            "help": "The ffmpeg program or the folder it is in (ffprobe beside it). Empty: \"ffmpeg\" as the server finds it. With ffmpeg, an uploaded file gets a poster from one of its frames, its length, and is converted in the background into a file every browser plays. Without it, the file plays as uploaded and the poster is uploaded by hand."
+        },
+        {
+            "key": "file_max_side",
+            "type": "select",
+            "default": "1080",
+            "options": {
+                "720": "720p",
+                "1080": "1080p",
+                "1440": "1440p",
+                "2160": "4K"
+            },
+            "label": "Shrink uploaded videos to",
+            "help": "The shorter side, so a phone's tall video is measured the same way as a wide one. A bigger file is converted down to it by ffmpeg in the background; the uploaded file plays until the converted one is ready."
+        },
+        {
+            "key": "card_icon",
+            "type": "checkbox",
+            "default": true,
+            "label": "Show a video mark on catalogue cards",
+            "help": "A small play icon beside the rating of a product that has a video."
+        }
+    ],
+    "permissions": [],
+    "admin_menu": []
+}

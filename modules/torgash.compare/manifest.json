@@ -1,0 +1,42 @@
+{
+    "id": "torgash.compare",
+    "name": "Comparison",
+    "version": "1.0.0",
+    "icon": "git-compare-arrows",
+    "section": "marketing",
+    "description": "Compare products side by side, one category at a time: a button on every card and product page, a counter in the header, a table of characteristics with \"differences only\". Kept for the visit, in the session.",
+    "provider": "Torgash\\Compare\\CompareServiceProvider",
+    "autoload": {
+        "Torgash\\Compare\\": "src/"
+    },
+    "requires": {
+        "core": ">=0.1",
+        "modules": [
+            "torgash.catalog"
+        ]
+    },
+    "settings": [
+        {
+            "key": "card_button",
+            "type": "checkbox",
+            "default": true,
+            "label": "A comparison button on catalogue cards",
+            "help": "In the photograph's corner, under the heart. On the product page it is always there."
+        },
+        {
+            "key": "per_group_max",
+            "type": "number",
+            "default": 4,
+            "label": "Products of one category compared at once",
+            "help": "Adding one more pushes out the one added first, and the notice says which. Past four the columns no longer fit a screen."
+        },
+        {
+            "key": "notice_on_add",
+            "type": "checkbox",
+            "default": true,
+            "label": "A notice in the corner when a product is added"
+        }
+    ],
+    "permissions": [],
+    "admin_menu": []
+}

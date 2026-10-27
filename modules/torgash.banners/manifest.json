@@ -1,0 +1,39 @@
+{
+    "id": "torgash.banners",
+    "name": "Banners",
+    "version": "1.0.0",
+    "icon": "gallery-horizontal-end",
+    "section": "content",
+    "description": "Banners and sliders made of templates. A banner is the values of its template's fields — words, pictures, a link, a colour; the template is HTML with {tokens} and CSS, made in the admin or restored from the module's and the theme's presets, and draws a banner as a wide slide, an upright card or a low strip. A slider is a frame template around its slides — where the strip, the dots, the arrows and a second slider beside it stand — placed by a block anywhere on the storefront.",
+    "provider": "Torgash\\Banners\\BannersServiceProvider",
+    "autoload": {
+        "Torgash\\Banners\\": "src/"
+    },
+    "requires": {
+        "core": ">=0.1",
+        "modules": [
+            "torgash.blocks",
+            "torgash.media"
+        ]
+    },
+    "settings": [],
+    "permissions": [
+        {
+            "name": "banners.manage",
+            "label": "Manage banners and sliders"
+        },
+        {
+            "name": "banners.templates",
+            "label": "Write banner templates (HTML and CSS)"
+        }
+    ],
+    "admin_menu": [
+        {
+            "label": "Banners",
+            "url": "/admin/banners",
+            "icon": "gallery-horizontal-end",
+            "position": 13,
+            "group": "content"
+        }
+    ]
+}

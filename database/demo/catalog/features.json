@@ -1,0 +1,132 @@
+[
+    {"code": "brand", "purpose": "brand", "name": {"en": "Brand", "ru": "Бренд"}, "values": [
+        {"code": "apple", "slug": "apple", "value": {"en": "Apple", "ru": "Apple"}, "logo": "brand-apple.png"},
+        {"code": "samsung", "slug": "samsung", "value": {"en": "Samsung", "ru": "Samsung"}, "logo": "brand-samsung.png"},
+        {"code": "google", "slug": "google", "value": {"en": "Google", "ru": "Google"}, "logo": "brand-google.png"},
+        {"code": "xiaomi", "slug": "xiaomi", "value": {"en": "Xiaomi", "ru": "Xiaomi"}, "logo": "brand-xiaomi.png"},
+        {"code": "nothing", "slug": "nothing", "value": {"en": "Nothing", "ru": "Nothing"}, "logo": "brand-nothing.png"},
+        {"code": "lenovo", "slug": "lenovo", "value": {"en": "Lenovo", "ru": "Lenovo"}, "logo": "brand-lenovo.png"},
+        {"code": "asus", "slug": "asus", "value": {"en": "ASUS", "ru": "ASUS"}, "logo": "brand-asus.png"},
+        {"code": "dell", "slug": "dell", "value": {"en": "Dell", "ru": "Dell"}, "logo": "brand-dell.png"},
+        {"code": "sony", "slug": "sony", "value": {"en": "Sony", "ru": "Sony"}, "logo": "brand-sony.png"},
+        {"code": "bose", "slug": "bose", "value": {"en": "Bose", "ru": "Bose"}, "logo": "brand-bose.png"},
+        {"code": "jbl", "slug": "jbl", "value": {"en": "JBL", "ru": "JBL"}, "logo": "brand-jbl.png"},
+        {"code": "marshall", "slug": "marshall", "value": {"en": "Marshall", "ru": "Marshall"}, "logo": "brand-marshall.png"},
+        {"code": "garmin", "slug": "garmin", "value": {"en": "Garmin", "ru": "Garmin"}, "logo": "brand-garmin.png"},
+        {"code": "lg", "slug": "lg", "value": {"en": "LG", "ru": "LG"}, "logo": "brand-lg.png"},
+        {"code": "canon", "slug": "canon", "value": {"en": "Canon", "ru": "Canon"}, "logo": "brand-canon.png"},
+        {"code": "gopro", "slug": "gopro", "value": {"en": "GoPro", "ru": "GoPro"}, "logo": "brand-gopro.png"},
+        {"code": "microsoft", "slug": "microsoft", "value": {"en": "Microsoft", "ru": "Microsoft"}, "logo": "brand-microsoft.png"},
+        {"code": "nintendo", "slug": "nintendo", "value": {"en": "Nintendo", "ru": "Nintendo"}, "logo": "brand-nintendo.png"},
+        {"code": "ubiquiti", "slug": "ubiquiti", "value": {"en": "Ubiquiti", "ru": "Ubiquiti"}, "logo": "brand-ubiquiti.png"},
+        {"code": "tp-link", "slug": "tp-link", "value": {"en": "TP-Link", "ru": "TP-Link"}, "logo": "brand-tp-link.png"},
+        {"code": "spigen", "slug": "spigen", "value": {"en": "Spigen", "ru": "Spigen"}, "logo": "brand-spigen.png"},
+        {"code": "anker", "slug": "anker", "value": {"en": "Anker", "ru": "Anker"}, "logo": "brand-anker.png"},
+        {"code": "sandisk", "slug": "sandisk", "value": {"en": "SanDisk", "ru": "SanDisk"}, "logo": "brand-sandisk.png"}
+    ]},
+    {"code": "color", "purpose": "variation", "is_color": true, "product_style": "swatches", "filter_style": "swatches", "name": {"en": "Colour", "ru": "Цвет"}, "values": [
+        {"code": "black", "value": {"en": "Black", "ru": "Чёрный"}, "swatch": "#1d1d1f"},
+        {"code": "white", "value": {"en": "White", "ru": "Белый"}, "swatch": "#f5f5f7"},
+        {"code": "silver", "value": {"en": "Silver", "ru": "Серебристый"}, "swatch": "#c9ccd1"},
+        {"code": "desert-titanium", "value": {"en": "Desert Titanium", "ru": "Пустынный титан"}, "swatch": "#bfa48f"},
+        {"code": "natural-titanium", "value": {"en": "Natural Titanium", "ru": "Натуральный титан"}, "swatch": "#a7a39b"},
+        {"code": "black-titanium", "value": {"en": "Black Titanium", "ru": "Чёрный титан"}, "swatch": "#3c3c3d"},
+        {"code": "titanium-silverblue", "value": {"en": "Titanium Silverblue", "ru": "Серебристо-синий титан"}, "swatch": "#a9b8c8"},
+        {"code": "ultramarine", "value": {"en": "Ultramarine", "ru": "Ультрамарин"}, "swatch": "#5b6ee1"},
+        {"code": "blue", "value": {"en": "Blue", "ru": "Синий"}, "swatch": "#2f6fd6"},
+        {"code": "midnight", "value": {"en": "Midnight", "ru": "Тёмная ночь"}, "swatch": "#2e3641"}
+    ]},
+    {"code": "storage", "purpose": "variation", "filter_style": "chips", "name": {"en": "Built-in memory", "ru": "Встроенная память"}, "values": [
+        {"code": "64gb", "value": {"en": "64 GB", "ru": "64 ГБ"}},
+        {"code": "128gb", "value": {"en": "128 GB", "ru": "128 ГБ"}},
+        {"code": "256gb", "value": {"en": "256 GB", "ru": "256 ГБ"}},
+        {"code": "512gb", "value": {"en": "512 GB", "ru": "512 ГБ"}},
+        {"code": "1tb", "value": {"en": "1 TB", "ru": "1 ТБ"}},
+        {"code": "2tb", "value": {"en": "2 TB", "ru": "2 ТБ"}}
+    ]},
+    {"code": "ram", "name": {"en": "RAM", "ru": "Оперативная память"}, "filter_style": "chips", "values": [
+        {"code": "8gb", "value": {"en": "8 GB", "ru": "8 ГБ"}},
+        {"code": "12gb", "value": {"en": "12 GB", "ru": "12 ГБ"}},
+        {"code": "16gb", "value": {"en": "16 GB", "ru": "16 ГБ"}},
+        {"code": "24gb", "value": {"en": "24 GB", "ru": "24 ГБ"}},
+        {"code": "32gb", "value": {"en": "32 GB", "ru": "32 ГБ"}}
+    ]},
+    {"code": "screen", "name": {"en": "Screen size", "ru": "Диагональ экрана"}, "values": [
+        {"code": "1-5", "value": {"en": "1.5–2\"", "ru": "1,5–2\""}},
+        {"code": "6-1", "value": {"en": "6.1–6.3\"", "ru": "6,1–6,3\""}},
+        {"code": "6-6", "value": {"en": "6.6–6.9\"", "ru": "6,6–6,9\""}},
+        {"code": "11", "value": {"en": "11\"", "ru": "11\""}},
+        {"code": "12-4", "value": {"en": "12.4\"", "ru": "12,4\""}},
+        {"code": "13", "value": {"en": "13–14\"", "ru": "13–14\""}},
+        {"code": "55", "value": {"en": "55\"", "ru": "55\""}},
+        {"code": "65", "value": {"en": "65\"", "ru": "65\""}}
+    ]},
+    {"code": "tv_size", "purpose": "variation", "name": {"en": "TV size", "ru": "Размер телевизора"}, "shown_in": ["specs", "buy_box"], "values": [
+        {"code": "55", "value": {"en": "55\"", "ru": "55\""}},
+        {"code": "65", "value": {"en": "65\"", "ru": "65\""}}
+    ]},
+    {"code": "watch_case", "purpose": "variation", "name": {"en": "Case size", "ru": "Размер корпуса"}, "shown_in": ["specs", "buy_box"], "values": [
+        {"code": "42mm", "value": {"en": "42 mm", "ru": "42 мм"}},
+        {"code": "46mm", "value": {"en": "46 mm", "ru": "46 мм"}}
+    ]},
+    {"code": "camera_kit", "purpose": "variation", "name": {"en": "Kit", "ru": "Комплектация"}, "shown_in": ["specs", "buy_box"], "values": [
+        {"code": "body", "value": {"en": "Body only", "ru": "Без объектива"}},
+        {"code": "kit-28-70", "value": {"en": "With 28–70 mm lens", "ru": "С объективом 28–70 мм"}}
+    ]},
+    {"code": "net_bundle", "purpose": "variation", "name": {"en": "Package", "ru": "Комплект"}, "shown_in": ["buy_box"], "values": [
+        {"code": "single", "value": {"en": "Single unit", "ru": "Один шлюз"}},
+        {"code": "ha-pair", "value": {"en": "High-availability pair", "ru": "Пара для отказоустойчивости"}}
+    ]},
+    {"code": "chip", "name": {"en": "Processor", "ru": "Процессор"}, "values": [
+        {"code": "a18-pro", "value": {"en": "Apple A18 Pro", "ru": "Apple A18 Pro"}},
+        {"code": "a18", "value": {"en": "Apple A18", "ru": "Apple A18"}},
+        {"code": "snapdragon-8-elite", "value": {"en": "Snapdragon 8 Elite", "ru": "Snapdragon 8 Elite"}},
+        {"code": "exynos-1580", "value": {"en": "Exynos 1580", "ru": "Exynos 1580"}},
+        {"code": "tensor-g4", "value": {"en": "Google Tensor G4", "ru": "Google Tensor G4"}},
+        {"code": "dimensity-7300", "value": {"en": "Dimensity 7300 Pro", "ru": "Dimensity 7300 Pro"}},
+        {"code": "m3", "value": {"en": "Apple M3", "ru": "Apple M3"}},
+        {"code": "m4", "value": {"en": "Apple M4", "ru": "Apple M4"}},
+        {"code": "m4-pro", "value": {"en": "Apple M4 Pro", "ru": "Apple M4 Pro"}},
+        {"code": "a16", "value": {"en": "Apple A16", "ru": "Apple A16"}},
+        {"code": "core-ultra-7", "value": {"en": "Intel Core Ultra 7", "ru": "Intel Core Ultra 7"}},
+        {"code": "ryzen-ai-9", "value": {"en": "AMD Ryzen AI 9", "ru": "AMD Ryzen AI 9"}},
+        {"code": "snapdragon-x-elite", "value": {"en": "Snapdragon X Elite", "ru": "Snapdragon X Elite"}}
+    ]},
+    {"code": "os", "name": {"en": "Operating system", "ru": "Операционная система"}, "values": [
+        {"code": "ios", "value": {"en": "iOS", "ru": "iOS"}},
+        {"code": "ipados", "value": {"en": "iPadOS", "ru": "iPadOS"}},
+        {"code": "android", "value": {"en": "Android", "ru": "Android"}},
+        {"code": "macos", "value": {"en": "macOS", "ru": "macOS"}},
+        {"code": "windows", "value": {"en": "Windows 11", "ru": "Windows 11"}},
+        {"code": "watchos", "value": {"en": "watchOS", "ru": "watchOS"}},
+        {"code": "wear-os", "value": {"en": "Wear OS", "ru": "Wear OS"}}
+    ]},
+    {"code": "anc", "name": {"en": "Noise cancelling", "ru": "Шумоподавление"}, "filter_style": "chips", "values": [
+        {"code": "yes", "value": {"en": "Active", "ru": "Активное"}},
+        {"code": "no", "value": {"en": "None", "ru": "Нет"}}
+    ]},
+    {"code": "fit", "name": {"en": "Fit", "ru": "Тип наушников"}, "filter_style": "chips", "values": [
+        {"code": "over-ear", "value": {"en": "Over-ear", "ru": "Полноразмерные"}},
+        {"code": "in-ear", "value": {"en": "In-ear", "ru": "Внутриканальные"}}
+    ]},
+    {"code": "panel", "name": {"en": "Panel", "ru": "Тип матрицы"}, "values": [
+        {"code": "oled", "value": {"en": "OLED", "ru": "OLED"}},
+        {"code": "mini-led", "value": {"en": "Mini LED", "ru": "Mini LED"}}
+    ]},
+    {"code": "wifi", "name": {"en": "Wi-Fi", "ru": "Wi-Fi"}, "filter_style": "chips", "values": [
+        {"code": "wifi-6e", "value": {"en": "Wi-Fi 6E", "ru": "Wi-Fi 6E"}},
+        {"code": "wifi-7", "value": {"en": "Wi-Fi 7", "ru": "Wi-Fi 7"}}
+    ]},
+    {"code": "power", "name": {"en": "Charging power", "ru": "Мощность зарядки"}, "values": [
+        {"code": "35w", "value": {"en": "35 W", "ru": "35 Вт"}},
+        {"code": "65w", "value": {"en": "65 W", "ru": "65 Вт"}}
+    ]},
+    {"code": "firewall", "name": {"en": "Firewall throughput", "ru": "Пропускная способность"}, "values": [
+        {"code": "100g", "value": {"en": "100 Gbit/s", "ru": "100 Гбит/с"}},
+        {"code": "2-5g", "value": {"en": "2.5 Gbit/s", "ru": "2,5 Гбит/с"}}
+    ]},
+    {"code": "battery", "purpose": "plain", "input_type": "text", "shown_in": ["specs"], "name": {"en": "Battery", "ru": "Аккумулятор"}},
+    {"code": "camera_main", "purpose": "plain", "input_type": "text", "shown_in": ["specs", "buy_box"], "name": {"en": "Main camera", "ru": "Основная камера"}},
+    {"code": "clients", "purpose": "plain", "input_type": "text", "shown_in": ["specs", "buy_box"], "name": {"en": "Clients", "ru": "Клиентов"}},
+    {"code": "cpu_cores", "purpose": "plain", "input_type": "number", "shown_in": ["specs"], "name": {"en": "CPU cores", "ru": "Ядер процессора"}}
+]

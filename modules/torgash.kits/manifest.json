@@ -1,0 +1,32 @@
+{
+    "id": "torgash.kits",
+    "name": "Kits",
+    "version": "1.0.0",
+    "icon": "package-plus",
+    "description": "Sets of separate products that are cheaper together: a phone with a glass and a case, a fridge with installation. A kit is written for one product or placed by conditions (a category with its subtree, a characteristic), and a slot can be filled from a whole set of products — narrowed to what FITS the main product by a characteristic they share, so a glass for the model being looked at is offered without anybody maintaining a list of pairs. The discount is taken off the cart line itself, so 1C, a refund and a return all see what each item actually cost.",
+    "provider": "Torgash\\Kits\\KitsServiceProvider",
+    "autoload": {
+        "Torgash\\Kits\\": "src/"
+    },
+    "requires": {
+        "core": ">=0.1",
+        "modules": [
+            "torgash.catalog",
+            "torgash.cart"
+        ]
+    },
+    "admin_menu": [
+        {
+            "label": "Kits",
+            "keywords": {
+                "en": "bundle, set, buy together, accessories, upsell, package",
+                "ru": "комплект, набор, покупают вместе, аксессуары, допродажа, сет, пакет"
+            },
+            "url": "/admin/kits",
+            "icon": "package-plus",
+            "group": "catalog",
+            "position": 19
+        }
+    ],
+    "settings": []
+}

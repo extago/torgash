@@ -1,0 +1,40 @@
+{
+    "id": "torgash.editor",
+    "name": "Rich text editor",
+    "version": "1.0.0",
+    "icon": "type",
+    "section": "content",
+    "description": "TipTap WYSIWYG for description fields. Vendored — no CDN, no npm.",
+    "provider": "Torgash\\Editor\\EditorServiceProvider",
+    "autoload": {
+        "Torgash\\Editor\\": "src/"
+    },
+    "requires": {
+        "core": ">=0.1",
+        "modules": []
+    },
+    "settings": [
+        {
+            "key": "toolbar",
+            "type": "text",
+            "default": "bold, italic, strike, code, h2, h3, bullet, ordered, quote, hr, link, image, gallery, html, clear, undo, redo",
+            "label": "Toolbar buttons",
+            "help": "Comma-separated, in display order. Available: bold, italic, strike, code, h1, h2, h3, bullet, ordered, quote, codeblock, hr, link, image, gallery, html, clear, undo, redo. Use | for a separator. The image and gallery buttons only appear on a record that has been saved and whose model keeps images inside its text — there is nowhere to upload to before that."
+        },
+        {
+            "key": "min_height",
+            "type": "number",
+            "default": 220,
+            "label": "Editor height, px"
+        },
+        {
+            "key": "show_source",
+            "type": "checkbox",
+            "default": true,
+            "label": "Offer an HTML source view",
+            "help": "Adds a Visual/HTML toggle so the raw markup stays reachable."
+        }
+    ],
+    "permissions": [],
+    "admin_menu": []
+}

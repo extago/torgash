@@ -1,0 +1,6 @@
+[
+    {"menu": "footer-company", "under": "About us", "pages": ["about", "contacts"]},
+    {"menu": "footer-company", "under": "Legal information", "pages": ["privacy", "returns"]},
+    {"menu": "footer-buyers", "under": "For customers", "pages": ["delivery", "payment"]},
+    {"menu": "top", "pages": ["delivery", "payment", "contacts"]}
+]

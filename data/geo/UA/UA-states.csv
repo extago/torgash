@@ -1,0 +1,28 @@
+country;state_code;ref;previous_ref;name_en;name_uk;name_ru
+UA;05;osm:r90726;osm:r90726;Vinnytsia Oblast;Вінницька область;Винницкая область
+UA;07;osm:r71064;osm:r71064;Volyn Oblast;Волинська область;Волынская область
+UA;09;osm:r71971;osm:r71971;Luhansk Oblast;Луганська область;Луганская область
+UA;12;osm:r101746;osm:r101746;Dnipropetrovsk Oblast;Дніпропетровська область;Днепропетровская область
+UA;14;osm:r71973;osm:r71973;Donetsk Oblast;Донецька область;Донецкая область
+UA;18;osm:r71245;osm:r71245;Zhytomyr Oblast;Житомирська область;Житомирская область
+UA;21;osm:r72489;osm:r72489;Zakarpattia Oblast;Закарпатська область;Закарпатская область
+UA;23;osm:r71980;osm:r71980;Zaporizhia Oblast;Запорізька область;Запорожская область
+UA;26;osm:r72488;osm:r72488;Ivano-Frankivsk Oblast;Івано-Франківська область;Ивано-Франковская область
+UA;30;osm:r421866;osm:r421866;Kyiv;Київ;Киев
+UA;32;osm:r71248;osm:r71248;Kyiv Oblast;Київська область;Киевская область
+UA;35;osm:r101859;osm:r101859;Kirovohrad Oblast;Кіровоградська область;Кировоградская область
+UA;40;osm:r1574364;osm:r1574364;Sevastopol;Севастополь;Севастополь
+UA;43;osm:r72639;osm:r72639;Autonomous Republic of Crimea;Автономна Республіка Крим;Автономная Республика Крым
+UA;46;osm:r72380;osm:r72380;Lviv Oblast;Львівська область;Львовская область
+UA;48;osm:r72635;osm:r72635;Mykolaiv Oblast;Миколаївська область;Николаевская область
+UA;51;osm:r72634;osm:r72634;Odesa Oblast;Одеська область;Одесская область
+UA;53;osm:r91294;osm:r91294;Poltava Oblast;Полтавська область;Полтавская область
+UA;56;osm:r71236;osm:r71236;Rivne Oblast;Рівненська область;Ровненская область
+UA;59;osm:r71250;osm:r71250;Sumy Oblast;Сумська область;Сумская область
+UA;61;osm:r72525;osm:r72525;Ternopil Oblast;Тернопільська область;Тернопольская область
+UA;63;osm:r71254;osm:r71254;Kharkiv Oblast;Харківська область;Харьковская область
+UA;65;osm:r71022;osm:r71022;Kherson Oblast;Херсонська область;Херсонская область
+UA;68;osm:r90742;osm:r90742;Khmelnytskyi Oblast;Хмельницька область;Хмельницкая область
+UA;71;osm:r91278;osm:r91278;Cherkasy Oblast;Черкаська область;Черкасская область
+UA;74;osm:r71249;osm:r71249;Chernihiv Oblast;Чернігівська область;Черниговская область
+UA;77;osm:r72526;osm:r72526;Chernivtsi Oblast;Чернівецька область;Черновицкая область

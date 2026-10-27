@@ -1,0 +1,46 @@
+{
+    "id": "torgash.blog",
+    "name": "Blog",
+    "version": "1.0.0",
+    "icon": "newspaper",
+    "description": "Articles in rubrics shown as coloured plates, a feed with a \"show more\", an article page with a contents list built from its headings, products placed right in the text, likes, sharing, \"read also\" and comments. No tags and no monthly archive — nobody looks for an article that way any more.",
+    "provider": "Torgash\\Blog\\BlogServiceProvider",
+    "autoload": {
+        "Torgash\\Blog\\": "src/"
+    },
+    "requires": {
+        "core": ">=0.1",
+        "modules": [
+            "torgash.catalog",
+            "torgash.media"
+        ]
+    },
+    "section": "content",
+    "settings": [
+        {
+            "key": "per_page",
+            "type": "number",
+            "default": 12,
+            "label": "Articles per page of the feed",
+            "help": "\"Show more\" brings the next page this many at a time."
+        },
+        {
+            "key": "read_also",
+            "type": "number",
+            "default": 3,
+            "label": "\"Read also\" under an article",
+            "help": "How many other articles of the same rubrics are offered under one. 0 — none."
+        }
+    ],
+    "permissions": [
+        {"name": "blog.manage", "label": "Write and publish blog articles"}
+    ],
+    "admin_menu": [
+        {"label": "Blog", "url": "/admin/blog", "group": "content", "icon": "newspaper", "position": 9, "keywords": {"en": "articles posts news rubrics", "ru": "статьи записи новости рубрики блог"}},
+        {"label": "Blog rubrics", "url": "/admin/blog/rubrics", "group": "content", "icon": "tags", "position": 10}
+    ],
+    "zones": [
+        {"name": "blog.sidebar", "group": "blog", "label": "Blog — beside the feed", "shape": "narrow"},
+        {"name": "blog.post.bottom", "group": "blog", "label": "Blog — under an article"}
+    ]
+}

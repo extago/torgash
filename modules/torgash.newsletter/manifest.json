@@ -1,0 +1,89 @@
+{
+    "id": "torgash.newsletter",
+    "name": "Newsletter",
+    "version": "1.0.0",
+    "icon": "mail-plus",
+    "description": "Collects subscribers for the shop's news and offers: a subscription block the shop lays out in its own HTML, a tick in the basket and at checkout, a switch in the customer's account. Every address confirmed by a letter (double opt-in), every letter with its way out; the list exported for a mailing service, and subscribers in the shop's personal-data registry.",
+    "provider": "Torgash\\Newsletter\\NewsletterServiceProvider",
+    "autoload": {
+        "Torgash\\Newsletter\\": "src/"
+    },
+    "requires": {
+        "core": ">=0.2",
+        "modules": []
+    },
+    "permissions": [
+        {
+            "name": "newsletter.manage",
+            "label": "See, export and import newsletter subscribers, send campaigns"
+        }
+    ],
+    "admin_menu": [
+        {
+            "label": "Subscribers",
+            "url": "/admin/newsletter",
+            "icon": "mail-plus",
+            "group": "marketing",
+            "position": 50,
+            "keywords": {
+                "en": "newsletter subscribers mailing email subscription",
+                "ru": "рассылка подписчики подписка email новости"
+            }
+        },
+        {
+            "label": "Campaigns",
+            "url": "/admin/newsletter/campaigns",
+            "icon": "send",
+            "group": "marketing",
+            "position": 51,
+            "keywords": {
+                "en": "newsletter campaign mailing email blast send letter",
+                "ru": "рассылка кампания письмо отправить email"
+            }
+        }
+    ],
+    "settings": [
+        {
+            "key": "double_opt_in",
+            "type": "checkbox",
+            "default": true,
+            "label": "Confirm every address by a letter",
+            "help": "A new subscriber is counted only after following the link in the letter. Off, anybody's address can be put on the list by anybody — and mailing services and the law in many countries ask for the confirmation. A signed-in customer whose address is already confirmed is not asked again."
+        },
+        {
+            "key": "offer_in_cart",
+            "type": "checkbox",
+            "default": true,
+            "label": "Offer to subscribe on the basket page",
+            "help": "A small form under the basket."
+        },
+        {
+            "key": "offer_at_checkout",
+            "type": "checkbox",
+            "default": true,
+            "label": "A \"Subscribe to news and offers\" tick at checkout",
+            "help": "The order's email is subscribed when the tick is on — and confirmed by a letter like any other."
+        },
+        {
+            "key": "checkout_ticked",
+            "type": "checkbox",
+            "default": false,
+            "label": "The checkout tick is on from the start",
+            "help": "Off is the honest default: a tick put there for the customer is not their consent, and in the EU it is not consent at all."
+        },
+        {
+            "key": "per_minute",
+            "type": "number",
+            "default": 120,
+            "label": "Campaign letters per minute",
+            "help": "How fast a campaign goes out. A mail server sent too much at once starts refusing, and the provider marks the shop as a spammer: ask yours what it allows (a shared hosting box often allows 100–300 an hour, a mailing service thousands a minute)."
+        },
+        {
+            "key": "privacy_url",
+            "type": "text",
+            "default": "",
+            "label": "Link to the privacy policy",
+            "help": "Shown beside the subscription form as {privacy_link}. Empty — no link."
+        }
+    ]
+}

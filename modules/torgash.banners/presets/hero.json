@@ -1,0 +1,99 @@
+{
+    "kind": "banner",
+    "label": "Big slide",
+    "fields": [
+        {
+            "key": "eyebrow",
+            "type": "text",
+            "label": "Above the heading"
+        },
+        {
+            "key": "title",
+            "type": "rich",
+            "label": "Heading"
+        },
+        {
+            "key": "text",
+            "type": "rich",
+            "label": "Text"
+        },
+        {
+            "key": "notice",
+            "type": "rich",
+            "label": "In bold under the text"
+        },
+        {
+            "key": "button",
+            "type": "text",
+            "label": "Button"
+        },
+        {
+            "key": "link",
+            "type": "link",
+            "label": "Link",
+            "help": "The whole slide is the link."
+        },
+        {
+            "key": "image",
+            "type": "image",
+            "label": "Picture",
+            "help": "About 1200 × 700, the product on the right; a transparent PNG or WebP to stand on the colour."
+        },
+        {
+            "key": "image_phone",
+            "type": "image",
+            "label": "Picture for a phone",
+            "fallback": "image",
+            "help": "Optional. Up to 767 px wide the phone gets this one instead."
+        },
+        {
+            "key": "video",
+            "type": "video",
+            "label": "Video behind the slide",
+            "help": "Instead of the colour: a short loop, played only while the slide is shown."
+        },
+        {
+            "key": "dim",
+            "type": "checkbox",
+            "label": "Darken the video",
+            "on": "hb-hero-dim",
+            "help": "So white words read over a bright video."
+        },
+        {
+            "key": "background",
+            "type": "color",
+            "label": "Background",
+            "default": "#f4f4f6"
+        },
+        {
+            "key": "scheme",
+            "type": "select",
+            "label": "Text",
+            "options": [
+                {
+                    "value": "light",
+                    "label": "Dark text on a light colour"
+                },
+                {
+                    "value": "dark",
+                    "label": "White text on a dark colour"
+                }
+            ]
+        },
+        {
+            "key": "fit",
+            "type": "select",
+            "label": "The picture",
+            "options": [
+                {
+                    "value": "contain",
+                    "label": "Whole, standing on the colour"
+                },
+                {
+                    "value": "cover",
+                    "label": "Filling the slide"
+                }
+            ]
+        }
+    ]
+}

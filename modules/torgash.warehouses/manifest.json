@@ -1,0 +1,59 @@
+{
+    "id": "torgash.warehouses",
+    "name": "Warehouses",
+    "version": "1.0.0",
+    "icon": "warehouse",
+    "description": "Multiple stock locations per product. A product opts in by getting at least one warehouse quantity row; until then its Stock field behaves exactly as before this module existed.",
+    "provider": "Torgash\\Warehouses\\WarehousesServiceProvider",
+    "autoload": {
+        "Torgash\\Warehouses\\": "src/"
+    },
+    "requires": {
+        "core": ">=0.1",
+        "modules": [
+            "torgash.catalog"
+        ]
+    },
+    "settings": [
+        {
+            "key": "point_availability",
+            "type": "select",
+            "default": "mark",
+            "options": {
+                "mark": "Show it, saying it is not at that point",
+                "hide": "Hide it from the catalogue",
+                "choice": "Let the customer choose — a switch in the town window"
+            },
+            "label": "A product the chosen point does not have",
+            "help": "Once a customer picks one of your points, the catalogue can either keep showing everything and mark what is not on that shelf, or become that point's assortment. Marking is the default on purpose: hiding loses sales silently, and the shop owner is the last to find out. Hiding is right for a shop that genuinely cannot move goods between points. Products whose stock is not split by warehouse are unaffected either way — they are available everywhere."
+        },
+        {
+            "key": "transfer_date",
+            "type": "checkbox",
+            "default": true,
+            "label": "Say when a product not at the chosen shop can be brought there",
+            "help": "\"We will bring it by 24.09\" with a truck, on cards and the product page — counted from the \"days to bring goods to a pickup point\" of the nearest warehouse that has it. A warehouse with that field empty offers no date."
+        },
+        {
+            "key": "transfer_working_days",
+            "type": "checkbox",
+            "default": true,
+            "label": "Count those days as working days (no Saturday or Sunday)"
+        }
+    ],
+    "permissions": [
+        {
+            "name": "warehouses.manage",
+            "label": "Manage warehouses and stock"
+        }
+    ],
+    "admin_menu": [
+        {
+            "label": "Warehouses",
+            "url": "/admin/warehouses",
+            "group": "logistics",
+            "icon": "warehouse",
+            "position": 25
+        }
+    ]
+}

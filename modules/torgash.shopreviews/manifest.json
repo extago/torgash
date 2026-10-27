@@ -1,0 +1,100 @@
+{
+    "id": "torgash.shopreviews",
+    "name": "Shop reviews",
+    "version": "1.0.0",
+    "icon": "message-square-heart",
+    "description": "Reviews of the shop itself rather than of a product: a page with the average, how many customers would recommend the shop and buy again, the marks for delivery, service and the rest, the shop's ratings on other sites, and the reviews with the shop's answers. Guests may write one, and everything is read before it is published. Blocks for the footer and the home page.",
+    "provider": "Torgash\\ShopReviews\\ShopReviewsServiceProvider",
+    "autoload": {
+        "Torgash\\ShopReviews\\": "src/"
+    },
+    "requires": {
+        "core": ">=0.1"
+    },
+    "permissions": [
+        {
+            "name": "shopreviews.moderate",
+            "label": "Moderate shop reviews"
+        }
+    ],
+    "admin_menu": [
+        {
+            "label": "Shop reviews",
+            "url": "/admin/shop-reviews",
+            "icon": "message-square-heart",
+            "group": "marketing",
+            "position": 9
+        }
+    ],
+    "settings": [
+        {
+            "key": "who_writes",
+            "type": "select",
+            "default": "anyone",
+            "label": "Who may write a review",
+            "options": {
+                "anyone": "Anyone — a guest gives a name and an email",
+                "accounts": "Signed-in customers only"
+            },
+            "help": "A guest's email is never shown; it is where the shop's answer is sent. Only a signed-in customer who has ordered here is marked as a customer of the shop — anybody can type someone else's email."
+        },
+        {
+            "key": "premoderate",
+            "type": "checkbox",
+            "default": true,
+            "label": "Check reviews before publishing",
+            "help": "On by default, and worth leaving on: the page is the shop's reputation, and one advert or insult on it costs more than a day's wait."
+        },
+        {
+            "key": "pros_cons",
+            "type": "checkbox",
+            "default": true,
+            "label": "Ask for pros and cons separately"
+        },
+        {
+            "key": "ask_recommend",
+            "type": "checkbox",
+            "default": true,
+            "label": "Ask \"would you recommend us\"",
+            "help": "The share who say yes is printed at the top of the page."
+        },
+        {
+            "key": "ask_return",
+            "type": "checkbox",
+            "default": true,
+            "label": "Ask \"will you buy from us again\""
+        },
+        {
+            "key": "ask_city",
+            "type": "checkbox",
+            "default": true,
+            "label": "Ask for the town"
+        },
+        {
+            "key": "per_page",
+            "type": "number",
+            "default": 20,
+            "label": "Reviews on a page"
+        },
+        {
+            "key": "reply_signature",
+            "type": "text",
+            "default": "",
+            "label": "How the shop's answers are signed",
+            "help": "For example \"Shop manager\". Empty — the name of whoever answers; it can also be changed on each answer."
+        },
+        {
+            "key": "notify_author",
+            "type": "checkbox",
+            "default": true,
+            "label": "Send the shop's answer to the author by email"
+        },
+        {
+            "key": "notify_email",
+            "type": "text",
+            "default": "",
+            "label": "Tell this address about new reviews",
+            "help": "Empty means the storefront's own contact address."
+        }
+    ]
+}

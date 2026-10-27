@@ -1,0 +1,71 @@
+{
+    "id": "torgash.speed",
+    "name": "Speed",
+    "version": "1.0.0",
+    "icon": "gauge",
+    "description": "Where the time goes on each page of the shop: engine start, database, outside calls, each module's hooks, and the rest — per page, per module and per query, with repeated queries (N+1) traced to the line that asked, and a timeline of the slowest pages. Measures a share of real requests, costs nothing on the others.",
+    "provider": "Torgash\\Speed\\SpeedServiceProvider",
+    "autoload": {
+        "Torgash\\Speed\\": "src/"
+    },
+    "requires": {
+        "core": ">=0.1",
+        "modules": []
+    },
+    "settings": [
+        {
+            "key": "enabled",
+            "type": "checkbox",
+            "default": true,
+            "label": "Measure the shop",
+            "help": "Off: nothing is measured and nothing is written — the only cost left is one setting read per request."
+        },
+        {
+            "key": "sample_percent",
+            "type": "number",
+            "default": 20,
+            "label": "Share of requests measured, %",
+            "help": "A measured request costs a few milliseconds of bookkeeping and a few rows written after the page is sent. A quiet shop can measure everything (100); a busy one learns just as much from 5."
+        },
+        {
+            "key": "trace_threshold_ms",
+            "type": "number",
+            "default": 800,
+            "label": "Keep a timeline of pages slower than, ms",
+            "help": "A measured page slower than this keeps its full timeline — every query, call and hook in order — to open later."
+        },
+        {
+            "key": "repeat_threshold",
+            "type": "number",
+            "default": 5,
+            "label": "A query repeated on one page this often is suspect",
+            "help": "The same query shape asked again and again while one page is built is almost always a loop asking one row at a time (N+1). It is listed with the line of code that asked."
+        },
+        {
+            "key": "keep_days",
+            "type": "number",
+            "default": 30,
+            "label": "Keep measurements for, days",
+            "help": "Older hours, queries and timelines are removed every night."
+        }
+    ],
+    "permissions": [
+        {
+            "name": "speed.view",
+            "label": "See the speed report"
+        }
+    ],
+    "admin_menu": [
+        {
+            "label": "Speed",
+            "url": "/admin/speed",
+            "icon": "gauge",
+            "group": "system",
+            "position": 40,
+            "keywords": {
+                "en": "performance slow profiler queries N+1 timing",
+                "ru": "производительность тормозит медленно профайлер запросы"
+            }
+        }
+    ]
+}

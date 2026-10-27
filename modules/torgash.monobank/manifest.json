@@ -1,0 +1,22 @@
+{
+    "id": "torgash.monobank",
+    "name": "monobank Acquiring",
+    "version": "1.0.0",
+    "regions": ["UA"],
+    "icon": "credit-card",
+    "section": "sales",
+    "description": "Card payments through monobank's internet acquiring: an invoice per order, the customer pays on monobank's page, and a signed webhook tells the shop what happened. Supports two-phase holds, full and partial refunds, and re-asking the bank from the order screen.",
+    "provider": "Torgash\\Monobank\\MonobankServiceProvider",
+    "autoload": {
+        "Torgash\\Monobank\\": "src/"
+    },
+    "requires": {
+        "core": ">=0.1",
+        "modules": [
+            "torgash.payments"
+        ]
+    },
+    "settings": [],
+    "permissions": [],
+    "admin_menu": []
+}

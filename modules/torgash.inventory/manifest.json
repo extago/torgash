@@ -1,0 +1,65 @@
+{
+    "id": "torgash.inventory",
+    "name": "Inventory",
+    "version": "1.0.0",
+    "icon": "clipboard-list",
+    "description": "Stock accounting without 1C: a journal of every movement of stock and why it happened, documents (receipt, write-off, transfer, count) with batches at their purchase price, the cost of what was sold, an order's own expenses and income, and the profit of an order and of a period. A shop that keeps its books in 1C does not need it.",
+    "provider": "Torgash\\Inventory\\InventoryServiceProvider",
+    "autoload": {
+        "Torgash\\Inventory\\": "src/"
+    },
+    "requires": {
+        "core": ">=0.1",
+        "modules": [
+            "torgash.catalog",
+            "torgash.warehouses",
+            "torgash.checkout"
+        ]
+    },
+    "section": "logistics",
+    "permissions": [
+        {
+            "name": "inventory.manage",
+            "label": "Keep stock documents and see the stock journal"
+        },
+        {
+            "name": "inventory.revoke",
+            "label": "Revoke posted stock documents (asks for the password)"
+        }
+    ],
+    "admin_menu": [
+        {
+            "label": "Stock documents",
+            "url": "/admin/inventory/documents",
+            "group": "logistics",
+            "icon": "clipboard-list",
+            "position": 26,
+            "keywords": {
+                "en": "receipt write-off transfer count delivery",
+                "ru": "приход списание перемещение инвентаризация поставка"
+            }
+        },
+        {
+            "label": "Stock journal",
+            "url": "/admin/inventory/moves",
+            "group": "logistics",
+            "icon": "history",
+            "position": 27,
+            "keywords": {
+                "en": "movements history stock log",
+                "ru": "движения история остатки журнал"
+            }
+        },
+        {
+            "label": "Profit",
+            "url": "/admin/inventory/profit",
+            "group": "sales",
+            "icon": "trending-up",
+            "position": 60,
+            "keywords": {
+                "en": "margin earnings cost of goods",
+                "ru": "прибыль маржа себестоимость доход"
+            }
+        }
+    ]
+}
