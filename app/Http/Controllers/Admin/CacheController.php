@@ -38,7 +38,34 @@ class CacheController extends Controller
             'cached' => app()->configurationIsCached(),
             'probes' => session('probes'),
             'lines' => session('lines'),
+            'pages' => $this->keptPages(),
         ]);
+    }
+
+    /**
+     * The pages kept ready for guests (PLAN §61): how many, how big, when
+     * they were last all thrown away and why, and why the latest pages were
+     * not kept — a module that forgot to declare something shows up here.
+     *
+     * @return array{enabled: bool, stats: array{entries: int, bytes: int}|null, flush: array{at: int, why: string}|null, refusals: list<array<string, mixed>>, kinds: array<string, string>}
+     */
+    protected function keptPages(): array
+    {
+        $cache = page_cache();
+
+        try {
+            $stats = $cache->stats();
+        } catch (Throwable) {
+            $stats = null;
+        }
+
+        return [
+            'enabled' => $cache->enabled(),
+            'stats' => $stats,
+            'flush' => $cache->lastFlush(),
+            'refusals' => $cache->refusals(),
+            'kinds' => $cache->kinds(),
+        ];
     }
 
     public function update(Request $request, CacheSetup $setup, EnvFile $env)
@@ -99,12 +126,16 @@ class CacheController extends Controller
 
     public function clear(Request $request, CacheSetup $setup)
     {
-        $what = $request->validate(['what' => ['required', Rule::in(['cache', 'views'])]])['what'];
+        $what = $request->validate(['what' => ['required', Rule::in(['cache', 'views', 'pages'])]])['what'];
 
         try {
             if ($what === 'cache') {
                 $setup->flush();
                 $message = __('The cache is cleared.');
+            } elseif ($what === 'pages') {
+                page_cache()->flush('thrown away on Admin → Cache and sessions');
+                page_cache()->forgetRefusals();
+                $message = __('The kept pages are thrown away; each is kept again when a guest next opens it.');
             } else {
                 Artisan::call('view:clear');
                 $message = __('Compiled templates are cleared; each is compiled again when first shown.');

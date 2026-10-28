@@ -224,6 +224,12 @@ class WarehousesServiceProvider extends ServiceProvider
                 ? app(Transfers::class)->date($product->id, $point->id)
                 : null;
 
+            // Counted from today: a page kept ready for guests (PLAN §61)
+            // that prints it is kept until tomorrow at the latest.
+            if ($bringBy !== null) {
+                page_cache()->until(\Carbon\CarbonImmutable::tomorrow());
+            }
+
             return $value.match (true) {
                 $here > 0 => '<span class="text-success">'.e(__('In stock at :point', ['point' => $point->t('name')])).'</span>',
                 $bringBy !== null => '<span class="text-primary">'.e(__('We will bring it to :point by :date', ['point' => $point->t('name'), 'date' => $bringBy->translatedFormat('j F')])).'</span>',
@@ -246,6 +252,15 @@ class WarehousesServiceProvider extends ServiceProvider
      */
     protected function registerStorefrontPoint(): void
     {
+        // The shop a visitor chose changes what a card says about stock and,
+        // with `only`, which products are listed at all: every page kept
+        // ready for guests is filed under it (PLAN §61). A sale moves a
+        // warehouse's row, which announces itself as a stock movement.
+        page_cache()
+            ->vary('pickup', fn () => (string) app(PointStore::class)->id().(app(PointStore::class)->filtering() ? '+only' : ''),
+                session: ['warehouses_point', 'warehouses_point_only'])
+            ->unseen('m_warehouse_product_stock');
+
         // The picker itself, beside the search box where every shop that has
         // branches puts it — unless the town window is there (torgash.locations,
         // PLAN §38), which asks for the town and the shop in one place: two

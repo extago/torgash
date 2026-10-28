@@ -248,6 +248,46 @@ if (! function_exists('csp_nonce')) {
     }
 }
 
+if (! function_exists('page_cache')) {
+    /** Pages kept ready for guests (PLAN §61): declarations, tags, what throws them away. */
+    function page_cache(): \App\Core\PageCache\PageCache
+    {
+        return app(\App\Core\PageCache\PageCache::class);
+    }
+}
+
+if (! function_exists('personal')) {
+    /**
+     * A part of the page that is this visitor's own — their basket, their
+     * town — drawn for each of them even when the rest of the page comes
+     * from a kept copy (App\Core\PageCache\Holes). The view is drawn ALONE,
+     * with this data only: plain values and models, which come back fresh.
+     * `$reusable`: it depends on nothing of the visitor's but their session,
+     * so a visitor holding none of what it read is served it as drawn. In a
+     * template: `@personal('view', [...])`.
+     *
+     * @param  array<string, mixed>  $data
+     */
+    function personal(string $view, array $data = [], bool $reusable = false): string
+    {
+        return app(\App\Core\PageCache\Holes::class)->render($view, $data, $reusable);
+    }
+}
+
+if (! function_exists('visit_action')) {
+    /**
+     * Something the page does for every visit — counting a view, "viewed
+     * recently" — done now and again for every visitor served from a kept
+     * copy of the page (PageCache::onVisit). The data must be plain values.
+     *
+     * @param  array<string, mixed>  $data
+     */
+    function visit_action(string $name, array $data = []): void
+    {
+        app(\App\Core\PageCache\PageCache::class)->visit($name, $data);
+    }
+}
+
 if (! function_exists('setting')) {
     function setting(string $module, string $key, mixed $default = null, ?int $storefrontId = null): mixed
     {

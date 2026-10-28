@@ -55,6 +55,7 @@ Route::post('features/bulk', [FeaturesController::class, 'bulk'])->name('feature
 Route::resource('features', FeaturesController::class)->except(['show']);
 Route::get('features/{feature}/values/{value}/edit', [FeatureValuesController::class, 'edit'])->name('features.values.edit');
 Route::put('features/{feature}/values/{value}', [FeatureValuesController::class, 'update'])->name('features.values.update');
+Route::post('features/{feature}/values/merge', [FeaturesController::class, 'mergeValues'])->name('features.values.merge');
 Route::patch('labels/{label}/status', [LabelsController::class, 'setStatus'])->name('labels.status');
 Route::post('labels/bulk', [LabelsController::class, 'bulk'])->name('labels.bulk');
 Route::resource('labels', LabelsController::class)->except(['show']);

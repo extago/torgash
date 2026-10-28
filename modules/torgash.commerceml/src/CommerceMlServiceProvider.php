@@ -7,6 +7,7 @@ use App\Core\Settings\SettingsManager;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\ServiceProvider;
 use Torgash\CommerceMl\Import\Matching;
+use Torgash\CommerceMl\Models\Link;
 
 class CommerceMlServiceProvider extends ServiceProvider implements ModuleLifecycle
 {
@@ -39,6 +40,9 @@ class CommerceMlServiceProvider extends ServiceProvider implements ModuleLifecyc
 
     public function boot(): void
     {
+        // The exchange's own bookkeeping is on no guest's page (PLAN §61).
+        page_cache()->unseen(['m_commerceml_exchanges', 'm_commerceml_links', 'm_commerceml_order_sync']);
+
         // A merge 1C has already taken — either order handed over and
         // confirmed after it — is 1C's fact too, and undoing it here would
         // leave the two systems telling different stories (PLAN §40.10/4).
@@ -58,6 +62,14 @@ class CommerceMlServiceProvider extends ServiceProvider implements ModuleLifecyc
         // Exchange sessions and the per-order sync state are this module's own
         // logs, written by 1C's calls — not somebody's act to audit.
         hook_listen('guard.audit.ignored_tables', fn (array $tables) => [...$tables, 'm_commerceml_exchanges', 'm_commerceml_order_sync']);
+
+        // Values merged into one (catalog, PLAN §60): what 1C calls by the
+        // merged values' ids lands on the value that took their place — the
+        // next exchange neither recreates them nor asks about them again.
+        hook_listen('catalog.feature_value.merged', fn (array $context) => Link::query()
+            ->where('kind', Link::KIND_FEATURE_VALUE)
+            ->whereIn('local_id', $context['merged'])
+            ->update(['local_id' => $context['into']->id, 'updated_at' => now()]));
 
         hook_listen('guard.files.expected', function (array $paths) {
             $endpoint = new LegacyEndpoint;

@@ -180,6 +180,7 @@ class CatalogServiceProvider extends ServiceProvider
             hook_action('catalog.products.listed', ['products' => $items]);
         });
 
+        $this->registerPageCache();
         $this->registerMachineReaders();
         $this->registerFeaturePlaces();
         $this->registerFilterFlags();
@@ -226,6 +227,110 @@ class CatalogServiceProvider extends ServiceProvider
         // statement about our own data rather than a dependency on theirs.
         hook_listen('guard.invariants', fn (array $all) => $all
             + (new Invariants\CatalogInvariants)->register());
+    }
+
+    /**
+     * Pages kept ready for guests (PLAN §61): the catalogue's kinds of page,
+     * what it keeps about a visitor, what its pages do for every visit — and
+     * which of its writes no guest page can see.
+     */
+    protected function registerPageCache(): void
+    {
+        page_cache()
+            ->kind('home', 'Home page')
+            ->kind('category', 'Categories and the catalogue')
+            ->kind('filter_page', 'Filter pages')
+            ->kind('product', 'Product pages')
+            ->kind('brand', 'Brands')
+            // "Counted already" — read only by the visit action below.
+            ->harmless(session: ['viewed_products'])
+            // Drawn by the "Viewed recently" block, which is personal by it;
+            // nothing else reads it, so its holders still give copies.
+            ->personal(session: [Support\RecentlyViewed::SESSION_KEY], copies: true)
+            // How the visitor has a listing laid out: what the page WILL use
+            // (the address first, then the cookie), so a cookie saying the
+            // default is the default's copy.
+            ->vary(
+                'listing',
+                fn (\Illuminate\Http\Request $request) => app(Support\ListingView::class)->perPage($request).'/'.app(Support\ListingView::class)->layout($request),
+                cookies: [Support\ListingView::PER_PAGE_COOKIE, Support\ListingView::LAYOUT_COOKIE],
+            )
+            // Counted in the product's own row on every view and sale; a label
+            // reading them is right again within the copy's hour. Stock is
+            // announced on its own (below), by product.
+            ->unseen('m_catalog_products', ['views_count', 'sales_count', 'popularity', 'stock', 'updated_at'])
+            // A label's dates, and "new for N days", put badges on and take
+            // them off with nothing written.
+            ->changes(function () {
+                $next = page_cache()->nextDateIn('m_catalog_labels');
+
+                foreach (Label::query()->where('enabled', true)->get() as $label) {
+                    foreach ((array) ($label->conditions['rules'] ?? []) as $rule) {
+                        if (($rule['field'] ?? null) !== 'age_days') {
+                            continue;
+                        }
+
+                        $days = (int) ($rule['value'] ?? 0);
+                        $youngest = DB::table('m_catalog_products')->where('created_at', '>', now()->subDays($days))->min('created_at');
+                        $at = $youngest ? Carbon::parse($youngest)->addDays($days)->addSecond() : null;
+
+                        if ($at !== null && ($next === null || $at->lt($next))) {
+                            $next = $at;
+                        }
+                    }
+                }
+
+                return $next;
+            })
+            // One view per product per session, never a crawler's points —
+            // for the visits served from a copy as for the drawn ones.
+            ->onVisit('catalog.product_viewed', function (array $data, \Illuminate\Http\Request $request) {
+                $id = (int) ($data['product'] ?? 0);
+                $seen = (array) session('viewed_products', []);
+
+                if (! in_array($id, $seen, true)) {
+                    // A plain query: a view is not an edit of the product, and
+                    // must not move updated_at or wake the model's listeners.
+                    DB::table('m_catalog_products')->where('id', $id)->increment('views_count');
+                    app(Support\Popularity::class)->viewed($id, $request);
+                    session(['viewed_products' => array_slice([...$seen, $id], -200)]);
+                }
+
+                app(Support\RecentlyViewed::class)->remember($id);
+            })
+            // A city page is a visitor saying where they are (filterPage()).
+            ->onVisit('catalog.place_chosen', fn (array $data) => hook_action('storefront.place_chosen', [
+                'place_id' => (int) ($data['place_id'] ?? 0),
+                'source' => 'geo_page',
+            ]));
+
+        // What a kept page shows, by the products it announces: a sale moves
+        // one product's stock, and only the pages that show it are drawn again.
+        hook_listen('catalog.products.listed', function (array $context) {
+            if (page_cache()->current() === null) {
+                return;
+            }
+
+            foreach ($context['products'] ?? [] as $product) {
+                if ($product instanceof Product) {
+                    page_cache()->tag('product:'.$product->id);
+                }
+            }
+        });
+
+        hook_listen('catalog.stock.moved', function (array $move) {
+            $after = $move['after'] ?? null;
+
+            // Sold out, or back: a listing that hides what is out of stock,
+            // the filter counts and the "in stock" flag all move — every page.
+            if ($after !== null && ((int) $after > 0) !== ((int) $after - (int) $move['delta'] > 0)) {
+                page_cache()->discardAll('stock of product '.$move['product_id'].' crossed zero');
+
+                return;
+            }
+
+            page_cache()->discard('product:'.$move['product_id']);
+        });
     }
 
     /**
@@ -1035,27 +1140,27 @@ class CatalogServiceProvider extends ServiceProvider
         // A product in the bin is still the product the file means — its SKU is
         // taken, so a "new" one could not be written anyway; it comes back
         // (Exim\ProductImport::saving).
-        hook_listen('exim.match.product', fn ($v, array $ctx) => $this->matchBy(
+        hook_listen('exim.match.product', fn ($v, array $ctx) => $this->namedOrRefused($this->matchBy(
             Product::class, 'sku', $ctx['row']['sku'] ?? null, $ctx['row']['external_id'] ?? null, withTrashed: true,
-        ));
+        ), $ctx['row'], 'no product matches it, and a new one needs a name'));
 
         // What a file may leave out and a row may not: a new product's and a
         // new category's address, made from the name.
         hook_listen('exim.saving.product', fn (array $ctx) => app(Exim\ProductImport::class)->saving($ctx['model']));
         hook_listen('exim.saving.category', fn (array $ctx) => app(Exim\ProductImport::class)->savingCategory($ctx['model']));
-        hook_listen('exim.match.category', fn ($v, array $ctx) => $this->matchBy(
+        hook_listen('exim.match.category', fn ($v, array $ctx) => $this->namedOrRefused($this->matchBy(
             Category::class, 'slug', $ctx['row']['slug'] ?? null, $ctx['row']['external_id'] ?? null,
-        ));
+        ), $ctx['row'], 'no category matches it, and a new one needs a name'));
         hook_listen('exim.match.feature', function ($v, array $ctx) {
             $code = $ctx['row']['code'] ?? null;
             if ($code) {
-                return $this->matchBy(Feature::class, 'code', $code);
+                return $this->namedOrRefused($this->matchBy(Feature::class, 'code', $code), $ctx['row'], 'no characteristic matches it, and a new one needs a name');
             }
 
             // Any language the file carries a name in, compared in THAT language.
             $names = collect($ctx['row'])->filter(fn ($value, $key) => preg_match('/^name_[a-z]{2,5}$/', (string) $key) && trim((string) $value) !== '');
             if ($names->isEmpty()) {
-                return ['model' => new Feature, 'matchedBy' => null];
+                return ['model' => new Feature, 'matchedBy' => null, 'refused' => 'no characteristic matches it, and a new one needs a name'];
             }
 
             $existing = Feature::where(function ($query) use ($names) {
@@ -1385,6 +1490,28 @@ class CatalogServiceProvider extends ServiceProvider
         $fields[] = ['key' => 'canonical_url', 'group' => 'seo', 'label' => 'Canonical address', 'get' => fn (Model $m) => $m->canonical_url, 'set' => fn (Model $m, $v) => $m->canonical_url = (trim((string) $v) ?: null)];
 
         return $fields;
+    }
+
+    /**
+     * A row that matches nothing and carries no name cannot make a record —
+     * every catalogue table requires one — so the match says why (`refused`,
+     * an English sentence) and the import skips that row with a note. It used
+     * to reach the database's NOT NULL and roll the whole file back: one
+     * mistyped SKU in a price list cost every other row of it.
+     */
+    protected function namedOrRefused(array $match, array $row, string $reason): array
+    {
+        if ($match['model']->exists) {
+            return $match;
+        }
+
+        foreach ($row as $key => $value) {
+            if (preg_match('/^name_[a-z]{2,5}$/', (string) $key) && trim((string) $value) !== '') {
+                return $match;
+            }
+        }
+
+        return $match + ['refused' => $reason];
     }
 
     /** @return array{model: Model, matchedBy: ?string} */

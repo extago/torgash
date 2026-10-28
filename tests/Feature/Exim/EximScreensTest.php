@@ -66,8 +66,8 @@ class EximScreensTest extends TestCase
     {
         $this->get('http://localhost/admin/exim/import')->assertOk();
 
-        $csv = "sku,price
-IMP-CHECK-1,12.50
+        $csv = "sku,name,price
+IMP-CHECK-1,Checked,12.50
 ";
         $file = UploadedFile::fake()->createWithContent('products.csv', $csv);
 
@@ -79,7 +79,7 @@ IMP-CHECK-1,12.50
             ->assertSee('IMP-CHECK-1')
             ->assertSee('— skip this column —');
 
-        $this->post('http://localhost/admin/exim/import/preview', ['token' => $token, 'map' => ['sku', ''], 'create_new' => 1])->assertOk()
+        $this->post('http://localhost/admin/exim/import/preview', ['token' => $token, 'map' => ['sku', 'name', ''], 'create_new' => 1])->assertOk()
             ->assertSee('IMP-CHECK-1')
             ->assertSee('1 will be created');
     }
@@ -193,6 +193,19 @@ IMP-F-2,Квокка 2,по запросу
         $this->get('http://localhost/admin/exim/import/'.$token.'/map')->assertOk()
             ->assertSee('name="formula[0]" value="ending($value * 1.2, 90)"', false)
             ->assertSee('690');
+    }
+
+    public function test_the_check_names_a_row_that_cannot_make_a_new_product(): void
+    {
+        $file = UploadedFile::fake()->createWithContent('typo.csv', "sku,price_units\nCHK-TYPO,5\n");
+        $map = $this->post('http://localhost/admin/exim/import/upload', ['entity' => 'product', 'file' => $file]);
+        $token = basename(dirname(parse_url($map->headers->get('Location'), PHP_URL_PATH)));
+        $this->get('http://localhost/admin/exim/import/'.$token.'/map')->assertOk();
+
+        $this->post('http://localhost/admin/exim/import/preview', ['token' => $token, 'map' => ['sku', 'price_units'], 'create_new' => 1])
+            ->assertOk()
+            ->assertSee('0 will be created')
+            ->assertSee('Line 1: skipped — no product matches it, and a new one needs a name');
     }
 
     public function test_a_draft_left_alone_for_a_week_is_swept_with_its_file(): void

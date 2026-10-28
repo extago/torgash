@@ -43,6 +43,16 @@ class SearchServiceProvider extends ServiceProvider implements ModuleLifecycle
         // Its card on core's admin dashboard.
         app(Admin\DashboardWidgets::class)->register();
 
+        // Pages kept ready for guests (PLAN §61): the search box says which
+        // half of the shop it searches — every copy filed under it; what the
+        // visitor searched before is read by the live window alone, and the
+        // counting of clicks by nothing a page shows.
+        page_cache()
+            ->vary('search_scope', fn (\Illuminate\Http\Request $request) => Scope::current($request), session: ['torgash.search.scope'])
+            ->personal(session: [History::KEY], copies: true)
+            ->harmless(session: ['torgash.search.counted', 'torgash.search.shown'])
+            ->unseen(['m_search_clicks', 'm_search_stats', 'm_search_phrases']);
+
         hook_listen('search.retrievers', fn (array $all) => $all + [
             'text' => ['class' => Retrievers\TextRetriever::class, 'weight' => 1.0],
             // A phrase's products lead: no text match can reach this weight.

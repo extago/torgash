@@ -60,14 +60,16 @@ class WishlistServiceProvider extends ServiceProvider
                 return $html;
             }
 
-            return $html.view('torgash.wishlist::button', ['wishProduct' => $product, 'wishLabelled' => false])->render();
+            // The visitor's own on a page kept ready for guests (PLAN §61) —
+            // for a guest with no wishlist, as it was drawn.
+            return $html.personal('torgash.wishlist::button', ['wishProduct' => $product, 'wishLabelled' => false], reusable: true);
         }, 5);
 
         hook_listen('cart.buy_box.links', function (string $html, array $context) {
             $product = $context['product'] ?? null;
 
             return $product instanceof Product
-                ? $html.view('torgash.wishlist::button', ['wishProduct' => $product, 'wishLabelled' => true])->render()
+                ? $html.personal('torgash.wishlist::button', ['wishProduct' => $product, 'wishLabelled' => true], reusable: true)
                 : $html;
         });
 
@@ -80,7 +82,11 @@ class WishlistServiceProvider extends ServiceProvider
                 : $html;
         });
 
-        hook_listen('storefront.header.icons', fn (string $html) => $html.view('torgash.wishlist::counter')->render());
+        hook_listen('storefront.header.icons', fn (string $html) => $html.personal('torgash.wishlist::counter', reusable: true));
+
+        page_cache()
+            ->personal(session: [Wishlists::SESSION])
+            ->unseen(['m_wishlist_lists', 'm_wishlist_items']);
 
         // The phone's tab bar (PLAN §38), between the catalogue and the profile.
         hook_listen('storefront.tabbar', fn (array $items) => [...$items, [

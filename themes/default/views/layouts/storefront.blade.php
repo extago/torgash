@@ -187,7 +187,9 @@
     {{-- The counterpart of @stack('head') the admin layout already has: a
          module shipping storefront JS (the town picker is the first) pushes it
          here rather than repeating a <script> in every view that uses it. --}}
-    @include('layouts.partials.mobile-tabbar')
+    {{-- Its counts are the visitor's own: drawn for each of them on a page
+         kept ready for guests (PLAN §61). --}}
+    @personal('layouts.partials.mobile-tabbar', ['storefront' => $storefront], true)
 
     {{-- Always, not only when the popover component pushed it: a shop's own
          HTML block (the contacts in the header) opens a popover with plain

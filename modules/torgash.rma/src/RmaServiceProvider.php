@@ -31,6 +31,9 @@ class RmaServiceProvider extends ServiceProvider
 
     public function boot(): void
     {
+        // Returns are on no guest's page (PLAN §61).
+        page_cache()->unseen('m_rma_returns');
+
         Kind::register();
 
         // A return names an order's lines by their keys and counts what is

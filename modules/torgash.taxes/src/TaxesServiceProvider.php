@@ -40,6 +40,13 @@ class TaxesServiceProvider extends ServiceProvider
         $this->prices();
         $this->totals();
 
+        // A price with tax and the "incl. VAT" under it are worked out for
+        // the visitor's town: every page kept ready for guests is filed
+        // under the rates that apply there (PLAN §61, Destinations).
+        page_cache()
+            ->vary('tax_place', fn () => app(Destinations::class)->signature())
+            ->unseen('m_taxes_order_taxes');
+
         // What must be true about charging tax, for whoever is watching. Never
         // fired when `torgash.guard` is absent — a statement about our own
         // data, not a dependency.

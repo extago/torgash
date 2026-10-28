@@ -30,6 +30,9 @@ class PointsServiceProvider extends ServiceProvider
 
     public function boot(): void
     {
+        // Customers' points and their history are on no guest's page (PLAN §61).
+        page_cache()->unseen(['m_points_accounts', 'm_points_ledger', 'm_points_orders']);
+
         // "Has points", for the newsletter's campaigns: a reminder that a balance is waiting.
         hook_listen('newsletter.segments', fn (array $kinds) => $kinds + [
             'points' => [

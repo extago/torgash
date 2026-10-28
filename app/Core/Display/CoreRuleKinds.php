@@ -44,6 +44,7 @@ class CoreRuleKinds
                 'not_in' => 'is outside',
             ],
             'matches' => fn (array $rule) => self::inPeriods($rule, 'date'),
+            'changes' => fn () => Periods::nextChange([], 'date'),
         ]);
     }
 
@@ -62,6 +63,7 @@ class CoreRuleKinds
                 'not_in' => 'is not one of',
             ],
             'matches' => fn (array $rule) => self::inList(shop_now()->dayOfWeekIso, $rule),
+            'changes' => fn () => Periods::nextChange([], 'date'),
         ]);
     }
 
@@ -78,6 +80,7 @@ class CoreRuleKinds
                 'not_in' => 'is outside',
             ],
             'matches' => fn (array $rule) => self::inPeriods($rule, 'time'),
+            'changes' => fn (array $rule) => Periods::nextChange((array) ($rule['value'] ?? []), 'time'),
         ]);
     }
 

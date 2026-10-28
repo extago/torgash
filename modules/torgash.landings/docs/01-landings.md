@@ -49,9 +49,32 @@ CSS is one for all languages.
 
 A landing stands in its own shadow root: the shop's styles do not reach into
 it (a designer's `.hero` or `.card` is not daisyUI's), and its styles do not
-leak out. The page's font and text colour still come through. In the CSS,
-`:host` (or `:scope`) is the landing itself. `@font-face` works; `@import`
-is dropped — bring fonts as files.
+leak out. There is nothing of the shop's to reset — inside, only the
+landing's CSS and the browser's defaults apply.
+
+What does come in is what the page passes down: the font, its size and
+colour, the line height — so the landing reads as part of the page — and CSS
+variables (the theme's colours as `var(--color-primary)`,
+`var(--color-base-content)` and the rest). A landing that wants none of it
+says so in its first rule, then sets its own font and colour:
+
+    :host { all: initial; display: block; }
+
+(Not `* { all: unset }`: that makes every element inline and throws away the
+browser's defaults as well.)
+
+- `:host` is the landing itself; `:root` and `:scope` are read as `:host`, so
+  a designer's variables on `:root` work. `html` and `body` match nothing
+  inside — write `:host` instead.
+- A reset of your own on a wrapper class outweighs your other rules:
+  `.lp img { display: block }` (a class and a tag) beats
+  `.icon { display: inline }` (a class alone). Write such a reset as
+  `:where(.lp) img { … }`, which weighs nothing, or inside
+  `@layer reset { … }` — any rule outside a layer wins over it.
+- `@font-face` works; `@import` is dropped — bring fonts as files.
+- A link to `#part` inside the landing goes to that part, opening a folded
+  landing first; so does a page opened at that address. The jump stops below
+  the page's sticky header — a `scroll-margin-top` of your own changes that.
 
 ## Files
 
@@ -66,11 +89,22 @@ Placeholders put in the product's own data: `{product_name}`, `{price}`,
 `{old_price}`, `{product_sku}`, `{brand}`, `{feature:code}` and the rest of
 the picker. One landing for a category then speaks about each product.
 
-## No scripts
+## Cleaned when printed
 
 HTML is cleaned when printed, as everything staff write: no `<script>`, no
 `onclick`, no forms. Animations are CSS. A widget that needs JavaScript goes
 through Code snippets, with its own display rules.
+
+The cleaning also removes:
+
+- `<style>` written into the HTML — CSS goes in its own field (a ZIP moves it
+  there by itself);
+- inline `<svg>` — use a picture file, an icon font or CSS (SVG files are not
+  accepted either, see Files);
+- `data-…` attributes, Alpine's and htmx's (`x-data`, `hx-get`) among them.
+
+`class`, `style`, `id` and links to `#…` stay as written — CSS variables in
+`style` too: `style="--accent: #c00"` works.
 
 ## ZIP
 
@@ -86,4 +120,6 @@ the same shape back.
 ## Looking before switching it on
 
 "Look at it" on the form opens a product with the landing as saved, even
-while it is switched off — only for staff who may edit landings.
+while it is switched off — only for staff who may edit landings. It is the
+product's ordinary address with `?landing_preview=<the landing's number>`
+added, so the landing can be looked at on any other product the same way.

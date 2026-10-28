@@ -21,6 +21,10 @@ class KitsServiceProvider extends ServiceProvider
 
     public function boot(): void
     {
+        // A kit's dates offer and withdraw it with nothing written: a page
+        // kept ready for guests is kept only until the next (PLAN §61).
+        page_cache()->changes(fn () => page_cache()->nextDateIn('m_kits_kits'));
+
         // Its part of the demo shop (PLAN §55.3), after the catalogue's products.
         hook_listen('core.demo.parts', fn (array $parts) => $parts + [
             'kits' => ['label' => 'Kits', 'after' => ['catalog'], 'install' => fn (\App\Core\Demo\DemoPack $pack) => app(Demo\KitsDemo::class)->install($pack)],

@@ -69,6 +69,10 @@ class CodeChanged
             // Remembered by the builder itself; the System page shows it.
         }
 
+        // Pages kept for guests were drawn by the old code (PLAN §61).
+        app(\App\Core\PageCache\PageCache::class)->flush('the code changed');
+        $done[] = 'pages';
+
         return $done;
     }
 }

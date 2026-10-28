@@ -3,6 +3,9 @@
 namespace Torgash\Catalog\Invariants;
 
 use Illuminate\Support\Facades\DB;
+use Torgash\Catalog\Features\Spelling;
+use Torgash\Catalog\Models\Feature;
+use Torgash\Catalog\Models\FeatureValue;
 use Torgash\Catalog\Models\Product;
 
 /**
@@ -115,7 +118,51 @@ class CatalogInvariants
                 'severity' => 'warning',
                 'check' => fn (int $limit) => $this->characteristicsPrintedTwice($limit),
             ],
+
+            'catalog.values_spelled_once' => [
+                'label' => 'No characteristic has one value written two ways',
+                'explain' => 'Two values of one characteristic differ only in letter case, dashes or spaces, so each holds only its own products: a customer who ticks one in the filter misses the rest, and each gets a filter page of its own. Open the characteristic and use "Merge values" — the products, filter pages and labels move to the value you keep, and imports find it by both spellings.',
+                'severity' => 'warning',
+                'check' => fn (int $limit) => $this->valuesWrittenAlike($limit),
+            ],
         ];
+    }
+
+    /**
+     * Characteristics whose values are written alike (Features\Spelling), one
+     * finding per characteristic naming the groups. Grouped in PHP, by the same
+     * Spelling::groups() the characteristic's page shows — a second copy of
+     * that rule in SQL would be one more thing to keep in step.
+     *
+     * @return list<array<string, mixed>>
+     */
+    protected function valuesWrittenAlike(int $limit): array
+    {
+        $findings = [];
+
+        foreach (Feature::query()->where('input_type', 'select')->with('values')->orderBy('id')->get() as $feature) {
+            $groups = Spelling::groups($feature->values);
+
+            if ($groups === []) {
+                continue;
+            }
+
+            $findings[] = [
+                'id' => (string) $feature->id,
+                'title' => (string) ($feature->t('name', self::locale()) ?: $feature->code),
+                'detail' => ['Written alike: :values', ['values' => implode('; ', array_map(
+                    fn (array $group) => implode(' = ', array_map(fn (FeatureValue $value) => (string) $value->display(self::locale()), $group)),
+                    $groups,
+                ))]],
+                'url' => route('admin.catalog.features.edit', $feature->id),
+            ];
+
+            if (count($findings) >= $limit) {
+                break;
+            }
+        }
+
+        return $findings;
     }
 
     /**

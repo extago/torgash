@@ -14,8 +14,13 @@
                 'code' => $v->code ?? '',
                 'position' => $v->sort,
                 'swatch' => $v->swatch ?? '#000000',
+                // Spellings merged into the value (PLAN §60), handed back
+                // whole: the screen can only drop some of them.
+                'aliases' => array_values((array) ($v->aliases ?? [])),
             ])->values()
             : collect();
+        $spellingGroups ??= [];
+        $valueProducts ??= [];
         $selectedCategories = array_map('intval', old('categories', $feature->exists ? $feature->categories->pluck('id')->all() : []));
         $locale = admin_content_locale();
         $purposes = [
@@ -38,6 +43,7 @@
               values: {{ \Illuminate\Support\Js::from($initialValues) }},
               addValue() { this.values.push({ id: null, value: {}, code: '', position: this.values.length, swatch: '#000000' }) },
               removeValue(i) { this.values.splice(i, 1) },
+              aliasWord(alias) { const names = alias.names || {}; return names[this.locale] || Object.values(names).find(text => text) || alias.code || '' },
           }">
         @csrf
         @if ($feature->exists) @method('PUT') @endif
@@ -108,6 +114,26 @@
                             {{ __('Add each brand\'s name here first, save, then use "Page" on the value to add its logo, description and slug.') }}
                         </div>
 
+                        {{-- Twins the shop already has — "тёмно‑синий" beside
+                             "темно-синий" (Features\Spelling): each holds half
+                             the products, and nothing else on the page says so. --}}
+                        @if ($spellingGroups)
+                            <div class="alert alert-warning text-sm flex flex-wrap items-center gap-2">
+                                <span>{{ __('Written alike — each holds only its own products:') }}</span>
+                                @foreach (array_slice($spellingGroups, 0, 3) as $group)
+                                    <span class="inline-flex flex-wrap gap-1">
+                                        @foreach ($group as $twin)
+                                            <span class="badge badge-ghost">{{ $twin->display($locale) }}</span>
+                                        @endforeach
+                                    </span>
+                                @endforeach
+                                @if (count($spellingGroups) > 3)
+                                    <span>{{ __('and :count more', ['count' => count($spellingGroups) - 3]) }}</span>
+                                @endif
+                                <button type="button" class="btn btn-sm ms-auto" data-open-dialog="modal-merge-values">{{ __('Merge values') }}</button>
+                            </div>
+                        @endif
+
                         <div class="flex flex-col gap-2">
                             <div class="flex gap-2 items-center text-xs opacity-60 px-0.5" x-show="values.length">
                                 <span class="w-16 shrink-0">{{ __('Sort order') }}</span>
@@ -117,16 +143,34 @@
                                 <span class="w-16 shrink-0"></span>
                             </div>
                             <template x-for="(row, i) in values" :key="i">
-                                <div class="flex gap-2 items-center">
+                                <div class="flex gap-2 items-start">
                                     <input type="number" x-model.number="row.position" aria-label="{{ __('Sort order') }}"
                                            class="input input-bordered w-16 shrink-0 tabular-nums">
                                     <span class="w-16 shrink-0" x-show="isColor">
                                         <input type="color" x-model="row.swatch" aria-label="{{ __('Swatch') }}"
                                                class="w-9 h-8 rounded border border-base-300 p-0.5 bg-base-100 block">
                                     </span>
-                                    <input type="text" x-model="row.value[locale]" aria-label="{{ __('Value') }}"
-                                           :placeholder="row.value[locale] ? '' : (Object.values(row.value).find(text => text) || @js(__('Value')))"
-                                           class="input input-bordered grow min-w-0 placeholder:italic">
+                                    <div class="grow min-w-0 flex flex-col gap-1">
+                                        <input type="text" x-model="row.value[locale]" aria-label="{{ __('Value') }}"
+                                               :placeholder="row.value[locale] ? '' : (Object.values(row.value).find(text => text) || @js(__('Value')))"
+                                               class="input input-bordered w-full placeholder:italic">
+                                        {{-- What a merge folded into this value: the import and
+                                             old filtered addresses still find it by these. --}}
+                                        <template x-if="row.aliases && row.aliases.length">
+                                            <div class="flex flex-wrap items-center gap-1 text-xs">
+                                                <span class="opacity-60">{{ __('Also written:') }}</span>
+                                                <template x-for="(alias, a) in row.aliases" :key="a">
+                                                    <span class="badge badge-ghost badge-sm gap-0.5 pe-0.5">
+                                                        <span x-text="aliasWord(alias)"></span>
+                                                        <button type="button" @click="row.aliases.splice(a, 1)" class="btn btn-ghost btn-xs btn-circle min-h-0 h-4 w-4"
+                                                                title="{{ __('Forget this spelling — the next import makes it a value of its own') }}">
+                                                            <x-icon name="x" size="sm" />
+                                                        </button>
+                                                    </span>
+                                                </template>
+                                            </div>
+                                        </template>
+                                    </div>
                                     <input type="text" x-model="row.code" aria-label="{{ __('Code') }}"
                                            class="input input-bordered w-36 font-mono shrink-0" placeholder="{{ __('auto') }}">
                                     <span class="w-16 shrink-0 flex items-center justify-end gap-1">
@@ -143,7 +187,12 @@
                             <div x-show="! values.length" class="text-sm opacity-60">{{ __('No values yet.') }}</div>
                         </div>
                         <div class="flex items-center justify-between gap-3 flex-wrap">
-                            <button type="button" @click="addValue()" class="btn btn-ghost btn-sm gap-1"><x-icon name="plus" size="sm" /> {{ __('Add value') }}</button>
+                            <div class="flex items-center gap-1">
+                                <button type="button" @click="addValue()" class="btn btn-ghost btn-sm gap-1"><x-icon name="plus" size="sm" /> {{ __('Add value') }}</button>
+                                @if ($feature->exists && $feature->values->count() > 1)
+                                    <button type="button" class="btn btn-ghost btn-sm gap-1" data-open-dialog="modal-merge-values"><x-icon name="merge" size="sm" /> {{ __('Merge values') }}</button>
+                                @endif
+                            </div>
                             <span class="text-xs opacity-60">
                                 {{ __('Only the :locale text is edited here — switch the content language at the top to edit another; a grey value is the one it falls back to.', ['locale' => strtoupper($locale)]) }}
                             </span>
@@ -258,4 +307,98 @@
             </div>
         </div>
     </form>
+
+    {{-- Beside the form, never inside it: a form in a form loses its tag and
+         leaks its inputs into the outer one. --}}
+    @if ($feature->exists && $feature->values->count() > 1)
+        @php
+            // A group's main value is the one most products carry — the
+            // spelling the shop has used most — and the older one on a tie.
+            $mergeSuggestions = array_map(function (array $group) use ($valueProducts, $locale) {
+                usort($group, fn ($a, $b) => [($valueProducts[$b->id] ?? 0), $a->id] <=> [($valueProducts[$a->id] ?? 0), $b->id]);
+
+                return [
+                    'into' => (string) $group[0]->id,
+                    'values' => array_map(fn ($value) => (string) $value->id, array_slice($group, 1)),
+                    'words' => array_map(fn ($value) => $value->display($locale), $group),
+                ];
+            }, $spellingGroups);
+        @endphp
+        <x-modal name="merge-values" :title="__('Merge values')" icon="merge" size="lg">
+            <form method="POST" action="{{ route('admin.catalog.features.values.merge', $feature) }}" class="flex flex-col gap-3"
+                  data-confirm="{{ __('Merge the ticked values into the main one? Their products, filter pages and labels move to it, and the ticked values are deleted.') }}"
+                  x-data="{
+                      into: '',
+                      picked: [],
+                      q: '',
+                      counts: {{ \Illuminate\Support\Js::from((object) $valueProducts) }},
+                      moving() { return this.picked.reduce((n, id) => n + (this.counts[id] || 0), 0) },
+                      pick(into, values) { this.into = into; this.picked = values; this.q = '' },
+                      shown(el) { const q = this.q.trim().toLowerCase().replace(/ё/g, 'е'); return ! q || el.dataset.words.includes(q) },
+                  }"
+                  x-init="$watch('into', id => picked = picked.filter(other => other !== id))">
+                @csrf
+                <p class="text-sm opacity-70">
+                    {{ __('The ticked values become the main one: their products, filter pages, labels and markup rules move to it, and they are deleted. Their spellings stay with the main value, so an import finds it by them.') }}
+                </p>
+
+                @if ($mergeSuggestions)
+                    <div class="flex flex-col gap-1.5">
+                        <div class="text-xs font-semibold opacity-60">{{ __('Written alike') }}</div>
+                        @foreach ($mergeSuggestions as $suggestion)
+                            <div class="flex items-center justify-between gap-3 rounded-box bg-base-200/60 px-3 py-1.5">
+                                <span class="flex flex-wrap gap-1 min-w-0">
+                                    @foreach ($suggestion['words'] as $word)
+                                        <span class="badge badge-ghost">{{ $word }}</span>
+                                    @endforeach
+                                </span>
+                                <button type="button" class="btn btn-ghost btn-sm shrink-0"
+                                        x-on:click="pick(@js($suggestion['into']), @js($suggestion['values']))">{{ __('Pick') }}</button>
+                            </div>
+                        @endforeach
+                    </div>
+                @endif
+
+                <input type="search" x-model="q" class="input input-bordered input-sm w-full" placeholder="{{ __('Find a value') }}" aria-label="{{ __('Find a value') }}">
+
+                <div class="border border-base-300 rounded-box max-h-80 overflow-y-auto">
+                    <table class="table table-sm">
+                        <thead class="sticky top-0 bg-base-100 z-10">
+                            <tr>
+                                <th class="w-16 text-center">{{ __('Main value') }}</th>
+                                <th class="w-16 text-center">{{ __('Merge in') }}</th>
+                                <th>{{ __('Value') }}</th>
+                                <th class="text-right">{{ __('Products') }}</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach ($feature->values as $value)
+                                <tr x-show="shown($el)" data-words="{{ \Torgash\Catalog\Features\Spelling::key(implode(' ', array_filter((array) $value->value, 'is_string')).' '.$value->code) }}">
+                                    <td class="text-center">
+                                        <input type="radio" name="into" value="{{ $value->id }}" x-model="into" class="radio radio-sm" aria-label="{{ __('Main value') }}">
+                                    </td>
+                                    <td class="text-center">
+                                        <input type="checkbox" name="values[]" value="{{ $value->id }}" x-model="picked" class="checkbox checkbox-sm"
+                                               :disabled="into === '{{ $value->id }}'" aria-label="{{ __('Merge in') }}">
+                                    </td>
+                                    <td>
+                                        {{ $value->display($locale) }}
+                                        <span class="font-mono text-xs opacity-50">{{ $value->code }}</span>
+                                    </td>
+                                    <td class="text-right tabular-nums">{{ $valueProducts[$value->id] ?? 0 }}</td>
+                                </tr>
+                            @endforeach
+                        </tbody>
+                    </table>
+                </div>
+
+                <div class="flex flex-wrap items-center justify-end gap-2 pt-1">
+                    <span class="text-sm opacity-70 me-auto" x-show="into && picked.length" x-cloak
+                          x-text="@js(__('Values to merge: :values. Products to move: :products.')).replace(':values', picked.length).replace(':products', moving())"></span>
+                    <button type="button" class="btn btn-ghost" data-close-dialog>{{ __('Cancel') }}</button>
+                    <button class="btn btn-primary gap-1.5" :disabled="! into || ! picked.length"><x-icon name="merge" size="sm" /> {{ __('Merge values') }}</button>
+                </div>
+            </form>
+        </x-modal>
+    @endif
 @endsection

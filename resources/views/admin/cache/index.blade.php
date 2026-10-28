@@ -168,6 +168,8 @@
                 </div>
             </section>
 
+            @include('admin.cache._pages', ['keptPages' => $pages, 'keptWhen' => $when])
+
             @if ($outage)
                 <section class="card bg-base-100 border border-base-300">
                     <div class="card-body gap-1 text-sm">

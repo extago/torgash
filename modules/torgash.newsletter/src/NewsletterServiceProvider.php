@@ -22,6 +22,9 @@ class NewsletterServiceProvider extends ServiceProvider implements ModuleLifecyc
 
     public function boot(): void
     {
+        // Subscribers and mailings are on no guest's page (PLAN §61).
+        page_cache()->unseen(['m_newsletter_subscribers', 'm_newsletter_campaigns', 'm_newsletter_deliveries', 'm_newsletter_links']);
+
         StorefrontRoutes::group(dirname(__DIR__).'/routes.php');
 
         Route::middleware(['web', 'auth', 'can:newsletter.manage'])

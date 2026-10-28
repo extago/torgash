@@ -57,7 +57,12 @@ source string) and `run()`, report with `total()` / `progress()` /
 which writes the `background_tasks` row and pushes the job. `SomeJob::startIfIdle(...)`
 is the same but no-ops when an instance is already queued or running (keyed by
 `label()`+`module()`) — for jobs the scheduler re-runs so a nightly copy does
-not stack on one still going. Message strings are stored as a KEY plus params,
+not stack on one still going. `SomeJob::runHere(...)` writes the same row and
+runs the job in this process (`dispatch_sync`), for a console command whose
+user waits for the answer anyway (`exim:import`): Background tasks lists it,
+the audit names whoever `auth()` held when it started, a failure is thrown as
+the worker would see it — and a `continueWith()` part still goes to the
+queue. Message strings are stored as a KEY plus params,
 never a finished sentence: the worker runs in the app's default locale and the
 admin reading the list may be in another one. Progress written from inside a DB
 transaction only becomes visible when that transaction commits (`RunImport`

@@ -93,6 +93,16 @@ class FormGuard
     /** A stamp for a form being rendered right now. */
     public function stamp(): string
     {
+        // A kept copy of the page gets a stamp of its own on every serve
+        // (PLAN §61): the copy's would be hours old, and "older than a day"
+        // is a replay to this guard. Its personal parts too: one kept as
+        // drawn is served to whoever holds none of what it read.
+        $capture = app(\App\Core\PageCache\PageCache::class)->current();
+
+        if ($capture !== null) {
+            return $capture->placeholder('stamp');
+        }
+
         return Crypt::encryptString((string) time());
     }
 

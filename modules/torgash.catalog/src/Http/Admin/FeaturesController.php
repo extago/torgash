@@ -5,13 +5,17 @@ namespace Torgash\Catalog\Http\Admin;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\ValidationException;
+use Torgash\Catalog\Features\MergeValues;
 use Torgash\Catalog\Features\Places;
+use Torgash\Catalog\Features\Spelling;
 use Torgash\Catalog\Filters\FilterQuery;
 use Torgash\Catalog\Models\Feature;
 use Torgash\Catalog\Models\FeatureGroup;
 use Torgash\Catalog\Models\FeatureValue;
+use Torgash\Catalog\Models\ProductFeature;
 use Torgash\Catalog\Support\CategoryTree;
 
 class FeaturesController extends Controller
@@ -125,7 +129,47 @@ class FeaturesController extends Controller
             'urlValue' => $urlName
                 ? $query->valueParamFor($feature->values->first() ?? new FeatureValue, $feature)
                 : null,
+            // For the merge window: how many products each value would move,
+            // and which values are written alike (Features\Spelling).
+            'valueProducts' => ProductFeature::where('feature_id', $feature->id)->whereNotNull('feature_value_id')
+                ->selectRaw('feature_value_id, count(*) as n')->groupBy('feature_value_id')
+                ->pluck('n', 'feature_value_id')->map(fn ($n) => (int) $n)->all(),
+            'spellingGroups' => Spelling::groups($feature->values),
         ]);
+    }
+
+    /**
+     * Several values become one (PLAN §60). Features\MergeValues does the
+     * work and refuses what it must — its refusal comes back as this form's
+     * error; this only reads the window and says what happened.
+     */
+    public function mergeValues(Request $request, Feature $feature, MergeValues $merge)
+    {
+        $validated = $request->validate([
+            'into' => ['required', 'integer', Rule::exists('m_catalog_feature_values', 'id')->where('feature_id', $feature->id)],
+            'values' => 'required|array|min:1',
+            'values.*' => 'integer',
+        ], [
+            'into.required' => __('Choose the value to keep.'),
+            'values.required' => __('Tick the values to merge into it.'),
+        ]);
+
+        $into = FeatureValue::where('feature_id', $feature->id)->findOrFail($validated['into']);
+        $done = $merge->merge($into, $validated['values']);
+
+        $details = array_filter([
+            $done['products'] ? __('products moved: :count', ['count' => $done['products']]) : null,
+            $done['filter_pages'] ? __('filter pages: :count', ['count' => $done['filter_pages']]) : null,
+            $done['labels'] ? __('labels: :count', ['count' => $done['labels']]) : null,
+            $done['markup_rules'] ? __('markup rules: :count', ['count' => $done['markup_rules']]) : null,
+        ]);
+
+        return redirect()->route('admin.catalog.features.edit', $feature)->with('status', trim(
+            trans_choice(':count value merged into ":into".|:count values merged into ":into".', $done['values'], [
+                'count' => $done['values'],
+                'into' => $into->fresh()->display(admin_content_locale()),
+            ]).($details ? ' '.Str::ucfirst(implode(', ', $details)).'.' : ''),
+        ));
     }
 
     public function update(Request $request, Feature $feature)
@@ -246,16 +290,11 @@ class FeaturesController extends Controller
 
         $rows = json_decode($request->input('values_json', '[]'), true) ?: [];
         $this->assertNoDuplicateValueCodes($rows, $feature);
+        $this->assertNoTwinSpellings($rows, $feature);
         $keptIds = [];
 
         foreach ($rows as $i => $row) {
-            // Every language the row carries — the screen edits one and hands
-            // the others back untouched, so a third language survives a save.
-            $value = collect((array) ($row['value'] ?? []))
-                ->filter(fn ($text, $locale) => is_string($locale) && preg_match('/^[a-z]{2,5}$/', $locale))
-                ->map(fn ($text) => trim((string) $text))
-                ->filter(fn ($text) => $text !== '')
-                ->all();
+            $value = $this->rowNames($row);
             if ($value === []) {
                 continue;
             }
@@ -271,6 +310,17 @@ class FeaturesController extends Controller
                 'swatch' => $feature->is_color ? ($row['swatch'] ?? null) : null,
             ];
 
+            // A spelling merged into the value can be let go (the × beside
+            // it): the next import then makes it a value of its own again.
+            // Only ever FEWER — the list is what a merge wrote, not a field.
+            if ($existingId && array_key_exists('aliases', $row)) {
+                $kept = array_values(array_filter(
+                    (array) ($feature->values->firstWhere('id', $existingId)?->aliases ?? []),
+                    fn ($alias) => in_array($alias, (array) $row['aliases']),
+                ));
+                $attrs['aliases'] = $kept ?: null;
+            }
+
             // Saved through the MODEL rather than a query-builder update: a
             // builder update fires no Eloquent events at all, so the row would
             // walk straight past the one place a code is assigned (and past
@@ -284,6 +334,53 @@ class FeaturesController extends Controller
         }
 
         $feature->values()->whereNotIn('id', $keptIds ?: [0])->delete();
+    }
+
+    /**
+     * Every language the row carries — the screen edits one and hands the
+     * others back untouched, so a third language survives a save.
+     *
+     * @return array<string, string>
+     */
+    protected function rowNames(array $row): array
+    {
+        return collect((array) ($row['value'] ?? []))
+            ->filter(fn ($text, $locale) => is_string($locale) && preg_match('/^[a-z]{2,5}$/', $locale))
+            ->map(fn ($text) => trim((string) $text))
+            ->filter(fn ($text) => $text !== '')
+            ->all();
+    }
+
+    /**
+     * A value added or renamed so that it is written like another one —
+     * "Темно-синий" beside "тёмно‑синий" (Features\Spelling) — is refused:
+     * that is how a shop ends up with two values nobody can tell apart, each
+     * with half the products. Rows that were ALREADY alike pass, or a shop with
+     * old twins could not save the page at all; the page offers to merge them.
+     */
+    protected function assertNoTwinSpellings(array $rows, Feature $feature): void
+    {
+        $owners = [];
+
+        foreach ($rows as $i => $row) {
+            $names = $this->rowNames($row);
+            $stored = ! empty($row['id']) ? $feature->values->firstWhere('id', (int) $row['id']) : null;
+            $changed = ! $stored || $names != $this->rowNames(['value' => $stored->value]);
+
+            foreach ($names as $text) {
+                $key = Spelling::key($text);
+                $owner = $owners[$key] ?? null;
+
+                if ($owner && $owner['row'] !== $i && ($changed || $owner['changed'])) {
+                    throw ValidationException::withMessages(['values' => __('":value" is written like ":other" — they differ only in letter case, dashes or spaces. Make them one with "Merge values".', [
+                        'value' => $text,
+                        'other' => $owner['text'],
+                    ])]);
+                }
+
+                $owners[$key] ??= ['row' => $i, 'text' => $text, 'changed' => $changed];
+            }
+        }
     }
 
     /**

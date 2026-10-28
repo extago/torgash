@@ -81,7 +81,8 @@
                     <div class="torgash-rich [&_h2]:scroll-mt-28 [&_h3]:scroll-mt-28">{!! $html !!}</div>
 
                     <div class="flex flex-wrap items-center justify-between gap-3 border-t border-base-300 pt-5">
-                        @include('torgash.blog::partials.like', ['post' => $post, 'liked' => $liked])
+                        {{-- The visitor's own heart on a page kept ready for guests (PLAN §61). --}}
+                        @personal('torgash.blog::partials.like-part', ['post' => $post], true)
                         @include('torgash.blog::partials.share', ['post' => $post])
                     </div>
                 </div>

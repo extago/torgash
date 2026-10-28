@@ -69,6 +69,42 @@ Nothing is changed for you — there are two good ways out:
 - **The own row is a leftover.** Delete it; the value is in the shop's
   characteristic.
 
+## Merging values
+
+"тёмно‑синий" and "темно-синий", "Gold" and "gold" — one value written two
+ways, and each holds only its own products: a customer who ticks one in the
+filter misses the rest, and each has a filter page of its own. Open the
+characteristic and press **Merge values** under its list. Choose the value to
+keep, tick the ones to merge into it, and merge. Values written alike are
+offered at the top of the window in one click, and the page warns about them.
+
+What happens:
+
+- their products get the main value — and so do the filter pages, labels,
+  markup rules, collections, promotions and 1C links that named them;
+- a filter page that becomes a copy of another is deleted, and its address
+  redirects (301) to the other one; empty texts of the page that stays are
+  filled from it;
+- for a brand, the main value takes the page's address, logo and texts it
+  does not have yet; the other brand addresses redirect to it;
+- the merged values are deleted, but their spellings stay with the main value
+  ("Also written" under it): an import and an old filtered address still find
+  it by them.
+
+Two products of one variation group cannot become the same: if the values being
+merged are what tells them apart, nothing is merged and the products are named.
+Change the value on one of them (or remove the extra product) first.
+
+A spelling under a value is removed with its ×; after saving, the next import
+makes it a value of its own again.
+
+The import, the values list and Security → Invariants ("No characteristic has
+one value written two ways") treat letter case, ё and е, dashes (the
+non-breaking hyphen too), spaces and curly quotes as one spelling: a supplier's
+file finds the value the shop already has, and a new value written like an
+existing one is refused. Different words ("gold" and "golden") are yours to
+merge.
+
 ## Import, 1C and the API
 
 Each source writes to one place, never to both:

@@ -194,6 +194,43 @@ class BlogTest extends TestCase
         $this->assertSame('', trim($render(['rubric' => (string) $empty->id])));
     }
 
+    /**
+     * "A row of equal cards": the cards are the grid's own cells, three across
+     * for three articles. The wrapper once carried `grid` beside `contents`,
+     * the stylesheet chose grid, and the live shop showed them in one column.
+     */
+    public function test_a_row_of_cards_stands_side_by_side(): void
+    {
+        foreach (['First', 'Second', 'Third', 'Fourth'] as $i => $title) {
+            $this->post_($title.' article', ['published_at' => now()->subDays($i + 1)]);
+        }
+
+        $render = fn (int $limit) => app(\Torgash\Blocks\ZoneRenderer::class)
+            ->block(new \Torgash\Blocks\Models\Block(['type' => 'blog_posts', 'settings' => ['layout' => 'row', 'limit' => $limit]]));
+
+        $three = $render(3);
+        $this->assertStringContainsString('<div class="contents">', $three);
+        $this->assertStringContainsString('lg:grid-cols-3', $three);
+        $this->assertStringNotContainsString('is-large', $three);
+
+        $this->assertStringContainsString('lg:grid-cols-4', $render(4));
+    }
+
+    /** The shop's "Pad" is about its catalogue grid; a cover keeps its own shape, or its card shows the padding as white bands. */
+    public function test_a_cover_keeps_its_shape_when_the_shop_pads_its_thumbnails(): void
+    {
+        app(\App\Core\Settings\SettingsManager::class)->set('torgash.media', 'thumb_fit', 'pad');
+        $post = $this->post_('Wide cover');
+        $this->actingAs($this->admin);
+
+        $this->post('http://localhost/admin/media/blog_post/'.$post->id.'/upload', ['images' => [$this->jpeg('wide.jpg')]])->assertOk();
+
+        // 400×300 into the 400×400 box: the whole picture, no band added.
+        $cover = $post->fresh()->getFirstMedia('gallery');
+        $this->assertTrue($cover->hasGeneratedConversion('thumb-400x400'));
+        $this->assertSame([400, 300], array_slice(getimagesize($cover->getPath('thumb-400x400')), 0, 2));
+    }
+
     protected function jpeg(string $name): UploadedFile
     {
         $image = imagecreatetruecolor(400, 300);

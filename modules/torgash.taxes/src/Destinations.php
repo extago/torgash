@@ -101,7 +101,37 @@ class Destinations
      */
     public function visitor(): Location
     {
-        return $this->visitor ??= app(LocationStore::class)->current();
+        // On a page kept ready for guests (PLAN §61) the town is read for
+        // the rates alone, and every copy is filed under them (signature()).
+        return page_cache()->under('tax_place', fn () => $this->visitor ??= app(LocationStore::class)->current());
+    }
+
+    /**
+     * What the visitor's town makes of the taxes, in one word: for each tax
+     * charged somewhere in particular, the row that decides it there. Two
+     * visitors with the same word are charged alike — the town where no row
+     * applies included, which is everybody who has not said. Every page
+     * kept ready for guests is filed under it (PLAN §61); a shop whose taxes
+     * name no place is one word for everybody.
+     */
+    public function signature(): string
+    {
+        $resolver = app(TaxResolver::class);
+
+        if (! $resolver->active() || $this->rates() === []) {
+            return '';
+        }
+
+        $where = $this->visitor();
+        $parts = [];
+
+        foreach ($resolver->all() as $tax) {
+            if (($this->rates()[$tax->id] ?? []) !== []) {
+                $parts[] = $tax->id.':'.($this->rowFor($tax, $where)?->id ?? '-');
+            }
+        }
+
+        return implode(',', $parts);
     }
 
     /**

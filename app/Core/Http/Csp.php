@@ -33,9 +33,14 @@ class Csp
         };
     }
 
+    /**
+     * Letters and digits only (128 bits, hex): a kept copy of a page has this
+     * request's nonce replaced wherever it stands (App\Core\PageCache), and a
+     * base64 one would also stand JSON-escaped (`\/`) where a script embeds it.
+     */
     public function nonce(): string
     {
-        return $this->nonce ??= base64_encode(random_bytes(18));
+        return $this->nonce ??= bin2hex(random_bytes(16));
     }
 
     public function policy(): string

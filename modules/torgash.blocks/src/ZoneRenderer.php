@@ -3,6 +3,9 @@
 namespace Torgash\Blocks;
 
 use App\Core\Content\Fragment;
+use App\Core\Display\RuleKinds;
+use App\Core\PageCache\Capture;
+use App\Core\PageCache\Holes;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Route;
 use Torgash\Blocks\Models\Block;
@@ -36,6 +39,12 @@ use Torgash\Blocks\Models\Block;
  * `inTabs` and leaves its heading to whoever draws the tab.
  *
  * The tabs are radio buttons (daisyUI's own), so they work with no JavaScript.
+ *
+ * A page kept ready for guests (PLAN §61) keeps a block that turns out to be
+ * the visitor's own — it read something personal (a rule asking their town,
+ * "viewed recently"), or its type or a rule's kind says so — as a personal
+ * part, drawn again for every visitor; a row or tabs with one such member as
+ * one part, since the others close up around it.
  */
 class ZoneRenderer
 {
@@ -50,31 +59,106 @@ class ZoneRenderer
         $groupKey = null;
         // The group's band is its FIRST block's, drawn or not — as the admin's zone screen says.
         $groupFirst = null;
+        // Every member, drawn or not, and whether one is the visitor's own:
+        // one that drew nothing for this visitor may draw for the next.
+        $members = [];
+        $personal = false;
+        // What the members read, while each of them is right as drawn for
+        // whoever holds none of it (Holes::probe()).
+        $read = [];
 
         foreach ($blocks as $block) {
             $key = self::groupKey($block);
 
             if ($key !== $groupKey) {
-                $out .= $this->flush($groupKey, $group, $groupFirst);
+                $out .= $this->personalPart($members, $context, $this->flush($groupKey, $group, $groupFirst), $personal, $read);
                 $group = [];
+                $members = [];
+                $personal = false;
+                $read = [];
                 $groupKey = $key;
                 $groupFirst = $block;
             }
 
             if ($key === null) {
-                $out .= Section::wrap($block->section, $this->block($block, $context));
+                $drawn = $this->drawn($block, $context);
+                $out .= $this->personalPart([$block], $context, Section::wrap($block->section, $drawn['html']), $drawn['personal'], $drawn['read']);
 
                 continue;
             }
 
-            $html = $this->block($block, $context, inTabs: str_starts_with($key, 'tabs:'));
+            $drawn = $this->drawn($block, $context, inTabs: str_starts_with($key, 'tabs:'));
+            $members[] = $block;
+            $personal = $personal || $drawn['personal'];
+            $read = Capture::together($read, $drawn['read']);
 
-            if (trim($html) !== '') {
-                $group[] = ['block' => $block, 'html' => $html];
+            if (trim($drawn['html']) !== '') {
+                $group[] = ['block' => $block, 'html' => $drawn['html']];
             }
         }
 
-        return $out.$this->flush($groupKey, $group, $groupFirst);
+        return $out.$this->personalPart($members, $context, $this->flush($groupKey, $group, $groupFirst), $personal, $read);
+    }
+
+    /**
+     * A block drawn, and whether it is the visitor's own — asked only while
+     * a copy of the page is being drawn for every guest.
+     *
+     * @return array{html: string, personal: bool, read: array<string, ?string>|null}
+     */
+    protected function drawn(Block $block, array $context, bool $inTabs = false): array
+    {
+        $drawn = app(Holes::class)->probe(fn () => $this->block($block, $context, $inTabs));
+
+        // Personal by what is said: by what, no session tells — never reused.
+        if (page_cache()->drawing() && $this->declaredPersonal($block)) {
+            $drawn['personal'] = true;
+            $drawn['read'] = null;
+        }
+
+        // Drawn again for each visitor, its push would land after the page's
+        // stack was printed: what the copy holds is the first visitor's.
+        if ($drawn['personal'] && $drawn['pushed']) {
+            page_cache()->current()?->refuse('block «'.$block->displayTitle().'» is personal and pushes to a stack');
+        }
+
+        return ['html' => $drawn['html'], 'personal' => $drawn['personal'], 'read' => $drawn['read']];
+    }
+
+    /**
+     * Personal by what is said rather than what was read: its type (its view
+     * asks something no session shows — the visitor's address), or a rule
+     * of a kind that does.
+     */
+    protected function declaredPersonal(Block $block): bool
+    {
+        if (! empty(BlockTypes::find($block->type)['personal'])) {
+            return true;
+        }
+
+        foreach ((array) ($block->rules ?? []) as $rule) {
+            if (is_array($rule) && ! empty(RuleKinds::find($rule['kind'] ?? null)['personal'])) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /**
+     * What blocks drew, kept in a copy as a personal part when one of them
+     * is the visitor's own: `torgash.blocks::personal` draws the same blocks
+     * again, with the same context, for each visitor — or, with `$read`,
+     * keeps as drawn for whoever holds what they read.
+     *
+     * @param  list<Block>  $blocks
+     * @param  array<string, ?string>|null  $read
+     */
+    protected function personalPart(array $blocks, array $context, string $html, bool $personal, ?array $read = null): string
+    {
+        return $personal && $blocks !== []
+            ? app(Holes::class)->adopt('torgash.blocks::personal', ['blocks' => $blocks, 'context' => $context], $html, $read)
+            : $html;
     }
 
     /**

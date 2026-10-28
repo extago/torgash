@@ -26,6 +26,10 @@ class LandingsServiceProvider extends ServiceProvider implements ModuleLifecycle
 
     public function boot(): void
     {
+        // A landing's dates open and close it with nothing written: a page
+        // kept ready for guests is kept only until the next (PLAN §61).
+        page_cache()->changes(fn () => page_cache()->nextDateIn('m_landings'));
+
         Route::middleware(['web', 'auth', 'can:landings.manage'])
             ->prefix('admin/landings')
             ->name('admin.landings.')

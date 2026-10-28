@@ -38,6 +38,9 @@ class GiftcardsServiceProvider extends ServiceProvider
 
     public function boot(): void
     {
+        // Issued cards and what they paid for are on no guest's page (PLAN §61).
+        page_cache()->unseen(['m_giftcards_cards', 'm_giftcards_ledger']);
+
         StorefrontRoutes::group(dirname(__DIR__).'/routes.php');
 
         Route::middleware(['web', 'auth', 'can:giftcards.manage'])

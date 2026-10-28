@@ -35,6 +35,13 @@ namespace App\Core\Display;
  * A definition is code in a file, exactly like a block type: the admin picks
  * from what is registered and fills in a value, and nothing they can type
  * becomes something that runs.
+ *
+ * For pages kept ready for guests (PLAN §61): a kind whose answer moves with
+ * the clock says when it next may (`changes` => fn ($rule, $context) => a
+ * moment), and a kind that asks something of the visitor no session shows —
+ * their address, their browser — says `personal` => true, so a block it
+ * guards is drawn for every visitor. A kind that reads the session (the
+ * visitor's town) needs neither: the reading is seen.
  */
 class RuleKinds
 {

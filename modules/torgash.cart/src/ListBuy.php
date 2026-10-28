@@ -84,9 +84,19 @@ class ListBuy
         return $this->inCartMap()[is_int($product) ? $product : $product->id] ?? 0;
     }
 
-    /** @return array<int, int> product id => quantity */
+    /**
+     * A page being kept ready for every guest is drawn with nothing in the
+     * basket — and without reading it; the visitor's own ticks are put on
+     * by a personal part (in-cart-marks).
+     *
+     * @return array<int, int> product id => quantity
+     */
     public function inCartMap(): array
     {
+        if (page_cache()->drawing()) {
+            return [];
+        }
+
         if ($this->inCart === null) {
             $this->inCart = [];
 

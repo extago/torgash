@@ -84,7 +84,7 @@
                         <label class="fieldset p-0">
                             <span class="fieldset-legend">{{ __('CSS') }}</span>
                             <textarea name="css" rows="12" class="textarea textarea-bordered w-full font-mono text-sm" spellcheck="false">{{ old('css', $landing->css) }}</textarea>
-                            <span class="text-xs opacity-60 leading-relaxed">{{ __('One for every language. It reaches only this landing (the browser\'s @scope): write selectors for what is inside it, :scope for the landing itself. url(assets/…) names its files.') }}</span>
+                            <span class="text-xs opacity-60 leading-relaxed">{{ __('One for every language. It reaches only this landing, and the shop\'s styles do not reach in: write selectors for what is inside it, :host for the landing itself (:root and :scope mean the same). url(assets/…) names its files.') }}</span>
                         </label>
                     </div>
                 </div>

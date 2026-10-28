@@ -48,7 +48,11 @@ class MenuBuilder
     /** @return list<Node> — empty for a menu that does not exist or is switched off */
     public function nodes(string $code): array
     {
-        if (isset($this->built[$code])) {
+        // Built again for each use while a page is drawn to be kept for
+        // guests (PLAN §61): a shortcut's counter and a rule asking the
+        // visitor's town are theirs, and each part drawing the menu must be
+        // seen asking for them.
+        if (isset($this->built[$code]) && page_cache()->current() === null) {
             return $this->built[$code];
         }
 

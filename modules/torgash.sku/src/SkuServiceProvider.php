@@ -22,6 +22,9 @@ class SkuServiceProvider extends ServiceProvider
 
     public function boot(): void
     {
+        // The counters codes are drawn from are on no guest's page (PLAN §61).
+        page_cache()->unseen('m_sku_counters');
+
         Route::middleware(['web', 'auth', 'can:sku.manage'])
             ->prefix('admin/sku')
             ->name('admin.sku.')

@@ -23,19 +23,31 @@ use Torgash\Landings\Models\Landing;
  *   `.hero`, `.card`, `.btn` still styled a designer's elements of the same
  *   name (a `.hero` became a grid that piled its children on top of each
  *   other). Inherited things — the page's font and text colour — still flow
- *   in, which is what a landing wants. `:scope` in the CSS means the landing
- *   itself, as `:host` does. `@font-face` does not work inside a shadow root,
- *   so it is printed beside it; `@import` is dropped (a landing brings its
- *   fonts as files).
+ *   in, which is what a landing wants. `:scope` and `:root` in the CSS mean
+ *   the landing itself, as `:host` does: neither names anything inside a
+ *   shadow root, and a designer's variables on `:root` reached nothing.
+ *   `@font-face` does not work inside a shadow root, so it is printed beside
+ *   it; `@import` is dropped (a landing brings its fonts as files).
  * - A browser too old for declarative shadow roots, and a fragment swapped in
  *   by htmx (which does not parse them), get them attached by one small
  *   script, printed once per page.
+ * - The same script takes a landing's own "#…" links there: a browser looks
+ *   for a fragment in the document only, never in a shadow root, so on its
+ *   own it changed the address and stayed put. A folded landing is asked to
+ *   open first (`torgash:unfold`, catalog's fold partial).
  */
 class Renderer
 {
     public const SPACE_TOP = ['none' => '', 'small' => 'mt-4', 'large' => 'mt-10'];
 
     public const SPACE_BOTTOM = ['none' => '', 'small' => 'mb-4', 'large' => 'mb-10'];
+
+    /**
+     * What every landing's root begins with, in a layer of its own so that
+     * any rule the landing writes wins: an element a "#…" link jumps to stops
+     * below the page's sticky header, as the product page's sections do.
+     */
+    protected const BASE_CSS = '@layer torgash{[id]{scroll-margin-top:calc(var(--torgash-header-h,0px) + 4rem)}}';
 
     protected bool $scriptPrinted = false;
 
@@ -55,7 +67,7 @@ class Renderer
         $space = trim((self::SPACE_TOP[$landing->space_top] ?? '').' '.(self::SPACE_BOTTOM[$landing->space_bottom] ?? ''));
 
         $body = '<div class="torgash-landing" data-landing="'.$landing->id.'"><template shadowrootmode="open">'
-            .($inside !== '' ? '<style>'.$inside.'</style>' : '')
+            .'<style>'.self::BASE_CSS.$inside.'</style>'
             .$html.'</template></div>';
 
         // Folded as the description is (the catalogue's partial and height),
@@ -94,7 +106,7 @@ class Renderer
         $css = str_replace('<', '\3C ', $css);
         $css = (string) preg_replace('/@import\b[^;]*;?/i', '', $css);
         $css = $this->assets($css, $landing);
-        $css = (string) preg_replace('/:scope\b/', ':host', $css);
+        $css = (string) preg_replace('/:(?:scope|root)\b/', ':host', $css);
 
         $outside = '';
         while (($at = stripos($css, '@font-face')) !== false) {
@@ -134,7 +146,13 @@ class Renderer
         return strlen($css);
     }
 
-    /** Attaches the shadow roots a browser or htmx left as templates — once per page. */
+    /**
+     * Attaches the shadow roots a browser or htmx left as templates, and
+     * takes "#…" links to an id inside a landing — a click on one, an
+     * address changed to one, a page opened at one. Once per page: a copy
+     * that comes again (in an htmx fragment) stops at once, and the first
+     * one's listeners do the work.
+     */
     protected function script(): string
     {
         if ($this->scriptPrinted) {
@@ -144,8 +162,19 @@ class Renderer
         $this->scriptPrinted = true;
 
         return '<script nonce="'.e(csp_nonce()).'">(function(){'
+            .'if(window.torgashLandings)return;window.torgashLandings=1;'
             .'function a(r){(r||document).querySelectorAll("[data-landing]>template[shadowrootmode]").forEach(function(t){'
             .'var h=t.parentNode;if(h.shadowRoot)return;h.attachShadow({mode:"open"}).appendChild(t.content);t.remove();});}'
+            .'function d(s){try{return decodeURIComponent(s)}catch(x){return s}}'
+            .'function g(s,id){var t=id&&s.getElementById(id);if(!t)return false;'
+            .'s.host.dispatchEvent(new CustomEvent("torgash:unfold",{bubbles:true}));'
+            .'requestAnimationFrame(function(){t.scrollIntoView();});return true;}'
+            .'function h(){var id=d(location.hash.slice(1));if(!id||document.getElementById(id))return;'
+            .'[].some.call(document.querySelectorAll("[data-landing]"),function(x){return x.shadowRoot&&g(x.shadowRoot,id);});}'
+            .'document.addEventListener("click",function(e){if(e.defaultPrevented||e.button||e.metaKey||e.ctrlKey||e.shiftKey||e.altKey)return;'
+            .'var l=e.composedPath().find(function(n){return n.localName==="a"&&n.hasAttribute("href");}),s=l&&l.getRootNode(),f=l&&l.getAttribute("href");'
+            .'if(s&&s.host&&s.host.hasAttribute("data-landing")&&f.charAt(0)==="#"&&g(s,d(f.slice(1)))){e.preventDefault();history.pushState(null,"",f);}});'
+            .'addEventListener("hashchange",h);addEventListener("load",h);'
             .'a();document.addEventListener("DOMContentLoaded",function(){a();});'
             .'document.addEventListener("htmx:afterSwap",function(e){a(e.target);});})();</script>';
     }

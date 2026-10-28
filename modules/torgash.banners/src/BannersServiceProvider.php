@@ -34,6 +34,13 @@ class BannersServiceProvider extends ServiceProvider implements ModuleLifecycle
 
     public function boot(): void
     {
+        // A banner's dates switch it on and off with nothing written: a page
+        // kept ready for guests is kept only until the next of them (PLAN
+        // §61). Its clicks are counted where no page shows them.
+        page_cache()
+            ->changes(fn () => page_cache()->nextDateIn('m_banners_banners'))
+            ->unseen('m_banners_clicks');
+
         // Its part of the demo shop (PLAN §55.3), after the pages and sales its slides point at.
         hook_listen('core.demo.parts', fn (array $parts) => $parts + [
             'banners' => ['label' => 'Banners', 'after' => ['catalog', 'promotions', 'pages', 'blog'], 'install' => fn (\App\Core\Demo\DemoPack $pack) => app(Demo\BannersDemo::class)->install($pack)],

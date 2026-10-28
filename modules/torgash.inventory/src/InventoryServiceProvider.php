@@ -21,6 +21,10 @@ class InventoryServiceProvider extends ServiceProvider
 
     public function boot(): void
     {
+        // The journal, documents and costs are on no guest's page (PLAN §61);
+        // stock itself is announced as it moves.
+        page_cache()->unseen(['m_inventory_moves', 'm_inventory_move_costs', 'm_inventory_documents', 'm_inventory_document_lines', 'm_inventory_batches', 'm_inventory_order_costs']);
+
 
         Route::middleware(['web', 'auth', 'can:inventory.manage'])
             ->prefix('admin/inventory')

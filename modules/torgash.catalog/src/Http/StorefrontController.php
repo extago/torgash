@@ -27,7 +27,6 @@ use Torgash\Catalog\Sorting\Sorts;
 use Torgash\Catalog\Support\CategoryNav;
 use Torgash\Catalog\Support\CategoryTree;
 use Torgash\Catalog\Support\ListingView;
-use Torgash\Catalog\Support\Popularity;
 
 class StorefrontController extends Controller
 {
@@ -315,12 +314,10 @@ class StorefrontController extends Controller
         // catalogue has no business inside checkout's session, and the listener
         // there only takes the answer while the question is still unanswered,
         // so it can never overwrite a town the customer chose for themselves.
-        // The same hook the pickup-point picker uses.
+        // The same hook the pickup-point picker uses. A visit action: it is
+        // said for every visit, the ones served from a kept copy too.
         if ($page->isGeo()) {
-            hook_action('storefront.place_chosen', [
-                'place_id' => (int) $page->place_id,
-                'source' => 'geo_page',
-            ]);
+            visit_action('catalog.place_chosen', ['place_id' => (int) $page->place_id]);
         }
 
         $products = within_pages($this->listing->sorted($this->listing->applyFilters($page->applyTo($this->listing->productsQuery($found)), $request), $request)
@@ -441,27 +438,11 @@ class StorefrontController extends Controller
         // Other modules can decorate the product before rendering.
         $product = hook_filter('catalog.product.view', $product);
 
-        // One increment per product per session — a raw per-request counter
-        // is trivially inflated by a visitor refreshing the page (or a bot),
-        // which would make a "Hit" badge look broken almost immediately.
-        // Cross-session/bot dedup is a real gap, just not one this needs to
-        // close — session-based is enough to stop the obvious case.
-        $seenKey = 'viewed_products';
-        $seen = session($seenKey, []);
-        if (! in_array($product->id, $seen, true)) {
-            $product->increment('views_count');
-
-            // The same event, counted a second time in points — one guard for
-            // both, or the two would drift. Popularity skips what looks like a
-            // crawler; views_count deliberately does not change what it counts
-            // (see Support\Popularity).
-            app(Popularity::class)->viewed($product, $request);
-
-            session([$seenKey => array_slice([...$seen, $product->id], -200)]);
-        }
-
-        // "Viewed recently" — its own list, newest first (see RecentlyViewed).
-        app(\Torgash\Catalog\Support\RecentlyViewed::class)->remember($product->id);
+        // The view counted and "viewed recently" updated — for every visit,
+        // the ones served from a kept copy of this page too (PLAN §61; the
+        // action is CatalogServiceProvider::registerPageCache()'s).
+        visit_action('catalog.product_viewed', ['product' => (int) $product->id]);
+        page_cache()->tag('product:'.$product->id);
 
         // The pickers: global characteristics marked as variation axes, never
         // free-form attributes — see Support\Variations.

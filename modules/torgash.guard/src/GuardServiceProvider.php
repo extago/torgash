@@ -279,8 +279,17 @@ class GuardServiceProvider extends ServiceProvider
 
         // Drawn into whatever form asks, through the component every guarded
         // form now renders. A form nobody ticked gets '' and no markup at all.
+        // Whether to ask is the visitor's own (an answer kept from before):
+        // a personal part of a page kept ready for guests (PLAN §61).
         hook_listen('core.form.fields', fn (string $value, array $context) => $value
-            .app(Captcha\Gate::class)->widget((string) ($context['form'] ?? '')));
+            .personal('torgash.guard::captcha.part', ['form' => (string) ($context['form'] ?? '')], reusable: true));
+
+        // The sums asked live in the session, read by the image and the
+        // check — nothing a page shows; the answers kept, by the part above.
+        page_cache()
+            ->harmless(session: ['guard.captcha'])
+            ->personal(session: ['guard.captcha_kept'], copies: true)
+            ->unseen(['m_guard_audit', 'm_guard_blocks', 'm_guard_checks', 'm_guard_errors', 'm_guard_findings', 'm_guard_two_factor']);
 
         // ...and checked on the way back in, by the same gate, so a visitor who
         // was never shown the box is never refused for leaving it empty.

@@ -112,7 +112,7 @@ class LandingsTest extends TestCase
     {
         $landing = $this->landing([
             'html' => ['en' => '<h2>{product_name}</h2><img src="assets/hero.webp" alt=""><script>alert(1)</script><a href="#" onclick="x()">go</a>', 'ru' => '<p>ПО-РУССКИ</p>'],
-            'css' => "h2 { color: red }\n@keyframes spin { from { rotate: 0 } to { rotate: 1turn } }\n@import url(https://evil.test/x.css);\n.x { background: url(assets/bg.webp) } </style><script>",
+            'css' => ":root { --brand: #c00 }\nh2 { color: var(--brand) }\n@keyframes spin { from { rotate: 0 } to { rotate: 1turn } }\n@import url(https://evil.test/x.css);\n.x { background: url(assets/bg.webp) } </style><script>",
         ]);
 
         $page = $this->page($this->product);
@@ -123,8 +123,13 @@ class LandingsTest extends TestCase
         // Its own shadow root: the shop's CSS cannot reach in, its CSS cannot leak out.
         $this->assertStringContainsString('data-landing="'.$landing->id.'"><template shadowrootmode="open"><style>', $page);
         $this->assertStringContainsString('@keyframes spin', $page);
+        // `:root` names nothing in a shadow root: a designer's variables there are the landing's.
+        $this->assertStringContainsString(':host { --brand: #c00 }', $page);
+        // A "#…" jump stops below the sticky header, in a layer any rule of the landing's beats.
+        $this->assertStringContainsString('<style>@layer torgash{[id]{scroll-margin-top:', $page);
         // Made once a page (the description is printed by both layouts, so it rides along twice — harmless).
         $this->assertGreaterThanOrEqual(1, substr_count($page, 'htmx:afterSwap'), 'the attaching script');
+        $this->assertStringContainsString('addEventListener("hashchange"', $page, 'and its "#…" links go somewhere');
         $this->assertStringNotContainsString('evil.test', $page);
         $this->assertStringNotContainsString('</style><script>', $page, 'the CSS cannot end its <style>');
 

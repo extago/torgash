@@ -1580,5 +1580,21 @@
     "A redirect left by a renamed address is removed once nobody has arrived through it for this long — by then search engines know the new address. Every visit restarts the count. Redirects typed by hand or imported are kept for ever, and so is one you mark \"Keep for ever\". 0 keeps every redirect.": "Переадресация, оставшаяся от смены адреса, удаляется, если по ней никто не приходил столько времени — к тому моменту поисковики уже знают новый адрес. Каждый переход начинает отсчёт заново. Введённые вручную и импортированные хранятся всегда, как и отмеченные «Хранить всегда». 0 — хранить все.",
     "Keep for ever": "Хранить всегда",
     "Automatic redirects nobody uses are forgotten after a while; kept ones never are.": "Автоматические переадресации, по которым никто не ходит, со временем забываются; отмеченные «хранить» — никогда.",
-    ":count redirect will be kept for ever.|:count redirects will be kept for ever.": ":count переадресация будет храниться всегда.|:count переадресации будут храниться всегда.|:count переадресаций будут храниться всегда."
+    ":count redirect will be kept for ever.|:count redirects will be kept for ever.": ":count переадресация будет храниться всегда.|:count переадресации будут храниться всегда.|:count переадресаций будут храниться всегда.",
+    "Page cache": "Кэш страниц",
+    "Keep pages ready for guests": "Держать страницы готовыми для гостей",
+    "A page a guest has opened is kept and handed to the next guests as it is — several times faster. The basket, the town, the wishlist and the other parts that are a visitor's own are still drawn for each of them. Signed-in customers always get a freshly drawn page, and a change in the admin throws the kept pages away by itself. System → Cache and sessions shows how many there are and why a page was not kept.": "Страница, которую открыл гость, сохраняется и отдаётся следующим гостям как есть — в несколько раз быстрее. Корзина, город, избранное и другие личные части по-прежнему рисуются для каждого посетителя свои. Вошедшие покупатели всегда получают свежую страницу, а изменение в админке само выбрасывает сохранённые страницы. Сколько их и почему страница не сохранилась — в Система → Кэш и сессии.",
+    "Keep a page for, minutes": "Хранить страницу, минут",
+    "At most. A change in the admin throws a page away sooner, and a page with a sale or a banner that starts or ends sooner is kept only until then.": "Не дольше. Изменение в админке выбросит страницу раньше, а страница с акцией или баннером, которые начнутся или закончатся раньше, хранится только до этого момента.",
+    "Always draw these pages afresh": "Всегда рисовать заново эти страницы",
+    "Pages kept for guests": "Страницы для гостей",
+    "Every page is drawn afresh for every visitor.": "Каждая страница рисуется заново для каждого посетителя.",
+    "Pages kept": "Сохранено страниц",
+    "Space taken": "Занимают",
+    "All thrown away :time": "Все выброшены :time",
+    "Why pages were not kept": "Почему страницы не сохранились",
+    "Throw the kept pages away": "Выбросить сохранённые страницы",
+    "Not needed after a change in the admin — that throws them away by itself. For a template or a file changed on the server.": "После изменений в админке не нужно — они выбрасываются сами. Это для шаблона или файла, изменённого на сервере.",
+    "Settings of the page cache": "Настройки кэша страниц",
+    "The kept pages are thrown away; each is kept again when a guest next opens it.": "Сохранённые страницы выброшены; каждая сохранится снова, когда её откроет гость."
 }

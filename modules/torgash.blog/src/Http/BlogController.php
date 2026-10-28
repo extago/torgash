@@ -48,7 +48,7 @@ class BlogController extends Controller
         return $this->feed($request, Post::query()->whereHas('rubrics', fn (Builder $q) => $q->whereKey($rubric->id)), $rubric);
     }
 
-    public function post(Request $request, string $slug, Article $article, Likes $likes)
+    public function post(Request $request, string $slug, Article $article)
     {
         $post = Post::reachable()->where('slug', $slug)->with(['rubrics' => fn ($q) => $q->where('enabled', true), 'media'])->first();
 
@@ -56,7 +56,10 @@ class BlogController extends Controller
             return $this->redirectOr404('/blog/'.$slug);
         }
 
-        $this->countView($request, $post);
+        // Counted for every visit — the ones served from a kept copy too
+        // (PLAN §61; the action is BlogServiceProvider's).
+        visit_action('blog.post_viewed', ['post' => (int) $post->id]);
+        page_cache()->tag('post:'.$post->id);
         $prepared = $article->prepare($post);
 
         page_meta()
@@ -94,7 +97,6 @@ class BlogController extends Controller
             'post' => $post,
             'html' => $prepared['html'],
             'contents' => $prepared['contents'],
-            'liked' => $likes->has($request, $post),
             'products' => $post->products()->listed()->withCardData()->get(),
             'readAlso' => $readAlso === 0 ? collect() : Post::listed()
                 ->whereKeyNot($post->id)
@@ -118,6 +120,7 @@ class BlogController extends Controller
     {
         $post = Post::reachable()->where('slug', $slug)->firstOrFail();
         $liked = $likes->toggle($request, $post);
+        page_cache()->discard('post:'.$post->id);
 
         // With no script the form posted the whole page: back to the article.
         if (! $request->header('HX-Request')) {
@@ -148,20 +151,6 @@ class BlogController extends Controller
                 ->get(),
             'allCount' => Post::query()->listed()->count(),
         ]);
-    }
-
-    /** One view per article per session, never a crawler's. */
-    protected function countView(Request $request, Post $post): void
-    {
-        $seen = (array) session('blog_viewed', []);
-
-        if (in_array($post->id, $seen, true) || app(\Torgash\Catalog\Support\Popularity::class)->isBot($request)) {
-            return;
-        }
-
-        // A plain query: a view is not an edit, and must not move updated_at.
-        \Illuminate\Support\Facades\DB::table('m_blog_posts')->where('id', $post->id)->increment('views_count');
-        session(['blog_viewed' => array_slice([...$seen, $post->id], -100)]);
     }
 
     protected function redirectOr404(string $path)

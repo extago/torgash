@@ -32,6 +32,9 @@ class SpeedServiceProvider extends ServiceProvider
 
     public function boot(): void
     {
+        // What is measured is on no guest's page (PLAN §61).
+        page_cache()->unseen(['m_speed_modules', 'm_speed_queries', 'm_speed_routes', 'm_speed_traces']);
+
         Route::middleware(['web', 'auth', 'can:speed.view'])
             ->prefix('admin/speed')
             ->name('admin.speed.')

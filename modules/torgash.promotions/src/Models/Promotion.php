@@ -5,6 +5,7 @@ namespace Torgash\Promotions\Models;
 use App\Core\Display\DisplayRules;
 use App\Core\Support\HasTranslations;
 use App\Models\User;
+use Carbon\CarbonInterface;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
@@ -391,6 +392,42 @@ class Promotion extends Model implements HasMedia
         }
 
         return true;
+    }
+
+    /**
+     * The next moment any enabled sale starts, ends, or opens or closes its
+     * window — prices change then with nothing written, and a page kept
+     * ready for guests is kept only until then (PLAN §61). Null: never.
+     */
+    public static function nextChange(): ?Carbon
+    {
+        $now = now();
+        $next = null;
+
+        $sooner = function (?CarbonInterface $at) use (&$next, $now) {
+            if ($at !== null && $at->gt($now) && ($next === null || $at->lt($next))) {
+                $next = Carbon::instance($at);
+            }
+        };
+
+        $running = static::query()
+            ->where('enabled', true)
+            ->where(fn ($q) => $q->whereNull('ends_at')->orWhere('ends_at', '>=', $now))
+            ->get();
+
+        foreach ($running as $promotion) {
+            $sooner($promotion->starts_at);
+            // In its dates through the end's whole second (`>= now()`).
+            $sooner($promotion->ends_at?->copy()->addSecond());
+
+            $windows = $promotion->scheduleWindows();
+
+            if (! $windows->isEmpty()) {
+                $sooner($windows->isOpenAt($now) ? $windows->closesAt($now) : $windows->opensAt($now));
+            }
+        }
+
+        return $next;
     }
 
     /**

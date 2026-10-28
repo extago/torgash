@@ -27,7 +27,10 @@ use App\Models\BackgroundTask;
 use App\Models\Currency;
 use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Console\Scheduling\Schedule;
+use Illuminate\Database\Events\QueryExecuted;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Blade;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\Facades\Route;
@@ -80,6 +83,15 @@ class CoreServiceProvider extends ServiceProvider
         // declares the intent; only Octane enforces it. See PerRequest.
         PerRequest::forget($this->app, PageMeta::class, Breadcrumbs::class, StructuredData::class, \App\Core\Themes\ThemeSettings::class, \App\Core\Themes\ShopPalette::class, \App\Core\Support\GrammaticalCases::class, \App\Core\Content\SafeHtml::class, \App\Core\Assets\AssetVersions::class, \App\Core\Http\Csp::class);
         $this->app->singleton(ModuleManager::class, fn ($app) => new ModuleManager($app));
+
+        // Pages kept ready for guests (PLAN §61): the registry every module
+        // declares into at boot, and the session built as a store the cache
+        // can watch while a copy of a page is drawn — the same store with the
+        // same handler, only the class differs.
+        $this->app->singleton(PageCache\PageCache::class);
+        $this->app->singleton(PageCache\Holes::class);
+        $this->app->singleton(PageCache\Writes::class);
+        $this->app->singleton('session', fn ($app) => new PageCache\WatchedSessionManager($app));
 
         $this->registerLocaleUrlGenerator();
         $this->registerFallbackCache();
@@ -302,6 +314,7 @@ class CoreServiceProvider extends ServiceProvider
         ]);
 
         $this->registerSchedule();
+        $this->registerPageCache();
         $this->announceCurrencyChanges();
         $this->watchRates();
         $this->watchTasks();
@@ -315,6 +328,56 @@ class CoreServiceProvider extends ServiceProvider
 
         // Core's own personal data: the account, addresses, verification codes.
         hook_listen('core.personal_data', fn (array $context) => \App\Core\Privacy\CorePersonalData::register($context['registry']));
+    }
+
+    /**
+     * Pages kept ready for guests (PLAN §61): the route middleware a module
+     * puts on its pages, `@personal`, the net that throws copies away on
+     * every write — and what core itself keeps about a visitor and which of
+     * its tables no guest page is drawn from. Every module declares its own.
+     */
+    protected function registerPageCache(): void
+    {
+        $this->app['router']->aliasMiddleware('page.cache', PageCache\CachePages::class);
+        Blade::directive('personal', fn (string $expression) => "<?php echo personal({$expression}); ?>");
+
+        DB::listen(fn (QueryExecuted $query) => app(PageCache\Writes::class)->saw($query));
+
+        // A request that died while a copy was being drawn must not leave the
+        // drawing open for the next one on the same worker.
+        $this->app->rebinding('request', function ($app) {
+            if ($app->resolved(PageCache\PageCache::class)) {
+                $app->make(PageCache\PageCache::class)->end();
+            }
+        });
+
+        // Switched on: whatever was kept the last time it was on is not to be
+        // trusted (the writes in between were not watched).
+        hook_listen('core.setting.changed', function (array $change) {
+            if ($change['module'] === CoreSettings::ID && $change['key'] === PageCache\PageCache::ENABLED) {
+                page_cache()->flush('the page cache was switched '.($change['to'] ? 'on' : 'off'));
+            }
+        });
+
+        page_cache()
+            // The language is the address's; the ResolveStorefront writes it
+            // on every request.
+            ->harmless(session: ['locale'])
+            ->personal(
+                session: ['verification', 'code_pending', \App\Http\Controllers\Account\NewPasswordController::SESSION],
+                cookies: [\App\Core\Verification\FormVerification::COOKIE],
+            )
+            ->vary('currency', fn () => current_currency(), session: ['currency'])
+            ->unseen([
+                'sessions', 'cache', 'cache_locks', 'jobs', 'job_batches', 'failed_jobs', 'migrations',
+                'page_cache', 'background_tasks', 'password_reset_tokens', 'verification_codes', 'demo_records',
+                // Who has which role, and the accounts themselves: a guest's
+                // page shows neither (a review keeps its author's name).
+                'users', 'addresses', 'roles', 'permissions', 'model_has_roles', 'model_has_permissions', 'role_has_permissions',
+                // Letters, and the redirect table — read only for an address
+                // that is not a page, which is never kept.
+                'mail_texts', 'redirects',
+            ]);
     }
 
     /**
@@ -506,6 +569,11 @@ class CoreServiceProvider extends ServiceProvider
             // redirect_forget_months); typed and imported ones stay.
             $schedule->call(fn () => app(RedirectManager::class)->prune())
                 ->dailyAt('03:40')->name('core:prune-redirects');
+
+            // Kept pages past their time or thrown away (PLAN §61): never
+            // served, only taking room.
+            $schedule->call(fn () => app(PageCache\PageCache::class)->prune())
+                ->everyFifteenMinutes()->name('core:prune-page-cache');
 
             // The scheduler's pulse: Admin → System reads its age to say
             // whether cron runs at all (nothing else would notice it stop).

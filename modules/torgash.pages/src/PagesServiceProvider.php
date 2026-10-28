@@ -220,13 +220,17 @@ class PagesServiceProvider extends ServiceProvider
      */
     protected function rootAddresses(): void
     {
+        // `page.cache`: kept ready for guests (PLAN §61) — an address that is
+        // no page answers 404 and is simply not kept.
         foreach (LocaleResolver::routePrefixes() as $locale) {
             Route::middleware('web')->prefix($locale)->name($locale.'.')
-                ->group(fn () => Route::fallback([PageController::class, 'show'])->name('pages.page'));
+                ->group(fn () => Route::fallback([PageController::class, 'show'])->name('pages.page')->middleware('page.cache:page'));
         }
 
         Route::middleware('web')
-            ->group(fn () => Route::fallback([PageController::class, 'show'])->name('pages.page'));
+            ->group(fn () => Route::fallback([PageController::class, 'show'])->name('pages.page')->middleware('page.cache:page'));
+
+        page_cache()->kind('page', 'Pages');
     }
 
     /**

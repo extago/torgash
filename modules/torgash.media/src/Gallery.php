@@ -3,6 +3,7 @@
 namespace Torgash\Media;
 
 use Illuminate\Database\Eloquent\Collection;
+use Spatie\Image\Enums\Fit;
 use Spatie\MediaLibrary\HasMedia;
 use Spatie\MediaLibrary\MediaCollections\Models\Media;
 
@@ -25,8 +26,15 @@ class Gallery
      * rather than in each model's `registerMediaConversions()` — one rule, one
      * place, and a model that forgets to pass the argument merely gets the old
      * behaviour instead of a mystery.
+     *
+     * `$fit` is for a model whose pictures are not product photos. The shop's
+     * fit is a choice about its catalogue grid (Pad and Cover make every
+     * thumbnail the same square), and a wide blog cover padded to a square is
+     * a picture with white bands that its card's frame then shows. Such a
+     * model passes Fit::Contain: the whole picture at its own shape, cut to
+     * the frame by the page (object-fit), never by the file.
      */
-    public static function conversions(HasMedia $model, ?Media $media = null): void
+    public static function conversions(HasMedia $model, ?Media $media = null, ?Fit $fit = null): void
     {
         if ($media && $media->collection_name === Content::COLLECTION) {
             return;
@@ -34,7 +42,7 @@ class Gallery
 
         $webp = ImageSettings::thumbWebp();
         $quality = $webp ? ImageSettings::webpQuality() : ImageSettings::thumbQuality();
-        $fit = ImageSettings::thumbFit();
+        $fit ??= ImageSettings::thumbFit();
         $padColor = ImageSettings::thumbPadColor();
 
         foreach (ImageSettings::thumbSizes() as $size) {

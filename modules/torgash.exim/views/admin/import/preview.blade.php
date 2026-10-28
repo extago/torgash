@@ -68,6 +68,20 @@
                 </div>
             @endif
 
+            @if ($refused)
+                <div class="alert alert-warning text-sm items-start">
+                    <x-icon name="triangle-alert" size="sm" class="mt-0.5" />
+                    <div>
+                        <div class="font-medium">{{ __('These rows match nothing and cannot make a new one — they will be skipped:') }}</div>
+                        <ul class="list-disc ml-4 mt-1">
+                            @foreach ($refused as $refusal)
+                                <li>{{ $refusal }}</li>
+                            @endforeach
+                        </ul>
+                    </div>
+                </div>
+            @endif
+
             <p class="text-sm opacity-70">
                 {{ __('Nothing has changed yet. The import starts when you press Import, and runs in the background.') }}
                 @if ($total > $shown)

@@ -64,6 +64,47 @@ class Periods
         return false;
     }
 
+    /**
+     * The next moment `contains()` may answer differently: a period's start,
+     * or the minute after its end (both ends are included) — on the shop's
+     * clock, for a page kept ready only until then (PLAN §61). A date answers
+     * differently at midnight at the earliest.
+     *
+     * @param  list<array{from: string, to?: string}>  $periods
+     */
+    public static function nextChange(array $periods, string $format, ?CarbonInterface $now = null): CarbonInterface
+    {
+        $now ??= shop_now();
+        $midnight = $now->copy()->addDay()->startOfDay();
+
+        if ($format !== 'time') {
+            return $midnight;
+        }
+
+        $next = $midnight;
+
+        foreach ($periods as $period) {
+            if (! is_array($period) || empty($period['from'])) {
+                continue;
+            }
+
+            foreach ([(string) $period['from'], (string) ($period['to'] ?? $period['from'])] as $i => $edge) {
+                [$hour, $minute] = array_map('intval', explode(':', $edge) + [1 => 0]);
+                $at = $now->copy()->setTime($hour, $minute)->addMinutes($i);
+
+                if ($at->lte($now)) {
+                    $at = $at->addDay();
+                }
+
+                if ($at->lt($next)) {
+                    $next = $at;
+                }
+            }
+        }
+
+        return $next;
+    }
+
     /** "25.12–08.01, 08.03" — a rule in the admin's words. */
     public static function describe(mixed $periods): string
     {

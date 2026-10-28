@@ -74,40 +74,22 @@ class LocationsServiceProvider extends ServiceProvider implements ModuleLifecycl
 
         // "Your town" in the header's corner and the window it opens (PLAN
         // §38). The town is read through checkout's `storefront.visitor_place`
-        // — resolved at render time, inside the listener, never at boot.
-        hook_listen('storefront.header.start', function (string $html, array $context) {
-            $placeId = (int) hook_filter('storefront.visitor_place', null);
-
-            return $html.view('torgash.locations::header-button', [
-                'locPlace' => $placeId ? Models\Place::find($placeId) : null,
-                'locHeader' => $context['header'] ?? 'dark',
-            ])->render();
-        });
+        // — resolved at render time, inside the view, never at boot. The
+        // visitor's own on a page kept for every guest (PLAN §61).
+        hook_listen('storefront.header.start', fn (string $html, array $context) => $html.personal(
+            'torgash.locations::header-button', ['locHeader' => $context['header'] ?? 'dark'], reusable: true,
+        ));
 
         hook_listen('core.footer', fn (string $html) => $html.view('torgash.locations::dialog-shell')->render());
 
         // "Is your town …?" (setting `town_prompt`): once a visit, only to a
-        // visitor who has not chosen a town. Marked as asked when it is
-        // printed, so the next page does not ask again whatever they did.
-        hook_listen('core.footer', function (string $html) {
-            $guess = app(TownGuess::class);
-            $mode = $guess->mode();
+        // visitor who has not chosen a town — its town guessed from their
+        // address, so drawn for every visitor (town-prompt-part).
+        hook_listen('core.footer', fn (string $html) => $html.personal('torgash.locations::town-prompt-part'));
 
-            if ($mode === 'off' || session('locations.town_prompted') || hook_filter('storefront.visitor_place', null)) {
-                return $html;
-            }
-
-            $place = $guess->guess(request()->ip());
-
-            // Without a town to name only the browser may still find one.
-            if (! $place && $mode !== 'browser') {
-                return $html;
-            }
-
-            session()->put('locations.town_prompted', true);
-
-            return $html.view('torgash.locations::town-prompt', ['townMode' => $mode, 'townGuess' => $place])->render();
-        });
+        // What only those two read: a page kept for guests may be drawn by a
+        // visitor already asked (PLAN §61).
+        page_cache()->personal(session: ['locations.town_prompted'], copies: true);
 
         // The country of the visitor's town — what a phone number typed
         // without its + is read in (core's Phones). A place's `country` is

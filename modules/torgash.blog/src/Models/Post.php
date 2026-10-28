@@ -8,6 +8,7 @@ use App\Core\Support\HasTranslations;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+use Spatie\Image\Enums\Fit;
 use Spatie\MediaLibrary\HasMedia;
 use Spatie\MediaLibrary\InteractsWithMedia;
 use Spatie\MediaLibrary\MediaCollections\Models\Media;
@@ -91,7 +92,9 @@ class Post extends Model implements HasMedia, PageSubject
 
     public function registerMediaConversions(?Media $media = null): void
     {
-        Gallery::conversions($this, $media);
+        // A cover is a scene, not a product shot: it keeps its own shape
+        // whatever the shop pads or crops its catalogue photos to.
+        Gallery::conversions($this, $media, Fit::Contain);
     }
 
     public function rubrics(): BelongsToMany
@@ -107,14 +110,34 @@ class Post extends Model implements HasMedia, PageSubject
     }
 
     /** In a feed: published, its moment come. */
+    /**
+     * A scheduled article comes out with nothing written at all: a page kept
+     * ready for guests that lists or opens articles is kept only until the
+     * next one does (PLAN §61).
+     */
+    protected static function keptUntilNextPublication(): void
+    {
+        if (page_cache()->current() === null) {
+            return;
+        }
+
+        $next = static::query()->where('status', '!=', self::DRAFT)->where('published_at', '>', now())->min('published_at');
+
+        page_cache()->until($next ? \Illuminate\Support\Carbon::parse($next) : null);
+    }
+
     public function scopeListed(Builder $query): Builder
     {
+        self::keptUntilNextPublication();
+
         return $query->where('status', self::PUBLISHED)->where('published_at', '<=', now());
     }
 
     /** By its address: published or hidden, its moment come. */
     public function scopeReachable(Builder $query): Builder
     {
+        self::keptUntilNextPublication();
+
         return $query->whereIn('status', [self::PUBLISHED, self::HIDDEN])->where('published_at', '<=', now());
     }
 

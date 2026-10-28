@@ -48,14 +48,25 @@ class WarehouseSync
      */
     public function for(string $settlementRef): Collection
     {
-        if ($this->stale($settlementRef)) {
-            $this->fill($settlementRef);
-        }
+        $this->ready($settlementRef);
 
         return Warehouse::where('settlement_ref', $settlementRef)
             ->get()
             ->sortBy(fn (Warehouse $warehouse) => (int) $warehouse->number)
             ->values();
+    }
+
+    /**
+     * The town's branches in the table, fetched or queued as for() does —
+     * without loading them: a quote reads the table with its own query, and
+     * Kyiv's eight thousand points made into models cost a fifth of a second
+     * on every product page and every keystroke at checkout (measured).
+     */
+    public function ready(string $settlementRef): void
+    {
+        if ($this->stale($settlementRef)) {
+            $this->fill($settlementRef);
+        }
     }
 
     /** How long to leave the carrier alone after it refuses a request. */

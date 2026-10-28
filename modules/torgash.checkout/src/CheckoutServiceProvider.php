@@ -245,6 +245,18 @@ class CheckoutServiceProvider extends ServiceProvider
             return $value ?? app(LocationStore::class)->placeId();
         });
 
+        // Pages kept ready for guests (PLAN §61): where a visitor said they
+        // are is read in personal parts (the header's town) or under a vary
+        // that answers for it (the tax rates there); the order they just
+        // placed only on its own page. Orders and what hangs on them are on
+        // no guest's page.
+        page_cache()
+            // Nothing reads the town before a page is drawn: a visitor who
+            // named one still gives copies.
+            ->personal(session: ['checkout_location'], copies: true)
+            ->personal(session: ['last_order_number'])
+            ->unseen(['m_checkout_orders', 'm_checkout_order_logs', 'm_checkout_order_merges', 'm_checkout_coupons']);
+
         // ...and the other direction: a visitor who names a town somewhere else
         // — by picking one of the shop's own points, say — has answered the
         // cart's question too. Only when it is still unanswered: overwriting a

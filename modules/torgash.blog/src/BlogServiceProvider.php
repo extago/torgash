@@ -25,6 +25,8 @@ class BlogServiceProvider extends ServiceProvider
 
     public function boot(): void
     {
+        $this->registerPageCache();
+
         // Its part of the demo shop (PLAN §55.3), after the catalogue's products.
         hook_listen('core.demo.parts', fn (array $parts) => $parts + [
             'blog' => ['label' => 'Blog', 'after' => ['catalog'], 'install' => fn (\App\Core\Demo\DemoPack $pack) => app(Demo\BlogDemo::class)->install($pack)],
@@ -192,5 +194,33 @@ class BlogServiceProvider extends ServiceProvider
 
             return $items === [] ? $sections : [...$sections, ['title' => __('Blog'), 'items' => $items]];
         });
+    }
+
+    /**
+     * Articles kept ready for guests (PLAN §61): a view counted for every
+     * visit, the heart drawn for each visitor (its browser's cookie), and a
+     * like or a view thrown away nowhere but on its own article.
+     */
+    protected function registerPageCache(): void
+    {
+        page_cache()
+            ->kind('blog', 'Blog')
+            ->harmless(session: ['blog_viewed'])
+            ->personal(cookies: [Likes::COOKIE])
+            ->unseen('m_blog_posts', ['views_count', 'likes_count'])
+            ->unseen('m_blog_likes')
+            // One view per article per session, never a crawler's. A plain
+            // query: a view is not an edit, and must not move updated_at.
+            ->onVisit('blog.post_viewed', function (array $data, \Illuminate\Http\Request $request) {
+                $id = (int) ($data['post'] ?? 0);
+                $seen = (array) session('blog_viewed', []);
+
+                if (in_array($id, $seen, true) || app(\Torgash\Catalog\Support\Popularity::class)->isBot($request)) {
+                    return;
+                }
+
+                \Illuminate\Support\Facades\DB::table('m_blog_posts')->where('id', $id)->increment('views_count');
+                session(['blog_viewed' => array_slice([...$seen, $id], -100)]);
+            });
     }
 }

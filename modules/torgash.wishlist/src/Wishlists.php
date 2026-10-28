@@ -33,13 +33,16 @@ class Wishlists
 
     public function current(bool $create = false): ?WishList
     {
+        // Asked every time, though the answer is kept: a page being kept
+        // ready for guests sees each part that reads the list (PLAN §61).
+        $token = session(self::SESSION);
+
         if ($this->looked && ($this->list || ! $create)) {
             return $this->list;
         }
 
         $this->looked = true;
         $user = auth()->user();
-        $token = session(self::SESSION);
 
         if ($user) {
             $this->list = WishList::where('user_id', $user->id)->first();
@@ -73,8 +76,9 @@ class Wishlists
     /** @return array<int, true> product id => true */
     public function ids(): array
     {
+        $list = $this->current();
+
         if ($this->ids === null) {
-            $list = $this->current();
             $this->ids = $list
                 ? DB::table('m_wishlist_items')->where('list_id', $list->id)->pluck('product_id')->mapWithKeys(fn ($id) => [(int) $id => true])->all()
                 : [];

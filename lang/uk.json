@@ -1580,5 +1580,21 @@
     "A redirect left by a renamed address is removed once nobody has arrived through it for this long — by then search engines know the new address. Every visit restarts the count. Redirects typed by hand or imported are kept for ever, and so is one you mark \"Keep for ever\". 0 keeps every redirect.": "Переадресація, що лишилася від зміни адреси, видаляється, якщо нею ніхто не приходив стільки часу — на той момент пошуковики вже знають нову адресу. Кожен перехід починає відлік наново. Введені вручну та імпортовані зберігаються завжди, як і позначені «Зберігати завжди». 0 — зберігати всі.",
     "Keep for ever": "Зберігати завжди",
     "Automatic redirects nobody uses are forgotten after a while; kept ones never are.": "Автоматичні переадресації, якими ніхто не користується, з часом забуваються; позначені «зберігати» — ніколи.",
-    ":count redirect will be kept for ever.|:count redirects will be kept for ever.": ":count переадресація зберігатиметься завжди.|:count переадресації зберігатимуться завжди.|:count переадресацій зберігатимуться завжди."
+    ":count redirect will be kept for ever.|:count redirects will be kept for ever.": ":count переадресація зберігатиметься завжди.|:count переадресації зберігатимуться завжди.|:count переадресацій зберігатимуться завжди.",
+    "Page cache": "Кеш сторінок",
+    "Keep pages ready for guests": "Тримати сторінки готовими для гостей",
+    "A page a guest has opened is kept and handed to the next guests as it is — several times faster. The basket, the town, the wishlist and the other parts that are a visitor's own are still drawn for each of them. Signed-in customers always get a freshly drawn page, and a change in the admin throws the kept pages away by itself. System → Cache and sessions shows how many there are and why a page was not kept.": "Сторінка, яку відкрив гість, зберігається й віддається наступним гостям як є — у кілька разів швидше. Кошик, місто, обране та інші особисті частини, як і раніше, малюються для кожного відвідувача свої. Покупці, які увійшли, завжди отримують свіжу сторінку, а зміна в адмінці сама викидає збережені сторінки. Скільки їх і чому сторінка не збереглася — в Система → Кеш і сесії.",
+    "Keep a page for, minutes": "Зберігати сторінку, хвилин",
+    "At most. A change in the admin throws a page away sooner, and a page with a sale or a banner that starts or ends sooner is kept only until then.": "Не довше. Зміна в адмінці викине сторінку раніше, а сторінка з акцією чи банером, які почнуться або закінчаться раніше, зберігається лише до цього моменту.",
+    "Always draw these pages afresh": "Завжди малювати заново ці сторінки",
+    "Pages kept for guests": "Сторінки для гостей",
+    "Every page is drawn afresh for every visitor.": "Кожна сторінка малюється заново для кожного відвідувача.",
+    "Pages kept": "Збережено сторінок",
+    "Space taken": "Займають",
+    "All thrown away :time": "Усі викинуто :time",
+    "Why pages were not kept": "Чому сторінки не збереглися",
+    "Throw the kept pages away": "Викинути збережені сторінки",
+    "Not needed after a change in the admin — that throws them away by itself. For a template or a file changed on the server.": "Після змін в адмінці не потрібно — вони викидаються самі. Це для шаблону чи файлу, зміненого на сервері.",
+    "Settings of the page cache": "Налаштування кешу сторінок",
+    "The kept pages are thrown away; each is kept again when a guest next opens it.": "Збережені сторінки викинуто; кожна збережеться знову, коли її відкриє гість."
 }

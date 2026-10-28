@@ -37,6 +37,8 @@ class FeatureValue extends Model implements HasMedia, PageSubject
             'meta_description' => 'array',
             'h1' => 'array',
             'noindex' => 'bool',
+            // Spellings merged into this value — see the migration that added it.
+            'aliases' => 'array',
         ];
     }
 

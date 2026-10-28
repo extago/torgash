@@ -14,6 +14,9 @@ class ApiServiceProvider extends ServiceProvider
 {
     public function boot(): void
     {
+        // What API clients hold is on no guest's page (PLAN §61).
+        page_cache()->unseen('m_api_tokens');
+
         $this->throttle();
 
         // NOT the `web` group: a machine has no session, no CSRF token and no

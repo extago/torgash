@@ -453,6 +453,35 @@ class CoreSettings
                 'label' => 'Extra lines for robots.txt',
                 'help' => 'Appended verbatim to the end of the generated file. The file itself no longer exists on disk — this is where a rule the shop needs and the engine never heard of goes.',
             ],
+            [
+                'key' => '_g_page_cache',
+                'type' => 'group',
+                'label' => 'Page cache',
+            ],
+            [
+                'key' => 'page_cache',
+                'type' => 'checkbox',
+                'default' => false,
+                'label' => 'Keep pages ready for guests',
+                'help' => 'A page a guest has opened is kept and handed to the next guests as it is — several times faster. The basket, the town, the wishlist and the other parts that are a visitor\'s own are still drawn for each of them. Signed-in customers always get a freshly drawn page, and a change in the admin throws the kept pages away by itself. System → Cache and sessions shows how many there are and why a page was not kept.',
+                'keywords' => ['en' => 'full page cache speed fast guests', 'ru' => 'кэш страниц скорость быстро ускорение гости'],
+            ],
+            [
+                'key' => 'page_cache_minutes',
+                'type' => 'number',
+                'default' => 60,
+                'label' => 'Keep a page for, minutes',
+                'help' => 'At most. A change in the admin throws a page away sooner, and a page with a sale or a banner that starts or ends sooner is kept only until then.',
+            ],
+            [
+                'key' => 'page_cache_skip',
+                'type' => 'checkboxes',
+                'default' => [],
+                // Filled in by screenDefinitions(): each kind of page is
+                // declared by the module that draws it.
+                'options' => [],
+                'label' => 'Always draw these pages afresh',
+            ],
         ];
     }
 
@@ -493,6 +522,11 @@ class CoreSettings
         return array_map(function (array $definition) use ($sources) {
             if ($definition['key'] === 'rates_source') {
                 $definition['options'] = ($definition['options'] ?? []) + $sources;
+            }
+
+            // The kinds of page a module keeps for guests (PLAN §61).
+            if ($definition['key'] === \App\Core\PageCache\PageCache::SKIP) {
+                $definition['options'] = page_cache()->kinds();
             }
 
             // Which forms can ask for a code is whoever owns them (PLAN §44).

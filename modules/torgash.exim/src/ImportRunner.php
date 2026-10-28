@@ -57,8 +57,12 @@ class ImportRunner
      * What the import WOULD do: every row matched (nothing is written), the
      * first `$show` kept for the screen.
      *
+     * A row that matches nothing may not be able to make a new record — the
+     * entity's owner says why in its match (`refused`: a product without a
+     * name). It is a skip, and `refused` says which lines and why.
+     *
      * @param  list<string>  $mapping
-     * @return array{fieldDefs: array, rows: list<array>, counts: array{create: int, update: int, skip: int}, fallbacks: int, total: int, problems: list<string>}
+     * @return array{fieldDefs: array, rows: list<array>, counts: array{create: int, update: int, skip: int}, fallbacks: int, total: int, problems: list<string>, refused: list<string>}
      */
     public function preview(ImportFile $file, string $entity, array $mapping, array $options = [], int $show = 100): array
     {
@@ -71,6 +75,7 @@ class ImportRunner
         $rows = [];
         $formulas = Columns::formulas((array) $options['formulas']);
         $problems = [];
+        $refused = [];
 
         foreach ($file->rows() as $line => $cells) {
             $row = Columns::row($header, $mapping, $cells, $fieldDefs, $formulas, function (string $column, FormulaException $e) use (&$problems, $line) {
@@ -86,8 +91,13 @@ class ImportRunner
             $total++;
             $match = hook_filter("exim.match.{$entity}", null, ['row' => $row]);
             $exists = $match && $match['model']->exists;
-            $action = $exists ? 'update' : ($options['create_new'] ? 'create' : 'skip');
+            $refusal = ! $exists && $options['create_new'] ? ($match['refused'] ?? null) : null;
+            $action = $exists ? 'update' : ($options['create_new'] && ! $refusal ? 'create' : 'skip');
             $counts[$action]++;
+
+            if ($refusal && count($refused) < 20) {
+                $refused[] = __('Line :line: skipped — :reason', ['line' => $line, 'reason' => __($refusal)]);
+            }
 
             if (($match['matchedBy'] ?? null) === 'name-fallback') {
                 $fallbacks++;
@@ -98,7 +108,7 @@ class ImportRunner
             }
         }
 
-        return ['fieldDefs' => $fieldDefs, 'rows' => $rows, 'counts' => $counts, 'fallbacks' => $fallbacks, 'total' => $total, 'problems' => $problems];
+        return ['fieldDefs' => $fieldDefs, 'rows' => $rows, 'counts' => $counts, 'fallbacks' => $fallbacks, 'total' => $total, 'problems' => $problems, 'refused' => $refused];
     }
 
     /**
@@ -189,6 +199,17 @@ class ImportRunner
                     $isNew = ! $model->exists;
 
                     if ($isNew && ! $options['create_new']) {
+                        $counts['skipped']++;
+                        $onRow && $onRow(array_sum($counts));
+
+                        continue;
+                    }
+
+                    // Nothing to make a record of (a product without a name):
+                    // this row is left out and said so, not allowed to stop
+                    // the file at the database and take every other row with it.
+                    if ($isNew && ($match['refused'] ?? null)) {
+                        $batch->note('Line :line: skipped — :reason', ['reason' => ['message' => $match['refused'], 'params' => []]]);
                         $counts['skipped']++;
                         $onRow && $onRow(array_sum($counts));
 

@@ -14,6 +14,12 @@
         ->orderByDesc('published_at')->orderByDesc('id')
         ->limit($blogLimit)->get();
     $blogFeatured = ($settings['layout'] ?? 'featured') !== 'row' && $blogPosts->count() > 1;
+    // A row fills its width: three columns or four, whichever leaves its last
+    // line less empty (four on a tie), so three articles stand three across
+    // rather than three and a hole.
+    $blogCount = $blogPosts->count();
+    $blogHoles = fn (int $columns) => (int) ceil($blogCount / $columns) * $columns - $blogCount;
+    $blogColumns = $blogHoles(4) <= $blogHoles(3) ? 4 : 3;
     $blogHeading = trim((string) ($settings['heading'] ?? ''));
 @endphp
 @if ($blogPosts->isNotEmpty())
@@ -28,10 +34,16 @@
         <div @class([
                 'grid gap-4 lg:gap-5',
                 'lg:grid-cols-[minmax(0,1.1fr)_minmax(0,1fr)]' => $blogFeatured,
-                'grid-cols-2 lg:grid-cols-4' => ! $blogFeatured,
+                'grid-cols-2' => ! $blogFeatured,
+                'lg:grid-cols-3' => ! $blogFeatured && $blogColumns === 3,
+                'lg:grid-cols-4' => ! $blogFeatured && $blogColumns === 4,
              ])>
             @foreach ($blogFeatured ? [$blogPosts->take(1), $blogPosts->slice(1)] : [$blogPosts] as $blogGroup)
-                <div @class(['grid gap-4 lg:gap-5', 'grid-cols-2' => $blogFeatured && ! $loop->first, 'contents' => ! $blogFeatured])>
+                {{-- In a row the cards are the outer grid's own cells, so the
+                     wrapper is `contents` and nothing else: with `grid` beside
+                     it the stylesheet's order picked grid, and the cards stood
+                     in one column in the first cell. --}}
+                <div @class(['grid gap-4 lg:gap-5' => $blogFeatured, 'grid-cols-2' => $blogFeatured && ! $loop->first, 'contents' => ! $blogFeatured])>
                     @foreach ($blogGroup as $blogPost)
                         @php
                             $blogLarge = $blogFeatured && $loop->parent->first;

@@ -30,6 +30,9 @@ class AutomationsServiceProvider extends ServiceProvider
 
     public function boot(): void
     {
+        // Rules and their runs are on no guest's page (PLAN §61).
+        page_cache()->unseen(['m_automations_rules', 'm_automations_conditions', 'm_automations_actions', 'm_automations_runs', 'm_automations_code_channels']);
+
         $this->triggers();
         $this->schedule();
 

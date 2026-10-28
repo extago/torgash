@@ -16,8 +16,33 @@ class CollectionsServiceProvider extends ServiceProvider implements ModuleLifecy
     {
         StorefrontRoutes::group(dirname(__DIR__).'/routes.php');
 
+        // A collection's dates open and close it with nothing written: a
+        // page kept ready for guests is kept only until the next (PLAN §61).
+        page_cache()->changes(fn () => page_cache()->nextDateIn('m_collections'));
+
         // Pictures and galleries inside a collection's description, as in a product's.
         hook_listen('media.owners', fn (array $context) => $context['owners']->register('collection', Collection::class, 'collections.manage', content: true));
+
+        // Values of a characteristic merged into one (catalog, PLAN §60): a
+        // collection made of "темно-синий" is made of "тёмно‑синий" now.
+        hook_listen('catalog.feature_value.merged', function (array $context) {
+            $featureId = (int) $context['feature']->id;
+            $into = (int) $context['into']->id;
+            $merged = array_map('intval', $context['merged']);
+
+            foreach (Collection::query()->whereNotNull('conditions')->orderBy('id')->get() as $collection) {
+                $conditions = (array) $collection->conditions;
+                $ids = array_map('intval', (array) ($conditions['features'][$featureId] ?? []));
+
+                if (array_intersect($ids, $merged) !== []) {
+                    $conditions['features'][$featureId] = array_values(array_unique(
+                        array_map(fn (int $id) => in_array($id, $merged, true) ? $into : $id, $ids),
+                    ));
+                    $collection->conditions = $conditions;
+                    $collection->save();
+                }
+            }
+        });
 
         Route::middleware(['web', 'auth', 'can:collections.manage'])
             ->prefix('admin/collections')

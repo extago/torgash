@@ -35,6 +35,10 @@ class ReviewsServiceProvider extends ServiceProvider
 
     public function boot(): void
     {
+        // "Helpful" votes: a guest's page is right again within the hour
+        // (PLAN §61) — a vote must not throw every page away.
+        page_cache()->unseen('m_reviews_votes');
+
         // Its part of the demo shop (PLAN §55.3), after the catalogue's products.
         hook_listen('core.demo.parts', fn (array $parts) => $parts + [
             'reviews' => ['label' => 'Reviews', 'after' => ['catalog'], 'install' => fn (\App\Core\Demo\DemoPack $pack) => app(Demo\ReviewsDemo::class)->install($pack)],

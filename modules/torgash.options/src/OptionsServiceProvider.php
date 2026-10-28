@@ -28,6 +28,9 @@ class OptionsServiceProvider extends ServiceProvider
 
     public function boot(): void
     {
+        // Files customers attach to an order line are on no guest's page (PLAN §61).
+        page_cache()->unseen('m_options_files');
+
         // Its part of the demo shop (PLAN §55.3), after the catalogue's products.
         hook_listen('core.demo.parts', fn (array $parts) => $parts + [
             'options' => ['label' => 'Options', 'after' => ['catalog'], 'install' => fn (\App\Core\Demo\DemoPack $pack) => app(Demo\OptionsDemo::class)->install($pack)],

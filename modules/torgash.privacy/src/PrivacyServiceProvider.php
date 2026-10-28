@@ -47,6 +47,18 @@ class PrivacyServiceProvider extends ServiceProvider
         // must find the consent defaults already set.
         hook_listen('core.head', fn (string $html) => $html.$this->consentModeDefaults(), 1);
 
+        // What the visitor allowed decides the banner, the consent defaults
+        // and which of the shop's snippets run: every page kept ready for
+        // guests is filed under it (PLAN §61) — their choice, or the
+        // browser's "do not sell" where the shop listens to it.
+        page_cache()
+            ->vary('consent', function () {
+                $state = app(ConsentState::class);
+
+                return implode(',', $state->allowed()).($state->shouldAsk() ? '?' : '');
+            }, cookies: [ConsentState::COOKIE])
+            ->unseen(['m_privacy_consents', 'm_privacy_requests']);
+
         hook_listen('core.footer', function (string $html) {
             return setting('torgash.privacy', 'consent_mode', 'opt_in') === 'off'
                 ? $html

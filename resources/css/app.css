@@ -1580,7 +1580,9 @@ body:not(:has(#product-options)) .torgash-kit-options-link { display: none; }
     border-radius: var(--radius-box, 1rem); background: var(--color-base-200);
 }
 .torgash-blog-cover.is-large { aspect-ratio: 16 / 10.5; }
-.torgash-blog-cover img { width: 100%; height: 100%; object-fit: cover; }
+/* Out of the grid's flow: in an auto row the picture set its own height and
+   the frame merely clipped it, so a wide cover never filled a 16:10 frame. */
+.torgash-blog-cover img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
 .torgash-blog-date {
     position: absolute; left: 0.5rem; bottom: 0.5rem; padding: 0.0625rem 0.5rem; border-radius: 9999px;
     font-size: 0.6875rem; font-weight: 600; background: rgb(0 0 0 / 0.5); color: #fff;

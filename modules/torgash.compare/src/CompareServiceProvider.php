@@ -41,14 +41,16 @@ class CompareServiceProvider extends ServiceProvider
                 return $html;
             }
 
-            return $html.view('torgash.compare::button', ['compareProduct' => $product, 'compareLabelled' => false])->render();
+            // The visitor's own on a page kept ready for guests (PLAN §61) —
+            // for a guest comparing nothing, as it was drawn.
+            return $html.personal('torgash.compare::button', ['compareProduct' => $product, 'compareLabelled' => false], reusable: true);
         }, 20);
 
         hook_listen('cart.buy_box.links', function (string $html, array $context) {
             $product = $context['product'] ?? null;
 
             return $product instanceof Product
-                ? $html.view('torgash.compare::button', ['compareProduct' => $product, 'compareLabelled' => true])->render()
+                ? $html.personal('torgash.compare::button', ['compareProduct' => $product, 'compareLabelled' => true], reusable: true)
                 : $html;
         }, 20);
 
@@ -61,6 +63,8 @@ class CompareServiceProvider extends ServiceProvider
             'active' => request()->routeIs('*compare.*'),
         ]]);
 
-        hook_listen('storefront.header.icons', fn (string $html) => $html.view('torgash.compare::counter')->render(), 20);
+        hook_listen('storefront.header.icons', fn (string $html) => $html.personal('torgash.compare::counter', reusable: true), 20);
+
+        page_cache()->personal(session: [Comparison::SESSION]);
     }
 }

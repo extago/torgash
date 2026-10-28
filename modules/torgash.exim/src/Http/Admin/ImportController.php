@@ -230,6 +230,7 @@ class ImportController extends Controller
                 'fallbacks' => $result['fallbacks'],
                 'total' => $result['total'],
                 'problems' => $result['problems'],
+                'refused' => $result['refused'],
                 'preset' => $preset,
             ]);
         });

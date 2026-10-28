@@ -4,6 +4,7 @@ namespace Torgash\Exim;
 
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\ServiceProvider;
+use Torgash\Exim\Console\ImportCommand;
 use Torgash\Exim\Console\RunScheduledCommand;
 use Torgash\Exim\Http\FeedController;
 
@@ -11,6 +12,9 @@ class EximServiceProvider extends ServiceProvider
 {
     public function boot(): void
     {
+        // Imports being prepared are on no guest's page (PLAN §61).
+        page_cache()->unseen(['m_exim_import_drafts', 'm_exim_import_presets', 'm_exim_profiles']);
+
         // Public, non-locale-prefixed — mirrors catalog's own /sitemap.xml
         // route (CatalogServiceProvider.php) for a machine-consumed endpoint.
         Route::middleware('web')->get('/exim/feed/{profile:public_token}', [FeedController::class, 'show'])
@@ -22,7 +26,7 @@ class EximServiceProvider extends ServiceProvider
             ->group(dirname(__DIR__).'/routes-admin.php');
 
         if ($this->app->runningInConsole()) {
-            $this->commands([RunScheduledCommand::class]);
+            $this->commands([RunScheduledCommand::class, ImportCommand::class]);
         }
 
         // A profile carries its own `schedule` and change rule and works out

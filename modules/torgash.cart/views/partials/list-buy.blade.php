@@ -32,7 +32,7 @@
         </a>
     @else
         <form hx-post="{{ route('cart.add', $listBuyProduct->slug) }}" hx-swap="none"
-              data-list-buy-add @if ($listBuyInCart > 0) data-in-cart @endif
+              data-list-buy-add @if ($listBuyInCart > 0) data-in-cart @endif data-product="{{ $listBuyProduct->id }}"
               @class([
                   'group/buy flex items-center shrink-0',
                   // A CARD has no room: the stepper opens on hover INSIDE one

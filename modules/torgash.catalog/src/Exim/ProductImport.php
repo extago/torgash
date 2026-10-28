@@ -3,6 +3,7 @@
 namespace Torgash\Catalog\Exim;
 
 use Illuminate\Support\Str;
+use Torgash\Catalog\Features\Spelling;
 use Torgash\Catalog\Models\Category;
 use Torgash\Catalog\Models\Feature;
 use Torgash\Catalog\Models\FeatureValue;
@@ -471,14 +472,16 @@ class ProductImport
         ProductFeature::updateOrCreate(['product_id' => $product->id, 'feature_id' => $feature->id], $attributes);
     }
 
+    /**
+     * Found by its spelling (Features\Spelling), not its exact characters: a
+     * supplier's "темно-синий" is the shop's "тёмно‑синий", and a spelling
+     * merged into a value is still that value — compared exactly, each file
+     * made the value the shop had just merged away.
+     */
     protected function valueOf(Feature $feature, string $text, array $ctx): FeatureValue
     {
         return $ctx['batch']->remember('value:'.$feature->id.':'.mb_strtolower($text), function () use ($feature, $text) {
-            $found = FeatureValue::query()
-                ->where('feature_id', $feature->id)
-                ->whereRaw('exists (select 1 from jsonb_each_text(value) v where lower(v.value) = lower(?))', [$text])
-                ->orderBy('id')
-                ->first();
+            $found = Spelling::find($feature->id, $text);
 
             if ($found) {
                 return $found;

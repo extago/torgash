@@ -79,17 +79,15 @@ class ShippingServiceProvider extends ServiceProvider
         // FIRST under the panel (the one card here that is about this product
         // and this visitor, before the shop's general cards); nothing for a
         // product nobody sends.
+        // The visitor's own on a page kept ready for guests (PLAN §61): their
+        // town — kept as drawn for whoever chose the same one; a date in it
+        // keeps the page only until it moves (the note below says so).
         hook_listen('catalog.product.after_buy_box', function (string $value, array $context) {
             if (! setting('torgash.shipping', 'product_estimate', true)) {
                 return $value;
             }
 
-            $estimate = app(ProductEstimate::class)->for($context['product']);
-
-            return $estimate === null ? $value : view('torgash.shipping::partials.product-delivery', [
-                'estimate' => $estimate,
-                'product' => $context['product'],
-            ])->render().$value;
+            return personal('torgash.shipping::partials.product-delivery-part', ['product' => $context['product']], reusable: true).$value;
         });
 
         hook_listen('cart.summary_after_total', function (string $value, array $context) {

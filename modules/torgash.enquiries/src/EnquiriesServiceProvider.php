@@ -30,6 +30,9 @@ class EnquiriesServiceProvider extends ServiceProvider
 
     public function boot(): void
     {
+        // A customer's enquiry and its conversation are on no guest's page (PLAN §61).
+        page_cache()->unseen(['m_enquiries_enquiries', 'm_enquiries_messages']);
+
         // What it keeps about a person, for core's personal-data registry (PLAN §49).
         hook_listen('core.personal_data', fn (array $context) => EnquiryPersonalData::register($context['registry']));
 

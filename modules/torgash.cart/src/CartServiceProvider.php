@@ -42,6 +42,12 @@ class CartServiceProvider extends ServiceProvider
 
         $this->buyingFromLists();
 
+        // A basket is one visitor's: its token is read in personal parts only
+        // (the badge, the ticks), and nothing about it is on a guest's page.
+        page_cache()
+            ->personal(session: ['cart_token', 'cart', 'cart_coupon'])
+            ->unseen('m_cart_carts');
+
         hook_listen('core.schedule', $this->schedule(...));
 
         // A cart is one visitor's, changes on every click and means nothing to
@@ -97,7 +103,8 @@ class CartServiceProvider extends ServiceProvider
             ])->render();
         });
 
-        hook_listen('core.footer', fn (string $html) => $html.view('torgash.cart::partials.dialog')->render());
+        hook_listen('core.footer', fn (string $html) => $html.view('torgash.cart::partials.dialog')->render()
+            .personal('torgash.cart::partials.in-cart-marks', reusable: true));
 
         // The basket's tab on a phone (PLAN §38): last, with its count — the
         // same count the header badge carries, refreshed with it after an add.

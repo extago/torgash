@@ -34,7 +34,14 @@ class Shortcuts
     /** @return array<string, array<string, mixed>> key => entry */
     public function all(): array
     {
-        return $this->shortcuts ??= collect((array) hook_filter('storefront.tabbar', self::base(), ['storefront' => current_storefront()]))
+        // Not kept while a page is drawn to be kept for guests (PLAN §61):
+        // a badge is the visitor's, and each part showing one must be seen
+        // asking for it.
+        if ($this->shortcuts !== null && page_cache()->current() === null) {
+            return $this->shortcuts;
+        }
+
+        return $this->shortcuts = collect((array) hook_filter('storefront.tabbar', self::base(), ['storefront' => current_storefront()]))
             ->filter(fn ($s) => is_array($s) && ! empty($s['key']))
             ->keyBy('key')
             ->all();

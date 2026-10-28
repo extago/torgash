@@ -157,3 +157,31 @@ jobs with it, and so do updates and their rollback.
 - **Backups**: Admin → System → Backups; restoring is done from the console,
   `php artisan torgash:backup-restore`.
 - A forgotten owner password: `php artisan torgash:admin you@example.com`.
+
+## Working from the console
+
+For scripts (`php artisan tinker`) and whoever runs them on a live shop:
+
+- **Run them as the shop's user** — `sudo -u www-data php artisan …`, as
+  above. What a command run as root writes (a log, a cache, an import's copy
+  of its file) is a file the shop cannot change afterwards.
+- **Many products at once is an import**, not a script: names, addresses,
+  descriptions, categories, prices, stock. Export the columns, change them,
+  bring the file back — on the admin's Import screen or with
+  `php artisan exim:import file.csv --dry-run` (then without `--dry-run`).
+  The Import / Export module's help says how.
+- **Write through the models**, not `DB::table(...)->update()`: codes,
+  addresses and their redirects, the audit trail and the search index are
+  kept by the models, and a query-builder update walks past all of them.
+- **Products have no hidden filter** besides the bin: `Product::query()`
+  finds every product that is not deleted, so `withoutGlobalScopes()` is not
+  needed — it only adds the deleted ones, as `withTrashed()` does. What a
+  visitor is shown is narrower: `Product::listed()`.
+- **Changed files by hand?** `php artisan torgash:refresh` drops the caches
+  made from code, rebuilds the stylesheet and restarts the workers. Updates
+  and module changes from the admin do this themselves.
+- **FrankenPHP in worker mode**: after replacing the shop's folder (copied
+  over, or a new release moved into place) restart the service —
+  `systemctl restart frankenphp`, or whatever yours is called — rather than
+  reloading it. A reload restarts the workers inside the running process,
+  which can go on serving the old files from memory.

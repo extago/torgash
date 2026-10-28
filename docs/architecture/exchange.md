@@ -141,6 +141,30 @@ this file is the reasoning. Read it before changing anything it covers.
   a row the formula cannot work out leaves that FIELD of the row untouched and
   notes why — never the bare cell (the purchase price would land as the price).
   A broken formula blocks "Check".
+- **A row that matches nothing may be unable to make a record**, and its
+  entity's owner says so in the match: `exim.match.<entity>` returns
+  `refused` — an English sentence, why — beside `model`. "Check" counts the
+  row as a skip and lists it; the commit skips it with a note
+  (`Line :line: skipped — :reason`). The catalogue refuses a new product,
+  category or characteristic with no `name_*` in any language
+  (`CatalogServiceProvider::namedOrRefused`): it used to reach the NOT NULL
+  and roll the whole file back — one mistyped SKU in a price list cost every
+  other row. A module whose table requires what a file may leave out does the
+  same rather than let the save fail.
+- **The console is the screen without the screen**: `exim:import <file>`
+  (`Console\ImportCommand`) finds the preset (named, else `forHeader`) and
+  guesses the columns with `Columns::guess`, exactly as the mapping screen
+  does, and the rows are written by `RunImport` — run in the console through
+  `TrackedJob::runHere()`, or queued with `--queue` — so a console import is
+  a Background task with its counts and notes (the one-off script that filled
+  the live shop left no trace there). The task gets its own copy of the file
+  on the private disk, as an upload; the file named stays. Reading settings
+  and formulas come from the preset — the command line says only what varies
+  per run (`--skip-new`/`--create-new`, `--images`). What the screen shows a
+  person, the console refuses: a column that goes to no field and that no
+  preset skips (`--skip-unknown` lets it), a formula that cannot be read.
+  `--dry-run` is "Check"; `--user` makes the import that staff member's,
+  audit trail included (otherwise nobody's, as everything from the console).
 - **What an import reads from another system, the export can WRITE** (a
   field with `get` + `on_request`): category paths, brand, characteristics in
   the typed-cell spelling, photo links, prices as written — so an export goes

@@ -117,8 +117,23 @@ abstract class TrackedJob implements ShouldQueue
         return $active ? null : $job->dispatchTracked();
     }
 
-    /** Writes the tracking row for this job instance and pushes it. */
-    protected function dispatchTracked(): BackgroundTask
+    /**
+     * start(), but run right here instead of handed to the queue: the same
+     * tracking row — Background tasks lists it, the audit asks it who started
+     * the work — for a console command whose user waits for the answer anyway,
+     * on a server whose queue may have no worker at all. Returns the row as
+     * the run left it; a failure is thrown, as the worker would see it.
+     */
+    public static function runHere(mixed ...$args): BackgroundTask
+    {
+        /** @var static $job */
+        $job = new static(...$args);
+
+        return $job->dispatchTracked(here: true)->refresh();
+    }
+
+    /** Writes the tracking row for this job instance and pushes it (or runs it, `$here`). */
+    protected function dispatchTracked(bool $here = false): BackgroundTask
     {
         $task = BackgroundTask::create([
             'name' => $this->label(),
@@ -128,7 +143,7 @@ abstract class TrackedJob implements ShouldQueue
         ]);
 
         $this->taskId = $task->id;
-        dispatch($this);
+        $here ? dispatch_sync($this) : dispatch($this);
 
         return $task;
     }

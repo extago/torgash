@@ -180,9 +180,26 @@ class FilterQuery
 
             // One query per characteristic NAMED IN THE ADDRESS, not one per
             // characteristic the shop has: a filtered page mentions one or two.
-            $ids = FeatureValue::where('feature_id', $feature->id)
+            $found = FeatureValue::where('feature_id', $feature->id)
                 ->whereIn(new Expression('lower(code)'), $codes)
-                ->pluck('id')->all();
+                ->get(['id', 'code']);
+            $ids = $found->pluck('id')->all();
+
+            // A code merged into another value (PLAN §60) still means that
+            // value — a bookmark of `?color=temno-siniy` keeps finding the
+            // products it found. Asked only for codes no value has, so a value
+            // that takes such a code again wins, and an ordinary address costs
+            // nothing more.
+            $merged = array_values(array_diff($codes, $found->map(fn (FeatureValue $value) => Str::lower((string) $value->code))->all()));
+
+            if ($merged !== []) {
+                $ids = [...$ids, ...FeatureValue::where('feature_id', $feature->id)
+                    ->whereRaw(
+                        "exists (select 1 from jsonb_array_elements(coalesce(aliases, '[]'::jsonb)) a where lower(a->>'code') in (".implode(', ', array_fill(0, count($merged), '?')).'))',
+                        $merged,
+                    )
+                    ->pluck('id')->all()];
+            }
 
             if ($ids === []) {
                 $unknown[$feature->id] = $codes;

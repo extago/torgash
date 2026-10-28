@@ -478,6 +478,34 @@ rows. `category_nav_hide_empty` never hides the current row or the way up.
   shop, from the admin) or `RedirectManager::withoutRecording(fn)` (one
   script); only `auto` rows are skipped, typed and imported ones never.
 
+- **Values of one characteristic are MERGED, never re-typed** (2026-10-27,
+  PLAN §60, `Features\MergeValues`; the first live shop's "тёмно‑синий" with
+  a non-breaking hyphen beside "темно-синий"). One transaction moves everything
+  that holds a value's id: the products' links (through the model — the audit
+  and search hear it), markup rules, labels' "characteristic is" rules, filter
+  pages (rewritten in place, or — when the new set is another page's —
+  deleted with a 301 to that page and its empty texts filled; a published page
+  outlives a switched-off twin), the brand page (empty fields filled, the
+  address with a history kept, the others 301). What OTHER modules hold they
+  move on `catalog.feature_value.merged` {feature, into, merged, values,
+  products}, fired inside the transaction before the rows go — collections,
+  promotions, 1C links; a module that stores a value id listens to it. It
+  REFUSES to make two products of one variation group the same on every axis
+  (a pair that already was does not count). The merged names (every language)
+  and codes stay on the value as `aliases` (an ARRAY): the import's lookup and
+  `FilterQuery` (for codes no real value has) still find it by them, and a real
+  value always wins over an alias.
+- **"Written alike" is ONE rule, `Features\Spelling`**: case, ё = е, every
+  dash and hyphen = "-", every space = one space, curly quotes and primes
+  straight, invisible characters dropped, NFC — nothing else ("1,5"/"1.5",
+  "золотой"/"золотистый" are a person's merge). PHP `key()` and SQL `sql()` are
+  built from one table and held together by `MergeFeatureValuesTest`.
+  `find()` asks the exact spelling first, then one written alike, then
+  aliases, so twins nobody has merged keep their own products from a file. The
+  values editor refuses a NEW or RENAMED value written like another (old twins
+  still save); the characteristic's page and the invariant
+  `catalog.values_spelled_once` name the twins.
+
 - **"All variants of this product" is a button, not a tab** (2026-10-27,
   setting `variations_list`, on). Other engines list the group
   in a product tab; here it is secondary, so a whole-width quiet button under

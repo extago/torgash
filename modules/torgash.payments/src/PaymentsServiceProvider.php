@@ -27,6 +27,9 @@ class PaymentsServiceProvider extends ServiceProvider
 
     public function boot(): void
     {
+        // Payments and their transactions are on no guest's page (PLAN §61).
+        page_cache()->unseen(['m_payments_payments', 'm_payments_transactions']);
+
         $this->routes();
         $this->methodForm();
         $this->orderScreen();

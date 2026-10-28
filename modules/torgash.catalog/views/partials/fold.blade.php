@@ -14,6 +14,10 @@
      of the switch. Folding back from far below brings the top
      into view, or the reader is left a screenful of somewhere else.
 
+     Something inside that is about to show a part below the fold — a
+     landing's "#…" link — sends `torgash:unfold` (a DOM event that bubbles),
+     and a folded block opens.
+
      `$foldHtml` (printed raw — clean it first), `$foldHeight`, `$foldMore`, `$foldLess`. --}}
 <div x-data="{
         open: false,
@@ -34,7 +38,7 @@
             });
         },
      }"
-     x-init="measure(); new ResizeObserver(() => measure()).observe($refs.foldBody)">
+     x-init="measure(); new ResizeObserver(() => measure()).observe($refs.foldBody); $el.addEventListener('torgash:unfold', () => { if (long && ! open) toggle() })">
     <div class="relative" :class="long && ! open && 'overflow-hidden'" :style="long && ! open ? 'max-height: {{ (int) $foldHeight }}px' : ''">
         <div x-ref="foldBody">{!! $foldHtml !!}</div>
         <div x-show="long && ! open" x-cloak class="absolute inset-x-0 bottom-0 h-24 bg-gradient-to-t from-base-100 to-transparent pointer-events-none"></div>

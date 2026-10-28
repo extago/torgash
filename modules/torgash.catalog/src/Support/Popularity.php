@@ -55,7 +55,7 @@ class Popularity
      * changing what it counts would move the thresholds of every label already
      * written against it.
      */
-    public function viewed(Product $product, Request $request): void
+    public function viewed(Product|int $product, Request $request): void
     {
         $points = (int) setting('torgash.catalog', 'popularity_view_points', 1);
 
@@ -63,7 +63,7 @@ class Popularity
             return;
         }
 
-        $this->award([(int) $product->id], $points);
+        $this->award([(int) ($product instanceof Product ? $product->id : $product)], $points);
     }
 
     /**

@@ -283,5 +283,7 @@
     "Give it to whoever fetches the file — a CRM, a wholesaler, a marketplace. With no schedule and no change rule above, it builds the file afresh every time it is asked.": "Дайте его тому, кто забирает файл, — CRM, оптовику, маркетплейсу. Без расписания и без сборки по изменениям он собирает файл заново при каждом запросе.",
     "Build again in the background": "Пересобрать в фоне",
     "on a change": "при изменениях",
-    "Updated by themselves": "Обновляются сами"
+    "Updated by themselves": "Обновляются сами",
+    "Line :line: skipped — :reason": "Строка :line: пропущена — :reason",
+    "These rows match nothing and cannot make a new one — they will be skipped:": "Эти строки ни с чем не совпали, а новую запись из них не создать — они будут пропущены:"
 }

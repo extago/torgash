@@ -71,6 +71,12 @@ class DisplayRules
             return false;
         }
 
+        // A kind whose answer moves with the clock says when it next may: a
+        // page kept ready for guests is kept only until then (PLAN §61).
+        if (isset($definition['changes']) && page_cache()->current() !== null) {
+            page_cache()->until(($definition['changes'])($rule, $context));
+        }
+
         return (bool) ($definition['matches'])($rule, $context);
     }
 

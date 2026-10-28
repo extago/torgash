@@ -49,7 +49,7 @@
     "The markup. Its pictures are \"assets/…\" — the files below. Placeholders put in the product's own data.": "Разметка. Картинки — это «assets/…», файлы ниже. Подстановки вставляют данные товара.",
     "HTML": "HTML",
     "CSS": "CSS",
-    "One for every language. It reaches only this landing (the browser's @scope): write selectors for what is inside it, :scope for the landing itself. url(assets/…) names its files.": "Один на все языки. Действует только внутри этого лендинга (@scope браузера): пишите селекторы для того, что внутри, :scope — для самого лендинга. url(assets/…) ссылается на его файлы.",
+    "One for every language. It reaches only this landing, and the shop's styles do not reach in: write selectors for what is inside it, :host for the landing itself (:root and :scope mean the same). url(assets/…) names its files.": "Один на все языки. Действует только внутри этого лендинга, а стили магазина внутрь не попадают: пишите селекторы для того, что внутри, :host — для самого лендинга (:root и :scope значат то же). url(assets/…) ссылается на его файлы.",
     "For which products": "Для каких товаров",
     "Products picked by hand see it; so do the products the conditions describe. With neither, every product sees it. A product left out never does.": "Его видят товары, выбранные вручную, и товары, подходящие под условия. Если нет ни того, ни другого — все товары. Исключённый товар не видит никогда.",
     "Also for these products": "Ещё для этих товаров",

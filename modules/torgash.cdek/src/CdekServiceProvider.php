@@ -40,6 +40,9 @@ class CdekServiceProvider extends ServiceProvider
 
     public function boot(): void
     {
+        // Waybills and the sync's bookkeeping are on no guest's page (PLAN §61).
+        page_cache()->unseen(['m_cdek_waybills', 'm_cdek_sync']);
+
         // Sync markers are this module's own log, not an act to audit.
         hook_listen('guard.audit.ignored_tables', fn (array $tables) => [...$tables, 'm_cdek_sync']);
 

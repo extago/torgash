@@ -28,6 +28,14 @@ class PromotionsServiceProvider extends ServiceProvider
 
     public function boot(): void
     {
+        // A sale starts, ends and opens its weekly window with nothing
+        // written: a page kept ready for guests is kept only until the next
+        // of those moments (PLAN §61). Which order took which sale is on
+        // nobody's page.
+        page_cache()
+            ->changes(fn () => Models\Promotion::nextChange())
+            ->unseen('m_promotions_order_promotions');
+
         // Its part of the demo shop (PLAN §55.3), after the catalogue's products.
         hook_listen('core.demo.parts', fn (array $parts) => $parts + [
             'promotions' => ['label' => 'Promotions', 'after' => ['catalog'], 'install' => fn (\App\Core\Demo\DemoPack $pack) => app(Demo\PromotionsDemo::class)->install($pack)],
@@ -44,6 +52,33 @@ class PromotionsServiceProvider extends ServiceProvider
         // Answered lazily, and a harmless no-op when torgash.api is not
         // installed: the closure only runs if that module ever asks.
         hook_listen('api.resources', fn () => (new Api\PromotionResources)->register());
+
+        // Values of a characteristic merged into one (catalog, PLAN §60): a
+        // tier asking for "темно-синий" asks for "тёмно‑синий" now.
+        hook_listen('catalog.feature_value.merged', function (array $context) {
+            $featureId = (int) $context['feature']->id;
+            $into = (int) $context['into']->id;
+            $merged = array_map('intval', $context['merged']);
+
+            foreach (PromotionTier::query()->whereRaw("conditions::text like '%feature%'")->orderBy('id')->get() as $tier) {
+                $conditions = (array) $tier->conditions;
+                $changed = false;
+
+                foreach ((array) ($conditions['rules'] ?? []) as $i => $rule) {
+                    if (($rule['kind'] ?? null) === 'feature'
+                        && (int) ($rule['feature_id'] ?? 0) === $featureId
+                        && in_array((int) ($rule['value'] ?? 0), $merged, true)) {
+                        $conditions['rules'][$i]['value'] = $into;
+                        $changed = true;
+                    }
+                }
+
+                if ($changed) {
+                    $tier->conditions = $conditions;
+                    $tier->save();
+                }
+            }
+        });
 
         // What must be true about a promotion, for whoever is watching. A filter
         // nobody fires when `torgash.guard` is not installed, so this is a

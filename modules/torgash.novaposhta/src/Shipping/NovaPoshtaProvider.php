@@ -2,6 +2,7 @@
 
 namespace Torgash\NovaPoshta\Shipping;
 
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Validation\ValidationException;
 use Throwable;
 use Torgash\Checkout\Shipping\Location;
@@ -29,6 +30,15 @@ use Torgash\Shipping\ShippingProvider;
  */
 class NovaPoshtaProvider implements ShippingProvider
 {
+    /**
+     * How long one live price is reused: a quote runs for every product page
+     * a visitor with a town opens, and on every keystroke at checkout.
+     */
+    public const PRICE_TTL = 1800;
+
+    /** How long a refused price is not asked again. */
+    public const FAILURE_TTL = 120;
+
     public function title(): string
     {
         return 'Nova Poshta';
@@ -180,7 +190,7 @@ class NovaPoshtaProvider implements ShippingProvider
 
         // Fills the cache for this town if it is stale; everything below reads
         // the table, which is also what the picker's search does.
-        app(WarehouseSync::class)->for($map->settlement_ref);
+        app(WarehouseSync::class)->ready($map->settlement_ref);
 
         // Every kind of pickup point, narrowed to the types the admin ticked —
         // including or excluding lockers, which is what that list is for.
@@ -265,27 +275,41 @@ class NovaPoshtaProvider implements ShippingProvider
 
         $grams = $package->weight ?: (int) setting('torgash.novaposhta', 'default_weight_g', 500);
 
+        $properties = [
+            'CitySender' => $sender,
+            'CityRecipient' => $map->city_ref,
+            // Always the branch tariff, lockers included: measured, the
+            // carrier will not price WarehousePostomat at all ("Not enough
+            // parameters" on every set tried), so asking for it would only
+            // turn a live price into no price.
+            'ServiceType' => ServiceType::BRANCH,
+            'CargoType' => 'Parcel',
+            'Weight' => (string) round(max(0.1, $grams / 1000), 2),
+            // Declared value: the carrier prices insurance off it, and the
+            // goods total is the honest number to declare.
+            'Cost' => (string) max(1, (int) round($package->subtotal / 100)),
+            'SeatsAmount' => '1',
+        ];
+
+        // The same parcel to the same town costs the same for a while: asked
+        // once, not on every page that shows it (the account's key is part of
+        // the question — another contract, another tariff).
+        $key = 'torgash.novaposhta.price.'.md5(json_encode([setting('torgash.novaposhta', 'api_key', ''), $properties]));
+        $cached = Cache::get($key);
+
+        if (is_array($cached)) {
+            return $cached['cost'];
+        }
+
         try {
-            $rows = app(Client::class)->call('InternetDocument', 'getDocumentPrice', [
-                'CitySender' => $sender,
-                'CityRecipient' => $map->city_ref,
-                // Always the branch tariff, lockers included: measured, the
-                // carrier will not price WarehousePostomat at all ("Not enough
-                // parameters" on every set tried), so asking for it would only
-                // turn a live price into no price.
-                'ServiceType' => ServiceType::BRANCH,
-                'CargoType' => 'Parcel',
-                'Weight' => (string) round(max(0.1, $grams / 1000), 2),
-                // Declared value: the carrier prices insurance off it, and the
-                // goods total is the honest number to declare.
-                'Cost' => (string) max(1, (int) round($package->subtotal / 100)),
-                'SeatsAmount' => '1',
-            ]);
+            $rows = app(Client::class)->call('InternetDocument', 'getDocumentPrice', $properties);
         } catch (Throwable $e) {
             // A carrier's API being down must not empty the checkout: the
             // method stays, and the shipping module's fallback decides what
-            // "no price" means for it.
+            // "no price" means for it — and it is not asked again on the very
+            // next keystroke either.
             report($e);
+            Cache::put($key, ['cost' => null], self::FAILURE_TTL);
 
             return null;
         }
@@ -293,7 +317,10 @@ class NovaPoshtaProvider implements ShippingProvider
         $cost = (int) round((float) ($rows[0]['Cost'] ?? 0));
 
         // A "successful" response with no positive cost is no price either.
-        return $cost > 0 ? $cost : null;
+        $cost = $cost > 0 ? $cost : null;
+        Cache::put($key, ['cost' => $cost], $cost ? self::PRICE_TTL : self::FAILURE_TTL);
+
+        return $cost;
     }
 
     /**
