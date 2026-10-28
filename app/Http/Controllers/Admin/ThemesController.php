@@ -132,25 +132,37 @@ class ThemesController extends Controller
      * once and answered with its path, which the configurator puts in the
      * field and sends as an ordinary draft value — so the preview shows it
      * before anything is saved, and a file never rides the draft request.
-     * Raster images only: an SVG served from the shop's own origin is a page
-     * that can run script.
+     * An SVG (a logo, mostly) is a document that can carry a script, and the
+     * shop's own origin would run it for whoever opened its address: it is
+     * rebuilt from an allow-list first (SafeSvg) and refused when nothing
+     * drawable is left.
      */
     public function image(Request $request, Storefront $storefront, ThemeManager $themes)
     {
         $settings = $this->settingsFor($storefront, $themes);
         $data = $request->validate([
             'key' => ['required', 'string'],
-            'file' => ['required', 'file', 'image', 'mimes:png,jpg,jpeg,webp,gif', 'max:2048'],
+            'file' => ['required', 'file', 'max:2048'],
         ]);
 
         abort_unless(in_array($settings->schema()[$data['key']]['type'] ?? null, ['image', 'background'], true), 422);
 
         $file = $request->file('file');
-        $path = $file->storeAs(
-            ThemeSettings::IMAGE_DIR.'/'.$storefront->id,
-            $data['key'].'-'.\Illuminate\Support\Str::random(16).'.'.strtolower($file->extension()),
-            'public',
-        );
+        $name = ThemeSettings::IMAGE_DIR.'/'.$storefront->id.'/'.$data['key'].'-'.\Illuminate\Support\Str::random(16);
+
+        if (strtolower($file->getClientOriginalExtension()) === 'svg' || $file->getMimeType() === 'image/svg+xml') {
+            $svg = \App\Core\Support\SafeSvg::clean((string) file_get_contents($file->getRealPath()));
+
+            if ($svg === null) {
+                throw \Illuminate\Validation\ValidationException::withMessages(['file' => __('This SVG could not be read as a drawing.')]);
+            }
+
+            $path = $name.'.svg';
+            \Illuminate\Support\Facades\Storage::disk('public')->put($path, $svg);
+        } else {
+            $request->validate(['file' => ['image', 'mimes:png,jpg,jpeg,webp,gif']]);
+            $path = $file->storeAs(dirname($name), basename($name).'.'.strtolower($file->extension()), 'public');
+        }
 
         return response()->json(['path' => $path, 'url' => \Illuminate\Support\Facades\Storage::disk('public')->url($path)]);
     }

@@ -27,7 +27,7 @@
 @endphp
 <header class="torgash-bar torgash-header-bar lg:hidden bg-neutral text-neutral-content sticky top-0 z-30 shadow-md"
         @if ($mobileHeader === 'logo') x-data="{ searching: @js(filled(request('q'))) }" @endif>
-    <div class="flex items-center gap-2 px-3 sm:px-4 h-14">
+    <div class="flex items-center gap-2 px-(--torgash-gutter) h-14">
         <button type="button" class="torgash-js-only btn btn-ghost btn-square btn-touch shrink-0" x-data x-on:click="$dispatch('torgash-drawer', true)" aria-label="{{ __('Menu') }}">
             <x-icon name="menu" size="xl" />
         </button>

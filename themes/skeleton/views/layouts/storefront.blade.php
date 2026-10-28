@@ -62,7 +62,7 @@
     @php $storefront = current_storefront(); @endphp
 
     <header class="bg-base-100 border-b border-base-300">
-        <div class="container mx-auto max-w-(--torgash-container) px-4 py-3 flex flex-wrap items-center gap-x-4 gap-y-3">
+        <div class="container mx-auto max-w-(--torgash-container) px-(--torgash-gutter) py-3 flex flex-wrap items-center gap-x-4 gap-y-3">
             <a href="{{ route('catalog.home') }}" class="shrink-0">
                 <x-theme.logo :on-dark="false" height="h-9" class="text-xl font-bold tracking-tight" />
             </a>
@@ -99,14 +99,14 @@
         </div>
     </header>
 
-    <main class="container mx-auto max-w-(--torgash-container) p-4 lg:p-6 grow">
+    <main class="container mx-auto max-w-(--torgash-container) px-(--torgash-gutter) py-4 lg:py-6 grow">
         @yield('content')
     </main>
 
     {{-- `torgash-bar`: blocks written for a dark footer read on it. --}}
     <footer class="torgash-bar bg-neutral text-neutral-content/80 text-sm">
-        <div class="container mx-auto max-w-(--torgash-container) px-6 py-6 flex flex-col gap-4">
-            @php $footerBottom = zone('storefront.footer.bottom', ['storefront' => $storefront]); @endphp
+        <div class="container mx-auto max-w-(--torgash-container) px-(--torgash-gutter) py-6 flex flex-col gap-4">
+            @php $footerBottom = zone('storefront.footer.bottom', ['storefront' => $storefront, 'place' => 'footer']); @endphp
             @if (trim($footerBottom) !== '')
                 {!! $footerBottom !!}
             @else

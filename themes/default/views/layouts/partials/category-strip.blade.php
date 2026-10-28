@@ -17,7 +17,7 @@
 @if ($stripItems->isNotEmpty())
     <div @class(['bg-base-100 border-b border-base-300 relative z-20', 'sticky top-(--torgash-strip-top)' => $stripSticks ?? false])
          x-data="torgashStrip">
-        <nav x-ref="nav" class="torgash-category-strip container mx-auto max-w-(--torgash-container) px-4 h-12 flex items-center gap-6 overflow-x-auto whitespace-nowrap text-sm font-semibold"
+        <nav x-ref="nav" class="torgash-category-strip container mx-auto max-w-(--torgash-container) px-(--torgash-gutter) h-12 flex items-center gap-6 overflow-x-auto whitespace-nowrap text-sm font-semibold"
              :class="ready && 'overflow-x-visible!'" aria-label="{{ __('Categories') }}">
             @foreach ($stripItems as $stripItem)
                 @php $stripChildren = collect($stripItem->children ?? [])->filter(fn ($node) => $node->href !== null)->values(); @endphp

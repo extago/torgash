@@ -99,6 +99,25 @@ class SubcategoriesTest extends TestCase
         $this->assertStringNotContainsString('img.test', $this->block($this->get('http://localhost/catalog/sub-lend')->getContent()));
     }
 
+    /** The theme names the frame and the air inside it; the picture is what is left. */
+    public function test_the_frame_its_padding_and_the_space_between_tiles_are_the_themes(): void
+    {
+        $parent = $this->category('frame');
+        $this->category('inner', $parent->id);
+        $style = fn () => (string) preg_replace('/.*?<section[^>]*style="([^"]*)".*/s', '$1', $this->block($this->get('http://localhost/catalog/sub-frame')->getContent()));
+
+        $this->assertStringContainsString('--tile-pic: 72px; --tile-gap: 16px; --tile-text: 14px; --tile-pt: 16px', $style(), '104 less 16 on each side, as before the frame had a size');
+
+        $this->theme('subcategories_frame_size', 120);
+        $this->theme('subcategories_frame_padding', 0);
+        $this->theme('subcategories_gap', 8);
+        $this->assertStringContainsString('--tile-pic: 120px; --tile-gap: 8px; --tile-text: 14px; --tile-pt: 0px', $style(), 'a photo that fills the frame');
+
+        $this->theme('subcategories_frame_size', 48);
+        $this->theme('subcategories_frame_padding', 30);
+        $this->assertStringContainsString('--tile-pic: 24px; --tile-gap: 8px; --tile-text: 14px; --tile-pt: 12px', $style(), 'padding never leaves the picture under 24px');
+    }
+
     public function test_the_category_form_saves_its_own_choice_and_the_parent_flag(): void
     {
         $this->actingAs(User::role('admin')->firstOrFail());

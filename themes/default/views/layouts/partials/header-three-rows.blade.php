@@ -20,7 +20,7 @@
     $hdContactsUp = theme_setting('header_contacts') === 'strip';
 @endphp
 <div @class([$hdBar, 'border-b text-sm relative z-40', $hdLine, 'sticky top-0' => $headerStick === 'all'])>
-    <div @class(['container mx-auto max-w-(--torgash-container) px-4 h-10 flex items-center gap-5', 'text-neutral-content/80' => $hdDark, 'text-base-content/70' => ! $hdDark])>
+    <div @class(['container mx-auto max-w-(--torgash-container) px-(--torgash-gutter) h-10 flex items-center gap-5', 'text-neutral-content/80' => $hdDark, 'text-base-content/70' => ! $hdDark])>
         <div class="flex items-center min-w-0 shrink-0">{!! hook_render('storefront.header.start', ['storefront' => $storefront, 'header' => $hdDark ? 'dark' : 'light']) !!}</div>
         {{-- Two zones of the strip (PLAN §39): after the town, and before the
              language and currency. The theme puts the "top" menu in the first;
@@ -43,7 +43,7 @@
 <header @class([$hdBar, 'torgash-header-bar z-30 relative', 'shadow-md' => $hdDark, 'border-b border-base-300' => ! $hdDark, 'sticky top-0' => $headerStick === 'main', 'sticky top-10' => $headerStick === 'all'])
         x-data="{ mega: false, megaActive: {{ \Illuminate\Support\Js::from($megaItems->first()?->id) }} }"
         @keydown.escape.window="mega = false" @click.outside="mega = false">
-    <div class="container mx-auto max-w-(--torgash-container) px-4 h-20 flex items-center gap-4 lg:gap-6">
+    <div class="container mx-auto max-w-(--torgash-container) px-(--torgash-gutter) h-20 flex items-center gap-4 lg:gap-6">
         <a href="{{ route('catalog.home') }}" class="flex items-center shrink-0">
             <x-theme.logo :on-dark="$hdDark" height="h-10" class="text-2xl font-bold tracking-tight" />
         </a>

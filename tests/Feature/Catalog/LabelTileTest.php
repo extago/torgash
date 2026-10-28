@@ -37,6 +37,23 @@ class LabelTileTest extends TestCase
 
         $this->assertNull(SafeSvg::clean('<!DOCTYPE svg [<!ENTITY x "y">]><svg/>'), 'no entities, no doctype');
         $this->assertNull(SafeSvg::clean('<html><body>not a drawing</body></html>'));
+        $this->assertNull(SafeSvg::clean('<svg xmlns="http://www.w3.org/2000/svg"><script>alert(1)</script></svg>'), 'blank once scrubbed');
+    }
+
+    /** Colours an editor wrote as CSS survive as attributes; the CSS itself does not. */
+    public function test_an_svg_keeps_the_colours_its_editor_wrote_as_css(): void
+    {
+        $clean = (string) SafeSvg::clean('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 30 10">'
+            .'<defs><style>/* Illustrator */ .cls-1{fill:#e30613;} .cls-2, .cls-3{fill:#1d1d1b; stroke:url(https://evil.test/x)} @import url(https://evil.test/a.css);</style></defs>'
+            .'<path class="cls-1" d="M0 0h10v10H0z"/><path class="cls-3" d="M10 0h10v10H10z"/>'
+            .'<rect x="20" width="10" height="10" class="cls-1" style="fill:#00ff00;stroke-width:2;behavior:url(x.htc)"/></svg>');
+
+        $this->assertStringContainsString('d="M0 0h10v10H0z" fill="#e30613"', $clean, 'a class rule');
+        $this->assertStringContainsString('fill="#1d1d1b"', $clean, 'one of several selectors');
+        $this->assertStringContainsString('fill="#00ff00" stroke-width="2"', $clean, 'its own style beats the class');
+        foreach (['<style', 'style=', 'evil.test', 'behavior', '@import'] as $gone) {
+            $this->assertStringNotContainsString($gone, $clean);
+        }
     }
 
     public function test_the_form_takes_an_svg_for_a_tile_and_the_page_draws_it(): void

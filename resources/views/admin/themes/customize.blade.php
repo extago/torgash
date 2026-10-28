@@ -469,9 +469,9 @@
                                                     <label class="btn btn-sm" :class="busy && 'btn-disabled'">
                                                         <span class="loading loading-spinner loading-xs" x-show="busy" x-cloak></span>
                                                         <x-icon name="upload" size="sm" x-show="! busy" /> {{ __('Upload') }}
-                                                        <input type="file" accept="image/png,image/jpeg,image/webp,image/gif" class="hidden" x-on:change.stop="send($event)">
+                                                        <input type="file" accept="image/png,image/jpeg,image/webp,image/gif,image/svg+xml,.svg" class="hidden" x-on:change.stop="send($event)">
                                                     </label>
-                                                    <p class="text-xs text-error" x-show="failed" x-cloak>{{ __('This file cannot be used: a PNG, JPG, WebP or GIF up to 2 MB.') }}</p>
+                                                    <p class="text-xs text-error" x-show="failed" x-cloak>{{ __('This file cannot be used: a PNG, JPG, WebP, GIF or SVG up to 2 MB.') }}</p>
                                                 </div>
                                             </div>
                                         </div>
@@ -504,11 +504,11 @@
                                                 <label class="btn btn-sm" :class="busy && 'btn-disabled'">
                                                     <span class="loading loading-spinner loading-xs" x-show="busy" x-cloak></span>
                                                     <x-icon name="upload" size="sm" x-show="! busy" /> {{ __('Upload') }}
-                                                    <input type="file" accept="image/png,image/jpeg,image/webp,image/gif" class="hidden" x-on:change.stop="upload($event)">
+                                                    <input type="file" accept="image/png,image/jpeg,image/webp,image/gif,image/svg+xml,.svg" class="hidden" x-on:change.stop="upload($event)">
                                                 </label>
                                                 <button type="button" class="btn btn-ghost btn-sm" x-show="path" x-cloak
                                                         x-on:click="path = ''; url = null; $nextTick(() => $refs.hidden.dispatchEvent(new Event('change', { bubbles: true })))">{{ __('Use the theme\'s own') }}</button>
-                                                <p class="text-xs text-error" x-show="failed" x-cloak>{{ __('This file cannot be used: a PNG, JPG, WebP or GIF up to 2 MB.') }}</p>
+                                                <p class="text-xs text-error" x-show="failed" x-cloak>{{ __('This file cannot be used: a PNG, JPG, WebP, GIF or SVG up to 2 MB.') }}</p>
                                             </div>
                                         </div>
                                         @break

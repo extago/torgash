@@ -62,13 +62,26 @@ left (`title`), only a cross top right, rounded-square arrows at the sides and t
 over a dimmed, blurred page (the blur sits on `.pswp` itself — it animates its
 own opacity, so it is the backdrop root and a blur inside it sees nothing); its icons and words come from
 `<template data-gallery-icon="…" data-label="…">` on the page, so the JS holds
-no SVG and no language. The product page's gallery is
-`torgash.catalog::partials.product-gallery` (a scroll-snap strip).
+no SVG and no language — the zoom button too: PhotoSwipe's own button (it
+knows when a photo can be zoomed) wearing the page's Lucide `zoom-in` through
+`zoomSVG`, its upright bar given PhotoSwipe's `pswp__zoom-icn-bar-v`, so
+PhotoSwipe's CSS turns "+" into "−" when zoomed in. Its colours are the
+shop's: the backdrop and the strip are the bar colour (`--color-neutral`)
+mixed darker (`SHADE`), the plates a step lighter — a slate of its own looked
+foreign on a graphite or warm theme. A pressed heart is filled through
+`style.fill`: `svg.lucide { fill: none }` beats a `fill` attribute. The
+product page's gallery is `torgash.catalog::partials.product-gallery` (a
+scroll-snap strip).
 
 **Where a product has no photo is ONE component, `<x-no-image>`** — the
 theme's `no_image` setting (an `image`-type theme field: uploaded through
-`admin.themes.image`, raster only, stored as a path `ThemeSettings` itself
-wrote, read with `theme_image()`), else a quiet frame in the page's colours.
+`admin.themes.image`, stored as a path `ThemeSettings` itself wrote, read
+with `theme_image()`), else a quiet frame in the page's colours. Such a field
+(the logos too) takes an SVG only as `SafeSvg::clean()` rebuilds it — the
+shop's origin would run a script for whoever opened the file's address — and
+refuses one with nothing drawable left; colours an editor wrote as CSS
+(Illustrator's `<style>.cls-1{…}`, Inkscape's `style=`) are moved into
+attributes first, or a logo came out black.
 `primaryImageUrl()` stays null for such a product: a feed must never be
 handed a placeholder. A category's icon may be its own picture
 (`icon_image`, `Category::iconImageUrl()`), which wins over the Lucide name.

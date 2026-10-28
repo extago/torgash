@@ -27,7 +27,7 @@
          logo/search/cart get uncontested room. Above the main row (z-40), so
          its drop-downs open over it. --}}
     <div @class([$hdBar, 'torgash-header-bar relative z-40 border-b', 'border-white/10' => $hdDark, 'border-base-300' => ! $hdDark, 'sticky top-0' => $headerStick === 'all'])>
-        <div class="container mx-auto max-w-(--torgash-container) flex items-center justify-end gap-1 px-4 h-10">
+        <div class="container mx-auto max-w-(--torgash-container) flex items-center justify-end gap-1 px-(--torgash-gutter) h-10">
             {{-- The strip's far LEFT is where a shop says where the customer is
                  (the town, the shop they collect from) — a module draws it
                  through storefront.header.start. --}}
@@ -50,7 +50,7 @@
     {{-- Main row: brand, catalog entry point, search, cart — the row that
          stays on screen, and what the mega menu hangs from. --}}
     <div @class([$hdBar, 'torgash-header-bar relative z-30', 'shadow-md' => $hdDark, 'border-b border-base-300 shadow-sm' => ! $hdDark, 'sticky top-0' => $headerStick === 'main', 'sticky top-10' => $headerStick === 'all'])>
-    <div class="torgash-header-main container mx-auto max-w-(--torgash-container) flex items-center gap-3 md:gap-4 px-4 h-16">
+    <div class="torgash-header-main container mx-auto max-w-(--torgash-container) flex items-center gap-3 md:gap-4 px-(--torgash-gutter) h-16">
         <a href="{{ route('catalog.home') }}" class="text-xl font-bold whitespace-nowrap shrink-0">
             <x-theme.logo :on-dark="$hdDark" />
         </a>

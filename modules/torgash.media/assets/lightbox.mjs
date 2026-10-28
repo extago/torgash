@@ -110,7 +110,33 @@ function pageIcon(name) {
     return document.querySelector(`template[data-gallery-icon="${name}"]`)?.innerHTML.trim() ?? '';
 }
 
+/**
+ * The zoom button's icon: the page's Lucide "zoom-in", its upright bar given
+ * PhotoSwipe's own class, so PhotoSwipe's stylesheet turns the "+" into a "−"
+ * while the photo is zoomed in, as it does with the icon it would draw.
+ */
+function zoomIcon() {
+    const holder = document.createElement('template');
+    holder.innerHTML = pageIcon('zoom');
+    const svg = holder.content.querySelector('svg');
+    const upright = [...(svg?.children ?? [])].find((part) => part.getAttribute('x1') !== null && part.getAttribute('x1') === part.getAttribute('x2'));
+    upright?.classList.add('pswp__zoom-icn-bar-v');
+
+    return svg ? svg.outerHTML : '';
+}
+
 const STRIP = 84; // the thumbnail strip's height, px
+
+/**
+ * The viewer's dark: the shop's own (its header and footer, --color-neutral)
+ * taken darker still. A viewer is dark whatever the bars are, and tinted like
+ * the shop rather than a blue-grey of its own, which stood out on a graphite
+ * or warm theme; a light bar gives a deep grey.
+ */
+const SHADE = 'color-mix(in oklab, var(--color-neutral, #18181b) 40%, #000)';
+// A button's plate: a step lighter, so it shows on that dark and still holds
+// a white icon over a light photo zoomed in under it.
+const PLATE = `color-mix(in oklab, color-mix(in oklab, ${SHADE}, #fff 14%) 80%, transparent)`;
 
 /**
  * The photos as a strip of thumbnails along the bottom — both viewers have it;
@@ -163,11 +189,24 @@ function registerThumbs(pswp, items, background) {
  * never disagree — and on a page without one it is simply not drawn.
  */
 function registerStorefrontUi(lightbox, items, onChange) {
-    const pill = 'display:flex;align-items:center;gap:6px;border-radius:12px;background:rgba(15,23,42,.55);'
-        + 'backdrop-filter:blur(6px);color:#fff;';
+    const plate = `align-items:center;gap:6px;border-radius:12px;background:${PLATE};backdrop-filter:blur(6px);color:#fff;`;
+    const pill = 'display:flex;' + plate;
 
     lightbox.on('uiRegister', () => {
         const pswp = lightbox.pswp;
+
+        pswp.on('firstUpdate', () => pswp.element.style.setProperty('--pswp-bg', SHADE));
+
+        // PhotoSwipe's own zoom button — it knows when a photo can be zoomed
+        // and hides itself otherwise, so no `display` here — on the back
+        // button's plate, with the page's icon (`zoomSVG`, openLightbox).
+        pswp.on('uiElementCreate', ({ data }) => {
+            if (data.name !== 'zoom') return;
+            data.onInit = (el) => {
+                el.style.cssText = plate + 'width:48px;height:48px;padding:12px;margin:12px 12px 0 0;';
+                el.querySelector('svg')?.style.setProperty('display', 'block');
+            };
+        });
 
         pswp.ui.registerElement({
             name: 'back',
@@ -210,7 +249,9 @@ function registerStorefrontUi(lightbox, items, onChange) {
                     const mirror = () => {
                         const on = toggle()?.getAttribute('aria-pressed') === 'true';
                         el.setAttribute('aria-pressed', on ? 'true' : 'false');
-                        el.querySelector('svg')?.setAttribute('fill', on ? 'currentColor' : 'none');
+                        // A style, not the attribute: the Lucide class's
+                        // `fill: none` beats an attribute, and the heart stayed hollow.
+                        el.querySelector('svg')?.style.setProperty('fill', on ? 'currentColor' : '');
                         el.style.color = on ? '#f87171' : '#fff';
                     };
                     mirror();
@@ -223,7 +264,7 @@ function registerStorefrontUi(lightbox, items, onChange) {
             });
         }
 
-        registerThumbs(pswp, items, '#0f172a');
+        registerThumbs(pswp, items, SHADE);
 
         pswp.on('change', () => onChange?.(pswp.currIndex));
     });
@@ -297,7 +338,7 @@ function registerDesktopUi(lightbox, items, title, onChange) {
         // the ROOT — it animates its own opacity, which makes it the backdrop
         // root, so a blur on the background inside it sees nothing (measured).
         pswp.on('firstUpdate', () => {
-            pswp.element.style.setProperty('--pswp-bg', '#0f172a');
+            pswp.element.style.setProperty('--pswp-bg', SHADE);
             pswp.element.style.backdropFilter = 'blur(8px)';
             pswp.element.style.webkitBackdropFilter = 'blur(8px)';
         });
@@ -324,6 +365,7 @@ export async function openLightbox({ items, index = 0, base, storefront = false,
         // The computer's layout wherever there is room for arrows beside the photo.
         const desktop = window.matchMedia('(min-width: 1024px)').matches;
         const thumbs = items.length > 1 ? STRIP : 0;
+        const zoomSvg = zoomIcon();
 
         const lightbox = new PhotoSwipeLightbox({
             dataSource: items.map((item, i) => ({
@@ -341,6 +383,9 @@ export async function openLightbox({ items, index = 0, base, storefront = false,
             arrowPrev: false,
             arrowNext: false,
             zoomTitle: document.querySelector('template[data-gallery-icon="zoom"]')?.dataset.label || 'Zoom',
+            // The page's icon where it drew one; PhotoSwipe's own otherwise
+            // (an empty string would be taken as the icon).
+            ...(zoomSvg ? { zoomSVG: zoomSvg } : {}),
             padding: desktop
                 ? { top: 64, bottom: thumbs + 16, left: 96, right: 96 }
                 : { top: 72, bottom: STRIP + 72, left: 12, right: 12 },

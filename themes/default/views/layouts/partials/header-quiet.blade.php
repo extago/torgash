@@ -11,7 +11,7 @@
     so a module that draws them there draws them here too.
 --}}
 <header class="bg-base-100 border-b border-base-300">
-    <div class="container mx-auto max-w-(--torgash-container) px-4 h-20 grid grid-cols-[1fr_auto_1fr] items-center gap-6">
+    <div class="container mx-auto max-w-(--torgash-container) px-(--torgash-gutter) h-20 grid grid-cols-[1fr_auto_1fr] items-center gap-6">
         <div class="flex items-center min-w-0 text-sm">
             {!! hook_render('storefront.header.start', ['storefront' => $storefront, 'header' => 'quiet']) !!}
         </div>

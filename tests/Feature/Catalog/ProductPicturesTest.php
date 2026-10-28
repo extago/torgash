@@ -77,7 +77,35 @@ class ProductPicturesTest extends TestCase
         $this->get('http://localhost/product/'.$product->slug)->assertOk()->assertSee($answer['url'], false);
     }
 
-    public function test_an_svg_or_a_non_image_field_is_refused(): void
+    /**
+     * An SVG logo is taken as a DRAWING: rebuilt by SafeSvg (its colours kept,
+     * its script gone) before it is published, refused when nothing is left.
+     */
+    public function test_an_svg_is_published_as_a_drawing_only(): void
+    {
+        Storage::fake('public');
+        $storefront = Storefront::query()->orderBy('id')->firstOrFail();
+        $settings = app(ThemeSettings::class);
+
+        $answer = $this->actingAs($this->admin())->post(route('admin.themes.image', $storefront), [
+            'key' => 'logo',
+            'file' => UploadedFile::fake()->createWithContent('logo.svg', '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 40" onload="alert(1)">'
+                .'<style>.cls-1{fill:#e30613}</style><script>alert(2)</script><path class="cls-1" d="M0 0h120v40H0z"/></svg>'),
+        ], ['Accept' => 'application/json'])->assertOk()->json();
+
+        $this->assertMatchesRegularExpression('#^theme-images/\d+/logo-[A-Za-z0-9]{16}\.svg$#', $answer['path']);
+        $stored = Storage::disk('public')->get($answer['path']);
+        foreach (['script', 'onload', '<style'] as $gone) {
+            $this->assertStringNotContainsString($gone, $stored);
+        }
+        $this->assertStringContainsString('fill="#e30613"', $stored, 'the colour a style sheet gave it');
+        $this->assertSame(['logo' => $answer['path']], $settings->clean(['logo' => $answer['path']]));
+
+        $settings->save($storefront, ['logo' => $answer['path']]);
+        $this->get('http://localhost/')->assertOk()->assertSee($answer['url'], false);
+    }
+
+    public function test_a_blank_svg_or_a_non_image_field_is_refused(): void
     {
         $storefront = Storefront::query()->orderBy('id')->firstOrFail();
         $admin = $this->admin();
@@ -85,7 +113,7 @@ class ProductPicturesTest extends TestCase
         $this->actingAs($admin)->post(route('admin.themes.image', $storefront), [
             'key' => 'no_image',
             'file' => UploadedFile::fake()->createWithContent('x.svg', '<svg xmlns="http://www.w3.org/2000/svg"><script>alert(1)</script></svg>'),
-        ], ['Accept' => 'application/json'])->assertStatus(422);
+        ], ['Accept' => 'application/json'])->assertStatus(422)->assertJsonValidationErrors('file');
 
         $this->actingAs($admin)->post(route('admin.themes.image', $storefront), [
             'key' => 'primary',
@@ -129,6 +157,7 @@ class ProductPicturesTest extends TestCase
         $this->assertStringContainsString('snap-x snap-mandatory', $page, 'a thumb swipes it with no script');
         $this->assertStringContainsString('1/3', $page);
         $this->assertStringContainsString('data-gallery-icon="arrow-left"', $page);
+        $this->assertMatchesRegularExpression('/data-gallery-icon="zoom"[^>]*>\s*<svg/', $page, 'the zoom button wears the page\'s Lucide icon, not PhotoSwipe\'s');
         $this->assertMatchesRegularExpression('/\\\\u0022width\\\\u0022:1\b|"width":1\b/', $page, 'the original\'s size, so the viewer measures nothing');
     }
 }

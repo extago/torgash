@@ -18,7 +18,8 @@
     - footer_palette: `dark` (the bar's colour, like the dark header) or
       `light` (the page's own palette, a line above);
     and the finer ones: the columns' widths, the dividers, the bottom line
-    spread or centred, menus folding on a phone.
+    spread or centred, menus folding on a phone, a logo of its own for each
+    colour scheme (its zones say `place: footer`, <x-theme.logo>).
 --}}
 @php
     $footerLayout = in_array(theme_setting('footer_layout'), ['compact', 'centred'], true) ? theme_setting('footer_layout') : 'columns';
@@ -35,12 +36,14 @@
             continue;
         }
 
-        $footerHtml = zone('storefront.footer.'.$footerKey, ['storefront' => $storefront]);
+        // `place`: a {logo} in a footer block is the footer's own (the
+        // theme's Footer settings, <x-theme.logo>).
+        $footerHtml = zone('storefront.footer.'.$footerKey, ['storefront' => $storefront, 'place' => 'footer']);
         $footerZones[$footerKey] = trim($footerHtml) !== '' ? $footerHtml : null;
     }
     $footerColumns = array_values(array_filter([$footerZones['about'], $footerZones['columns'], $footerZones['side']]));
     $footerCount = count($footerColumns);
-    $footerContainer = 'container mx-auto max-w-(--torgash-container) px-3 sm:px-4 lg:px-6';
+    $footerContainer = 'container mx-auto max-w-(--torgash-container) px-(--torgash-gutter)';
 
     // A line between bands: the bar's faint white, or the page's border.
     $footerRule = ! $footerLines ? '' : ($footerLight ? 'border-b border-base-300' : 'border-b border-white/5');

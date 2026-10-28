@@ -30,7 +30,7 @@
                      'inset-x-0 bottom-16 lg:bottom-0 border-x-0 border-b-0' => ! $bannerCorner,
                      'left-4 right-4 bottom-20 sm:right-auto sm:max-w-sm lg:bottom-4 rounded-box' => $bannerCorner,
                  ])>
-            <div @class(['flex gap-3 p-4', 'container mx-auto max-w-(--torgash-container) flex-col lg:flex-row lg:items-center' => ! $bannerCorner, 'flex-col' => $bannerCorner])>
+            <div @class(['flex gap-3', 'container mx-auto max-w-(--torgash-container) px-(--torgash-gutter) py-4 flex-col lg:flex-row lg:items-center' => ! $bannerCorner, 'p-4 flex-col' => $bannerCorner])>
                 <p class="text-sm flex-1">
                     {{ __('We use cookies: the necessary ones for the shop to work, and — only if you agree — for statistics and advertising.') }}
                     @if ($bannerPolicy)

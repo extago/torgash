@@ -11,6 +11,10 @@
     The default mode rides a <meta> the head's own script reads before the
     first paint: a visitor's saved choice still wins; "auto" follows the
     system, as before.
+
+    The shop's icon (theme setting `favicon`) is printed here too: the tab,
+    the bookmarks, the search results, the closed page as well. A phone's
+    home screen takes a PNG only, so an SVG is left to the tab.
 --}}
 @php
     $themeSettings = app(\App\Core\Themes\ThemeSettings::class);
@@ -26,6 +30,14 @@
     $themeMode = (string) $themeSettings->get('mode', 'auto');
 @endphp
 <meta name="torgash-mode" content="{{ in_array($themeMode, ['light', 'dark'], true) ? $themeMode : 'auto' }}">
+@if ($themeIcon = $themeSettings->imageUrl('favicon'))
+    @if (str_ends_with(strtolower((string) parse_url($themeIcon, PHP_URL_PATH)), '.svg'))
+        <link rel="icon" href="{{ $themeIcon }}" type="image/svg+xml">
+    @else
+        <link rel="icon" href="{{ $themeIcon }}">
+        <link rel="apple-touch-icon" href="{{ $themeIcon }}">
+    @endif
+@endif
 @if ($themeCss !== [] || $themeDark !== [] || $themeFaces !== [] || $themeRules !== [])
     <style data-theme-settings>
         @foreach ($themeFaces as $themeFace)

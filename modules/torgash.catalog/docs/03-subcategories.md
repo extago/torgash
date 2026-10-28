@@ -15,7 +15,12 @@ Appearance → Themes → Configure → **Category page**:
   indicator, as on the home page), two rows that scroll, or a grid.
 - **Picture frame**: a circle, a square with rounded corners, or a card as
   wide as the tile.
-- **Picture size**, **A photo from its products**, **How many products**.
+- **Frame size**: the side of the circle or the square (for a card, its
+  height). **Padding inside the frame**: the air between the frame and the
+  photo; the smaller it is, the larger the photo, and at 0 the photo fills
+  the frame. Products shot on white look best with some padding, photos
+  taken edge to edge with none. **Space between tiles**.
+- **A photo from its products**, **How many products**.
 
 The preview opens on a category that has subcategories.
 

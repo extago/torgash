@@ -16,6 +16,11 @@
 @php
     $subcatsView = $subcategories->isNotEmpty() ? $category->subcategoriesView() : 'none';
     $subcatsCounts = (bool) theme_setting('subcategories_counts', true);
+    // The theme names the frame and the air inside it; the block draws a
+    // picture with padding around it, so the picture is what the frame leaves
+    // (never under the block's 24px).
+    $subcatsFrame = max(48, min(240, (int) theme_setting('subcategories_frame_size', 104)));
+    $subcatsPadding = max(0, min((int) theme_setting('subcategories_frame_padding', 16), intdiv($subcatsFrame - 24, 2)));
 @endphp
 @if ($subcatsView === 'tiles')
     <div class="torgash-subcategories bg-base-100 border border-base-300 rounded-box">
@@ -30,7 +35,9 @@
                 'picture' => 'auto',
                 'photos' => (bool) theme_setting('subcategories_photos', true),
                 'counts' => $subcatsCounts,
-                'picture_size' => theme_setting('subcategories_picture_size', 72),
+                'picture_size' => $subcatsFrame - 2 * $subcatsPadding,
+                'padding' => (string) $subcatsPadding,
+                'gap_size' => theme_setting('subcategories_gap', 16),
                 'arrows' => true,
                 'indicator' => true,
             ],

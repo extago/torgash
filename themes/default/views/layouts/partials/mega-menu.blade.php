@@ -36,7 +36,7 @@
 <div x-cloak x-show="mega" class="absolute inset-x-0 top-full z-30 pointer-events-none"
      x-transition:enter="transition ease-out duration-200" x-transition:enter-start="opacity-0 -translate-y-2" x-transition:enter-end="opacity-100 translate-y-0"
      x-transition:leave="transition ease-in duration-150" x-transition:leave-start="opacity-100 translate-y-0" x-transition:leave-end="opacity-0 -translate-y-2">
-    <div class="container mx-auto max-w-(--torgash-container) px-4">
+    <div class="container mx-auto max-w-(--torgash-container) px-(--torgash-gutter)">
     {{-- A panel of its own right under the bar — rounded all round (no gap:
          one shows the dimmed strip under the header as a grey band), with
          the popovers' arrow pointing at the button that opened it (its

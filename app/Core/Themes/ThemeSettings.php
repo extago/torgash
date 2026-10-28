@@ -618,7 +618,7 @@ class ThemeSettings
      */
     public static function isUploadedImage(string $path, bool $checkExists = true): bool
     {
-        return preg_match('#^'.self::IMAGE_DIR.'/\d+/[a-z0-9_]+-[A-Za-z0-9]{16}\.(png|jpe?g|webp|gif)$#', $path) === 1
+        return preg_match('#^'.self::IMAGE_DIR.'/\d+/[a-z0-9_]+-[A-Za-z0-9]{16}\.(png|jpe?g|webp|gif|svg)$#', $path) === 1
             && (! $checkExists || \Illuminate\Support\Facades\Storage::disk('public')->exists($path));
     }
 

@@ -899,6 +899,16 @@ html:has([data-sections-nav]) .torgash-buy-mini { top: calc(var(--torgash-header
    layouts' containers read it as max-w-(--torgash-container). */
 :root { --torgash-container: 1500px; }
 
+/* ... and its side gutter: ONE number for every band that runs across the
+   page — the header's rows, its mega menu and category strip, the page, a
+   band section, the footer, the phone's header — read as
+   px-(--torgash-gutter), so their edges stay on one line. Each used to say
+   its own (px-4 in the header, px-3 sm:px-4 lg:p-6 under it) and the logo
+   stood 8px left of everything below it. */
+:root { --torgash-gutter: 0.75rem; }
+@media (min-width: 40rem) { :root { --torgash-gutter: 1rem; } }
+@media (min-width: 64rem) { :root { --torgash-gutter: 1.5rem; } }
+
 /* ---- The shop's sign inside the phone's search field (mobile-header,
    theme setting "search_mark"): a small square at the field's left end. */
 .torgash-search-mark {
@@ -1368,10 +1378,16 @@ a:has([data-inert-text]:hover) { -webkit-user-drag: none; }
    them. `under`: the picture on a card, the name beneath; `inside`: both on
    one card. A grid fits as many tiles as their size allows; a strip is the
    browser's own sideways scroll (one row, or two with .torgash-tiles-two),
-   which tiles.js gives an indicator, arrows and dragging by mouse. */
-.torgash-tiles {
+   which tiles.js gives an indicator, arrows and dragging by mouse.
+   The sizes everything follows are worked out on the BLOCK, not the row: the
+   arrows stand beside the row, and a variable set on the row never reached
+   them — their `top` came out invalid and they fell to the row's foot. */
+.torgash-block-category-tiles {
     --tile-pad-x: calc(var(--tile-pl, 16px) + var(--tile-pr, 16px)); --tile-pad-y: calc(var(--tile-pt, 16px) + var(--tile-pb, 16px));
-    --tile-box: calc(var(--tile-pic, 72px) + var(--tile-pad-y)); gap: var(--tile-gap, 1rem);
+    --tile-box: calc(var(--tile-pic, 72px) + var(--tile-pad-y));
+}
+.torgash-tiles {
+    gap: var(--tile-gap, 1rem);
     --tile-bg: var(--color-base-100); --tile-ink: var(--color-primary);
     --tile-line: color-mix(in oklab, var(--color-base-300) 60%, transparent);
 }
@@ -1461,12 +1477,15 @@ a:has([data-inert-text]:hover) { -webkit-user-drag: none; }
     outline: 2px solid var(--tile-ink); outline-offset: 2px;
 }
 .torgash-tiles-arrow {
-    position: absolute; top: calc(var(--tile-box) / 2); margin-top: -1.125rem; z-index: 1;
+    /* The row's room for the hover lift (0.375rem) is above its tiles. */
+    position: absolute; top: calc(var(--tile-box) / 2 + 0.375rem); margin-top: -1.125rem; z-index: 1;
     display: none; align-items: center; justify-content: center; width: 2.25rem; height: 2.25rem; border-radius: 9999px;
     background: var(--color-base-100); border: 1px solid var(--color-base-300); box-shadow: 0 2px 6px rgb(0 0 0 / 0.12); cursor: pointer;
 }
 @media (hover: hover) and (min-width: 768px) { .torgash-tiles-arrow { display: flex; } }
-.torgash-tiles-corner ~ .torgash-tiles-arrow { top: 50%; }
+/* Level with the pictures; where a tile is all card, or there are two rows,
+   in the middle of the whole. */
+.torgash-tiles-corner ~ .torgash-tiles-arrow, .torgash-tiles-two ~ .torgash-tiles-arrow { top: 50%; }
 .torgash-tiles-indicator { position: relative; height: 2px; margin-top: 0.75rem; background: var(--color-base-300); overflow: hidden; }
 .torgash-tiles-indicator > span { position: absolute; inset-block: 0; left: 0; background: var(--color-primary); }
 /* The picture's frame under the `under` look (the block's `shape`, the
@@ -1479,9 +1498,11 @@ a:has([data-inert-text]:hover) { -webkit-user-drag: none; }
    picture made for the tile. Products are shot on white: in the dark
    palette their frame is white too, or each would stand there as a square. */
 [data-theme="torgash-dark"] .torgash-tile-pic.is-product { background: #fff; }
-/* ...and takes the frame's shape: a square photo in a circle showed its
-   corners (on white they melt into the frame anyway). */
-.torgash-tiles-circle .torgash-tile-pic.is-product img { border-radius: 9999px; }
+/* In a rounded square its corners are softened too. In a circle it stays a
+   whole square: with the default padding it fits inside, its white corners
+   melting into the frame — rounding it as well drew a circle within the
+   circle and cut a tall product's top and bottom. A photo shot edge to edge
+   takes a padding of 0, and the frame cuts it round. */
 .torgash-tiles-rounded .torgash-tile-pic.is-product img { border-radius: var(--radius-field, 0.5rem); }
 .torgash-tile-count { margin-top: -0.375rem; font-size: 0.85em; opacity: 0.6; }
 
@@ -1744,9 +1765,8 @@ html { overflow-x: clip; }
 .torgash-section { margin-bottom: 1.5rem; }
 .torgash-section-band, .torgash-section-full { margin-inline: calc(50% - 50vw + var(--torgash-scrollbar, 0px) / 2); }
 .torgash-section-band > .torgash-section-inner {
-    max-width: var(--torgash-container, 1500px); margin-inline: auto; padding-inline: 1rem;
+    max-width: var(--torgash-container, 1500px); margin-inline: auto; padding-inline: var(--torgash-gutter, 1rem);
 }
-@media (min-width: 1024px) { .torgash-section-band > .torgash-section-inner { padding-inline: 1.5rem; } }
 .torgash-section-page { border-radius: var(--radius-box, 1rem); }
 .torgash-section-page > .torgash-section-inner { padding-inline: 1rem; }
 .torgash-section-page:not([class*="bg-"]):not([style]) > .torgash-section-inner { padding-inline: 0; }
@@ -1773,6 +1793,16 @@ html { overflow-x: clip; }
 [data-theme="torgash-dark"] .torgash-brand-logo {
     background: #fff; border-radius: var(--radius-field, 0.375rem); padding: 0.125rem 0.375rem; box-sizing: content-box;
 }
+
+/* The shop's OWN logo in two colour schemes (<x-theme.logo>): where the
+   picture for the light scheme and the one for the dark differ, both are in
+   the page and the scheme shows one — chosen with data-theme or, with none,
+   by the system, the same two ways the palette itself is chosen. Only ever
+   hiding, so each keeps the display it has. */
+[data-theme="torgash-light"] .torgash-logo-dark,
+[data-theme="torgash-dark"] .torgash-logo-light { display: none; }
+@media (prefers-color-scheme: light) { :root:not([data-theme]) .torgash-logo-dark { display: none; } }
+@media (prefers-color-scheme: dark) { :root:not([data-theme]) .torgash-logo-light { display: none; } }
 
 /* The product page on a phone is ONE flex column ordered by `order-*`: photo
    → buy panel → the wide row (a kit) → description. In the HTML the left

@@ -10,8 +10,14 @@ use Illuminate\Support\Facades\Blade;
  * 2015 – {year}", without a block type of its own for one line of markup.
  *
  *   {year}       this year, so a © never goes stale
- *   {logo}       the theme's logo (or the shop's name), for a light background
- *   {logo_dark}  the same for a dark one — the footer, the dark header
+ *   {logo}       the theme's logo (or the shop's name) on the page's own
+ *                colours: the light one, and in the dark scheme the one for a
+ *                dark background
+ *   {logo_dark}  the logo for a dark background — the dark footer, the dark
+ *                header
+ *
+ * In a band whose zones say `'place' => 'footer'` (the theme's footer) both
+ * are the footer's own logo when the theme has one (<x-theme.logo>).
  */
 class ThemePlaceholders
 {
@@ -30,9 +36,9 @@ class ThemePlaceholders
                 'group' => 'shop',
                 // Markup by definition — the registry escapes everything else.
                 'raw' => true,
-                'resolve' => fn () => trim(Blade::render(
-                    '<x-theme.logo :on-dark="$onDark" height="h-10" class="text-xl font-bold" />',
-                    ['onDark' => $onDark],
+                'resolve' => fn (array $context = []) => trim(Blade::render(
+                    '<x-theme.logo :on-dark="$onDark" :place="$place" height="h-10" class="text-xl font-bold" />',
+                    ['onDark' => $onDark, 'place' => ($context['place'] ?? null) === 'footer' ? 'footer' : null],
                 )),
             ]);
         }

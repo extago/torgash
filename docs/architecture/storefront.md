@@ -407,9 +407,30 @@ it — three modules that do not know each other must not own three corners.
   it has: a one-column menu fixed to two left an empty half beside it.
   Tailwind classes in theme.json are compiled (`@source "../../themes"`); ones a
   shop types into a block later are not — that is what "Your own CSS" is for.
-- **The logo is one component, `<x-theme.logo :on-dark>`** — the theme's `logo`
+- **The logo is one component, `<x-theme.logo :on-dark :place>`** — the theme's `logo`
   / `logo_on_dark` pictures, or the shop's name with the dot. Headers and the
-  signature block use it. **The shop's own CSS** is the theme setting
+  signature block use it. Which picture is the BACKGROUND's (2026-10-28): on a
+  dark bar (`:on-dark`) `logo_on_dark` in both schemes, the bar being dark in
+  both; on the page's colours (the phone's menu, a light header, the closed
+  page) `logo` in the light scheme and `logo_on_dark` in the dark. The scheme
+  is the visitor's, picked in the browser after the page is drawn (and a
+  guest's page is kept ready for all), so both are printed and
+  `.torgash-logo-light` / `-dark` (app.css) hide one — by `data-theme` or,
+  with none, the system's preference, the two ways the palette is chosen. A
+  footer band's zones pass `'place' => 'footer'` in their context, and
+  `{logo}` / `{logo_dark}` drawn there take the footer's own pair first
+  (`footer_logo`; `footer_logo_dark`, empty — the one before). The shop's
+  icon is the theme setting `favicon`, printed by `<x-theme.style>` (the
+  closed page has it too): `rel=icon`, plus `apple-touch-icon` for a raster
+  only — iOS takes no SVG. A theme picture may be an SVG, rebuilt by
+  `SafeSvg` first (media.md).
+- **The page's side gutter is ONE number**, `--torgash-gutter` (12 / 16 /
+  24px from `sm` / `lg`), written `px-(--torgash-gutter)` on every band that
+  runs across the page: the header's rows, the mega menu, the category strip,
+  `<main>`, a band section, the footer, the phone's header, the cookie bar.
+  Each used to say its own and the header stood 8px left of the page under
+  it; `ThemeLogoTest` reads the templates for a `max-w-(--torgash-container)`
+  without it. **The shop's own CSS** is the theme setting
   `custom_css` (type `code`), printed last by `<x-theme.style>` with `</style`
   neutralised; the shop's own JavaScript goes to Snippets (category
   "Necessary"), never a theme field — a second place for scripts would bypass

@@ -73,7 +73,7 @@
             "type": "image",
             "default": "",
             "label": "Logo",
-            "help": "On a light background. Without one the shop's name is written in its place. A wide picture about 80 px high reads best."
+            "help": "On a light background: the page in the light colour scheme, a header in the page's colours. Without one the shop's name is written in its place. A wide picture about 80 px high reads best."
         },
         {
             "key": "logo_on_dark",
@@ -81,7 +81,15 @@
             "type": "image",
             "default": "",
             "label": "Logo on a dark background",
-            "help": "For the dark header and the footer. Empty — the logo above is used there too."
+            "help": "For the dark header and the footer, and in the dark colour scheme for the page itself (the phone's menu, a header in the page's colours). Empty — the logo above is used there too."
+        },
+        {
+            "key": "favicon",
+            "section": "general",
+            "type": "image",
+            "default": "",
+            "label": "Site icon (favicon)",
+            "help": "In the browser's tab and bookmarks, in search results, on a phone's home screen. A square picture: a PNG of 512 × 512 px, or an SVG."
         },
         {
             "key": "no_image",
@@ -1123,13 +1131,37 @@
             }
         },
         {
-            "key": "subcategories_picture_size",
+            "key": "subcategories_frame_size",
             "section": "category",
             "type": "number",
-            "default": "72",
-            "label": "Picture size",
-            "min": 40,
-            "max": 160,
+            "default": "104",
+            "label": "Frame size",
+            "help": "The side of the circle or the square; for a card, its height.",
+            "min": 48,
+            "max": 240,
+            "step": 1,
+            "unit": "px"
+        },
+        {
+            "key": "subcategories_frame_padding",
+            "section": "category",
+            "type": "number",
+            "default": "16",
+            "label": "Padding inside the frame",
+            "help": "Between the frame and a product's photo or an icon: the smaller it is, the larger the photo; at 0 the photo fills the frame. A picture uploaded for the tile always fills it.",
+            "min": 0,
+            "max": 60,
+            "step": 1,
+            "unit": "px"
+        },
+        {
+            "key": "subcategories_gap",
+            "section": "category",
+            "type": "number",
+            "default": "16",
+            "label": "Space between tiles",
+            "min": 0,
+            "max": 48,
             "step": 1,
             "unit": "px"
         },
@@ -1214,6 +1246,22 @@
                 "dark": "Dark bar",
                 "light": "The page's colours"
             }
+        },
+        {
+            "key": "footer_logo",
+            "section": "footer",
+            "type": "image",
+            "default": "",
+            "label": "Footer logo",
+            "help": "Drawn where the footer's signature says {logo} or {logo_dark} — in the light colour scheme, and in the dark one too while the next field is empty. Empty — the logos from General, as in the header."
+        },
+        {
+            "key": "footer_logo_dark",
+            "section": "footer",
+            "type": "image",
+            "default": "",
+            "label": "Footer logo in the dark scheme",
+            "help": "For a visitor with the dark colour scheme on (the sun/moon switch, or their system's own). Empty — the footer logo above."
         },
         {
             "key": "footer_columns",

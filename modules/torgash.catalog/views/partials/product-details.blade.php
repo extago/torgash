@@ -32,7 +32,7 @@
                 <div data-sections-slot>
                     <nav data-sections-nav aria-label="{{ __('On this page') }}"
                          class="group/secnav bg-base-100 border border-base-300 rounded-box data-[stuck]:fixed data-[stuck]:inset-x-0 data-[stuck]:top-(--torgash-header-h) data-[stuck]:z-20 data-[stuck]:rounded-none data-[stuck]:border-x-0 data-[stuck]:border-t-0 data-[stuck]:shadow-md">
-                        <div class="relative flex gap-x-6 overflow-x-auto whitespace-nowrap px-5 text-sm [scrollbar-width:none] group-data-[stuck]/secnav:container group-data-[stuck]/secnav:mx-auto group-data-[stuck]/secnav:max-w-(--torgash-container) group-data-[stuck]/secnav:px-4 lg:group-data-[stuck]/secnav:px-6">
+                        <div class="relative flex gap-x-6 overflow-x-auto whitespace-nowrap px-5 text-sm [scrollbar-width:none] group-data-[stuck]/secnav:container group-data-[stuck]/secnav:mx-auto group-data-[stuck]/secnav:max-w-(--torgash-container) group-data-[stuck]/secnav:px-(--torgash-gutter)">
                             @foreach ($detailTabs as $detailTab)
                                 <a href="#{{ $detailTab['key'] }}" data-sections-link
                                    class="py-3 border-b-2 border-transparent opacity-70 hover:opacity-100 aria-[current=true]:opacity-100 aria-[current=true]:border-primary aria-[current=true]:font-medium">{{ $detailTab['label'] }}@if (! empty($detailTab['count']))<span class="opacity-60 ms-1">{{ $detailTab['count'] }}</span>@endif</a>

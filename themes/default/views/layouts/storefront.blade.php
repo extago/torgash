@@ -175,7 +175,7 @@
     @include('layouts.partials.mobile-header')
     @include('layouts.partials.mobile-drawer')
 
-    <main class="container mx-auto max-w-(--torgash-container) px-3 py-4 sm:p-4 lg:p-6 grow">
+    <main class="container mx-auto max-w-(--torgash-container) px-(--torgash-gutter) py-4 lg:py-6 grow">
         @yield('content')
     </main>
 
