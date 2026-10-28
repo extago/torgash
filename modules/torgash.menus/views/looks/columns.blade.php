@@ -1,15 +1,18 @@
 {{--
     A column per top entry: its name as the column's title (a link when it is
     one), its children beneath, their children smaller under each — the shape
-    of a footer, and of a page listing departments. Lays out by its OWN width
-    (@container), since a shop may place it anywhere.
+    of a footer, and of a page listing departments. Lays out by its OWN width,
+    since a shop may place it anywhere: as many columns of at least 12rem as
+    fit, at most four (a track is never narrower than a quarter), and never
+    more than it has — a menu of one column fixed to two left an empty half
+    beside it (two menus one above the other in a footer).
 --}}
 @php $menuLabelWraps = true; @endphp
 <nav class="torgash-menu torgash-menu-columns @container" @if ($menuHeading !== '') aria-label="{{ $menuHeading }}" @endif>
     @if ($menuHeading !== '')
         <div class="font-semibold mb-3">{{ $menuHeading }}</div>
     @endif
-    <div class="grid gap-6 @md:grid-cols-2 @3xl:grid-cols-4">
+    <div class="grid gap-6 grid-cols-[repeat(auto-fit,minmax(max(min(100%,12rem),calc((100%_-_4.5rem)/4)),1fr))]">
         @foreach ($menuNodes as $menuColumn)
             @continue($menuColumn->isDivider())
             @php $menuColumnFolds = $menuColumn->hasChildren() && $menuDepth > 1; @endphp

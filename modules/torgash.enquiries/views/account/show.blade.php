@@ -18,7 +18,7 @@
     <div class="flex flex-col md:flex-row gap-6">
         @include('account._nav')
 
-        <div class="flex-1 flex flex-col gap-4">
+        <div class="flex-1 min-w-0 flex flex-col gap-4">
             <div class="flex flex-wrap items-center gap-3">
                 <a href="{{ route('account.enquiries.index') }}" class="btn btn-ghost btn-sm gap-1">
                     <x-icon name="arrow-left" size="sm" />
@@ -38,7 +38,7 @@
             @endif
 
             <div class="card bg-base-100 shadow-sm border border-base-300/60">
-                <div class="card-body gap-3">
+                <div class="card-body p-4 md:p-6 gap-3">
                     <h1 class="card-title text-base">{{ $enquiry->kindLabel() }}</h1>
 
                     @if ($subject)
@@ -54,21 +54,22 @@
 
                     <div class="text-xs opacity-60">{{ $enquiry->created_at?->format('Y-m-d H:i') }}</div>
 
-                    <table class="table table-sm">
-                        <tbody>
-                            @foreach ($enquiry->answers() as $answer)
-                                <tr>
-                                    <td class="whitespace-nowrap opacity-70 w-1/3">{{ $answer['label'] }}</td>
-                                    <td class="whitespace-pre-line">{{ $answer['value'] }}</td>
-                                </tr>
-                            @endforeach
-                        </tbody>
-                    </table>
+                    {{-- A question over its answer on a phone, beside it from sm
+                         up. A table with the questions on one line each was wider
+                         than a phone, and cut the answers off at the edge. --}}
+                    <dl class="divide-y divide-base-300/60 text-sm">
+                        @foreach ($enquiry->answers() as $answer)
+                            <div class="grid sm:grid-cols-[minmax(0,1fr)_minmax(0,2fr)] gap-x-4 gap-y-0.5 py-2">
+                                <dt class="text-xs sm:text-sm opacity-60">{{ $answer['label'] }}</dt>
+                                <dd class="whitespace-pre-line break-words">{{ $answer['value'] }}</dd>
+                            </div>
+                        @endforeach
+                    </dl>
                 </div>
             </div>
 
             <div class="card bg-base-100 shadow-sm border border-base-300/60">
-                <div class="card-body gap-3">
+                <div class="card-body p-4 md:p-6 gap-3">
                     <h2 class="card-title text-base">{{ __('Conversation') }}</h2>
 
                     {{-- $post, not $message: @error binds a $message of its own. --}}

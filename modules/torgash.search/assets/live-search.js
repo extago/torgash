@@ -98,15 +98,19 @@
         }
 
         // Under the box, as wide as the box (and never narrower than a phone
-        // screen's worth), re-placed whenever the page moves under it. Its
+        // screen's worth) — on a phone the whole screen less the page's own
+        // 12px edges, since there the box starts after the menu button and
+        // the window hung off-centre beside it. Re-placed whenever the page
+        // moves under it. Its
         // height is bounded by what is left of the screen below the box: the
         // window itself never scrolls — only its list of products does, so
         // "All results", the categories and the pages stay where the pointer
         // is going (a whole scrolling window moved them away mid-reach).
         function place() {
             const box = form.getBoundingClientRect();
-            const width = Math.min(Math.max(box.width, 320), window.innerWidth - 16);
-            const left = Math.min(Math.max(8, box.left), window.innerWidth - width - 8);
+            const phone = window.innerWidth < 768;
+            const width = phone ? window.innerWidth - 24 : Math.min(Math.max(box.width, 320), window.innerWidth - 16);
+            const left = phone ? 12 : Math.min(Math.max(8, box.left), window.innerWidth - width - 8);
             const top = box.bottom + 8;
 
             panel.style.top = top + 'px';

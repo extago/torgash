@@ -440,7 +440,7 @@ that, in order:
 
 ### Setting one up
 
-Security → **Set up two-factor authentication** shows a QR code and, beside it,
+Security → Two-factor authentication → **Set it up** shows a QR code and, beside it,
 the same key in groups of four for a phone that will not scan. Nothing is
 switched on until a code from the app has been typed back in: an enrolment
 nobody finished costs nothing and stops nobody signing in, so a camera that will

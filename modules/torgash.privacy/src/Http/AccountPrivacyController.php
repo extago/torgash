@@ -43,6 +43,14 @@ class AccountPrivacyController extends Controller
 
     public function erase(Request $request)
     {
+        // The password, typed again: the request closes the account, and a
+        // signed-in phone in somebody else's hands is not its owner. Laravel's
+        // own rule, as for a new password or switching the second factor off.
+        $request->validate(['current_password' => ['required', 'current_password']], [
+            'current_password.required' => __('Type your password.'),
+            'current_password.current_password' => __('That is not your password.'),
+        ]);
+
         $user = $request->user();
 
         $already = PrivacyRequest::where('user_id', $user->id)->open()->where('type', PrivacyRequest::ERASE)->exists();

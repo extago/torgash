@@ -26,7 +26,7 @@
         && setting('torgash.catalog', 'card_description_on_hover');
 @endphp
 <div {!! $cardAttributes ?? '' !!} @if ($cardPanel) data-card-panel @endif
-     class="torgash-card relative p-4 flex flex-col gap-1 {{ $cardClass ?? '' }}">
+     class="torgash-card relative p-3 md:p-4 flex flex-col gap-1 {{ $cardClass ?? '' }}">
 <a href="{{ route('catalog.product', $product->slug) }}" class="flex flex-col gap-1 flex-1">
     <figure class="aspect-square bg-base-200 relative mb-2">
         @include('torgash.catalog::partials.label-badges', [
@@ -165,14 +165,15 @@
         @endif
     </div>
     @if ($cardCorner !== '')
-        {{-- top-6/right-6: the card's padding plus the figure's own inset, the
-             same corner a top-right label would take (which moves aside). --}}
-        {{-- On a touch screen only the FIRST button stands (the heart: the
-             wishlist answers first) with "…" under it opening the rest — three
-             frosted squares covered a phone's small photo. With a mouse the
-             corner shows on hover as before, and the "…" is never drawn
-             (app.css, .torgash-corner-more). --}}
-        <div class="torgash-card-corner absolute top-6 right-6 z-10 flex flex-col gap-1.5"
+        {{-- top-5/right-5 (md: 6): the card's padding plus the figure's own
+             inset, the same corner a top-right label would take (which moves
+             aside). The padding is 12px on a phone, as the page's own edge. --}}
+        {{-- Which buttons stand is the theme's, per device (phone / tablet /
+             computer): by default a phone gets the FIRST button (the heart:
+             the wishlist answers first) with "…" under it opening the rest —
+             three frosted squares covered a phone's small photo. The rules are
+             app.css, .torgash-corner-more. --}}
+        <div class="torgash-card-corner absolute top-5 right-5 md:top-6 md:right-6 z-10 flex flex-col gap-1.5"
              x-data="{ more: false }" x-bind:class="more && 'is-open'" x-on:click.outside="more = false">{!! $cardCorner !!}<button type="button" class="torgash-corner-more btn btn-ghost btn-sm btn-square btn-touch"
                     x-on:click="more = ! more" x-bind:aria-expanded="more" aria-expanded="false" aria-label="{{ __('More actions') }}">
                 <span x-show="! more"><x-icon name="ellipsis" size="lg" /></span>

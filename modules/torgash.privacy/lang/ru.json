@@ -100,5 +100,9 @@
     "Personal data request": "Запрос о персональных данных",
     "Received": "Получена",
     "Waiting": "Ждут проверки",
-    "days": "дня"
+    "days": "дня",
+    "Your password": "Ваш пароль",
+    "Type your password.": "Введите пароль.",
+    "That is not your password.": "Пароль не подходит.",
+    "Do not know it? Sign out and choose \"Forgot your password?\" when signing in — a code brings you back with a new one.": "Не знаете его? Выйдите и при входе нажмите «Забыли пароль?» — по коду вы вернётесь в аккаунт с новым паролем."
 }

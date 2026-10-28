@@ -108,7 +108,7 @@
                             <thead>
                                 <tr>
                                     <th>{{ __('Page') }}</th>
-                                    <th class="text-right">{{ __('Share') }}</th>
+                                    <th class="text-right">{{ __('Share of the time') }}</th>
                                     <th class="text-right">{{ __('Visits') }}</th>
                                     <th class="text-right">{{ __('Typical') }}</th>
                                     <th class="text-right">{{ __('1 in 20') }}</th>

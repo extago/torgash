@@ -18,7 +18,7 @@
                         <th>{{ __('Module') }}</th>
                         <th class="text-right">{{ __('Per page') }}</th>
                         <th class="text-right">{{ __('Of it, database') }}</th>
-                        <th class="text-right">{{ __('Share') }}</th>
+                        <th class="text-right">{{ __('Share of the time') }}</th>
                         <th class="w-1/3"></th>
                     </tr>
                 </thead>

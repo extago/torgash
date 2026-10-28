@@ -94,7 +94,17 @@ this file is the reasoning. Read it before changing anything it covers.
   keeps its page, and a change reloads the frame at the scroll position it
   had. Sections are named in `setting_sections` and may carry
   `setting_section_meta` — `icon`, and `device` ("phone": opening the section
-  turns the frame into a phone). The page in the frame is picked from
+  turns the frame into a phone). A phone or tablet frame is narrow, but its
+  pointer is the admin's mouse, so `(hover: hover)` held there and a card
+  lifted on hover as on no phone: in such a frame every `@media` asking about
+  hover or the pointer is rewritten to a touch screen's answer
+  (`assets/js/preview-touch.js`, printed by `<x-theme.style />` only when
+  `ThemeSettings::framed()` — staff, in a frame), kept in `window.name` for
+  the links followed inside. A device-dependent rule is therefore written as
+  `@media (hover: …)`/`(pointer: …)`, never by sniffing in a script. Which
+  buttons a card's photo shows is a theme setting per device
+  (`card_corner_phone|tablet|computer`, printed as `data-card-corner-*` on
+  `<body>`; app.css `.torgash-corner-more`). The page in the frame is picked from
   `core.theme.preview_pages` (items `['label' => English, 'icon', 'path',
   'position']`; core adds the home page and the account, the catalogue,
   cart and blog add theirs — core does not know there is a catalogue).
@@ -388,6 +398,13 @@ it — three modules that do not know each other must not own three corners.
   once dropped the payment marks to a line of their own. Folding is the
   `columns` menu look's own markup (`data-fold`, `.torgash-fold-toggle`,
   hidden unless a container with `.torgash-footer-fold` asks, below md).
+  Folded, the menus are ONE accordion: a single column of faint plates
+  (menus that follow one another, or sit in the shop's row, closed up to
+  the plates' gap), the WHOLE plate the button (the toggle's `::after`, a
+  title that is a link stays a link above it), the chevron with no box of
+  its own — a finger left the ghost button's square on it. Unfolded, the
+  look lays out by its own width, at most four columns and never more than
+  it has: a one-column menu fixed to two left an empty half beside it.
   Tailwind classes in theme.json are compiled (`@source "../../themes"`); ones a
   shop types into a block later are not — that is what "Your own CSS" is for.
 - **The logo is one component, `<x-theme.logo :on-dark>`** — the theme's `logo`

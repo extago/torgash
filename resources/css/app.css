@@ -286,6 +286,26 @@
 .torgash-popover[data-side="below"]::before { display: block; top: -8px; border-right-width: 0; border-bottom-width: 0; }
 .torgash-popover[data-side="above"]::before { display: block; bottom: -8px; border-left-width: 0; border-top-width: 0; }
 
+/* The account's places (account/_nav): ONE list — on a phone a menu as
+   wide as the full-width button it hangs from (the page's width less its
+   12px edges), with no arrow: it is that button's own continuation; from md
+   up the side column, simply in the page — shown although never opened, in
+   the flow. */
+.torgash-account-places.torgash-popover { width: calc(100vw - 1.5rem); margin-block: 0.25rem; }
+@supports (width: anchor-size(width)) { .torgash-account-places.torgash-popover { width: anchor-size(width); } }
+.torgash-account-places.torgash-popover::before { display: none; }
+.torgash-account-nav:has(.torgash-account-places:popover-open) .torgash-account-chevron { rotate: 180deg; }
+@media (width >= 48rem) {
+    .torgash-account-places.torgash-popover:not(:popover-open) { display: block !important; }
+    .torgash-account-places.torgash-popover { position: static; margin: 0; width: auto; max-width: none; transition: none; }
+}
+
+/* A part of a form a phone folds behind its own button (the wishlist's
+   filters): open from md up, and wherever no script could open it. */
+@media (width < 48rem) {
+    .torgash-js .torgash-fold:not(.is-open) { display: none; }
+}
+
 /* The catalogue's mega menu (mega-menu.blade.php): the same arrow, at the
    Catalogue button's middle (`--mega-arrow`, set when it opens); none until
    it is measured. */
@@ -369,16 +389,48 @@
 .torgash-footer-centred .torgash-fold-title { justify-content: center; }
 
 /* Menus folding on a phone (footer setting footer_fold_menus): a column of
-   the `columns` look keeps its title and hides its links until the title's
-   toggle is pressed. Only where the footer asks for it, only below md —
-   everywhere else the toggle is not even drawn. */
+   the `columns` look keeps its title and hides its links until the title is
+   pressed. Only where the footer asks for it, only below md — everywhere
+   else the toggle is not even drawn. Folded, the menus are an accordion: ONE
+   column of faint plates (two columns of them left a hole beside a menu of
+   one), each plate wholly the button — the toggle's ::after covers it, and a
+   title that is a link stays a link above it. The chevron draws no box of
+   its own (a finger left the ghost button's square on it): the plate
+   answers to the pointer, the press and the keyboard's focus instead, and
+   its title reads as a button's label, not as a dimmed heading. */
 .torgash-fold-toggle { display: none; }
 @media (max-width: 47.99rem) {
-    .torgash-footer-fold .torgash-fold-toggle { display: inline-grid; }
+    .torgash-footer-fold .torgash-fold-toggle { display: inline-grid; position: static; }
     .torgash-footer-fold [data-fold]:not([data-open]) .torgash-fold-list { display: none; }
-    .torgash-footer-fold [data-fold] .torgash-fold-title { margin-bottom: 0; }
+    .torgash-footer-fold .torgash-menu-columns > div:last-child { grid-template-columns: minmax(0, 1fr); gap: .5rem; }
+    .torgash-footer-fold [data-fold] .torgash-fold-title {
+        position: relative;
+        margin-bottom: 0;
+        padding: .125rem .125rem .125rem .875rem;
+        border-radius: var(--radius-field);
+        background: color-mix(in oklab, currentColor 6%, transparent);
+        transition: background-color .15s;
+    }
+    .torgash-footer-fold [data-fold] .torgash-fold-toggle,
+    .torgash-footer-fold [data-fold] .torgash-fold-toggle:is(:hover, :focus, :focus-visible, :active) { background: none; border-color: transparent; box-shadow: none; outline: none; translate: none; }
+    .torgash-footer-fold [data-fold] .torgash-fold-toggle::after { content: ""; position: absolute; inset: 0; }
+    .torgash-footer-fold [data-fold] .torgash-fold-title:has(.torgash-fold-toggle:active) { background: color-mix(in oklab, currentColor 12%, transparent); }
+    .torgash-footer-fold [data-fold] .torgash-fold-title:has(.torgash-fold-toggle:focus-visible) { outline: 2px solid currentColor; outline-offset: 2px; }
+    .torgash-footer-fold [data-fold] .torgash-fold-title > span > .opacity-60 { opacity: 1; }
+    .torgash-footer-fold [data-fold] .torgash-fold-title a { position: relative; z-index: 1; }
     .torgash-footer-fold [data-fold][data-open] .torgash-fold-title { margin-bottom: .5rem; }
-    .torgash-footer-fold .torgash-menu-columns > div:last-child { gap: .75rem; }
+    .torgash-footer-fold [data-fold] .torgash-fold-list { padding-inline: .875rem; padding-bottom: .25rem; }
+    /* Folded menus that follow one another — two menu blocks one under the
+       other, or the shop's row of them (one column on a phone) — read as ONE
+       accordion: the gap between them (the cell's gap-6 / -4 / -5 by layout,
+       the row's gap-6) brought down to the plates' own .5rem. */
+    .torgash-footer-fold .torgash-menu-columns:has([data-fold]) + .torgash-menu-columns:has([data-fold]),
+    .torgash-footer-fold .torgash-block-row > div:has(> .torgash-menu-columns [data-fold]) + div:has(> .torgash-menu-columns [data-fold]) { margin-top: -1rem; }
+    .torgash-footer-fold.torgash-footer-compact .torgash-menu-columns:has([data-fold]) + .torgash-menu-columns:has([data-fold]) { margin-top: -.5rem; }
+    .torgash-footer-fold.torgash-footer-centred .torgash-menu-columns:has([data-fold]) + .torgash-menu-columns:has([data-fold]) { margin-top: -.75rem; }
+}
+@media (max-width: 47.99rem) and (hover: hover) {
+    .torgash-footer-fold [data-fold] .torgash-fold-title:hover { background: color-mix(in oklab, currentColor 10%, transparent); }
 }
 .torgash-fold-toggle svg { transition: rotate .2s ease-out; }
 [data-open] > .torgash-fold-title .torgash-fold-toggle svg { rotate: 180deg; }
@@ -656,16 +708,42 @@ input[type="search"]::-webkit-search-cancel-button:hover {
     .torgash-card-buy .torgash-price { font-size: 1rem; }
 }
 
-/* "…" in a card's corner (product-card): a touch screen shows the first
-   button (the heart) and this; the rest open under it. Drawn only where it
-   has something to open — two buttons or more besides itself — and never
-   with a mouse, which gets the whole corner on hover. A pressed toggle (in
-   the comparison) stays out: it is information, as on hover. */
+/* A card's corner per device — the theme's "Buttons on a card's photo"
+   settings, printed by the layout as data-card-corner-{phone,tablet,computer}
+   on <body>. A device is told by its POINTER and width: a phone is a touch
+   screen under 48rem (the two-column grid), a tablet a wider touch screen, a
+   computer anything with hover. A body without the attribute (a theme that
+   does not offer the setting) gets the default: "…" on a phone, every button
+   on a tablet, on hover on a computer.
+     more  — the first button (the heart) and "…" opening the rest; drawn only
+             where it has something to open, two buttons besides itself;
+     dots  — "…" alone, opening all of them (the heart too);
+     first — the first button alone;
+     all   — every button, always;
+     none  — no corner at all.
+   A pressed toggle (in the comparison) stays out under more/first: it is
+   information, as on hover. */
 .torgash-corner-more { display: none; }
-@media (hover: none) {
-    .torgash-card-corner:has(> :nth-child(3)) .torgash-corner-more { display: inline-flex; order: 1; }
-    .torgash-card-corner:has(> :nth-child(3)) > :not(:first-child, .torgash-corner-more) { order: 2; }
-    .torgash-card-corner:has(> :nth-child(3)):not(.is-open) > :not(:first-child, .torgash-corner-more, :has([aria-pressed="true"])) { display: none; }
+@media (hover: none) and (width < 48rem) {
+    :is(body:not([data-card-corner-phone]), [data-card-corner-phone="more"]) .torgash-card-corner:has(> :nth-child(3)) .torgash-corner-more { display: inline-flex; order: 1; }
+    :is(body:not([data-card-corner-phone]), [data-card-corner-phone="more"]) .torgash-card-corner:has(> :nth-child(3)) > :not(:first-child, .torgash-corner-more) { order: 2; }
+    :is(body:not([data-card-corner-phone]), [data-card-corner-phone="more"]) .torgash-card-corner:has(> :nth-child(3)):not(.is-open) > :not(:first-child, .torgash-corner-more, :has([aria-pressed="true"])) { display: none; }
+    [data-card-corner-phone="dots"] .torgash-card-corner:has(> :nth-child(3)) .torgash-corner-more { display: inline-flex; order: -1; }
+    [data-card-corner-phone="dots"] .torgash-card-corner:has(> :nth-child(3)):not(.is-open) > :not(.torgash-corner-more) { display: none; }
+    [data-card-corner-phone="first"] .torgash-card-corner > :not(:first-child, :has([aria-pressed="true"])) { display: none; }
+    [data-card-corner-phone="none"] .torgash-card-corner { display: none; }
+}
+@media (hover: none) and (width >= 48rem) {
+    [data-card-corner-tablet="more"] .torgash-card-corner:has(> :nth-child(3)) .torgash-corner-more { display: inline-flex; order: 1; }
+    [data-card-corner-tablet="more"] .torgash-card-corner:has(> :nth-child(3)) > :not(:first-child, .torgash-corner-more) { order: 2; }
+    [data-card-corner-tablet="more"] .torgash-card-corner:has(> :nth-child(3)):not(.is-open) > :not(:first-child, .torgash-corner-more, :has([aria-pressed="true"])) { display: none; }
+    [data-card-corner-tablet="dots"] .torgash-card-corner:has(> :nth-child(3)) .torgash-corner-more { display: inline-flex; order: -1; }
+    [data-card-corner-tablet="dots"] .torgash-card-corner:has(> :nth-child(3)):not(.is-open) > :not(.torgash-corner-more) { display: none; }
+    [data-card-corner-tablet="first"] .torgash-card-corner > :not(:first-child, :has([aria-pressed="true"])) { display: none; }
+    [data-card-corner-tablet="none"] .torgash-card-corner { display: none; }
+}
+@media (hover: hover) {
+    [data-card-corner-computer="none"] .torgash-card-corner { display: none; }
 }
 
 /* The same toggles beside a ROW (the listing's list view): no photograph to
@@ -711,7 +789,8 @@ input[type="search"]::-webkit-search-cancel-button:hover {
            straight on down the panel. */
         position: absolute; left: calc(-1 * var(--card-edge, 0px)); right: 0; top: 100%;
         border-left: inherit;
-        padding: 0 1rem 1rem;
+        padding: 0 0.75rem 0.75rem;
+        @media (width >= 48rem) { padding: 0 1rem 1rem; }
         margin-top: -0.25rem;
         background: var(--color-base-100);
         font-size: 0.75rem; line-height: 1.375;
@@ -721,10 +800,11 @@ input[type="search"]::-webkit-search-cancel-button:hover {
     }
     .torgash-card:hover .torgash-card-panel { opacity: 1; visibility: visible; transform: none; }
 
-    /* The corner shows itself on hover, one button after another. What is
+    /* The corner shows itself on hover, one button after another — unless
+       the theme says "always" (data-card-corner-computer, above). What is
        already pressed (in the wishlist) never hides: it is information, not
        a control waiting to be offered. */
-    .torgash-card-corner > * {
+    :is(body:not([data-card-corner-computer]), [data-card-corner-computer="hover"]) .torgash-card-corner > * {
         opacity: 0; transform: translateX(0.5rem);
         transition: opacity 0.2s, transform 0.2s;
     }
@@ -1389,6 +1469,31 @@ a:has([data-inert-text]:hover) { -webkit-user-drag: none; }
 .torgash-tiles-corner ~ .torgash-tiles-arrow { top: 50%; }
 .torgash-tiles-indicator { position: relative; height: 2px; margin-top: 0.75rem; background: var(--color-base-300); overflow: hidden; }
 .torgash-tiles-indicator > span { position: absolute; inset-block: 0; left: 0; background: var(--color-primary); }
+/* The picture's frame under the `under` look (the block's `shape`, the
+   theme's subcategories_shape): a circle or a rounded square the size of
+   the picture and its padding, instead of the card as wide as the tile. */
+.torgash-tiles-under:is(.torgash-tiles-circle, .torgash-tiles-rounded) .torgash-tile-pic { width: var(--tile-box); height: var(--tile-box); }
+.torgash-tiles-under.torgash-tiles-circle .torgash-tile-pic { border-radius: 9999px; }
+/* A photo lent by the category's most popular product is the product whole,
+   inside the frame (the base rule's size), never cropped to fill it like a
+   picture made for the tile. Products are shot on white: in the dark
+   palette their frame is white too, or each would stand there as a square. */
+[data-theme="torgash-dark"] .torgash-tile-pic.is-product { background: #fff; }
+/* ...and takes the frame's shape: a square photo in a circle showed its
+   corners (on white they melt into the frame anyway). */
+.torgash-tiles-circle .torgash-tile-pic.is-product img { border-radius: 9999px; }
+.torgash-tiles-rounded .torgash-tile-pic.is-product img { border-radius: var(--radius-field, 0.5rem); }
+.torgash-tile-count { margin-top: -0.375rem; font-size: 0.85em; opacity: 0.6; }
+
+/* A category's subcategories (catalog-subcategories), in the page's card:
+   a row that scrolls runs to the card's edges, where it is cut off, rather
+   than stopping short of them; buttons keep to two rows until "Show N more"
+   — clamped only where the script runs to count them and open the rest. */
+.torgash-subcategories { --subcats-pad: 0.75rem; }
+@media (width >= 48rem) { .torgash-subcategories { --subcats-pad: 1rem; } }
+.torgash-subcategories > .torgash-block-category-tiles { padding: var(--subcats-pad); }
+.torgash-subcategories .torgash-tiles-strip { margin-inline: calc(-1 * var(--subcats-pad)); padding-inline: var(--subcats-pad); scroll-padding-inline: var(--subcats-pad); }
+.torgash-js .torgash-subcategory-chips:not(.is-all) { max-height: calc(2 * 2.25rem + 0.5rem + 4px); overflow: hidden; padding: 2px; margin: -2px; }
 
 /* ---- Sales on a page (torgash.promotions' "Deal with a countdown" and
    "Current promotions" blocks) ---------------------------------------------

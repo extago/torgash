@@ -120,7 +120,28 @@ class Category extends Model implements PageSubject
             'meta_description' => 'array',
             'h1' => 'array',
             'noindex' => 'bool',
+            'shown_in_parent' => 'bool',
         ];
+    }
+
+    /** How a category's page can show the categories under it (`subcategories_view`, theme setting `subcategories`). */
+    public const SUBCATEGORY_VIEWS = ['tiles', 'buttons', 'none'];
+
+    /**
+     * How this category's page shows the categories under it: its own word,
+     * else the theme's — tiles when the theme has no such setting.
+     */
+    public function subcategoriesView(): string
+    {
+        $own = (string) ($this->subcategories_view ?? '');
+
+        if (in_array($own, self::SUBCATEGORY_VIEWS, true)) {
+            return $own;
+        }
+
+        $theme = (string) theme_setting('subcategories', 'tiles');
+
+        return in_array($theme, self::SUBCATEGORY_VIEWS, true) ? $theme : 'tiles';
     }
 
     /** Where a category's own icon pictures are kept on the public disk. */

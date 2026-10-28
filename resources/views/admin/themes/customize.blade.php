@@ -811,6 +811,9 @@
                     this.searchHelp = ! fields.some(el => words.every(w => el.dataset.label.includes(w)));
                     this.found = fields.filter(el => this.shows(null, this.searchHelp ? el.dataset.search : el.dataset.label)).length;
                 });
+                // A phone or a tablet answers as a touch screen in the frame,
+                // although the pointer over it is a mouse (preview-touch.js).
+                this.$watch('device', () => this.touch());
                 if (o.flash) this.say(o.flash, o.flashError);
                 // A section can be linked to: ?section=header.
                 const asked = new URLSearchParams(location.search).get('section');
@@ -896,6 +899,17 @@
                     if (this.scrollY > 0) win.scrollTo({ top: this.scrollY, behavior: 'instant' });
                 } catch (e) {}
                 this.scrollY = 0;
+                this.touch();
+            },
+            // The frame's own script keeps the answer for the pages after this
+            // one; a page without it (an error page) is only told its name.
+            touch() {
+                try {
+                    const win = this.$refs.frame.contentWindow;
+                    const on = this.device !== 'desktop';
+                    if (win.torgashPreviewTouch) win.torgashPreviewTouch(on);
+                    else win.name = on ? 'torgash-preview-touch' : '';
+                } catch (e) {}
             },
 
             // The draft goes first, THEN the frame reloads the page it is on —

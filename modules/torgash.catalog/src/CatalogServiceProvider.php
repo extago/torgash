@@ -145,7 +145,14 @@ class CatalogServiceProvider extends ServiceProvider
         hook_listen('core.theme.preview_pages', function (array $pages) {
             $pages[] = ['label' => 'Catalogue', 'icon' => 'layout-grid', 'path' => route('catalog.index', [], false), 'position' => 10];
 
-            if ($category = Category::query()->listed()->orderBy('id')->first()) {
+            // One with subcategories when there is one: the theme's
+            // "Category page" settings are about those.
+            $listed = app(\Torgash\Catalog\Support\CategoryTree::class)->ordered(listedOnly: true);
+            $parents = $listed->pluck('parent_id')->filter()->map(fn ($id) => (int) $id)->flip();
+            $category = $listed->first(fn (Category $c) => $parents->has((int) $c->id))
+                ?? Category::query()->listed()->orderBy('id')->first();
+
+            if ($category) {
                 $pages[] = ['label' => 'Category page', 'icon' => 'folder', 'path' => route('catalog.category', $category->slug, false), 'position' => 20];
             }
 

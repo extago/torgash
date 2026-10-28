@@ -45,4 +45,11 @@
     }
     /* Room in the box for the site/catalogue switch left of the submit button. */
     form[data-live-search]:has(.torgash-search-scope) input[name="q"] { padding-right: 5rem; }
+    /* A finger is wider than a pointer: the brands and categories are chips a
+       thumb can hit (36px, the storefront's compact size), and the box's own
+       "clear" cross gets a 32px target round its small glyph. */
+    @media (pointer: coarse) {
+        .torgash-live-search a.badge { height: 2.25rem; padding-inline: .875rem; font-size: .875rem; }
+        form[data-live-search] input[type="search"]::-webkit-search-cancel-button { width: 2rem; height: 2rem; margin-inline: 0; -webkit-mask-size: .875rem; mask-size: .875rem; }
+    }
 </style>

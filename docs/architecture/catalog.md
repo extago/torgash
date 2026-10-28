@@ -32,6 +32,22 @@ this file is the reasoning. Read it before changing anything it covers.
   source, a menu item a person placed by hand). `enabled` survives as a
   compatibility attribute — writes keep the old meaning, reads answer
   "listed" — and nothing in the engine reads it.
+- **A category's page shows what is under it as the theme says, or as the
+  category says** (2026-10-28): `Category::subcategoriesView()` — its own
+  `subcategories_view` (tiles / buttons / none), else the theme's
+  `subcategories` (section "Category page"), else tiles. Tiles are the
+  "Category tiles" block's own view included with the theme's settings
+  (`bare`: the page frames it), so a category page and the home page look
+  alike; the block got the same `shape` (card / circle / rounded),
+  `counts` and `photos`. A subcategory with `shown_in_parent` off is left out
+  of its parent's page only — the menus and the list beside the catalogue
+  still have it. Counts are `Support\CategoryCounts` (the list beside the
+  catalogue asks it too: one query, the subtree, `Product::listed()`); a
+  category without a tile picture borrows the photo of its most popular
+  product the visitor can order (`Support\CategoryPhotos`: one query, then
+  that product's own photo, so a product without one lends nothing). Drawn
+  through `Fragment::isolate()` — the grid holds the subtree anyway.
+  Buttons keep to two rows behind "Show N more", counted by the script.
 - **A product's short description is composed where nobody wrote one.**
   `short_description` is a column on the product; which characteristics stand in
   for it is a FLAG on the characteristic (`in_short_description`), never a list

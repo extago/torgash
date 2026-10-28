@@ -21,7 +21,9 @@
     <li class="flex items-center gap-3 px-3 py-1.5 hover:bg-base-200">
         <a href="{{ route('catalog.product', $product->slug) }}" role="option" class="flex items-center gap-3 flex-1 min-w-0">
             @if ($show['image'])
-                <span class="w-12 h-12 shrink-0 rounded bg-base-200 flex items-center justify-center overflow-hidden">
+                {{-- The corners of a product's photo are the theme's (radius_image), as
+                     on a card — up to 12px: past it a 48px picture turns into a circle. --}}
+                <span class="w-12 h-12 shrink-0 rounded-[min(var(--torgash-radius-image,0.25rem),0.75rem)] bg-base-200 flex items-center justify-center overflow-hidden">
                     @if ($image = $product->primaryImageUrl(96))
                         <img src="{{ $image }}" alt="" class="object-contain w-full h-full" loading="lazy">
                     @else
@@ -29,7 +31,7 @@
                     @endif
                 </span>
             @endif
-            <span class="flex flex-col min-w-0">
+            <span class="flex flex-col gap-1 min-w-0">
                 <span class="leading-snug line-clamp-2">{{ \Torgash\Search\Highlight::html($name, $marked) }}</span>
                 @if ($show['sku'] && $product->sku)
                     <span class="text-xs opacity-50 font-mono">{{ \Torgash\Search\Highlight::html($product->sku, $marked) }}</span>

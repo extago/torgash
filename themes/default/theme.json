@@ -15,6 +15,7 @@
         "shapes": "Width and corners",
         "header": "Header",
         "cards": "Product cards",
+        "category": "Category page",
         "footer": "Footer",
         "mobile": "Phone",
         "code": "Your own CSS"
@@ -37,6 +38,9 @@
         },
         "cards": {
             "icon": "layout-grid"
+        },
+        "category": {
+            "icon": "folder-tree"
         },
         "footer": {
             "icon": "panel-bottom"
@@ -1037,6 +1041,113 @@
                 "4": "4",
                 "5": "5"
             }
+        },
+        {
+            "key": "card_corner_phone",
+            "section": "cards",
+            "type": "select",
+            "default": "more",
+            "label": "Buttons on a card's photo on a phone",
+            "help": "The heart, the comparison, quick view — whichever modules are on. A phone's photo is small: three buttons cover it.",
+            "options": {
+                "more": "The heart and \"…\" opening the rest",
+                "dots": "Only \"…\" opening them all",
+                "first": "Only the heart",
+                "all": "All of them",
+                "none": "None"
+            }
+        },
+        {
+            "key": "card_corner_tablet",
+            "section": "cards",
+            "type": "select",
+            "default": "all",
+            "label": "Buttons on a card's photo on a tablet",
+            "help": "A touch screen wider than a phone: there is no hover, so they are shown as chosen here.",
+            "options": {
+                "more": "The heart and \"…\" opening the rest",
+                "dots": "Only \"…\" opening them all",
+                "first": "Only the heart",
+                "all": "All of them",
+                "none": "None"
+            }
+        },
+        {
+            "key": "card_corner_computer",
+            "section": "cards",
+            "type": "select",
+            "default": "hover",
+            "label": "Buttons on a card's photo on a computer",
+            "help": "A pressed one (already in the wishlist) is always shown.",
+            "options": {
+                "hover": "When the pointer is over the card",
+                "always": "Always",
+                "none": "None"
+            }
+        },
+        {
+            "key": "subcategories",
+            "section": "category",
+            "type": "select",
+            "default": "tiles",
+            "label": "Subcategories above the products",
+            "help": "A category can say otherwise for itself: Catalog → Categories → the category → \"Subcategories\".",
+            "options": {
+                "tiles": "Tiles with a picture",
+                "buttons": "Buttons — compact, in two rows",
+                "none": "Not shown"
+            }
+        },
+        {
+            "key": "subcategories_layout",
+            "section": "category",
+            "type": "select",
+            "default": "strip",
+            "label": "Tiles laid out",
+            "options": {
+                "strip": "One row that scrolls",
+                "strip2": "Two rows that scroll",
+                "grid": "Grid"
+            }
+        },
+        {
+            "key": "subcategories_shape",
+            "section": "category",
+            "type": "select",
+            "default": "circle",
+            "label": "Picture frame",
+            "options": {
+                "circle": "A circle",
+                "rounded": "A square with rounded corners",
+                "card": "A card as wide as the tile"
+            }
+        },
+        {
+            "key": "subcategories_picture_size",
+            "section": "category",
+            "type": "number",
+            "default": "72",
+            "label": "Picture size",
+            "min": 40,
+            "max": 160,
+            "step": 1,
+            "unit": "px"
+        },
+        {
+            "key": "subcategories_photos",
+            "section": "category",
+            "type": "checkbox",
+            "default": true,
+            "label": "A photo from its products",
+            "help": "A subcategory with no tile picture shows the photo of its most popular product in stock."
+        },
+        {
+            "key": "subcategories_counts",
+            "section": "category",
+            "type": "checkbox",
+            "default": true,
+            "label": "How many products",
+            "help": "Under each name, counting everything inside the subcategory."
         },
         {
             "key": "mobile_header",

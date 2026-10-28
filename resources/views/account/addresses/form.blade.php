@@ -6,7 +6,7 @@
     <div class="flex flex-col md:flex-row gap-6">
         @include('account._nav')
 
-        <div class="flex-1 max-w-lg">
+        <div class="flex-1 min-w-0 max-w-lg">
             <form method="POST"
                   action="{{ $address->exists ? route('account.addresses.update', $address) : route('account.addresses.store') }}"
                   class="card bg-base-100 shadow-sm border border-base-300/60">

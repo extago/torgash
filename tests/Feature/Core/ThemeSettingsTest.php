@@ -83,6 +83,17 @@ class ThemeSettingsTest extends TestCase
         $this->assertStringNotContainsString('#7c3aed', $this->actingAs($admin)->get('http://localhost/', ['Sec-Fetch-Dest' => 'iframe'])->getContent());
     }
 
+    /** The phone frame's touch answers (preview-touch.js) are staff's, in a frame, draft or none. */
+    public function test_only_the_configurators_frame_answers_as_a_touch_screen(): void
+    {
+        $admin = $this->admin();
+
+        $this->assertStringContainsString('preview-touch.js', $this->actingAs($admin)->get('http://localhost/', ['Sec-Fetch-Dest' => 'iframe'])->getContent());
+        $this->assertStringNotContainsString('preview-touch.js', $this->actingAs($admin)->get('http://localhost/', ['Sec-Fetch-Dest' => 'document'])->getContent());
+        $this->assertStringNotContainsString('preview-touch.js', $this->actingAs(User::factory()->create())->get('http://localhost/', ['Sec-Fetch-Dest' => 'iframe'])->getContent(),
+            'a customer framing the shop gets no configurator script');
+    }
+
     /** Values reach a <style> tag, so only what a field can answer survives. */
     public function test_only_answers_a_field_can_give_are_kept(): void
     {

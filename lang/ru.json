@@ -1419,7 +1419,7 @@
     "Social network links as icons": "Ссылки на соцсети значками",
     "Share to": "Куда можно поделиться",
     "Where the \"Share\" button of an article or a page offers to send it. Each is a plain link to the network's own share address, so nothing is loaded from them until somebody presses one. \"Copy the link\" is always there; on a phone the system's own share sheet comes first.": "Куда кнопка «Поделиться» у статьи или страницы предлагает отправить ссылку. Каждый пункт — обычная ссылка на страницу «поделиться» самой сети, поэтому от них ничего не загружается, пока кто-то не нажмёт. «Скопировать ссылку» есть всегда; на телефоне сначала открывается системное меню «Поделиться».",
-    "Share": "Доля",
+    "Share": "Поделиться",
     "Copy the link": "Скопировать ссылку",
     "This part of the page failed and is hidden from customers: :what": "Эта часть страницы упала с ошибкой и скрыта от покупателей: :what",
     "Only staff see this notice. The error is written to the log.": "Это сообщение видят только сотрудники. Ошибка записана в журнал.",

@@ -197,14 +197,23 @@ class ThemeSettings
         return $this->values()[$key] ?? $default;
     }
 
-    /** Is this page the configurator's preview frame? */
+    /** Is this page the configurator's preview frame, showing a draft? */
     public function previewing(): bool
     {
-        $request = request();
-
-        return $request->headers->get('Sec-Fetch-Dest') === 'iframe'
-            && (bool) auth()->user()?->can('themes.manage')
+        return $this->framed()
             && session()->has(self::DRAFT.'.'.(current_storefront()?->id ?? 0));
+    }
+
+    /**
+     * May this page be in the configurator's frame — framed, for somebody
+     * allowed to manage themes — draft or no draft? What only that frame
+     * needs (answering as a touch screen, assets/js/preview-touch.js) is
+     * printed on this, never for a customer.
+     */
+    public function framed(): bool
+    {
+        return request()->headers->get('Sec-Fetch-Dest') === 'iframe'
+            && (bool) auth()->user()?->can('themes.manage');
     }
 
     /**

@@ -212,6 +212,7 @@ class CategoriesController extends Controller
             // A raster picture: an SVG served from the shop's own origin is a page that can run script.
             'icon_file' => ['nullable', 'file', 'image', 'mimes:png,jpg,jpeg,webp,gif', 'max:512'],
             'tile_file' => ['nullable', 'file', 'image', 'mimes:png,jpg,jpeg,webp,gif', 'max:2048'],
+            'subcategories_view' => ['nullable', Rule::in(Category::SUBCATEGORY_VIEWS)],
         ] + MetaFields::rules());
 
         $name = $category?->name ?? [];
@@ -241,6 +242,14 @@ class CategoriesController extends Controller
             'icon' => ($validated['icon'] ?? null) ?: null,
             'icon_image' => $this->iconImage($request, $category),
             'tile_image' => $this->picture($request, $category?->tile_image, 'tile', Category::TILE_DIR),
+            // Empty is the theme's word; a client that never sends the fields
+            // changes neither.
+            'subcategories_view' => $request->has('subcategories_view')
+                ? (($validated['subcategories_view'] ?? null) ?: null)
+                : $category?->subcategories_view,
+            'shown_in_parent' => $request->has('shown_in_parent')
+                ? $request->boolean('shown_in_parent')
+                : ($category?->shown_in_parent ?? true),
             // The form sends `status`; a client written for the old switch
             // sends `enabled`, and saying neither changes nothing.
             'status' => $validated['status']

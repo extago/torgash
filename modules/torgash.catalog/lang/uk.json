@@ -1186,5 +1186,22 @@
     "no category matches it, and a new one needs a name": "такої категорії немає, а новій потрібна назва",
     "no characteristic matches it, and a new one needs a name": "такої характеристики немає, а новій потрібна назва",
     "Categories and the catalogue": "Категорії та каталог",
-    "Product pages": "Сторінки товарів"
+    "Product pages": "Сторінки товарів",
+    "Picture frame": "Рамка картинки",
+    "For \"The picture on a card, the name under it\".": "Для «Картинка на картці, назва під нею».",
+    "A card as wide as the tile": "Картка на всю ширину плитки",
+    "A circle": "Коло",
+    "A square with rounded corners": "Квадрат із заокругленими кутами",
+    "A photo from its products": "Фото з її товарів",
+    "A category with no tile picture shows the photo of its most popular product in stock.": "Категорія без картинки для плитки покаже фото найпопулярнішого товару в наявності.",
+    "Under each name, counting everything inside the category.": "Під кожною назвою — з урахуванням усього, що всередині категорії.",
+    "Subcategories": "Підкатегорії",
+    "Show fewer": "Згорнути",
+    "On this category's page": "На сторінці цієї категорії",
+    "As the theme says": "Як у темі",
+    "Tiles with a picture": "Плитки з картинкою",
+    "Buttons — compact, in two rows": "Кнопки — компактно, у два рядки",
+    "How the categories under this one are shown above its products. The theme's own choice is in its settings, \"Category page\".": "Як показувати категорії всередині цієї — над її товарами. Вибір теми — в її налаштуваннях, розділ «Сторінка категорії».",
+    "Shown among its parent's subcategories": "Показувати серед підкатегорій батьківської",
+    "Untick to leave it out of the tiles and buttons on its parent's page — the menus and the list beside the catalogue still have it.": "Зніміть, щоб прибрати її з плиток і кнопок на сторінці батьківської — у меню та в списку поруч із каталогом вона залишиться."
 }

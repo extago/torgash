@@ -185,6 +185,34 @@
                     </div>
                 </section>
 
+                {{-- The categories under this one, above its products: the
+                     theme's choice unless the category makes its own; and
+                     whether this one is among those on its parent's page.
+                     The hidden 0 tells "unticked" from a form without the box. --}}
+                @php $subcatsOwn = old('subcategories_view', $category->subcategories_view); @endphp
+                <section class="card bg-base-100 border border-base-300">
+                    <div class="card-body gap-4">
+                        <h3 class="font-semibold">{{ __('Subcategories') }}</h3>
+                        <fieldset class="fieldset p-0"><legend class="fieldset-legend">{{ __('On this category\'s page') }}</legend>
+                            <select name="subcategories_view" class="select select-bordered w-full">
+                                <option value="">{{ __('As the theme says') }}</option>
+                                @foreach (['tiles' => __('Tiles with a picture'), 'buttons' => __('Buttons — compact, in two rows'), 'none' => __('Not shown')] as $subcatsValue => $subcatsText)
+                                    <option value="{{ $subcatsValue }}" @selected($subcatsOwn === $subcatsValue)>{{ $subcatsText }}</option>
+                                @endforeach
+                            </select>
+                            <p class="label whitespace-normal">{{ __('How the categories under this one are shown above its products. The theme\'s own choice is in its settings, "Category page".') }}</p>
+                        </fieldset>
+                        <div>
+                            <input type="hidden" name="shown_in_parent" value="0">
+                            <label class="label cursor-pointer justify-start gap-2 text-sm text-base-content whitespace-normal">
+                                <input type="checkbox" name="shown_in_parent" value="1" class="checkbox checkbox-sm" @checked(old('shown_in_parent', $category->shown_in_parent ?? true))>
+                                {{ __('Shown among its parent\'s subcategories') }}
+                            </label>
+                            <p class="label text-xs opacity-60 whitespace-normal">{{ __('Untick to leave it out of the tiles and buttons on its parent\'s page — the menus and the list beside the catalogue still have it.') }}</p>
+                        </div>
+                    </div>
+                </section>
+
                 {{-- A lucide.dev name; the saved one is drawn beside the box (from the
                      engine's own pack, nothing fetched), so a typo shows as an
                      empty square after saving. --}}

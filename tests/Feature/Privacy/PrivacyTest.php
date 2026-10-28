@@ -102,7 +102,7 @@ class PrivacyTest extends TestCase
 
     public function test_a_customer_asks_and_a_manager_erases_what_the_law_does_not_keep(): void
     {
-        $customer = User::create(['name' => 'Olena Leaving', 'email' => 'olena@example.test', 'password' => bcrypt(Str::random(20))]);
+        $customer = User::create(['name' => 'Olena Leaving', 'email' => 'olena@example.test', 'password' => bcrypt('right-password')]);
         $customer->forceFill(['email_verified_at' => now()])->save();
         $product = Product::create(['sku' => 'PRV-1', 'name' => ['en' => 'Kettle'], 'slug' => 'prv-1', 'price' => 10_00, 'stock' => 3, 'status' => 'active']);
         Address::create(['user_id' => $customer->id, 'full_name' => 'Olena', 'phone' => '+380671112233', 'address_line' => '1 Street', 'city' => 'Kyiv']);
@@ -116,7 +116,12 @@ class PrivacyTest extends TestCase
         $this->assertStringContainsString($order->order_number, $download);
         $this->assertStringNotContainsString($guestOrder->order_number, $download);
 
-        $this->post('http://localhost/account/privacy/erase', ['note' => 'Please'])->assertRedirect();
+        // Not without the password: a signed-in phone in somebody else's hands.
+        $this->post('http://localhost/account/privacy/erase', ['note' => 'Please'])->assertSessionHasErrors('current_password');
+        $this->post('http://localhost/account/privacy/erase', ['note' => 'Please', 'current_password' => 'wrong'])->assertSessionHasErrors('current_password');
+        $this->assertFalse(PrivacyRequest::where('user_id', $customer->id)->exists());
+
+        $this->post('http://localhost/account/privacy/erase', ['note' => 'Please', 'current_password' => 'right-password'])->assertRedirect();
         $request = PrivacyRequest::where('user_id', $customer->id)->firstOrFail();
         $this->assertSame('erase', $request->type);
         $this->assertSame('olena@example.test', $request->email); // confirmed, so it counts

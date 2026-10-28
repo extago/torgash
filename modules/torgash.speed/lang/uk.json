@@ -57,7 +57,7 @@
     "Query": "Запит",
     "Query shapes by the database time they took in total. One slow query shows as a high \"slowest\"; a cheap one asked everywhere shows as many runs.": "Види запитів за сумарним часом у базі. Один повільний запит видно за великим «найповільніший»; дешевий, але такий, що питається всюди, — за кількістю запусків.",
     "Runs": "Запусків",
-    "Share": "Частка",
+    "Share of the time": "Частка",
     "Slow pages keep their whole timeline — every query, outside call and hook in order. So does every page opened while \"Trace my pages\" is on.": "Повільні сторінки зберігають повну шкалу — кожен запит, зовнішній виклик і хук по порядку. Так само — кожна сторінка, відкрита з увімкненим «Трасуванням моїх сторінок».",
     "Slowest": "Найповільніший",
     "Stop": "Зупинити",

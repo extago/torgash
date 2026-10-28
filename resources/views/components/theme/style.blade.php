@@ -66,3 +66,9 @@
 @if ($themeOwnCss !== '')
     <style data-theme-custom>{!! str_ireplace('</style', '<\/style', $themeOwnCss) !!}</style>
 @endif
+@if ($themeSettings->framed())
+    {{-- The configurator's phone and tablet frames answer hover and pointer
+         questions as a touch screen — the admin's mouse made them a computer.
+         Here, so every theme's layout gets it without knowing. --}}
+    <script nonce="{{ csp_nonce() }}" src="{{ asset_url('/assets/js/preview-touch.js') }}"></script>
+@endif

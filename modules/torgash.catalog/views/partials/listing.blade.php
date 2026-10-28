@@ -94,7 +94,15 @@
              Drawn by the module; the catalogue only gives it the place. --}}
         {!! hook_filter('catalog.listing.notice', '', ['category' => $category]) !!}
 
-        @include('torgash.catalog::partials.catalog-subcategories', ['subcategories' => $subcategories ?? collect()])
+        {{-- The grid holds the whole subtree anyway: a drawing that breaks
+             costs the subcategories, not the page. --}}
+        @if (($subcategories ?? collect())->isNotEmpty() && ($category ?? null))
+            {!! \App\Core\Content\Fragment::isolate(
+                fn () => view('torgash.catalog::partials.catalog-subcategories', ['subcategories' => $subcategories, 'category' => $category])->render(),
+                fn () => __('Subcategories'),
+                fn () => route('admin.catalog.categories.edit', $category),
+            ) !!}
+        @endif
 
         @include('torgash.catalog::partials.catalog-filter-pages', ['filterPages' => $filterPages ?? ['filters' => collect(), 'places' => collect()], 'filterPage' => $filterPage ?? null])
 

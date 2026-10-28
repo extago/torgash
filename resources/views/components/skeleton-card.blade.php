@@ -20,7 +20,7 @@
         <div class="skeleton h-6 w-24 shrink-0"></div>
     </div>
 @else
-    <div {{ $attributes->class('flex flex-col gap-2 p-4') }} aria-hidden="true">
+    <div {{ $attributes->class('flex flex-col gap-2 p-3 md:p-4') }} aria-hidden="true">
         <div class="skeleton aspect-square w-full mb-2"></div>
         <div class="skeleton h-4 w-full"></div>
         <div class="skeleton h-4 w-2/3"></div>

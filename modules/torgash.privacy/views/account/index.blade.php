@@ -8,7 +8,7 @@
     <div class="flex flex-col md:flex-row gap-6">
         @include('account._nav')
 
-        <div class="flex-1 flex flex-col gap-4 max-w-3xl">
+        <div class="flex-1 min-w-0 flex flex-col gap-4 max-w-3xl">
             <h1 class="text-xl font-bold">{{ __('My data') }}</h1>
 
             @if (session('status'))
@@ -40,10 +40,22 @@
                         </div>
                     @else
                         <p class="text-sm opacity-70">{{ __('Your account, addresses, wishlist and enquiries are erased, and your name is taken off your reviews. Orders stay — the law asks a shop to keep them for its accounts — but without your IP address and browser. The account cannot be restored afterwards.') }}</p>
-                        <form method="POST" action="{{ route('account.privacy.erase') }}" class="flex flex-col gap-2"
+                        {{-- The password, so that neither a slip of the finger nor
+                             somebody holding a signed-in phone closes the account. A
+                             customer who never chose one gets one by a code. --}}
+                        <form method="POST" action="{{ route('account.privacy.erase') }}" class="flex flex-col gap-3"
                               data-confirm="{{ __('Ask the shop to erase your data? Your account will be closed once it is done.') }}">
                             @csrf
-                            <textarea name="note" rows="2" class="textarea textarea-bordered w-full" placeholder="{{ __('Anything we should know (optional)') }}"></textarea>
+                            <textarea name="note" rows="2" class="textarea w-full" placeholder="{{ __('Anything we should know (optional)') }}">{{ old('note') }}</textarea>
+                            <label class="fieldset p-0">
+                                <span class="fieldset-legend">{{ __('Your password') }}</span>
+                                <input type="password" name="current_password" required autocomplete="current-password"
+                                       @class(['input w-full sm:w-72', 'input-error' => $errors->has('current_password')])>
+                                @error('current_password')
+                                    <span class="text-error text-xs">{{ $message }}</span>
+                                @enderror
+                                <span class="text-xs opacity-60">{{ __('Do not know it? Sign out and choose "Forgot your password?" when signing in — a code brings you back with a new one.') }}</span>
+                            </label>
                             <div><button class="btn btn-error btn-outline btn-sm">{{ __('Ask to erase my data') }}</button></div>
                         </form>
                     @endif

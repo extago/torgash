@@ -55,7 +55,11 @@ class StorefrontController extends Controller
         return app(CategoryNav::class)->rows($current);
     }
 
-    /** The children of the category being shown — the block a visitor drills down with. */
+    /**
+     * The children of the category being shown — the block a visitor drills
+     * down with — less those the shop keeps out of it (`shown_in_parent`):
+     * the menus and the list beside the catalogue still have them.
+     */
     protected function subcategories(?Category $category): Collection
     {
         if (! $category) {
@@ -65,7 +69,7 @@ class StorefrontController extends Controller
         $tree = app(CategoryTree::class);
 
         return $tree->ordered(listedOnly: true)
-            ->filter(fn (Category $c) => (int) $c->parent_id === (int) $category->id)
+            ->filter(fn (Category $c) => (int) $c->parent_id === (int) $category->id && ($c->shown_in_parent ?? true))
             ->values();
     }
 

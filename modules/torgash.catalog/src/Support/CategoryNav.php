@@ -2,7 +2,6 @@
 
 namespace Torgash\Catalog\Support;
 
-use Illuminate\Support\Facades\DB;
 use Torgash\Catalog\Models\Category;
 use Torgash\Catalog\Models\Product;
 
@@ -24,11 +23,9 @@ use Torgash\Catalog\Models\Product;
  * to read than the lines here that decide visibility. A row's category is null
  * for "All products".
  *
- * Counts are the visitor's: `Product::listed()` (a closed assortment hides
- * goods, and a number that counts them promises a grid that is not there), and
- * a category counts its whole subtree, like the listing it links to — DISTINCT,
- * because a product filed in two leaves of one branch is one product. One
- * query for every row, whatever the list's length.
+ * Counts are the visitor's, a category's whole subtree, one query for every
+ * row whatever the list's length — {@see CategoryCounts}, which the tiles of
+ * a category's subcategories ask too.
  */
 class CategoryNav
 {
@@ -150,38 +147,9 @@ class CategoryNav
     /** @return array<int, int> category id (0 = all products) => products in its subtree */
     protected function counts(array $rows): array
     {
-        $tree = app(CategoryTree::class);
-        $owners = [];
-        $members = [];
-
-        foreach ($rows as $row) {
-            if (! $row['category']) {
-                continue;
-            }
-
-            foreach ($tree->descendants((int) $row['category']->id) as $id) {
-                $owners[] = (int) $row['category']->id;
-                $members[] = $id;
-            }
-        }
-
-        $listed = Product::listed()->select('m_catalog_products.id')->toBase();
-        $counts = [];
-
-        if ($owners !== []) {
-            $counts = DB::query()
-                ->fromRaw('unnest(?::bigint[], ?::bigint[]) as nav(owner, member)', [
-                    '{'.implode(',', $owners).'}',
-                    '{'.implode(',', $members).'}',
-                ])
-                ->join('m_catalog_category_product as cp', 'cp.category_id', '=', 'nav.member')
-                ->whereIn('cp.product_id', $listed)
-                ->groupBy('nav.owner')
-                ->selectRaw('nav.owner, count(distinct cp.product_id) as n')
-                ->pluck('n', 'owner')
-                ->map(fn ($n) => (int) $n)
-                ->all();
-        }
+        $counts = app(CategoryCounts::class)->of(
+            collect($rows)->pluck('category')->filter()->all()
+        );
 
         if (collect($rows)->contains(fn ($row) => $row['category'] === null)) {
             $counts[0] = Product::listed()->count();

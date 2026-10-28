@@ -21,7 +21,7 @@
             "type": "checkbox",
             "default": true,
             "label": "A comparison button on catalogue cards",
-            "help": "In the photograph's corner, under the heart. On the product page it is always there."
+            "help": "In the photograph's corner, under the heart; on which devices — the theme's settings, \"Product cards\". On the product page it is always there."
         },
         {
             "key": "per_group_max",

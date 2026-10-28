@@ -57,7 +57,7 @@
     "Query": "Запрос",
     "Query shapes by the database time they took in total. One slow query shows as a high \"slowest\"; a cheap one asked everywhere shows as many runs.": "Виды запросов по суммарному времени в базе. Один медленный запрос виден по большому «самый медленный»; дешёвый, но спрашиваемый везде, — по числу запусков.",
     "Runs": "Запусков",
-    "Share": "Доля",
+    "Share of the time": "Доля",
     "Slow pages keep their whole timeline — every query, outside call and hook in order. So does every page opened while \"Trace my pages\" is on.": "Медленные страницы сохраняют полную шкалу — каждый запрос, внешний вызов и хук по порядку. Так же — каждая страница, открытая при включённой «Трассировке моих страниц».",
     "Slowest": "Самый медленный",
     "Stop": "Остановить",

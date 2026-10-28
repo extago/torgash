@@ -71,7 +71,11 @@
     $stripSticks = ! $quietHeader && theme_setting('category_strip') && theme_setting('category_strip_sticky', false);
     $headerHeight = ($stuckHeaderRem + ($stripSticks ? 3 : 0)).'rem';
 @endphp
-<body class="torgash-storefront min-h-screen bg-base-200 flex flex-col max-lg:pb-16" style="--torgash-header-h: {{ $headerHeight }}; --torgash-strip-top: {{ $stuckHeaderRem }}rem">
+{{-- Which buttons a card's photo shows, per device (theme settings
+     card_corner_*; the rules are app.css, .torgash-corner-more). --}}
+<body class="torgash-storefront min-h-screen bg-base-200 flex flex-col max-lg:pb-16"
+      data-card-corner-phone="{{ theme_setting('card_corner_phone', 'more') }}" data-card-corner-tablet="{{ theme_setting('card_corner_tablet', 'all') }}" data-card-corner-computer="{{ theme_setting('card_corner_computer', 'hover') }}"
+      style="--torgash-header-h: {{ $headerHeight }}; --torgash-strip-top: {{ $stuckHeaderRem }}rem">
     {{-- The three slots a module needs to reach the page without patching a
          theme: a counter's <noscript> pixel goes here, its script in
          `core.head`, a chat widget in `core.footer`. --}}

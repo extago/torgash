@@ -33,7 +33,7 @@
             "type": "checkbox",
             "default": true,
             "label": "Quick view on catalogue cards",
-            "help": "An eye in the card's corner opens the product in a window — its pictures, its main characteristics, the choice and \"Add to cart\" — without leaving the list."
+            "help": "An eye in the card's corner opens the product in a window — its pictures, its main characteristics, the choice and \"Add to cart\" — without leaving the list. On which devices it shows — the theme's settings, \"Product cards\"."
         },
         {
             "key": "card_buttons",

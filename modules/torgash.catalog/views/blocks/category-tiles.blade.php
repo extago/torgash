@@ -6,6 +6,10 @@
     own scrolling, so touch and trackpad need no script; tiles.js adds the
     indicator, the arrows and dragging by mouse. Prints nothing when no
     category is left to show.
+
+    A category's page draws its subcategories with this same view
+    (partials/catalog-subcategories, settings from the theme), so the two
+    look alike; `bare` there leaves the heading and the margin to the page.
 --}}
 @php
     $tilesTree = app(\Torgash\Catalog\Support\CategoryTree::class);
@@ -21,6 +25,9 @@
     // neighbours never share one, whatever the shop picked.
     $tilesHues = ($settings['colors'] ?? '') === 'tinted' ? [250, 340, 35, 150, 205, 295, 80, 175] : null;
     $tilesPicture = in_array($settings['picture'] ?? '', ['auto', 'tile', 'icon', 'none'], true) ? $settings['picture'] : 'auto';
+    // The picture's frame under the `under` look: the card as wide as the
+    // tile, or a circle / a rounded square around the picture.
+    $tilesShape = in_array($settings['shape'] ?? '', ['card', 'circle', 'rounded'], true) ? $settings['shape'] : 'card';
     // Sizes are whole px, typed by the shop; sanitize() clamped the numbers,
     // the view clamps again for a block saved before a limit moved.
     $tilesPx = fn ($value, int $default, int $min, int $max) => is_numeric($value) ? max($min, min($max, (int) round((float) $value))) : $default;
@@ -43,6 +50,16 @@
     }
     $tilesScrolls = $tilesLayout !== 'grid';
     $tilesHeading = trim((string) ($settings['heading'] ?? ''));
+    $tilesBare = ! empty($settings['bare']);
+    // How many products each holds, under its name; a category with no tile
+    // picture borrows the photo of its most popular product in stock — one
+    // query each for the whole row (CategoryCounts, CategoryPhotos).
+    $tilesCounts = ! empty($settings['counts']) && $tilesCategories->isNotEmpty()
+        ? app(\Torgash\Catalog\Support\CategoryCounts::class)->of($tilesCategories)
+        : null;
+    $tilesPhotos = ! empty($settings['photos']) && in_array($tilesPicture, ['auto', 'tile'], true)
+        ? app(\Torgash\Catalog\Support\CategoryPhotos::class)->of($tilesCategories->filter(fn ($c) => $c->tileImageUrl() === null), $tilesSize * 2)
+        : [];
 @endphp
 @if ($tilesCategories->isNotEmpty())
     @if ($tilesScrolls)
@@ -52,7 +69,7 @@
             @endpush
         @endonce
     @endif
-    <section @class(['torgash-block torgash-block-category-tiles', 'mb-10' => ! $inTabs])
+    <section @class(['torgash-block torgash-block-category-tiles', 'mb-10' => ! $inTabs && ! $tilesBare])
              style="--tile-pic: {{ $tilesSize }}px; --tile-gap: {{ $tilesGap }}px; --tile-text: {{ $tilesText }}px; --tile-pt: {{ $tilesPad[0] }}px; --tile-pr: {{ $tilesPad[1] }}px; --tile-pb: {{ $tilesPad[2] }}px; --tile-pl: {{ $tilesPad[3] }}px"
              @if ($tilesScrolls) x-data="torgashTiles" @endif>
         @if (! $inTabs && $tilesHeading !== '')
@@ -63,6 +80,7 @@
             <div @class([
                     'torgash-tiles',
                     'torgash-tiles-'.$tilesLook,
+                    'torgash-tiles-'.$tilesShape => $tilesShape !== 'card',
                     'torgash-tiles-tinted' => $tilesHues !== null,
                     'torgash-tiles-grid' => ! $tilesScrolls,
                     'torgash-tiles-strip' => $tilesScrolls,
@@ -72,21 +90,24 @@
                 @foreach ($tilesCategories as $tilesCategory)
                     @php
                         $tilesName = $tilesCategory->t('name');
+                        $tilesLent = $tilesPhotos[$tilesCategory->id] ?? null;
                         $tilesImage = match ($tilesPicture) {
-                            'auto' => $tilesCategory->tileImageUrl() ?? $tilesCategory->iconImageUrl(),
-                            'tile' => $tilesCategory->tileImageUrl(),
+                            'auto' => $tilesCategory->tileImageUrl() ?? $tilesLent ?? $tilesCategory->iconImageUrl(),
+                            'tile' => $tilesCategory->tileImageUrl() ?? $tilesLent,
                             'icon' => $tilesCategory->iconImageUrl(),
                             default => null,
                         };
-                        // A photo fills its box; an icon is a sign, drawn small
-                        // in the shop's colour.
+                        // A photo fills its box; a product's photo is the
+                        // product whole, inside it; an icon is a sign, drawn
+                        // small in the shop's colour.
                         $tilesIsPhoto = $tilesImage !== null && $tilesPicture !== 'icon' && $tilesCategory->tileImageUrl() === $tilesImage;
+                        $tilesIsProduct = $tilesImage !== null && ! $tilesIsPhoto && $tilesImage === $tilesLent;
                         $tilesIcon = $tilesImage === null && $tilesPicture !== 'none' ? $tilesCategory->lucideIcon() : null;
                     @endphp
                     <a href="{{ route('catalog.category', $tilesCategory->slug) }}" class="torgash-tile" draggable="false"
                        @if ($tilesHues) style="--tile-hue: {{ $tilesHues[$loop->index % count($tilesHues)] }}" @endif>
                         @if ($tilesPicture !== 'none')
-                            <span @class(['torgash-tile-pic', 'is-photo' => $tilesIsPhoto])>
+                            <span @class(['torgash-tile-pic', 'is-photo' => $tilesIsPhoto, 'is-product' => $tilesIsProduct])>
                                 @if ($tilesImage)
                                     <img src="{{ $tilesImage }}" alt="" loading="lazy" draggable="false">
                                 @elseif ($tilesIcon)
@@ -97,6 +118,9 @@
                             </span>
                         @endif
                         <span class="torgash-tile-name">{{ $tilesName }}</span>
+                        @if ($tilesCounts !== null)
+                            <span class="torgash-tile-count">{{ trans_choice(':count product|:count products', $tilesCounts[$tilesCategory->id] ?? 0) }}</span>
+                        @endif
                     </a>
                 @endforeach
             </div>

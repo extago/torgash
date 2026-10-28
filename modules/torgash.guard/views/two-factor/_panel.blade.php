@@ -127,7 +127,7 @@
                         <input type="password" name="current_password" autocomplete="current-password" required
                                placeholder="{{ __('Your password') }}" class="input input-bordered input-sm w-full">
                         <div>
-                            <button class="btn btn-sm btn-error btn-outline">{{ __('Turn off two-factor authentication') }}</button>
+                            <button class="btn btn-sm btn-error btn-outline">{{ __('Turn off') }}</button>
                         </div>
                     @endunless
                 </form>
@@ -188,8 +188,10 @@
         @else
             <form method="POST" action="{{ route($tfRoute.'.start') }}">
                 @csrf
+                {{-- Short: the card's heading already says what is set up, and
+                     the long name wrapped inside a phone's button. --}}
                 <button class="btn btn-primary btn-sm">
-                    <x-icon name="shield-plus" size="sm" /> {{ __('Set up two-factor authentication') }}
+                    <x-icon name="shield-plus" size="sm" /> {{ __('Set it up') }}
                 </button>
             </form>
         @endif

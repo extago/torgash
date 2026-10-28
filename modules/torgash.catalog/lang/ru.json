@@ -1186,5 +1186,22 @@
     "no category matches it, and a new one needs a name": "такой категории нет, а новой нужно название",
     "no characteristic matches it, and a new one needs a name": "такой характеристики нет, а новой нужно название",
     "Categories and the catalogue": "Категории и каталог",
-    "Product pages": "Страницы товаров"
+    "Product pages": "Страницы товаров",
+    "Picture frame": "Рамка картинки",
+    "For \"The picture on a card, the name under it\".": "Для «Картинка на карточке, название под ней».",
+    "A card as wide as the tile": "Карточка во всю ширину плитки",
+    "A circle": "Круг",
+    "A square with rounded corners": "Квадрат со скруглёнными углами",
+    "A photo from its products": "Фото из её товаров",
+    "A category with no tile picture shows the photo of its most popular product in stock.": "Категория без картинки для плитки покажет фото самого популярного товара в наличии.",
+    "Under each name, counting everything inside the category.": "Под каждым названием — считая всё, что внутри категории.",
+    "Subcategories": "Подкатегории",
+    "Show fewer": "Свернуть",
+    "On this category's page": "На странице этой категории",
+    "As the theme says": "Как в теме",
+    "Tiles with a picture": "Плитки с картинкой",
+    "Buttons — compact, in two rows": "Кнопки — компактно, в две строки",
+    "How the categories under this one are shown above its products. The theme's own choice is in its settings, \"Category page\".": "Как показывать категории внутри этой — над её товарами. Выбор темы — в её настройках, раздел «Страница категории».",
+    "Shown among its parent's subcategories": "Показывать среди подкатегорий родителя",
+    "Untick to leave it out of the tiles and buttons on its parent's page — the menus and the list beside the catalogue still have it.": "Снимите, чтобы убрать её из плиток и кнопок на странице родителя — в меню и в списке рядом с каталогом она останется."
 }

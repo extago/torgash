@@ -5,9 +5,14 @@
      is taller than a laptop's screen, and a sticky column that tall hides its
      own last items.
 
-     One list of links, drawn two ways by CSS: on a phone the cards dissolve
-     (`contents`) and their links become one strip of pills that scrolls
-     sideways — ten items stacked would push the page itself below the fold. --}}
+     One list of links, drawn two ways by CSS: on a phone the same card is a
+     menu under ONE full-width button — who is signed in, the column's own
+     first block (a strip of ten pills swiped sideways hid most of them, and
+     stacked they pushed the page below the fold); from md up it is the
+     column, simply in the page — app.css, .torgash-account-places. The
+     page's own heading says where you are, so the button names the person,
+     not the place. The menu hangs from its button, so it closes when the
+     page scrolls rather than riding up over the sticky header. --}}
 @php
     $accountUser = auth()->user();
     // Whatever a module puts in the account area. A LIST of items, not a
@@ -32,16 +37,31 @@
     $accountInitials = $accountUser
         ? (mb_strtoupper(collect(preg_split('/\s+/u', trim((string) $accountUser->name)) ?: [])->filter()->take(2)->map(fn ($word) => mb_substr($word, 0, 1))->implode('')) ?: '?')
         : '';
-    $accountRow = 'flex items-center gap-2.5 whitespace-nowrap rounded-full md:rounded-field px-3.5 md:px-2.5 h-9 text-sm transition-colors';
+    $accountRow = 'flex items-center gap-2.5 whitespace-nowrap rounded-field px-2.5 h-9 text-sm transition-colors';
 @endphp
 <aside class="torgash-account-nav shrink-0 md:w-60 md:self-start">
-    {{-- On a phone the strip opens scrolled to the page you are on. --}}
-    <nav aria-label="{{ __('My account') }}" x-data x-init="const a = $el.querySelector('[aria-current]'); if (a && $el.scrollWidth > $el.clientWidth) $el.scrollLeft = a.offsetLeft - 16"
-         class="relative -mx-3 px-3 sm:-mx-4 sm:px-4 md:mx-0 md:px-0 overflow-x-auto md:overflow-visible [scrollbar-width:none]">
-        {{-- ONE card on a computer: who, then the groups under small headings
-             split by a hairline — separate cards with big rows made the
-             column the heaviest thing on the page. --}}
-        <div class="flex md:flex-col gap-1.5 md:gap-0 w-max md:w-full md:bg-base-100 md:rounded-box md:border md:border-base-300/60 md:shadow-sm md:p-2">
+    <button type="button" popovertarget="account-places" style="anchor-name: --account-places"
+            class="md:hidden w-full flex items-center gap-3 bg-base-100 border border-base-300/60 rounded-box shadow-sm px-3 py-2 text-left cursor-pointer">
+        <span class="w-9 h-9 rounded-full bg-primary text-primary-content grid place-items-center text-sm font-semibold shrink-0" aria-hidden="true">
+            @if ($accountUser) {{ $accountInitials }} @else <x-icon name="user" size="sm" /> @endif
+        </span>
+        <span class="flex-1 min-w-0 leading-tight">
+            <span class="block text-sm font-semibold truncate">{{ $accountUser?->name ?: __('My account') }}</span>
+            @if ($accountUser?->email || $accountUser?->phone)
+                <span class="block text-xs opacity-60 truncate">{{ $accountUser->email ?: \App\Core\Support\Phones::display($accountUser->phone) }}</span>
+            @endif
+        </span>
+        <x-icon name="chevron-down" class="torgash-account-chevron opacity-60 shrink-0" />
+    </button>
+    {{-- ONE card: who, then the groups under small headings split by a
+         hairline — separate cards with big rows made the column the
+         heaviest thing on the page. On a phone it scrolls inside itself
+         when it is taller than the screen under its button. --}}
+    <nav id="account-places" popover style="position-anchor: --account-places" data-align="start" aria-label="{{ __('My account') }}"
+         x-data x-on:scroll.window.passive="$el.matches(':popover-open') && $el.hidePopover()"
+         class="torgash-popover torgash-account-places bg-base-100 text-base-content border border-base-300 md:border-base-300/60 rounded-box shadow-lg md:shadow-sm p-2">
+        <div class="max-h-[calc(100dvh-10rem)] overflow-y-auto overscroll-contain md:max-h-none md:overflow-visible">
+            {{-- On a phone this is the button itself. --}}
             @if ($accountUser)
                 <div class="hidden md:flex items-center gap-2.5 px-2 pt-1.5 pb-3">
                     <span class="w-9 h-9 rounded-full bg-primary text-primary-content grid place-items-center text-sm font-semibold shrink-0" aria-hidden="true">{{ $accountInitials }}</span>
@@ -55,21 +75,21 @@
             @endif
 
             @foreach ($accountGroups as $accountGroup => $accountItems)
-                <section class="contents md:block md:border-t md:border-base-300/60 md:pt-2 md:pb-1">
+                <section class="border-t border-base-300/60 pt-2 pb-1 max-md:first-of-type:border-t-0 max-md:first-of-type:pt-0">
                     @if ($accountGroup !== '')
-                        <h2 class="hidden md:block text-xs font-medium opacity-50 px-2.5 pb-1">{{ $accountGroupTitles[$accountGroup] }}</h2>
+                        <h2 class="text-xs font-medium opacity-50 px-2.5 pb-1">{{ $accountGroupTitles[$accountGroup] }}</h2>
                     @endif
-                    <ul class="contents md:flex md:flex-col">
+                    <ul class="flex flex-col">
                         @foreach ($accountItems as $item)
                             <li>
                                 <a href="{{ $item['url'] }}" @if (! empty($item['active'])) aria-current="page" @endif
                                    @class([
                                        $accountRow,
-                                       'bg-neutral text-neutral-content md:bg-base-200 md:text-base-content font-semibold' => ! empty($item['active']),
-                                       'bg-base-100 border border-base-300/70 md:border-0 md:bg-transparent hover:bg-base-200' => empty($item['active']),
+                                       'bg-base-200 font-semibold' => ! empty($item['active']),
+                                       'hover:bg-base-200' => empty($item['active']),
                                    ])>
-                                    <x-icon :name="$item['icon'] ?? 'circle'" size="sm" class="shrink-0 {{ ! empty($item['active']) ? 'md:text-primary' : 'opacity-70' }}" />
-                                    <span class="md:flex-1 md:truncate">{{ $item['label'] }}</span>
+                                    <x-icon :name="$item['icon'] ?? 'circle'" size="sm" class="shrink-0 {{ ! empty($item['active']) ? 'text-primary' : 'opacity-70' }}" />
+                                    <span class="flex-1 truncate">{{ $item['label'] }}</span>
                                     @if (! empty($item['badge']))
                                         <span class="badge badge-primary badge-sm">{{ $item['badge'] }}</span>
                                     @endif
@@ -80,13 +100,19 @@
                 </section>
             @endforeach
 
-            <form method="POST" action="{{ route('account.logout') }}" class="contents md:block md:border-t md:border-base-300/60 md:pt-1">
+            <form method="POST" action="{{ route('account.logout') }}" class="border-t border-base-300/60 pt-1">
                 @csrf
-                <button type="submit" class="{{ $accountRow }} w-full bg-base-100 border border-base-300/70 md:border-0 md:bg-transparent hover:bg-base-200 cursor-pointer text-left">
+                <button type="submit" class="{{ $accountRow }} w-full hover:bg-base-200 cursor-pointer text-left">
                     <x-icon name="log-out" size="sm" class="shrink-0 opacity-70" />
-                    <span class="md:flex-1">{{ __('Logout') }}</span>
+                    <span class="flex-1">{{ __('Logout') }}</span>
                 </button>
             </form>
         </div>
     </nav>
 </aside>
+
+{{-- Keyed as the popover component keys it: one tag a page, placing the panel where
+     the browser cannot (iOS 18 and older). --}}
+@pushOnce('scripts', 'popover-anchor')
+    <script nonce="{{ csp_nonce() }}" src="{{ asset_url('/assets/js/popover-anchor.js') }}" defer></script>
+@endPushOnce

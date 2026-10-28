@@ -249,6 +249,12 @@ class ProductBlock
                     ['value' => 'inside', 'label' => 'The picture and the name on one card'],
                     ['value' => 'corner', 'label' => 'The name on a card, a large picture in its corner'],
                 ]],
+                ['key' => 'shape', 'type' => 'select', 'default' => 'card', 'label' => 'Picture frame',
+                    'help' => 'For "The picture on a card, the name under it".', 'options' => [
+                    ['value' => 'card', 'label' => 'A card as wide as the tile'],
+                    ['value' => 'circle', 'label' => 'A circle'],
+                    ['value' => 'rounded', 'label' => 'A square with rounded corners'],
+                ]],
                 ['key' => 'colors', 'type' => 'select', 'default' => 'plain', 'label' => 'Tile colours', 'options' => [
                     ['value' => 'plain', 'label' => "Plain, in the theme's colours"],
                     ['value' => 'tinted', 'label' => 'Each tile its own soft colour'],
@@ -259,6 +265,10 @@ class ProductBlock
                     ['value' => 'icon', 'label' => 'Icon only'],
                     ['value' => 'none', 'label' => 'No picture'],
                 ]],
+                ['key' => 'photos', 'type' => 'checkbox', 'default' => false, 'label' => 'A photo from its products',
+                    'help' => 'A category with no tile picture shows the photo of its most popular product in stock.'],
+                ['key' => 'counts', 'type' => 'checkbox', 'default' => false, 'label' => 'How many products',
+                    'help' => 'Under each name, counting everything inside the category.'],
                 ['key' => 'picture_size', 'type' => 'number', 'default' => 72, 'min' => 24, 'max' => 240, 'suffix' => 'px',
                     'label' => 'Picture size'],
                 ['key' => 'padding', 'type' => 'text', 'label' => 'Padding inside a tile', 'short' => true, 'placeholder' => '12px 16px',
