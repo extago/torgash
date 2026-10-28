@@ -93,6 +93,21 @@ class DeclensionTest extends TestCase
         $this->assertSame('Тернополя', $this->declension->form('Тернопіль', 'uk', 2));
     }
 
+    /**
+     * A town is inanimate, so its accusative ("доставка в …") is the name
+     * itself — the alternated stem is for the other cases: "в Київ", never
+     * "в Києв".
+     */
+    public function test_ukrainian_accusative_is_the_name_itself(): void
+    {
+        foreach (['Київ', 'Львів', 'Харків', 'Тернопіль', 'Луцьк', 'Ужгород', 'Дніпро'] as $name) {
+            $this->assertSame($name, $this->declension->form($name, 'uk', 4), $name);
+        }
+
+        $this->assertSame('Полтаву', $this->declension->form('Полтава', 'uk', 4));
+        $this->assertSame('Днепр', $this->declension->form('Днепр', 'ru', 4));
+    }
+
     /** A velar stem takes -у in the locative: у Луцьку, not "у Луцькі". */
     public function test_ukrainian_velar_locative(): void
     {

@@ -30,7 +30,16 @@ namespace App\Core\Display;
  * `{items: [{id, label}]}` for `?q=`, and `labels` => fn (array $ids) =>
  * [id => label] for the ones already chosen. `periods` is a list of
  * from–to pairs, `format` => `date` (25.12, or 25.12.2026 for one year
- * only) or `time` (18:00) — checked by `Periods`.
+ * only) or `time` (18:00) — checked by `Periods`. An `options` kind may
+ * give `labels` too, when its options are drawn for a picker (a tree,
+ * indented): a rule's description reads the plain names from there.
+ *
+ * A kind about the PRODUCT may say which products it can pass, as a query
+ * (`narrow` => fn (Builder $products, array $rule) => …): whoever wants an
+ * example — a landing looked at before it goes live — then finds one in SQL
+ * instead of asking every product in turn (`DisplayRules::narrow()`). It may
+ * only narrow, never decide: `matches` is still asked, so a kind that cannot
+ * say itself exactly in SQL says nothing.
  *
  * A definition is code in a file, exactly like a block type: the admin picks
  * from what is registered and fills in a value, and nothing they can type

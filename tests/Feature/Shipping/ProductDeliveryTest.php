@@ -5,6 +5,7 @@ namespace Tests\Feature\Shipping;
 use App\Core\Settings\SettingsManager;
 use Tests\TestCase;
 use Torgash\Catalog\Models\Product;
+use Torgash\Locations\Models\Place;
 use Torgash\Shipping\Models\ShippingMethod;
 use Torgash\Shipping\Models\Zone;
 
@@ -34,6 +35,28 @@ class ProductDeliveryTest extends TestCase
 
         app(SettingsManager::class)->set('torgash.shipping', 'product_estimate', false);
         $this->assertStringNotContainsString('torgash-product-delivery', $this->get('http://localhost/product/'.$product->slug)->getContent());
+    }
+
+    /** "Delivery to" says where the parcel goes: "в Полтаву", not "в Полтаве". */
+    public function test_the_heading_names_the_town_it_is_sent_to(): void
+    {
+        $poltava = Place::create([
+            'country' => 'UA',
+            'name' => ['en' => 'Poltava', 'ru' => 'Полтава', 'uk' => 'Полтава'],
+            'type' => 'city',
+            'enabled' => true,
+            'source' => 'manual',
+            'population' => 1000,
+        ]);
+        $product = $this->product('PD-3');
+        $this->withSession(['checkout_location' => ['place_id' => $poltava->id, 'postal' => null, 'town' => null, 'country' => 'UA']]);
+
+        $html = $this->get('http://localhost/ru/product/'.$product->slug)->assertOk()->getContent();
+        $block = substr($html, strpos($html, 'torgash-product-delivery'), 2000);
+        $this->assertStringContainsString('Доставка в Полтаву', $block);
+        $this->assertStringNotContainsString('Полтаве', $block);
+
+        $this->assertStringContainsString('Delivery to Poltava', $this->get('http://localhost/product/'.$product->slug)->getContent());
     }
 
     public function test_a_product_nobody_sends_has_no_delivery_block(): void

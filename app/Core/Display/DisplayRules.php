@@ -2,6 +2,8 @@
 
 namespace App\Core\Display;
 
+use Illuminate\Database\Eloquent\Builder;
+
 /**
  * "Should this be shown here, now, to them?" — asked of a list of rules.
  *
@@ -185,14 +187,66 @@ class DisplayRules
         }
 
         // Names, not ids: "belongs to 2, 5" is not a sentence anybody can check.
-        $options = $definition['value'] === 'search'
-            ? RuleKinds::labels($kind, array_map('strval', (array) $value))
-            : RuleKinds::options($kind);
-        $chosen = array_map(
-            fn ($id) => (string) ($options[$id] ?? $id),
-            is_array($value) ? $value : [$value],
-        );
+        // The kind's own `labels` first, where it has them: options drawn
+        // for a picker may carry its indent ("— — iPhone"), no part of a name.
+        $ids = array_map('strval', is_array($value) ? $value : [$value]);
+        $names = RuleKinds::labels($kind, $ids);
 
-        return implode(', ', $chosen);
+        if ($definition['value'] !== 'search' && array_diff($ids, array_map('strval', array_keys($names))) !== []) {
+            $names += RuleKinds::options($kind);
+        }
+
+        return implode(', ', array_map(fn ($id) => (string) ($names[$id] ?? $id), $ids));
+    }
+
+    /**
+     * A query of products cut down to the ones these rules CAN pass, as far
+     * as their kinds say how (`narrow`) — so a screen that wants one example
+     * ("look at this landing on a product it is for") finds it in SQL rather
+     * than by asking every product in the shop. It only narrows: what comes
+     * back is still to be asked of passes() one by one, since a kind that
+     * cannot say itself in SQL (stock, "has no description") is left out of
+     * the query, never guessed at.
+     *
+     * With ALL, a kind nobody registered fails every product (the class
+     * docblock), so nothing is left. With ANY, such a rule is simply never the
+     * one that passes, and a known rule that cannot narrow lets every product
+     * through — the query is narrowed only when all the known ones can.
+     *
+     * @param  list<array<string, mixed>>  $rules
+     */
+    public function narrow(Builder $query, array $rules, string $match = self::MATCH_ALL): Builder
+    {
+        $rules = array_values(array_filter($rules, fn ($rule) => is_array($rule) && ! empty($rule['kind'])));
+        $known = array_values(array_filter($rules, fn (array $rule) => RuleKinds::has($rule['kind'])));
+        $narrowing = fn (array $rule) => RuleKinds::find($rule['kind'])['narrow'] ?? null;
+
+        if ($match !== self::MATCH_ANY) {
+            if (count($known) < count($rules)) {
+                return $query->whereRaw('false');
+            }
+
+            foreach ($known as $rule) {
+                if (is_callable($by = $narrowing($rule))) {
+                    $query->where(fn (Builder $products) => $by($products, $rule));
+                }
+            }
+
+            return $query;
+        }
+
+        if ($rules !== [] && $known === []) {
+            return $query->whereRaw('false');
+        }
+
+        if ($known === [] || array_filter($known, fn (array $rule) => ! is_callable($narrowing($rule))) !== []) {
+            return $query;
+        }
+
+        return $query->where(function (Builder $any) use ($known, $narrowing) {
+            foreach ($known as $rule) {
+                $any->orWhere(fn (Builder $products) => $narrowing($rule)($products, $rule));
+            }
+        });
     }
 }

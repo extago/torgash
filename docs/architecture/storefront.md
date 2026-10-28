@@ -319,6 +319,17 @@ this file is the reasoning. Read it before changing anything it covers.
   too long to send to the page (`search` = a type-ahead URL answering
   `{items: [{id, label}]}`, `labels` = names for chosen ids). A form that
   narrows the editor's groups offers `when` alongside `where` and `who`.
+  An `options` kind whose options are drawn for a picker (the category tree,
+  indented "— — iPhone Duo") gives `labels` too: `describe()` — the summary
+  in a list — reads names from there, never the picker's indent.
+  A product kind may say which products it can pass as a query (`narrow` =>
+  fn (Builder $products, $rule)); `DisplayRules::narrow($query, $rules,
+  all|any)` applies them, so a screen that wants ONE example product finds
+  it in SQL (a landing's preview, `Torgash\Landings\PreviewProduct`). It
+  only ever narrows — whatever comes back is still asked of `passes()` —
+  so a kind that cannot say itself exactly in SQL (stock, "has no
+  description") declares nothing; under ANY one such rule lets every
+  product through, under ALL an unknown kind leaves none.
 - Popups are `<x-modal>` (core, `resources/views/components/modal.blade.php`):
   a native `<dialog>` with three optional zones — `trigger` (an attribute),
   `title`/`icon`, the default slot, and a `footer` slot; `framed` puts the
@@ -434,9 +445,15 @@ it — three modules that do not know each other must not own three corners.
   `banners` replaced torgash.blocks' `banner` (moved by `install()`).
   Embla Carousel (MIT, `assets/embla/`, fetched only by a page with a
   slider): daisyUI's `carousel` is only scroll-snap classes and cannot loop;
-  Splide brings markup of its own. Off-screen slides are `inert`; autoplay
-  waits under the pointer and focus and stops in a hidden tab — an automated
-  test in a background tab sees it stand still. A slider's settings are
+  Splide brings markup of its own. Off-screen slides are `inert` — and only
+  they: what is in view comes from Embla's IntersectionObserver a frame
+  AFTER it starts (and after every reInit, i.e. a resize), so `slider.js`
+  takes it on `slidesInView` whenever the strip is at rest (while it moves,
+  `settle` does). Synced only on select/settle, every card in view but the
+  first stayed inert — no hover, no click — until the strip first moved.
+  Autoplay waits under the pointer and focus and stops in a hidden tab — an
+  automated test in a background tab, or in an occluded window that draws
+  no frames (no frames, no observer), sees it stand still. A slider's settings are
   shaped in ONE place, `Slider::shapeOptions()` (the template preview uses
   it too): "in view" to a tenth (a fraction peeks), `drag` snap / glide
   (Embla `skipSnaps`) / free (`dragFree`), `step` one / view

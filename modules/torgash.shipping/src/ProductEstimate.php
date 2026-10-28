@@ -58,15 +58,16 @@ class ProductEstimate
     }
 
     /**
-     * The town as "delivery to …" needs it — the case a sentence takes after
-     * the preposition (6 — "в Киеве"), asked of whoever keeps the towns
-     * (`locations.place.forms`) so this module names none of their classes;
-     * else what was typed into the town box.
+     * The town as "delivery to …" needs it — where the parcel GOES, the
+     * accusative (4 — "в Днепр", "в Москву"), not where something is (6 —
+     * "в Днепре"); asked of whoever keeps the towns (`locations.place.forms`)
+     * so this module names none of their classes; else what was typed into
+     * the town box.
      */
     protected function townIn(Location $location): ?string
     {
         if ($location->placeId) {
-            $form = hook_filter('locations.place.forms', [], ['ids' => [$location->placeId], 'case' => 6])[$location->placeId] ?? null;
+            $form = hook_filter('locations.place.forms', [], ['ids' => [$location->placeId], 'case' => 4])[$location->placeId] ?? null;
 
             if (is_string($form) && trim($form) !== '') {
                 return $form;

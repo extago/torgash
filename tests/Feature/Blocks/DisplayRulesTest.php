@@ -10,6 +10,7 @@ use Tests\TestCase;
 use Torgash\Blocks\Models\Block;
 use Torgash\Catalog\Models\Category;
 use Torgash\Catalog\Models\Product;
+use Torgash\Catalog\Support\CategoryTree;
 
 /**
  * When a block is shown — the engine, its registry, and the block using both.
@@ -131,6 +132,46 @@ class DisplayRulesTest extends TestCase
 
         $this->assertStringContainsString('Wholesale', $described);
         $this->assertStringNotContainsString((string) $group->id, $described);
+    }
+
+    /** The picker indents a subcategory ("— — Duo"); a sentence names it. */
+    public function test_a_subcategory_is_described_by_its_name_alone(): void
+    {
+        $phones = Category::create(['name' => ['en' => 'DR phones'], 'slug' => 'dr-phones', 'enabled' => true]);
+        $duo = Category::create(['name' => ['en' => 'DR duo'], 'slug' => 'dr-duo', 'parent_id' => $phones->id, 'enabled' => true]);
+        app(CategoryTree::class)->flush();
+
+        $this->assertSame('— DR duo', RuleKinds::options('product_category')[$duo->id], 'the picker still indents');
+        $this->assertSame('Product category — is in DR phones, DR duo', app(DisplayRules::class)->describe([
+            'kind' => 'product_category', 'operator' => 'in', 'value' => [$phones->id, $duo->id],
+        ]));
+    }
+
+    /**
+     * Narrowed in SQL as far as the kinds can say it — only narrowed: a kind
+     * that cannot (stock) leaves its products in for passes() to ask.
+     */
+    public function test_rules_narrow_a_product_query_as_far_as_their_kinds_can(): void
+    {
+        $phones = Category::create(['name' => ['en' => 'NR phones'], 'slug' => 'nr-phones', 'enabled' => true]);
+        $duo = Category::create(['name' => ['en' => 'NR duo'], 'slug' => 'nr-duo', 'parent_id' => $phones->id, 'enabled' => true]);
+        app(CategoryTree::class)->flush();
+        $inDuo = Product::create(['sku' => 'NR-1', 'name' => ['en' => 'NR-1'], 'slug' => 'nr-1', 'price' => 100, 'stock' => 1, 'status' => 'active']);
+        $inDuo->categories()->attach($duo->id);
+        $elsewhere = Product::create(['sku' => 'NR-2', 'name' => ['en' => 'NR-2'], 'slug' => 'nr-2', 'price' => 100, 'stock' => 1, 'status' => 'active']);
+
+        $narrowed = fn (array $rules, string $match = DisplayRules::MATCH_ALL) => app(DisplayRules::class)
+            ->narrow(Product::query()->whereKey([$inDuo->id, $elsewhere->id]), $rules, $match)->orderBy('id')->pluck('id')->all();
+        $inPhones = ['kind' => 'product_category', 'operator' => 'in', 'value' => [$phones->id]];
+        $inStock = ['kind' => 'product_stock', 'operator' => 'in_stock', 'value' => null];
+
+        $this->assertSame([$inDuo->id], $narrowed([$inPhones]), 'a category takes its subcategories');
+        $this->assertSame([$elsewhere->id], $narrowed([['operator' => 'not_in'] + $inPhones]));
+        $this->assertSame([$inDuo->id, $elsewhere->id], $narrowed([$inStock]));
+        $this->assertSame([$inDuo->id], $narrowed([$inPhones, $inStock]));
+        $this->assertSame([$inDuo->id, $elsewhere->id], $narrowed([$inPhones, $inStock], DisplayRules::MATCH_ANY), 'one that cannot narrow lets everything through');
+        $this->assertSame([], $narrowed([$inPhones, ['kind' => 'module_is_gone', 'operator' => 'in', 'value' => [1]]]), 'all, with a kind nobody knows: nothing');
+        $this->assertSame([$inDuo->id], $narrowed([$inPhones, ['kind' => 'module_is_gone', 'operator' => 'in', 'value' => [1]]], DisplayRules::MATCH_ANY));
     }
 
     /**

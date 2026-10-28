@@ -3,7 +3,7 @@
 return [
     // The engine's own version — what the System page reports and what an
     // update server will one day be asked about (PLAN §45).
-    'version' => '0.3.0',
+    'version' => '0.3.1',
 
     // Where pg_dump / pg_restore live, for backups (PLAN §45). Empty means
     // "on the PATH", which is how a Linux server has them; OSPanel keeps them

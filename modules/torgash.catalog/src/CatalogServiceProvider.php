@@ -806,6 +806,9 @@ class CatalogServiceProvider extends ServiceProvider
             // interleaves the levels, so "Gaming laptops" sits nowhere near
             // "Laptops" and the shop owner picks the wrong one.
             'options' => fn () => app(CategoryTree::class)->options(),
+            // ...and the names alone for a rule's description: "is in
+            // iPhone Duo", not "is in — — iPhone Duo".
+            'labels' => fn (array $ids) => app(CategoryTree::class)->names($ids),
             'operators' => [
                 'in' => 'is in',
                 'not_in' => 'is not in',
@@ -825,6 +828,15 @@ class CatalogServiceProvider extends ServiceProvider
 
                 return ($rule['operator'] ?? 'in') === 'not_in' ? ! $has : $has;
             },
+            // The same question in SQL, subtree and all (DisplayRules::narrow).
+            'narrow' => function (Builder $products, array $rule) {
+                $wanted = app(CategoryTree::class)->descendants(array_map('intval', (array) ($rule['value'] ?? [])));
+                $in = fn (Builder $category) => $category->whereKey($wanted);
+
+                return ($rule['operator'] ?? 'in') === 'not_in'
+                    ? $products->whereDoesntHave('categories', $in)
+                    : $products->whereHas('categories', $in);
+            },
         ]);
 
         // "Which category is OPEN" — the question a block in a category page's
@@ -838,6 +850,7 @@ class CatalogServiceProvider extends ServiceProvider
             'group' => 'where',
             'value' => 'options',
             'options' => fn () => app(CategoryTree::class)->options(),
+            'labels' => fn (array $ids) => app(CategoryTree::class)->names($ids),
             'operators' => [
                 'in' => 'is in',
                 'not_in' => 'is not in',
@@ -879,6 +892,13 @@ class CatalogServiceProvider extends ServiceProvider
                 $has = $product->labels->pluck('id')->intersect($wanted)->isNotEmpty();
 
                 return ($rule['operator'] ?? 'in') === 'not_in' ? ! $has : $has;
+            },
+            'narrow' => function (Builder $products, array $rule) {
+                $in = fn (Builder $label) => $label->whereKey(array_map('intval', (array) ($rule['value'] ?? [])));
+
+                return ($rule['operator'] ?? 'in') === 'not_in'
+                    ? $products->whereDoesntHave('labels', $in)
+                    : $products->whereHas('labels', $in);
             },
         ]);
 

@@ -149,7 +149,8 @@ this file is the reasoning. Read it before changing anything it covers.
   `Package::forCart()`, `CartFacts::forCart()`, `ShippingOptions::inZone()`
   — so the page never quotes what the cart then prices differently. The
   town is the visitor's (`LocationStore`), named in the sentence's case
-  through `locations.place.forms` (case 6), and changed through the
+  through `locations.place.forms` — case 4, where the parcel goes ("в
+  Днепр", "в Москву"), never 6 ("в Днепре") — and changed through the
   locations window (its save reloads the page). The term is the rate's
   `delivery_time` (or the carrier's offer). A module adds a line under an
   option through `shipping.product_delivery.note` — warehouses says, under

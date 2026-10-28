@@ -138,15 +138,28 @@
                 this.api.on('scroll', () => this.$root.classList.add('is-moving'));
                 this.api.on('settle', () => this.$root.classList.remove('is-moving'));
 
-                // Not on `slidesInView`: that fires while the strip moves, and
-                // switching `inert` and a class on every slide (eighteen, with
-                // the copies) mid-movement made the browser restyle the whole
-                // strip between frames — Embla animates on the main thread,
-                // so that work showed as small stutters. Once a stop is chosen
-                // and once the strip comes to rest is enough.
+                // Not on every `slidesInView`: that fires while the strip
+                // moves, and switching `inert` and a class on every slide
+                // (eighteen, with the copies) mid-movement made the browser
+                // restyle the whole strip between frames — Embla animates on
+                // the main thread, so that work showed as small stutters.
+                // Once a stop is chosen and once the strip comes to rest is
+                // enough.
                 this.api.on('select', sync);
                 this.api.on('settle', sync);
                 this.api.on('reInit', sync);
+                // But Embla learns what is in view from an IntersectionObserver,
+                // which first answers a frame AFTER it starts — and after every
+                // reInit, as a resize builds a new one. Until then
+                // slidesInView() is empty and only the selected slide counts
+                // as shown, so the other cards in view stayed inert (no hover,
+                // no click) until the strip first moved. Its answer is taken
+                // whenever the strip is at rest; while it moves, `settle` is.
+                this.api.on('slidesInView', () => {
+                    if (!this.$root.classList.contains('is-moving')) {
+                        sync();
+                    }
+                });
                 this.api.on('scroll', () => {
                     this.progress = copied
                         ? Math.round((this.selected + 1) / this.count * 100)

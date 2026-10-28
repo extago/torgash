@@ -82,6 +82,17 @@ class Landing extends Model
 
     public const ASSETS = 'assets';
 
+    /** @return array<string, string> state() => the list's word for it, in the order of its tabs */
+    public static function stateLabels(): array
+    {
+        return [
+            'running' => __('Shown now'),
+            'scheduled' => __('Waits for its date'),
+            'ended' => __('Its dates are over'),
+            'off' => __('Switched off'),
+        ];
+    }
+
     /** off / scheduled / ended / running — the list's badge. */
     public function state(): string
     {

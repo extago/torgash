@@ -11,26 +11,88 @@ use RuntimeException;
 use Torgash\Catalog\Models\Product;
 use Torgash\Landings\Files;
 use Torgash\Landings\Models\Landing;
+use Torgash\Landings\PreviewProduct;
 use Torgash\Landings\Zip;
 
 /**
- * Catalogue → Product landings: the list, one landing's form (its words per
- * language, CSS, files, where and for whom), copying, and a landing as a ZIP.
+ * Catalogue → Product landings: the list (switched in place, several at
+ * once), one landing's form (its words per language, CSS, files, where and
+ * for whom), copying, a look at it on a product, and a landing as a ZIP.
  */
 class LandingsController extends Controller
 {
     public function index(Request $request)
     {
-        $landings = Landing::query()
-            ->when($request->filled('q'), fn ($q) => $q->where('name', 'ilike', '%'.$request->input('q').'%'))
+        $filters = [
+            'q' => trim((string) $request->query('q', '')),
+            'state' => array_key_exists((string) $request->query('state'), Landing::stateLabels()) ? (string) $request->query('state') : '',
+        ];
+
+        // A shop has dozens of these, not thousands: read once, counted per
+        // state for the tabs (a state moves with the clock, not a column).
+        $searched = Landing::query()
+            ->when($filters['q'] !== '', fn ($q) => $q->where('name', 'ilike', '%'.addcslashes($filters['q'], '%_\\').'%'))
             ->orderBy('placement')->orderBy('sort')->orderBy('id')
             ->get();
+        $landings = $filters['state'] === '' ? $searched : $searched->filter(fn (Landing $landing) => $landing->state() === $filters['state'])->values();
 
         $counts = DB::table('m_landing_products')->selectRaw('landing_id, excluded, count(*) as n')
             ->groupBy('landing_id', 'excluded')->get()
             ->groupBy('landing_id')->map(fn ($rows) => $rows->pluck('n', 'excluded')->mapWithKeys(fn ($n, $ex) => [$ex ? 'excluded' : 'picked' => (int) $n]));
 
-        return view('torgash.landings::admin.index', ['landings' => $landings, 'counts' => $counts]);
+        return view('torgash.landings::admin.index', [
+            'landings' => $landings,
+            'counts' => $counts,
+            'filters' => $filters,
+            'stateCounts' => ['' => $searched->count()] + collect(Landing::stateLabels())
+                ->map(fn ($label, $state) => $searched->filter(fn (Landing $landing) => $landing->state() === $state)->count())->all(),
+        ]);
+    }
+
+    /** Several at once from the list: switched on, off, or deleted. */
+    public function bulk(Request $request)
+    {
+        $validated = $request->validate([
+            'action' => ['required', Rule::in(['enable', 'disable', 'delete'])],
+            'ids' => ['required', 'array', 'min:1'],
+            'ids.*' => ['integer'],
+        ]);
+
+        // Model by model: a landing's files go with it only through its
+        // model, and the audit hears Eloquent events.
+        $landings = Landing::query()->whereIn('id', $validated['ids'])->get();
+
+        if ($validated['action'] === 'delete') {
+            $landings->each->delete();
+
+            return back()->with('status', trans_choice(':count landing deleted.|:count landings deleted.', $landings->count(), ['count' => $landings->count()]));
+        }
+
+        $landings->each(fn (Landing $landing) => $landing->update(['enabled' => $validated['action'] === 'enable']));
+
+        return back()->with('status', trans_choice(':count landing updated.|:count landings updated.', $landings->count(), ['count' => $landings->count()]));
+    }
+
+    /**
+     * The landing as saved, on a product's page — whatever its switch, dates
+     * and conditions say (`?landing_preview=`, staff only). On the product
+     * asked for, or on one it is for (PreviewProduct).
+     */
+    public function preview(Request $request, Landing $landing, PreviewProduct $previews)
+    {
+        $product = $request->filled('product')
+            ? Product::query()->reachable()->find((int) $request->query('product'))
+            : $previews->for($landing)['product'];
+
+        if ($product === null) {
+            return redirect()->route('admin.landings.edit', $landing)->withErrors([
+                'product' => $request->filled('product')
+                    ? __('That product has no page on the storefront: it is switched off or deleted.')
+                    : __('There is no product to look at it on yet.'),
+            ]);
+        }
+
+        return redirect()->to(route('catalog.product', $product->slug).'?landing_preview='.$landing->id);
     }
 
     public function create()
@@ -94,12 +156,13 @@ class LandingsController extends Controller
         return redirect()->route('admin.landings.edit', $copy)->with('status', __('The landing is copied. The copy is switched off.'));
     }
 
-    /** On or off as chosen (`enabled`); a request naming neither flips it. */
-    public function toggle(Request $request, Landing $landing)
+    /** The list's in-place switch: answers with the cell. */
+    public function status(Request $request, Landing $landing)
     {
-        $landing->update(['enabled' => $request->has('enabled') ? $request->boolean('enabled') : ! $landing->enabled]);
+        $request->validate(['enabled' => ['required', 'boolean']]);
+        $landing->update(['enabled' => $request->boolean('enabled')]);
 
-        return back();
+        return view('torgash.landings::admin._status', ['landing' => $landing]);
     }
 
     public function upload(Request $request, Landing $landing, Files $files)
@@ -251,15 +314,8 @@ class LandingsController extends Controller
             'picked' => $links->where('excluded', false)->pluck('product_id')->map(fn ($id) => (int) $id)->values()->all(),
             'excluded' => $links->where('excluded', true)->pluck('product_id')->map(fn ($id) => (int) $id)->values()->all(),
             'files' => $landing->exists ? app(Files::class)->of($landing) : [],
-            'previewProduct' => $this->previewProduct($landing, $links),
+            // Named on the form: where "Look at it" opens is never a guess.
+            'landingPreview' => $landing->exists ? app(PreviewProduct::class)->for($landing) : ['product' => null, 'for' => false],
         ];
-    }
-
-    /** A product to look at the landing on: one picked by hand, else any product it applies to, else any. */
-    protected function previewProduct(Landing $landing, $links): ?Product
-    {
-        $id = $links->where('excluded', false)->pluck('product_id')->first();
-
-        return ($id ? Product::find($id) : null) ?? Product::query()->where('status', 'active')->orderBy('id')->first();
     }
 }

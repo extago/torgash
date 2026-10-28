@@ -219,6 +219,26 @@ class CategoryTree
         return str_repeat($marker, $this->depth((int) $category->id)).$name;
     }
 
+    /**
+     * The names alone, for a sentence ("is in iPhone Duo") — options() is for
+     * a picker, and its indent is no part of a name.
+     *
+     * @param  iterable<int|string>  $ids
+     * @return array<int, string>
+     */
+    public function names(iterable $ids): array
+    {
+        $names = [];
+
+        foreach ($ids as $id) {
+            if ($category = $this->find((int) $id)) {
+                $names[(int) $id] = $category->t('name', admin_content_locale()) ?: $category->slug;
+            }
+        }
+
+        return $names;
+    }
+
     /** @return array<int, list<int>> */
     protected function childMap(): array
     {

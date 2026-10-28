@@ -12,6 +12,7 @@ use Torgash\Catalog\Models\Product;
 use Torgash\Catalog\Support\CategoryTree;
 use Torgash\Landings\Landings;
 use Torgash\Landings\Models\Landing;
+use Torgash\Landings\PreviewProduct;
 use Torgash\Landings\Zip;
 
 /**
@@ -211,6 +212,70 @@ class LandingsTest extends TestCase
 
         $this->actingAs($admin)->delete('http://localhost/admin/landings/'.$landing->id)->assertRedirect();
         $this->assertNull(Landing::find($landing->id));
+    }
+
+    /** The list: a landing switched in place (the answer is its cell), by state, several at once. */
+    public function test_the_list_switches_in_place_and_several_at_once(): void
+    {
+        $admin = $this->admin();
+        $one = $this->landing(['name' => 'LND-ONE']);
+        $two = $this->landing(['name' => 'LND-TWO', 'enabled' => false]);
+        $three = $this->landing(['name' => 'LND-THREE']);
+
+        $this->actingAs($admin)->patch('http://localhost/admin/landings/'.$one->id.'/status', ['enabled' => '0'])
+            ->assertOk()->assertSee('id="landing-status-'.$one->id.'"', false)->assertSee('Switched off');
+        $this->assertFalse($one->fresh()->enabled);
+
+        $this->actingAs($admin)->get('http://localhost/admin/landings?state=off')->assertOk()
+            ->assertSee('LND-ONE')->assertSee('LND-TWO')->assertDontSee('LND-THREE');
+
+        $this->actingAs($admin)->post('http://localhost/admin/landings/bulk', ['action' => 'enable', 'ids' => [$one->id, $two->id]])->assertRedirect();
+        $this->assertTrue($one->fresh()->enabled);
+        $this->assertTrue($two->fresh()->enabled);
+
+        Storage::disk('public')->put($three->folder().'/assets/a.webp', 'x');
+        $this->actingAs($admin)->post('http://localhost/admin/landings/bulk', ['action' => 'delete', 'ids' => [$two->id, $three->id]])->assertRedirect();
+        $this->assertNull(Landing::find($two->id));
+        $this->assertNull(Landing::find($three->id));
+        Storage::disk('public')->assertMissing($three->folder().'/assets/a.webp');
+        $this->assertNotNull(Landing::find($one->id));
+    }
+
+    /**
+     * Looked at on a product it is FOR: picked by hand first, else the first
+     * its conditions take — never the catalogue's first product, which is
+     * where a landing for one category used to open — and never one left out.
+     */
+    public function test_the_preview_opens_on_a_product_the_landing_is_for(): void
+    {
+        $admin = $this->admin();
+        $laptops = Category::create(['name' => ['en' => 'Laptops'], 'slug' => 'lnd-pv-laptops', 'enabled' => true]);
+        app(CategoryTree::class)->flush();
+        $laptop = $this->product('LND-PV-1', '<p>x</p>');
+        $laptop->categories()->attach($laptops->id);
+        $landing = $this->landing(['enabled' => false, 'rules' => [['kind' => 'product_category', 'operator' => 'in', 'value' => [$laptops->id]]]]);
+        $preview = 'http://localhost/admin/landings/'.$landing->id.'/preview';
+
+        $this->actingAs($admin)->get($preview)->assertRedirect('http://localhost/product/lnd-pv-1?landing_preview='.$landing->id);
+        $this->actingAs($admin)->get('http://localhost/admin/landings/'.$landing->id.'/edit')->assertOk()
+            ->assertSee('Opens on a product it is for:')->assertSee('LND-PV-1 — LND-PV-1 product');
+
+        $picked = $this->product('LND-PV-2', '<p>x</p>');
+        DB::table('m_landing_products')->insert(['landing_id' => $landing->id, 'product_id' => $picked->id, 'excluded' => false]);
+        $this->actingAs($admin)->get($preview)->assertRedirect('http://localhost/product/lnd-pv-2?landing_preview='.$landing->id);
+
+        // Nothing it is for: it opens on any product, and the form says so.
+        DB::table('m_landing_products')->where('landing_id', $landing->id)->update(['product_id' => $laptop->id, 'excluded' => true]);
+        $chosen = app(PreviewProduct::class)->for($landing);
+        $this->assertFalse($chosen['for']);
+        $this->assertNotSame($laptop->id, $chosen['product']->id);
+        $this->actingAs($admin)->get('http://localhost/admin/landings/'.$landing->id.'/edit')->assertOk()->assertSee('No product fits it yet');
+
+        // Any product, asked for; one with no page is refused.
+        $this->actingAs($admin)->get($preview.'?product='.$this->product->id)->assertRedirect('http://localhost/product/lnd-1?landing_preview='.$landing->id);
+        $this->product->update(['status' => 'disabled']);
+        $this->actingAs($admin)->get($preview.'?product='.$this->product->id)
+            ->assertRedirect('http://localhost/admin/landings/'.$landing->id.'/edit')->assertSessionHasErrors('product');
     }
 
     public function test_a_file_must_be_what_its_name_says(): void

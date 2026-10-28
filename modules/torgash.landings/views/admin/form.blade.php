@@ -31,11 +31,42 @@
                 <div class="font-semibold truncate leading-tight">{{ $landing->exists ? $landing->name : __('New landing') }}</div>
             </div>
             @if ($landing->exists)
-                @if ($previewProduct)
-                    <a href="{{ route('catalog.product', $previewProduct->slug) }}?landing_preview={{ $landing->id }}" target="_blank" rel="noopener"
-                       class="btn btn-ghost btn-sm gap-1.5" title="{{ __('As saved, on :product — even while it is switched off', ['product' => $previewProduct->t('name')]) }}">
-                        <x-icon name="eye" /> {{ __('Look at it') }}
-                    </a>
+                @if ($landingPreview['product'])
+                    @php
+                        $previewName = $landingPreview['product']->t('name', admin_content_locale()) ?: $landingPreview['product']->sku;
+                    @endphp
+                    {{-- On a product it is FOR (PreviewProduct), named in the
+                         panel; the chevron looks for another. The search box
+                         stands inside the landing's form: no name, so it is
+                         never sent, and Enter must not send the form. --}}
+                    <div class="flex items-center">
+                        <a href="{{ route('admin.landings.preview', $landing) }}" target="_blank" rel="noopener" class="btn btn-ghost btn-sm gap-1.5"
+                           title="{{ $landingPreview['for'] ? __('As saved, on :product — even while it is switched off', ['product' => $previewName]) : __('No product fits it yet — it opens on :product', ['product' => $previewName]) }}">
+                            <x-icon name="eye" /> {{ __('Look at it') }}
+                        </a>
+                        <div class="dropdown dropdown-end">
+                            <div tabindex="0" role="button" class="btn btn-ghost btn-sm btn-square" title="{{ __('On another product') }}" aria-label="{{ __('On another product') }}">
+                                <x-icon name="chevron-down" />
+                            </div>
+                            <div tabindex="0" class="dropdown-content bg-base-100 rounded-box shadow-md w-80 mt-2 p-3 z-50 border border-base-300 flex flex-col gap-2"
+                                 x-data="landingPreview({{ \Illuminate\Support\Js::from(route('admin.landings.products')) }}, {{ \Illuminate\Support\Js::from(route('admin.landings.preview', $landing)) }})">
+                                <div class="text-xs">
+                                    <span @class(['opacity-60' => $landingPreview['for'], 'text-warning' => ! $landingPreview['for']])>{{ $landingPreview['for'] ? __('Opens on a product it is for:') : __('No product fits it yet, so it opens on any:') }}</span>
+                                    <a href="{{ route('admin.landings.preview', $landing) }}" target="_blank" rel="noopener" class="link link-hover block font-medium truncate">{{ $landingPreview['product']->sku }} — {{ $previewName }}</a>
+                                </div>
+                                <label class="input input-sm w-full gap-2">
+                                    <x-icon name="search" size="sm" class="opacity-50" />
+                                    <input type="search" x-model="q" x-on:keydown.enter.prevent class="grow" placeholder="{{ __('Another product: SKU or name…') }}" aria-label="{{ __('On another product') }}">
+                                </label>
+                                <ul class="menu menu-sm p-0 w-full max-h-64 overflow-y-auto flex-nowrap" x-show="found.length" x-cloak>
+                                    <template x-for="item in found" :key="item.id">
+                                        <li><a :href="at(item.id)" target="_blank" rel="noopener" x-text="item.label"></a></li>
+                                    </template>
+                                </ul>
+                                <p class="text-xs opacity-60" x-show="q.trim() !== '' && !loading && !found.length" x-cloak>{{ __('Nothing found.') }}</p>
+                            </div>
+                        </div>
+                    </div>
                 @endif
                 <div class="dropdown dropdown-end">
                     <div tabindex="0" role="button" class="btn btn-ghost btn-sm btn-square" title="{{ __('More actions') }}">
@@ -236,5 +267,43 @@
               data-confirm="{{ __('Delete this file?') }}">@csrf @method('DELETE')</form>
         <form method="POST" id="landing-import" action="{{ route('admin.landings.import', $landing) }}" enctype="multipart/form-data"
               data-confirm="{{ __('Replace the HTML, CSS and files of this landing with the archive\'s?') }}">@csrf</form>
+
+        @push('scripts')
+            <script nonce="{{ csp_nonce() }}">
+                document.addEventListener('alpine:init', () => {
+                    // "Look at it" on another product: the pickers' own product
+                    // search (debounced, only the latest answer counts), its
+                    // answers as links to the preview.
+                    Alpine.data('landingPreview', (source, preview) => ({
+                        q: '',
+                        found: [],
+                        loading: false,
+                        asked: 0,
+                        init() {
+                            this.$watch('q', () => this.ask());
+                        },
+                        ask() {
+                            clearTimeout(this.timer);
+                            const q = this.q.trim();
+                            if (q === '') { this.found = []; this.loading = false; return; }
+                            this.loading = true;
+                            this.timer = setTimeout(async () => {
+                                const ticket = ++this.asked;
+                                try {
+                                    const response = await fetch(source + '?q=' + encodeURIComponent(q), { headers: { Accept: 'application/json' } });
+                                    const found = response.ok ? await response.json() : [];
+                                    if (ticket === this.asked) { this.found = found; }
+                                } finally {
+                                    if (ticket === this.asked) { this.loading = false; }
+                                }
+                            }, 250);
+                        },
+                        at(id) {
+                            return preview + '?product=' + id;
+                        },
+                    }));
+                });
+            </script>
+        @endpush
     @endif
 @endsection

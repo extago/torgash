@@ -119,7 +119,23 @@ the same shape back.
 
 ## Looking before switching it on
 
-"Look at it" on the form opens a product with the landing as saved, even
-while it is switched off — only for staff who may edit landings. It is the
-product's ordinary address with `?landing_preview=<the landing's number>`
-added, so the landing can be looked at on any other product the same way.
+"Look at it" on the form (and the arrow in its row of the list) opens the
+landing as saved on a product's page, even while it is switched off — only
+for staff who may edit landings. The product is one the landing is FOR: the
+first picked by hand, else the first its conditions about the product take
+(a category, a label, stock, what the product has); the conditions about
+the day and the visitor do not choose a product, and a product left out is
+never chosen. The panel beside the button names that product, and finds
+any other to look at it on. A landing no product fits yet opens on any
+product, and the panel says so.
+
+It is the product's ordinary address with `?landing_preview=<the landing's
+number>` added, so the landing can be looked at on any product that way too.
+
+## The list
+
+The status is switched in its own cell: the badge says where the landing
+stands (shown now, waiting for its date, past its dates, switched off), the
+menu under it switches it on or off. The tabs above count each state. Tick
+several to switch them on or off at once, or to delete them with their
+files.

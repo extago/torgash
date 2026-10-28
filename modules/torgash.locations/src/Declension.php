@@ -239,11 +239,11 @@ class Declension
 
         // Київ → Києв-, Львів → Львов-, Харків → Харков-.
         if (str_ends_with($lower, 'їв')) {
-            return $this->ukrainianHard(Str::substr($name, 0, -2).'єв', soft: false);
+            return $this->ukrainianHard(Str::substr($name, 0, -2).'єв', soft: false, nominative: $name);
         }
 
         if (str_ends_with($lower, 'ів')) {
-            return $this->ukrainianHard(Str::substr($name, 0, -2).'ов', soft: false);
+            return $this->ukrainianHard(Str::substr($name, 0, -2).'ов', soft: false, nominative: $name);
         }
 
         // Тернопіль → Тернопол-ь: the same alternation one letter further in.
@@ -257,9 +257,12 @@ class Declension
     /**
      * The masculine endings, off a stem the alternation has already fixed.
      *
+     * The accusative of a town (inanimate) is its nominative — "в Київ", never
+     * the oblique stem "в Києв" — so the nominative is always handed in.
+     *
      * @return array<int, string>
      */
-    protected function ukrainianHard(string $stem, bool $soft, ?string $nominative = null): array
+    protected function ukrainianHard(string $stem, bool $soft, string $nominative): array
     {
         $last = Str::lower(Str::substr($stem, -1));
         $velar = in_array($last, ['к', 'г', 'х'], true);
@@ -267,7 +270,7 @@ class Declension
         return [
             2 => $stem.($soft ? 'я' : 'а'),
             3 => $stem.($soft ? 'ю' : 'у'),
-            4 => $nominative ?? $stem,
+            4 => $nominative,
             5 => $stem.($soft ? 'ем' : 'ом'),
             // у Луцьку, but у Києві: a velar stem takes -у, everything else -і.
             6 => $stem.($velar ? 'у' : 'і'),
