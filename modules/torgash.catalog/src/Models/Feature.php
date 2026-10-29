@@ -20,6 +20,14 @@ class Feature extends Model
     public const PURPOSE_VARIATION = 'variation';
 
     /**
+     * What a characteristic IS: a plain one (filter), a variation axis, the
+     * brand. The one list every writer checks against — the form, the demo
+     * pack, an import — so a row never carries a purpose nothing can name
+     * (a demo file once said "plain", and the list printed the raw word).
+     */
+    public const PURPOSES = ['filter', self::PURPOSE_VARIATION, 'brand'];
+
+    /**
      * How the values are drawn (see the migration that added the columns):
      * on the product page's variation picker, and in the filter panel. Only
      * drawing — the control underneath is the same in every style.
@@ -74,7 +82,9 @@ class Feature extends Model
 
     public function values(): HasMany
     {
-        return $this->hasMany(FeatureValue::class)->orderBy('sort');
+        // `id` closes the order: values of one `sort` (a fresh list is all 0)
+        // otherwise come in whatever order the table happens to hold them.
+        return $this->hasMany(FeatureValue::class)->orderBy('sort')->orderBy('id');
     }
 
     /** Empty = applies to every category. */

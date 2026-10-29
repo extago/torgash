@@ -1,6 +1,7 @@
 @extends('admin.layout')
 
 @section('title', __('Speed'))
+@section('title_hint', __('Real visits measured and added up by the hour: what a page typically costs, what one in twenty costs, where the time goes. Trace your own pages for a full timeline.'))
 
 @use('Torgash\Speed\Format')
 
@@ -18,32 +19,32 @@
             <div class="alert alert-success">{{ session('status') }}</div>
         @endif
 
-        {{-- Header: what is being looked at, and the one action. --}}
-        <div class="flex flex-wrap items-center gap-3">
-            <h1 class="text-xl font-bold flex-1">{{ __('Speed') }}</h1>
-
-            <div class="join">
+        {{-- The period as one row of tabs (app.css, `admin-tabs`), the one
+             action at its end, under the layout's heading. --}}
+        <div class="admin-tabs-row">
+            <nav class="admin-tabs" aria-label="{{ __('Period') }}">
                 @foreach ($periodNames as $key => $label)
                     <a href="{{ route('admin.speed.index', array_filter(['period' => $key, 'zone' => $zone])) }}"
-                       class="btn btn-sm join-item {{ $period === $key ? 'btn-primary' : '' }}">{{ $label }}</a>
+                       @class(['admin-tab', 'is-active' => $period === $key])>{{ $label }}</a>
                 @endforeach
+            </nav>
+            <div class="admin-tabs-actions">
+                @if ($tracingUntil)
+                    <form method="POST" action="{{ route('admin.speed.trace-me.stop') }}">
+                        @csrf
+                        <button class="btn btn-warning gap-1.5">
+                            <x-icon name="radio" size="sm" /> {{ __('Tracing your pages until :time', ['time' => date('H:i', $tracingUntil)]) }} · {{ __('Stop') }}
+                        </button>
+                    </form>
+                @else
+                    <form method="POST" action="{{ route('admin.speed.trace-me') }}">
+                        @csrf
+                        <button class="btn btn-ghost gap-1.5" title="{{ __('For ten minutes every page you open is measured and keeps its full timeline.') }}">
+                            <x-icon name="scan-search" size="sm" /> {{ __('Trace my pages for 10 minutes') }}
+                        </button>
+                    </form>
+                @endif
             </div>
-
-            @if ($tracingUntil)
-                <form method="POST" action="{{ route('admin.speed.trace-me.stop') }}">
-                    @csrf
-                    <button class="btn btn-sm btn-warning gap-2">
-                        <x-icon name="radio" /> {{ __('Tracing your pages until :time', ['time' => date('H:i', $tracingUntil)]) }} · {{ __('Stop') }}
-                    </button>
-                </form>
-            @else
-                <form method="POST" action="{{ route('admin.speed.trace-me') }}">
-                    @csrf
-                    <button class="btn btn-sm btn-outline gap-2" title="{{ __('For ten minutes every page you open is measured and keeps its full timeline.') }}">
-                        <x-icon name="scan-search" /> {{ __('Trace my pages for 10 minutes') }}
-                    </button>
-                </form>
-            @endif
         </div>
 
         @unless ($enabled)

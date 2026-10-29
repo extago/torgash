@@ -1,6 +1,7 @@
 @extends('admin.layout')
 
 @section('title', __('Product info blocks'))
+@section('title_hint', __('Accordion cards shown below the buy panel on the product page — delivery, payment, warranty, whatever helps close the sale. Multiple cards can be open at once.'))
 
 @section('content')
     @php
@@ -15,17 +16,26 @@
         <div class="alert alert-error text-sm">{{ $errors->first() }}</div>
     @endif
 
+    {{-- The states as one row of tabs over the card, the screen's action at
+         its end (app.css, `admin-tabs`); LINKS carrying the search. --}}
+    <div class="admin-tabs-row">
+        <nav class="admin-tabs" aria-label="{{ __('Product info blocks') }}">
+            @foreach ($stateTabs as $stateKey => $stateLabel)
+                <a href="{{ request()->fullUrlWithQuery(['state' => $stateKey ?: null, 'page' => null]) }}"
+                   @class(['admin-tab', 'is-active' => $filters['state'] === $stateKey])>
+                    {{ $stateLabel }} <span class="admin-tab-count">{{ $stateCounts[$stateKey] }}</span>
+                </a>
+            @endforeach
+        </nav>
+        <div class="admin-tabs-actions">
+            <a href="{{ route('admin.motivation.create') }}" class="btn btn-primary">+ {{ __('New card') }}</a>
+        </div>
+    </div>
+
     <div class="card bg-base-100 border border-base-300" x-data="{ selected: [] }">
         <div class="card-body gap-4">
-            <div class="flex justify-between items-start gap-3 flex-wrap">
-                <p class="text-sm opacity-70 max-w-3xl">
-                    {{ __('Accordion cards shown below the buy panel on the product page — delivery, payment, warranty, whatever helps close the sale. Multiple cards can be open at once.') }}
-                </p>
-                <a href="{{ route('admin.motivation.create') }}" class="btn btn-primary btn-sm">+ {{ __('New card') }}</a>
-            </div>
-
             <form method="GET" class="flex flex-wrap items-center gap-2">
-                <label class="input input-sm w-full sm:w-72 gap-2">
+                <label class="input input-sm grow min-w-48 gap-2">
                     <x-icon name="search" size="sm" class="opacity-50" />
                     <input type="search" name="q" value="{{ $filters['q'] }}" class="grow" placeholder="{{ __('Search by title…') }}">
                 </label>
@@ -34,15 +44,6 @@
                     <a href="{{ route('admin.motivation.index') }}" class="btn btn-ghost btn-sm">{{ __('Reset') }}</a>
                 @endif
             </form>
-
-            <div class="join flex-wrap -mt-1">
-                @foreach ($stateTabs as $stateKey => $stateLabel)
-                    <a href="{{ request()->fullUrlWithQuery(['state' => $stateKey ?: null]) }}"
-                       @class(['btn btn-sm join-item', 'btn-active' => $filters['state'] === $stateKey])>
-                        {{ $stateLabel }} <span class="opacity-50">{{ $stateCounts[$stateKey] }}</span>
-                    </a>
-                @endforeach
-            </div>
 
             <div class="min-h-12 flex items-center">
                 <p x-show="!selected.length" class="text-xs opacity-50">

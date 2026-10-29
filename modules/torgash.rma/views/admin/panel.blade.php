@@ -24,7 +24,7 @@
     <div class="card-body gap-3">
         <h2 class="card-title text-base">
             {{ __('Return or exchange') }}
-            <span class="badge {{ State::badge($return->state) }}">{{ State::label($return->state) }}</span>
+            <span class="badge badge-sm {{ State::badge($return->state) }}">{{ State::label($return->state) }}</span>
         </h2>
 
         <div class="flex flex-wrap gap-x-6 gap-y-1 text-sm">
@@ -190,7 +190,7 @@
                         <p class="text-sm opacity-70">{{ __('Say why. A refusal with no reason is what makes people ring instead of read.') }}</p>
                         <textarea name="note" rows="3" maxlength="5000" class="textarea textarea-bordered w-full"
                                   placeholder="{{ __('Write a reply to the customer') }}"></textarea>
-                        <button class="btn btn-error btn-sm">{{ __('Decline') }}</button>
+                        <button class="btn btn-sm btn-error btn-outline">{{ __('Decline') }}</button>
                     </form>
                 </x-modal>
             @endif

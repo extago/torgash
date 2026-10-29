@@ -91,5 +91,8 @@
     "Views": "Просмотры",
     "from": "с",
     "made from the name": "составится из названия",
-    "made from the title": "составится из заголовка"
+    "Rows per page": "Строк на странице",
+    ":n per page": ":n на странице",
+    "made from the title": "составится из заголовка",
+    "Articles in rubrics, published by their date: a scheduled one appears on time, drafts and hidden ones never reach the storefront.": "Статьи по рубрикам, публикуемые по дате: запланированная выйдет в срок, черновики и скрытые на витрину не попадают."
 }

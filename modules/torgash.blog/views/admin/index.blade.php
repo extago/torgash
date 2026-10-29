@@ -1,45 +1,56 @@
 @extends('admin.layout')
 
 @section('title', __('Blog'))
+@section('title_hint', __('Articles in rubrics, published by their date: a scheduled one appears on time, drafts and hidden ones never reach the storefront.'))
 
 @section('content')
     @if (session('status'))
         <div class="alert alert-success text-sm">{{ session('status') }}</div>
     @endif
 
+    {{-- The states as one row of tabs over the card, the screen's actions at
+         its end (app.css, `admin-tabs`); LINKS carrying the search and the rubric. --}}
+    <div class="admin-tabs-row">
+        <nav class="admin-tabs" aria-label="{{ __('Blog') }}">
+            @foreach (['' => __('All'), 'published' => __('Published'), 'scheduled' => __('Scheduled'), 'draft' => __('Drafts'), 'hidden' => __('Hidden')] as $statusKey => $statusLabel)
+                <a href="{{ route('admin.blog.index', array_filter(['status' => $statusKey, 'q' => $filters['q'], 'rubric' => $filters['rubric'], 'per' => $filters['per'] !== \Torgash\Blog\Http\Admin\PostsController::PER_PAGE[0] ? $filters['per'] : null])) }}"
+                   @class(['admin-tab', 'is-active' => $filters['status'] === $statusKey])>
+                    {{ $statusLabel }}
+                    @if (isset($counts[$statusKey]))
+                        <span class="admin-tab-count">{{ $counts[$statusKey] }}</span>
+                    @endif
+                </a>
+            @endforeach
+        </nav>
+        <div class="admin-tabs-actions">
+            <a href="{{ route('admin.blog.rubrics.index') }}" class="btn btn-ghost gap-1.5"><x-icon name="tags" size="sm" /> {{ __('Rubrics') }}</a>
+            <a href="{{ route('admin.blog.create') }}" class="btn btn-primary gap-1.5"><x-icon name="plus" size="sm" /> {{ __('New article') }}</a>
+        </div>
+    </div>
+
     <div class="card bg-base-100 border border-base-300">
         <div class="card-body gap-4">
-            <div class="flex flex-wrap items-center gap-2">
-                <form method="GET" class="flex flex-wrap items-center gap-2 flex-1">
-                    <label class="input input-sm w-full sm:w-72 gap-2">
-                        <x-icon name="search" size="sm" class="opacity-50" />
-                        <input type="search" name="q" value="{{ $filters['q'] }}" class="grow" placeholder="{{ __('Title or address…') }}">
-                    </label>
-                    <select name="rubric" class="select select-sm select-bordered" data-submit-on-change aria-label="{{ __('Rubric') }}">
-                        <option value="">{{ __('Every rubric') }}</option>
-                        @foreach ($rubrics as $rubricOption)
-                            <option value="{{ $rubricOption->id }}" @selected($filters['rubric'] === $rubricOption->id)>{{ $rubricOption->t('name', admin_content_locale()) }}</option>
-                        @endforeach
-                    </select>
-                    @if ($filters['status'] !== '')
-                        <input type="hidden" name="status" value="{{ $filters['status'] }}">
-                    @endif
-                </form>
-                <a href="{{ route('admin.blog.rubrics.index') }}" class="btn btn-ghost btn-sm gap-1.5"><x-icon name="tags" size="sm" /> {{ __('Rubrics') }}</a>
-                <a href="{{ route('admin.blog.create') }}" class="btn btn-primary btn-sm gap-1.5"><x-icon name="plus" size="sm" /> {{ __('New article') }}</a>
-            </div>
-
-            <div role="tablist" class="tabs tabs-border">
-                @foreach (['' => __('All'), 'published' => __('Published'), 'scheduled' => __('Scheduled'), 'draft' => __('Drafts'), 'hidden' => __('Hidden')] as $statusKey => $statusLabel)
-                    <a role="tab" href="{{ route('admin.blog.index', array_filter(['status' => $statusKey, 'q' => $filters['q'], 'rubric' => $filters['rubric']])) }}"
-                       @class(['tab', 'tab-active' => $filters['status'] === $statusKey])>
-                        {{ $statusLabel }}
-                        @if (isset($counts[$statusKey]))
-                            <span class="opacity-50 ml-1">{{ $counts[$statusKey] }}</span>
-                        @endif
-                    </a>
-                @endforeach
-            </div>
+            <form method="GET" class="flex flex-wrap items-center gap-2">
+                <label class="input input-sm grow min-w-48 gap-2">
+                    <x-icon name="search" size="sm" class="opacity-50" />
+                    <input type="search" name="q" value="{{ $filters['q'] }}" class="grow" placeholder="{{ __('Title or address…') }}">
+                </label>
+                <select name="rubric" class="select select-sm w-auto" data-submit-on-change aria-label="{{ __('Rubric') }}">
+                    <option value="">{{ __('Every rubric') }}</option>
+                    @foreach ($rubrics as $rubricOption)
+                        <option value="{{ $rubricOption->id }}" @selected($filters['rubric'] === $rubricOption->id)>{{ $rubricOption->t('name', admin_content_locale()) }}</option>
+                    @endforeach
+                </select>
+                @if ($filters['status'] !== '')
+                    <input type="hidden" name="status" value="{{ $filters['status'] }}">
+                @endif
+                {{-- How many rows a page shows; a change asks the list again. --}}
+                <select name="per" class="select select-sm w-auto shrink-0" data-submit-on-change aria-label="{{ __('Rows per page') }}">
+                    @foreach (\Torgash\Blog\Http\Admin\PostsController::PER_PAGE as $perOption)
+                        <option value="{{ $perOption }}" @selected($filters['per'] === $perOption)>{{ __(':n per page', ['n' => $perOption]) }}</option>
+                    @endforeach
+                </select>
+            </form>
 
             @if ($posts->isEmpty())
                 <div class="text-center py-12 opacity-60">

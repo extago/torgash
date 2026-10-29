@@ -26,7 +26,7 @@
     </div>
 @endif
 
-<div class="flex flex-col gap-4" x-data="{ adding: @js($rulesOpen) }">
+<div class="flex flex-col gap-6" x-data="{ adding: @js($rulesOpen) }">
 <section class="card bg-base-100 border border-base-300" x-show="adding" x-cloak id="rule-form">
     <form method="POST" action="{{ $rulesAction }}" class="card-body gap-4">
         @csrf

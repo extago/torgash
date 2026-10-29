@@ -33,6 +33,10 @@
     // once; a touch still opens it with a tap. A panel with BUTTONS
     // stays click-only: one opened by hover closes on the way to them.
     'hover' => false,
+    // `start` / `end`: hang the panel from the button's own edge rather than
+    // centring it on the button (app.css, `data-align`) — for a button at the
+    // edge of what it belongs to, the heading's hint.
+    'align' => null,
 ])
 @php
     $popoverId = $id ?: 'popover-'.\Illuminate\Support\Str::lower(\Illuminate\Support\Str::random(10));
@@ -43,6 +47,7 @@
         {{ $attributes->merge(['class' => 'cursor-pointer text-left']) }}>{{ $trigger }}</button>
 <div id="{{ $popoverId }}" popover style="position-anchor: --{{ $popoverId }}"
      data-placement="{{ $placement === 'top' ? 'top' : 'bottom' }}"
+     @if (in_array($align, ['start', 'end'], true)) data-align="{{ $align }}" @endif
      @class([
          'torgash-popover torgash-bar-panel bg-base-100 text-base-content border border-base-300',
          // Both are centred on their button (app.css); a hint is just

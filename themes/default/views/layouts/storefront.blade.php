@@ -8,28 +8,14 @@
          structured data, all out of App\Core\Seo\PageMeta — see the component.
          A page fills that in; nothing prints a head tag of its own. --}}
     <x-seo.head />
-    {{-- The theme's settings as this storefront chose them (PLAN §37). --}}
+    {{-- The theme's settings as this storefront chose them (PLAN §37), and
+         the colour scheme written on <html> before the first paint. --}}
     <x-theme.style />
     <script nonce="{{ csp_nonce() }}">
         // "A script runs here": what only a script can open (the phone's menu,
         // the filter sheet) is folded away only under this class, so a browser
         // without one still gets every control in the page's own flow.
         document.documentElement.classList.add('torgash-js');
-        (function () {
-            try {
-                var saved = localStorage.getItem('torgash-theme');
-                if (saved === 'torgash-dark' || saved === 'torgash-light') {
-                    document.documentElement.setAttribute('data-theme', saved);
-                } else {
-                    // Nothing chosen yet: the shop's default (theme setting
-                    // "Appearance"); "auto" leaves it to the system.
-                    var mode = document.querySelector('meta[name="torgash-mode"]');
-                    if (mode && (mode.content === 'light' || mode.content === 'dark')) {
-                        document.documentElement.setAttribute('data-theme', 'torgash-' + mode.content);
-                    }
-                }
-            } catch (e) {}
-        })();
     </script>
     <link rel="stylesheet" href="{{ asset_url('/assets/css/app.css') }}">
     <script nonce="{{ csp_nonce() }}" src="{{ asset_url('/assets/js/vendor/htmx.min.js') }}" defer></script>

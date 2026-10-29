@@ -1,6 +1,7 @@
 @extends('admin.layout')
 
 @section('title', __('Automations'))
+@section('title_hint', __('When something happens, wait if you like, check the conditions, then act. Rules run in the queue, so nothing here slows the shop down.'))
 
 @section('content')
     @php
@@ -26,39 +27,41 @@
         <div class="alert alert-error text-sm">{{ $errors->first() }}</div>
     @endif
 
+    {{-- The states as one row of tabs over the card, the screen's actions at
+         its end (app.css, `admin-tabs`); LINKS carrying the search. --}}
+    <div class="admin-tabs-row">
+        <nav class="admin-tabs" aria-label="{{ __('Automations') }}">
+            @foreach (['' => __('All'), 'enabled' => __('Enabled'), 'disabled' => __('Disabled')] as $statusKey => $statusLabel)
+                <a href="{{ route('admin.automations.index', array_filter(['status' => $statusKey, 'q' => $filters['q']], fn ($v) => $v !== null && $v !== '')) }}"
+                   @class(['admin-tab', 'is-active' => (string) $filters['status'] === (string) $statusKey])>
+                    {{ $statusLabel }} <span class="admin-tab-count">{{ $statusCounts[$statusKey] }}</span>
+                </a>
+            @endforeach
+        </nav>
+        <div class="admin-tabs-actions">
+            <a href="{{ route('admin.automations.runs') }}" class="btn btn-ghost gap-1.5">
+                <x-icon name="list-checks" size="sm" /> {{ __('Run log') }}
+                @if ($failedToday)
+                    <span class="badge badge-sm badge-error" title="{{ __('Failed in the last 24 hours') }}">{{ $failedToday }}</span>
+                @endif
+            </a>
+            <a href="{{ route('admin.automations.import') }}" class="btn btn-ghost gap-1.5"><x-icon name="upload" size="sm" /> {{ __('Import') }}</a>
+            <a href="{{ route('admin.automations.create') }}" class="btn btn-primary">+ {{ __('New rule') }}</a>
+        </div>
+    </div>
+
     {{-- One Alpine root: the bulk bar and every row's checkbox share
          `selected` — the categories list's own arrangement. --}}
     <div class="card bg-base-100 border border-base-300" x-data="{ selected: [] }">
         <div class="card-body gap-4">
-            <div class="flex justify-between items-start gap-3 flex-wrap">
-                <p class="text-sm opacity-70 max-w-3xl">
-                    {{ __('When something happens, wait if you like, check the conditions, then act. Rules run in the queue, so nothing here slows the shop down.') }}
-                </p>
-                <div class="flex items-center gap-2">
-                    <a href="{{ route('admin.automations.runs') }}" class="btn btn-sm gap-1.5">
-                        <x-icon name="list-checks" size="sm" /> {{ __('Run log') }}
-                        @if ($failedToday)
-                            <span class="badge badge-sm badge-error" title="{{ __('Failed in the last 24 hours') }}">{{ $failedToday }}</span>
-                        @endif
-                    </a>
-                    <a href="{{ route('admin.automations.import') }}" class="btn btn-sm gap-1.5"><x-icon name="upload" size="sm" /> {{ __('Import') }}</a>
-                    <a href="{{ route('admin.automations.create') }}" class="btn btn-primary btn-sm">+ {{ __('New rule') }}</a>
-                </div>
-            </div>
-
             <form method="GET" class="flex flex-wrap items-center gap-2">
-                <label class="input input-sm w-full sm:w-72 gap-2">
+                @if ($filters['status'])
+                    <input type="hidden" name="status" value="{{ $filters['status'] }}">
+                @endif
+                <label class="input input-sm grow min-w-48 gap-2">
                     <x-icon name="search" size="sm" class="opacity-50" />
                     <input type="search" name="q" value="{{ $filters['q'] }}" class="grow" placeholder="{{ __('Search by name…') }}">
                 </label>
-                <div class="join">
-                    @foreach (['' => __('All'), 'enabled' => __('Enabled'), 'disabled' => __('Disabled')] as $statusKey => $statusLabel)
-                        <button type="submit" name="status" value="{{ $statusKey }}"
-                                @class(['btn btn-sm join-item', 'btn-active' => (string) $filters['status'] === (string) $statusKey])>
-                            {{ $statusLabel }} <span class="opacity-50">{{ $statusCounts[$statusKey] }}</span>
-                        </button>
-                    @endforeach
-                </div>
                 @if ($filters['q'] !== '' || $filters['status'])
                     <a href="{{ route('admin.automations.index') }}" class="btn btn-ghost btn-sm">{{ __('Reset') }}</a>
                 @endif
@@ -127,7 +130,7 @@
                                         <div class="text-xs opacity-60 mt-0.5 flex items-center gap-1">
                                             <x-icon name="zap" size="sm" class="opacity-60" /> {{ Triggers::label($rule->event) }}
                                             @if ($ruleSubject)
-                                                <span class="badge badge-xs badge-ghost">{{ __($ruleSubject::label()) }}</span>
+                                                <span class="badge badge-sm badge-ghost">{{ __($ruleSubject::label()) }}</span>
                                             @endif
                                         </div>
                                         @if ($rule->fields)

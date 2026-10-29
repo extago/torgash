@@ -28,7 +28,8 @@ class PriceTypeScreensTest extends TestCase
         $this->priceType('PT Club', enabled: false);
 
         $html = $this->get('http://localhost/admin/catalog/price-types')->assertOk()->getContent();
-        $this->assertSame(1, preg_match_all('/<h[12][^>]*>\s*(Price types|Типы цен)\s*<\/h[12]>/u', $html));
+        // The heading's text sits in a span, with the ⓘ hint beside it.
+        $this->assertSame(1, preg_match_all('/<h[12][^>]*>\s*(?:<span>)?\s*(Price types|Типы цен)\s*(?:<\/span>|<\/h[12]>)/u', $html));
 
         $this->get('http://localhost/admin/catalog/price-types?q=dealer')->assertOk()
             ->assertSee('PT Dealer')->assertDontSee('PT Club');

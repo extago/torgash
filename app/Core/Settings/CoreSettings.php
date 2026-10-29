@@ -350,7 +350,7 @@ class CoreSettings
                 'type' => 'text',
                 'default' => '',
                 'label' => 'Default preview picture',
-                'help' => 'The address of an image shown when a page of this shop is pasted into a messenger or a social network and has no picture of its own — a product page uses its own photo. About 1200×630.',
+                'help' => 'Needed only when neither a page nor its storefront has a picture of its own — a storefront\'s is uploaded in Storefronts → Home page. The address of an image, about 1200×630.',
             ],
             [
                 'key' => 'redirect_on_rename',

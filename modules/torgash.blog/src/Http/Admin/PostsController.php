@@ -20,11 +20,16 @@ use Torgash\Catalog\Models\Product;
  */
 class PostsController extends Controller
 {
+    /** How many rows a page may show. */
+    public const PER_PAGE = [30, 60, 120];
+
     public function index(Request $request)
     {
         $q = trim((string) $request->query('q', ''));
         $status = (string) $request->query('status', '');
         $rubric = $request->integer('rubric') ?: null;
+        // How many rows a page shows — the admin's choice at the toolbar.
+        $per = in_array($request->integer('per'), self::PER_PAGE, true) ? $request->integer('per') : self::PER_PAGE[0];
 
         $posts = Post::query()
             ->when($q !== '', fn ($query) => $query->where(fn ($w) => $w
@@ -35,11 +40,11 @@ class PostsController extends Controller
             ->when($rubric, fn ($query) => $query->whereHas('rubrics', fn ($r) => $r->whereKey($rubric)))
             ->with(['rubrics', 'media'])
             ->orderByRaw('published_at desc nulls first')->orderByDesc('id')
-            ->paginate(30)->withQueryString();
+            ->paginate($per)->withQueryString();
 
         return view('torgash.blog::admin.index', [
             'posts' => $posts,
-            'filters' => ['q' => $q, 'status' => $status, 'rubric' => $rubric],
+            'filters' => ['q' => $q, 'status' => $status, 'rubric' => $rubric, 'per' => $per],
             'rubrics' => Rubric::orderBy('sort')->get(),
             'counts' => Post::query()->selectRaw('status, count(*) as n')->groupBy('status')->pluck('n', 'status'),
         ]);

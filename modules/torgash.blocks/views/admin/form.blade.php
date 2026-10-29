@@ -29,8 +29,8 @@
         <input type="hidden" name="type" value="{{ $block->type }}">
         <input type="hidden" name="input_mode" :value="mode">
 
-        <div class="sticky top-16 z-20 -mx-6 px-6 py-3 bg-base-200/95 backdrop-blur border-b border-base-300 flex items-center gap-3 mb-4">
-            <a href="{{ route('admin.blocks.zone', $block->zone) }}" class="btn btn-ghost btn-sm btn-square" title="{{ __('Back to the zone') }}">
+        <x-admin.form-bar class="mb-4">
+            <a href="{{ route('admin.blocks.zone', $block->zone) }}" class="btn btn-ghost btn-sm btn-square" title="{{ __('Back to the zone') }}" aria-label="{{ __('Back to the zone') }}">
                 <x-icon name="arrow-left" size="lg" />
             </a>
             <div class="flex-1 min-w-0">
@@ -49,7 +49,7 @@
                     fields='textarea[name^="settings"], input[name^="settings"], textarea[name="settings_json"]' />
             @endif
             <div class="dropdown dropdown-end">
-                <div tabindex="0" role="button" class="btn btn-ghost btn-sm btn-square" title="{{ __('More actions') }}">
+                <div tabindex="0" role="button" class="btn btn-ghost btn-sm btn-square" title="{{ __('More actions') }}" aria-label="{{ __('More actions') }}">
                     <x-icon name="settings" size="lg" />
                 </div>
                 <ul tabindex="0" class="dropdown-content menu menu-sm bg-base-100 rounded-box shadow-md w-60 mt-2 p-2 z-50 border border-base-300">
@@ -60,9 +60,11 @@
                     @endif
                 </ul>
             </div>
-            <a href="{{ route('admin.blocks.zone', $block->zone) }}" class="btn btn-ghost btn-sm">{{ __('Cancel') }}</a>
-            <button class="btn btn-primary btn-sm">{{ $block->exists ? __('Save') : __('Create') }}</button>
-        </div>
+            <x-slot:actions>
+                <a href="{{ route('admin.blocks.zone', $block->zone) }}" class="btn btn-ghost btn-sm">{{ __('Cancel') }}</a>
+                <button class="btn btn-primary btn-sm">{{ $block->exists ? __('Save') : __('Create') }}</button>
+            </x-slot:actions>
+        </x-admin.form-bar>
 
         @if (session('status'))
             <div class="alert alert-success text-sm mb-4">{{ session('status') }}</div>
@@ -77,7 +79,7 @@
             <div class="card-body gap-4">
                 <div class="flex items-center justify-between gap-3 flex-wrap">
                     <h3 class="font-semibold">{{ label_text($type['label'] ?? null, $locale, $block->type) }}</h3>
-                <div role="tablist" class="tabs tabs-box tabs-sm w-fit">
+                <div role="tablist" class="tabs tabs-border tabs-sm w-fit">
                     <a role="tab" class="tab" :class="mode === 'form' && 'tab-active'"
                        x-on:click.prevent="mode = 'form'" href="#">{{ __('Settings') }}</a>
                     <a role="tab" class="tab" :class="mode === 'json' && 'tab-active'"
@@ -130,7 +132,7 @@
                             @elseif (($field['type'] ?? 'text') === 'checkbox')
                                 <label class="label cursor-pointer justify-start gap-2 p-0">
                                     <input type="checkbox" name="settings[{{ $key }}]" value="1"
-                                           class="checkbox checkbox-sm checkbox-primary" @checked($value)>
+                                           class="checkbox checkbox-sm" @checked($value)>
                                     <span class="label-text">{{ $txt($field, 'help') ?? __('Yes') }}</span>
                                 </label>
                             @elseif (($field['type'] ?? 'text') === 'select')
@@ -263,7 +265,7 @@
                     </fieldset>
                     <fieldset class="fieldset p-0">
                         <legend class="fieldset-legend">{{ __('CSS class') }}</legend>
-                        <input name="css_class" value="{{ old('css_class', $block->css_class) }}" maxlength="{{ \Torgash\Blocks\CssClasses::MAX }}"
+                        <input name="css_class" autocapitalize="off" autocorrect="off" spellcheck="false" value="{{ old('css_class', $block->css_class) }}" maxlength="{{ \Torgash\Blocks\CssClasses::MAX }}"
                                class="input input-bordered w-full font-mono @error('css_class') input-error @enderror" placeholder="home-hits">
                         @error('css_class')<p class="label text-xs text-error whitespace-normal">{{ $message }}</p>@enderror
                         <p class="label text-xs opacity-60 whitespace-normal">{{ __('For the shop\'s own stylesheet: added to the block\'s outermost element. Several are separated by spaces.') }}</p>

@@ -357,5 +357,7 @@
     "Another task is already being put back — wait until it finishes.": "Уже триває повернення іншого завдання — дочекайтеся, поки воно завершиться.",
     "Putting it back in the background — see Background tasks for how it went.": "Повертаю у фоні — підсумок дивіться у «Фонових завданнях».",
     "Put back everything this task changed? Fields changed again since then are left alone; what could not be put back is counted in the result.": "Повернути все, що змінило це завдання? Поля, які змінювали після нього, залишаться як є; що не вдалося повернути, буде пораховано в підсумку.",
-    "Put back everything this task did": "Повернути все, що зробило завдання"
+    "Put back everything this task did": "Повернути все, що зробило завдання",
+    "What broke on the shop's pages and in its jobs, grouped by place: when each last happened, how often, and whether the code has changed since.": "Що ламалося на сторінках магазину та в його задачах, згруповано за місцем: коли сталося востаннє, як часто і чи змінювався код відтоді.",
+    "What must always be true of the shop's own data — stock, totals, links between rows. The guard checks each statement and names the rows that break it.": "Що завжди має бути правдою про дані магазину — залишки, суми, зв'язки між рядками. Вартовий перевіряє кожне твердження й називає рядки, які його порушують."
 }

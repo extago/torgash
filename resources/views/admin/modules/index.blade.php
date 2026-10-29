@@ -1,6 +1,7 @@
 @extends('admin.layout')
 
 @section('title', __('Modules'))
+@section('title_hint', __('What the engine does beyond its core: each module is switched on, set up and, when no longer needed, removed without a trace. A module made for one country shows for the shops in it.'))
 
 @section('content')
     {{--
@@ -46,19 +47,33 @@
         <div class="alert alert-error text-sm">{{ $errors->first() }}</div>
     @endif
 
-    <div role="tablist" class="tabs tabs-border" data-modules-tabs>
-        @foreach ($stateTabs as $stateKey => [$stateLabel, $stateIcon])
-            <button type="button" role="tab" data-state-tab="{{ $stateKey }}" @class(['tab gap-2', 'tab-active' => $stateKey === 'all'])>
-                <x-icon :name="$stateIcon" size="sm" /> {{ $stateLabel }}
-                <span class="badge badge-sm badge-ghost" data-state-count="{{ $stateKey }}">{{ $counts[$stateKey] ?? 0 }}</span>
-            </button>
-        @endforeach
+    {{-- The states as one row of tabs standing on the card (app.css,
+         `admin-tabs`); switched by the script below. --}}
+    <div class="admin-tabs-row">
+        <nav class="admin-tabs" data-modules-tabs aria-label="{{ __('Modules') }}">
+            @foreach ($stateTabs as $stateKey => [$stateLabel, $stateIcon])
+                <button type="button" data-state-tab="{{ $stateKey }}" @class(['admin-tab', 'is-active' => $stateKey === 'all'])>
+                    <x-icon :name="$stateIcon" size="sm" /> {{ $stateLabel }}
+                    <span class="admin-tab-count" data-state-count="{{ $stateKey }}">{{ $counts[$stateKey] ?? 0 }}</span>
+                </button>
+            @endforeach
+        </nav>
+        {{-- Putting code on the server is the built-in group's alone
+             (ModulesController::upload); everybody else is told how a
+             module arrives. --}}
+        @if ($canUpload)
+            <div class="admin-tabs-actions">
+                <button type="button" class="btn btn-primary gap-1.5" data-open-dialog="modal-module-upload">
+                    <x-icon name="upload" size="sm" /> {{ __('Upload a module') }}
+                </button>
+            </div>
+        @endif
     </div>
 
     <div class="card bg-base-100 border border-base-300" data-modules-screen>
         <div class="card-body gap-4 p-4">
             <div class="flex flex-wrap items-center gap-2">
-                <label class="input input-sm w-full sm:w-80 gap-2">
+                <label class="input input-sm grow min-w-48 gap-2">
                     <x-icon name="search" size="sm" class="opacity-50" />
                     <input type="search" class="grow" data-modules-filter autocomplete="off" placeholder="{{ __('Name, code, author…') }}">
                 </label>
@@ -79,18 +94,11 @@
                         @endforeach
                     </select>
                 @endif
-                {{-- Putting code on the server is the built-in group's alone
-                     (ModulesController::upload); everybody else is told how a
-                     module arrives. --}}
-                @if ($canUpload)
-                    <button type="button" class="btn btn-primary btn-sm gap-1.5 ms-auto" data-open-dialog="modal-module-upload">
-                        <x-icon name="upload" size="sm" /> {{ __('Upload a module') }}
-                    </button>
-                @else
+                @unless ($canUpload)
                     <p class="text-xs opacity-50 ms-auto">
                         {{ __('A module is added by putting its folder into modules/ — it then appears here to be installed.') }}
                     </p>
-                @endif
+                @endunless
             </div>
 
             <ul class="divide-y divide-base-300 -mx-4 border-t border-base-300">
@@ -168,7 +176,7 @@
             tabs.forEach(function (tab) {
                 tab.addEventListener('click', function () {
                     state = tab.dataset.stateTab;
-                    tabs.forEach(function (t) { t.classList.toggle('tab-active', t === tab); });
+                    tabs.forEach(function (t) { t.classList.toggle('is-active', t === tab); });
                     apply();
                 });
             });

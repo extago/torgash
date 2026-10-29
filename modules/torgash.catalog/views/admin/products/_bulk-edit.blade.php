@@ -35,7 +35,7 @@
     <div class="modal-box max-w-3xl p-0 flex flex-col max-h-[90vh]">
         <div class="flex items-center gap-3 px-6 py-4 border-b border-base-300">
             <h3 class="font-semibold text-lg grow">{{ __('Change products') }}</h3>
-            <span class="badge badge-ghost">
+            <span class="badge badge-sm badge-ghost">
                 <span x-show="!found"><span x-text="selected.length"></span> {{ __('selected') }}</span>
                 <span x-show="found">{{ __('All :n found', ['n' => $foundCount]) }}</span>
             </span>

@@ -1,6 +1,7 @@
 @extends('admin.layout')
 
 @section('title', __('Letters'))
+@section('title_hint', __('Every letter the shop sends, in one frame. A letter nobody edited speaks its module\'s own words in the reader\'s language; what you write replaces them only in the language you write it in.'))
 
 {{-- Every letter the shop sends, and the frame they share (LettersController). --}}
 @section('content')
@@ -20,21 +21,19 @@
     @endif
 
     <div class="grid gap-4 xl:grid-cols-[minmax(0,1fr)_22rem] items-start">
-        <div class="flex flex-col gap-4 min-w-0">
+        <div class="flex flex-col gap-6 min-w-0">
+            {{-- The audiences as one row of tabs over the card (app.css, `admin-tabs`). --}}
+            <nav class="admin-tabs" aria-label="{{ __('Letters') }}">
+                @foreach ($groups as $audienceKey => $unused)
+                    <a href="{{ request()->fullUrlWithQuery(['audience' => $audienceKey]) }}"
+                       @class(['admin-tab', 'is-active' => $audience === $audienceKey])>
+                        {{ $audienceNames[$audienceKey] ?? $audienceKey }} <span class="admin-tab-count">{{ $audienceCount($audienceKey) }}</span>
+                    </a>
+                @endforeach
+            </nav>
+
             <div class="card bg-base-100 border border-base-300">
                 <div class="card-body gap-4">
-                    <p class="text-sm opacity-70 max-w-3xl">
-                        {{ __('Every letter the shop sends, in one frame. A letter nobody edited speaks its module\'s own words in the reader\'s language; what you write replaces them only in the language you write it in.') }}
-                    </p>
-
-                    <div class="join flex-wrap">
-                        @foreach ($groups as $audienceKey => $unused)
-                            <a href="{{ request()->fullUrlWithQuery(['audience' => $audienceKey]) }}"
-                               @class(['btn btn-sm join-item', 'btn-active' => $audience === $audienceKey])>
-                                {{ $audienceNames[$audienceKey] ?? $audienceKey }} <span class="opacity-50">{{ $audienceCount($audienceKey) }}</span>
-                            </a>
-                        @endforeach
-                    </div>
 
                     @foreach (array_intersect_key($groups, [$audience => true]) as $byGroup)
                         <div class="overflow-x-auto">
@@ -75,7 +74,7 @@
                                                     @endif
                                                 </td>
                                                 <td class="text-right">
-                                                    <a href="{{ route('admin.letters.edit', $key) }}" class="btn btn-ghost btn-sm btn-square" title="{{ __('Edit') }}"><x-icon name="pencil" size="sm" /></a>
+                                                    <a href="{{ route('admin.letters.edit', $key) }}" class="btn btn-ghost btn-sm btn-square" title="{{ __('Edit') }}" aria-label="{{ __('Edit') }}"><x-icon name="pencil" size="sm" /></a>
                                                 </td>
                                             </tr>
                                         @endforeach

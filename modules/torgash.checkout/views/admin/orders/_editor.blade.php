@@ -17,8 +17,10 @@
         @endif
     </div>
 
+    {{-- Cards on a phone (app.css, "A list drawn as cards"): the name across,
+         then quantity, price, SKU and the line's total. --}}
     <div class="overflow-x-auto">
-        <table class="table">
+        <table class="table admin-cards admin-line-cards" @if ($editing) data-editing @endif>
             <thead>
                 <tr>
                     <th>{{ __('SKU') }}</th>
@@ -43,8 +45,8 @@
                         $lineKey = (string) ($item['key'] ?? $item['product_id'] ?? '');
                     @endphp
                     <tr @class(['bg-base-200/40' => $isPart])>
-                        <td class="font-mono text-xs">{{ $item['sku'] }}</td>
-                        <td @class(['ps-6' => $isPart])>
+                        <td class="font-mono text-xs" data-cell="sku">{{ $item['sku'] }}</td>
+                        <td @class(['ps-6' => $isPart]) data-cell="name">
                             @if ($isPart)
                                 <span class="opacity-40">↳</span>
                                 @if (! empty($item['option_label']) && $item['option_label'] !== $item['name'])
@@ -63,7 +65,7 @@
                             @endforeach
                         </td>
                         @if ($editing)
-                            <td colspan="2">
+                            <td colspan="2" data-cell="edit">
                                 <form id="line-{{ $lineKey }}" class="flex items-center gap-2"
                                       hx-patch="{{ route('admin.orders.items.update', ['order' => $order, 'line' => $lineKey]) }}"
                                       hx-target="#order-editor" hx-swap="outerHTML">
@@ -84,12 +86,12 @@
                                 </form>
                             </td>
                         @else
-                            <td>{{ $item['qty'] }}</td>
-                            <td>{{ $order->adminMoney($item['unit_price']) }}</td>
+                            <td data-cell="qty">{{ $item['qty'] }}</td>
+                            <td data-cell="unit">{{ $order->adminMoney($item['unit_price']) }}</td>
                         @endif
-                        <td class="font-semibold">{{ $order->adminMoney($item['line_total']) }}</td>
+                        <td class="font-semibold" data-cell="total">{{ $order->adminMoney($item['line_total']) }}</td>
                         @if ($editing)
-                            <td class="text-right whitespace-nowrap">
+                            <td class="text-right whitespace-nowrap" data-cell="actions">
                                 {{-- Only a parent line, and only where something
                                      answers for it: a part exists because its
                                      parent's build says so, and editing it on
@@ -146,7 +148,7 @@
                     <div class="text-sm font-medium">{{ __('Coupon') }}</div>
                     @if ($order->coupon_code)
                         <div class="flex items-center gap-2 text-sm">
-                            <span class="badge badge-success badge-outline font-mono">{{ $order->coupon_code }}</span>
+                            <span class="badge badge-sm badge-success font-mono">{{ $order->coupon_code }}</span>
                             @if (is_array($order->coupon_terms))
                                 <span class="opacity-60">{{ $order->coupon_terms['type'] === 'percent' ? $order->coupon_terms['value'].'%' : $order->adminMoney((int) $order->coupon_terms['value']) }}</span>
                             @else
@@ -160,7 +162,7 @@
                     @endif
                     <form class="join w-full max-w-sm"
                           hx-post="{{ route('admin.orders.coupon.apply', $order) }}" hx-target="#order-editor" hx-swap="outerHTML">
-                        <input name="code" class="input input-bordered join-item w-full font-mono uppercase"
+                        <input name="code" autocapitalize="off" autocorrect="off" spellcheck="false" class="input input-bordered join-item w-full font-mono uppercase"
                                placeholder="{{ $order->coupon_code ? __('Another code') : __('Coupon code') }}" autocomplete="off">
                         <button class="btn join-item">{{ $order->coupon_code ? __('Replace the coupon') : __('Apply') }}</button>
                     </form>
@@ -170,7 +172,7 @@
                     <div class="text-sm font-medium">{{ __('Manager\'s discount') }}</div>
                     @if ($order->manual_discount)
                         <div class="flex items-center gap-2 text-sm flex-wrap">
-                            <span class="badge badge-success badge-outline">
+                            <span class="badge badge-sm badge-success">
                                 {{ ($order->manual_discount['type'] ?? '') === 'percent' ? $order->manual_discount['value'].'%' : $order->adminMoney((int) $order->manual_discount['value']) }}
                             </span>
                             <span class="opacity-70">{{ $order->manual_discount['reason'] ?? '' }}</span>

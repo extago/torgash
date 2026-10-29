@@ -113,5 +113,6 @@
     ":count product|:count products": ":count товар|:count товари|:count товарів",
     "Availability": "Наявність",
     "Hidden": "Приховано",
-    "Price": "Ціна"
+    "Price": "Ціна",
+    "Period": "Період"
 }

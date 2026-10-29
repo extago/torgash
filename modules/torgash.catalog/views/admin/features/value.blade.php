@@ -20,7 +20,7 @@
             </div>
 
             <fieldset class="fieldset p-0"><legend class="fieldset-legend">Slug</legend>
-                <input name="slug" value="{{ old('slug', $value->slug) }}" class="input input-bordered w-full"
+                <input name="slug" autocapitalize="off" autocorrect="off" spellcheck="false" value="{{ old('slug', $value->slug) }}" class="input input-bordered w-full"
                        placeholder="auto from name">
             </fieldset>
             <div class="text-xs opacity-50 -mt-2">Page URL: {{ url('/brand/'.($value->slug ?: '…')) }}</div>
@@ -37,7 +37,7 @@
 
         </div></div>
 
-        <x-seo.fields :record="$value"
+        <x-seo.fields :record="$value" picture
                       :url-preview="$value->slug ? url('/brand/'.$value->slug) : null" />
 
         <div class="flex gap-2">

@@ -1,6 +1,10 @@
 @extends('admin.layout')
 
 @section('title', __('Languages'))
+@section('title_hint', __('The languages the shop can be written in. A storefront chooses which of them it offers; every text in the admin can be filled in for each.'))
+@section('title_actions')
+    <a href="{{ route('admin.languages.create') }}" class="btn btn-primary">+ {{ __('New language') }}</a>
+@endsection
 
 @section('content')
     @if (session('status'))
@@ -12,12 +16,6 @@
 
     <div class="card bg-base-100 border border-base-300">
         <div class="card-body gap-4">
-            <div class="flex justify-between items-start gap-3 flex-wrap">
-                <p class="text-sm opacity-70 max-w-3xl">
-                    {{ __('The languages the shop can be written in. A storefront chooses which of them it offers; every text in the admin can be filled in for each.') }}
-                </p>
-                <a href="{{ route('admin.languages.create') }}" class="btn btn-primary btn-sm">+ {{ __('New language') }}</a>
-            </div>
 
             <div class="overflow-x-auto">
                 <table class="table">
@@ -47,7 +45,7 @@
                                         <form method="POST" action="{{ route('admin.languages.base', $language) }}" class="inline"
                                               data-confirm="{{ __('Make :name the base language? Every text will be required in it, and a missing translation will fall back to it.', ['name' => $language->native_name]) }}">
                                             @csrf
-                                            <button class="btn btn-ghost btn-xs ml-1 font-normal opacity-60 hover:opacity-100">{{ __('Make it the base') }}</button>
+                                            <button class="btn btn-ghost btn-sm ml-1 font-normal opacity-60 hover:opacity-100">{{ __('Make it the base') }}</button>
                                         </form>
                                     @endif
                                     <div class="text-xs opacity-50">{{ $language->name }}</div>

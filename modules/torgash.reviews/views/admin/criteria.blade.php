@@ -1,6 +1,11 @@
 @extends('admin.layout')
 
 @section('title', __('Rating criteria'))
+@section('title_hint', __('What a customer rates besides the overall mark — quality, value for money, how it fits. A criterion with no categories is asked about every product; attached to a category, it is asked there and in everything under it.'))
+@section('title_actions')
+    <a href="{{ route('admin.reviews.index') }}" class="btn btn-ghost gap-1.5"><x-icon name="arrow-left" size="sm" /> {{ __('Back to reviews') }}</a>
+    <a href="{{ route('admin.reviews.criteria.create') }}" class="btn btn-primary">+ {{ __('New criterion') }}</a>
+@endsection
 
 @section('content')
     @if (session('status'))
@@ -9,15 +14,6 @@
 
     <div class="card bg-base-100 border border-base-300">
         <div class="card-body gap-4">
-            <div class="flex justify-between items-start gap-3 flex-wrap">
-                <p class="text-sm opacity-70 max-w-3xl">
-                    {{ __('What a customer rates besides the overall mark — quality, value for money, how it fits. A criterion with no categories is asked about every product; attached to a category, it is asked there and in everything under it.') }}
-                </p>
-                <div class="flex items-center gap-2">
-                    <a href="{{ route('admin.reviews.index') }}" class="btn btn-ghost btn-sm gap-1.5"><x-icon name="arrow-left" size="sm" /> {{ __('Back to reviews') }}</a>
-                    <a href="{{ route('admin.reviews.criteria.create') }}" class="btn btn-primary btn-sm">+ {{ __('New criterion') }}</a>
-                </div>
-            </div>
 
             @if ($criteria->isEmpty())
                 <div class="text-center py-12 opacity-60">

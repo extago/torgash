@@ -7,7 +7,7 @@
     <div tabindex="0" role="button" class="btn btn-ghost btn-sm btn-square relative" title="{{ __('Notifications') }}" aria-label="{{ __('Notifications') }}">
         <x-icon name="bell" size="lg" />
         @if ($bellTotal > 0)
-            <span class="badge badge-error badge-xs absolute -top-1 -right-1 px-1 min-w-4 h-4 text-[10px] font-semibold">{{ $bellTotal > 99 ? '99+' : $bellTotal }}</span>
+            <span class="badge badge-error badge-xs absolute -top-1 -right-1 px-1 min-w-4 h-4 text-xs font-semibold">{{ $bellTotal > 99 ? '99+' : $bellTotal }}</span>
         @endif
     </div>
     <div tabindex="0" class="dropdown-content bg-base-100 rounded-box shadow-lg w-72 mt-3 p-2 z-50 border border-base-300">

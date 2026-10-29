@@ -1,6 +1,7 @@
 @extends('admin.layout')
 
 @section('title', __('Orders'))
+@section('title_hint', __('Every order the shop has taken, by status. Open one to change its lines, payment, delivery and notes; tick several to move them at once.'))
 
 @section('content')
     @if (session('status'))
@@ -25,40 +26,50 @@
             return route('admin.orders.index', $code ? $query + ['status' => [$code]] : $query);
         };
         $moreActive = collect($filter->values)->except(['q', 'status', 'manager', 'from', 'to'])->contains(fn ($v) => $v !== '' && $v !== []);
+        // On a phone the manager and the dates are folded away with the rest;
+        // its "Filters" button says how many of them are set.
+        $filtersSet = collect($filter->values)->except(['q', 'status', 'customer'])->filter(fn ($v) => $v !== '' && $v !== [])->count();
     @endphp
+
+    {{-- The statuses as one row of tabs over the card, counted under the
+         other filters, the screen's actions at its end (app.css,
+         `admin-tabs`); a tab keeps every other filter. The shop says
+         whether the row scrolls or wraps (setting `status_tabs`): with
+         many statuses an owner may want every one in sight. --}}
+    <div class="admin-tabs-row">
+        <nav @class(['admin-tabs', 'is-wrapping' => setting('torgash.checkout', 'status_tabs', 'row') === 'wrap']) aria-label="{{ __('Orders') }}">
+            <a href="{{ $statusUrl(null) }}" @class(['admin-tab', 'is-active' => $activeStatuses === []])>
+                {{ __('All') }} <span class="admin-tab-count">{{ $statusCounts->sum() }}</span>
+            </a>
+            @foreach ($statuses as $status)
+                <a href="{{ $statusUrl($status->code) }}" @class(['admin-tab', 'is-active' => $activeStatuses === [$status->code]])>
+                    <span class="h-2 w-2 rounded-full inline-block" style="background-color: {{ $status->color ?? '#999' }}"></span>
+                    {{ $status->t('name') }} <span class="admin-tab-count">{{ $statusCounts[$status->code] ?? 0 }}</span>
+                </a>
+            @endforeach
+        </nav>
+        <div class="admin-tabs-actions">
+            @if ($trashed)
+                <a href="{{ route('admin.orders.index') }}" class="btn btn-ghost gap-1.5">
+                    <x-icon name="arrow-left" size="sm" /> {{ __('Back to orders') }}
+                </a>
+            @elseif ($trashedCount)
+                <a href="{{ route('admin.orders.index', ['trashed' => 1]) }}" class="btn btn-ghost gap-1.5">
+                    <x-icon name="trash-2" size="sm" /> {{ __('Trash') }} <span class="badge badge-sm">{{ $trashedCount }}</span>
+                </a>
+            @endif
+            <a href="{{ route('admin.orders.statuses.index') }}" class="btn btn-ghost gap-1.5">
+                <x-icon name="settings-2" size="sm" /> {{ __('Manage statuses') }}
+            </a>
+            @unless ($trashed)
+                <a href="{{ route('admin.orders.create') }}" class="btn btn-primary">+ {{ __('New order') }}</a>
+            @endunless
+        </div>
+    </div>
 
     {{-- One Alpine root: the bulk bar and every row's checkbox share `selected`. --}}
     <div class="card bg-base-100 border border-base-300" x-data="{ selected: [], action: '' }">
         <div class="card-body gap-4">
-            {{-- Statuses as tabs, counted under the other filters. --}}
-            <div class="flex items-center gap-3 flex-wrap">
-                <div class="flex flex-wrap gap-1.5 grow">
-                    <a href="{{ $statusUrl(null) }}" @class(['btn btn-sm', 'btn-active' => $activeStatuses === []])>
-                        {{ __('All') }} <span class="opacity-50">{{ $statusCounts->sum() }}</span>
-                    </a>
-                    @foreach ($statuses as $status)
-                        <a href="{{ $statusUrl($status->code) }}"
-                           @class(['btn btn-sm gap-1.5', 'btn-active' => $activeStatuses === [$status->code]])>
-                            <span class="h-2 w-2 rounded-full inline-block" style="background-color: {{ $status->color ?? '#999' }}"></span>
-                            {{ $status->t('name') }} <span class="opacity-50">{{ $statusCounts[$status->code] ?? 0 }}</span>
-                        </a>
-                    @endforeach
-                </div>
-                <div class="flex items-center gap-1">
-                    @if ($trashed)
-                        <a href="{{ route('admin.orders.index') }}" class="btn btn-ghost btn-sm gap-1.5">
-                            <x-icon name="arrow-left" size="sm" /> {{ __('Back to orders') }}
-                        </a>
-                    @elseif ($trashedCount)
-                        <a href="{{ route('admin.orders.index', ['trashed' => 1]) }}" class="btn btn-ghost btn-sm gap-1.5">
-                            <x-icon name="trash-2" size="sm" /> {{ __('Trash') }} <span class="badge badge-sm">{{ $trashedCount }}</span>
-                        </a>
-                    @endif
-                    <a href="{{ route('admin.orders.statuses.index') }}" class="btn btn-ghost btn-sm gap-1.5">
-                        <x-icon name="settings-2" size="sm" /> {{ __('Manage statuses') }}
-                    </a>
-                </div>
-            </div>
 
             @if ($trashed)
                 <div class="alert alert-warning text-sm">
@@ -91,11 +102,14 @@
                     </div>
                 @endif
                 <div class="flex flex-wrap items-center gap-2">
-                    <label class="input input-sm w-full sm:w-80 gap-2">
+                    <label class="input input-sm grow min-w-48 gap-2">
                         <x-icon name="search" size="sm" class="opacity-50" />
                         <input type="search" name="q" value="{{ $filter->get('q') }}" class="grow"
                                placeholder="{{ __('Order number, name, email or phone') }}">
                     </label>
+                    {{-- From a tablet up these stand in the row; on a phone
+                         they are folded in with the other filters. --}}
+                    <div class="md:contents max-md:hidden max-md:w-full flex flex-wrap items-center gap-2" :class="more && 'max-md:flex!'">
                     <select name="manager" class="select select-bordered select-sm w-auto" aria-label="{{ __('Manager') }}">
                         <option value="">{{ __('Any manager') }}</option>
                         <option value="none" @selected($filter->get('manager') === 'none')>{{ __('Not assigned') }}</option>
@@ -108,9 +122,13 @@
                         <span class="opacity-40">–</span>
                         <input type="date" name="to" value="{{ $filter->get('to') }}" class="input input-bordered input-sm w-36" aria-label="{{ __('Placed until') }}">
                     </div>
-                    <button type="button" class="btn btn-ghost btn-sm gap-1.5" @click="more = ! more">
-                        <x-icon name="sliders-horizontal" size="sm" /> {{ __('More filters') }}
-                        @if ($moreActive)<span class="badge badge-primary badge-xs">•</span>@endif
+                    </div>
+                    <button type="button" class="btn btn-ghost btn-sm gap-1.5" @click="more = ! more" :aria-expanded="more">
+                        <x-icon name="sliders-horizontal" size="sm" />
+                        <span class="max-md:hidden">{{ __('More filters') }}</span>
+                        <span class="md:hidden">{{ __('Filters') }}</span>
+                        @if ($moreActive)<span class="badge badge-primary badge-sm max-md:hidden">•</span>@endif
+                        @if ($filtersSet)<span class="badge badge-primary badge-sm md:hidden">{{ $filtersSet }}</span>@endif
                     </button>
                     <button class="btn btn-primary btn-sm">{{ __('Find') }}</button>
                     @if ($filter->active())
@@ -126,7 +144,7 @@
                         <div class="flex flex-col gap-1">
                             @foreach (PaymentState::all() as $state)
                                 <label class="flex items-center gap-2 cursor-pointer text-sm">
-                                    <input type="checkbox" name="payment_state[]" value="{{ $state }}" class="checkbox checkbox-xs"
+                                    <input type="checkbox" name="payment_state[]" value="{{ $state }}" class="checkbox checkbox-sm"
                                            @checked(in_array($state, (array) $filter->get('payment_state'), true))>
                                     {{ PaymentState::label($state) }}
                                 </label>
@@ -156,9 +174,9 @@
                     <fieldset class="fieldset p-0">
                         <legend class="fieldset-legend">{{ __('Total') }}</legend>
                         <div class="flex items-center gap-1">
-                            <input type="text" name="total_from" value="{{ $filter->get('total_from') }}" class="input input-bordered input-sm w-full" placeholder="0">
+                            <input type="text" name="total_from" inputmode="decimal" value="{{ $filter->get('total_from') }}" class="input input-bordered input-sm w-full" placeholder="0">
                             <span class="opacity-40">–</span>
-                            <input type="text" name="total_to" value="{{ $filter->get('total_to') }}" class="input input-bordered input-sm w-full" placeholder="∞">
+                            <input type="text" name="total_to" inputmode="decimal" value="{{ $filter->get('total_to') }}" class="input input-bordered input-sm w-full" placeholder="∞">
                         </div>
                     </fieldset>
                     <fieldset class="fieldset p-0">
@@ -171,7 +189,7 @@
 
             {{-- The bulk bar: every action goes through the code a single order's
                  page uses, one order at a time (OrdersController::bulk). --}}
-            <div class="min-h-12 flex items-center">
+            <div class="min-h-12 max-md:min-h-0 flex items-center">
                 <p x-show="!selected.length" class="text-xs opacity-50">
                     {{ $trashed
                         ? __('Tick orders to restore several at once or delete them for good.')
@@ -180,7 +198,7 @@
                 @if ($trashed)
                 <form method="POST" action="{{ route('admin.orders.bulk') }}"
                       x-show="selected.length" x-cloak
-                      class="w-full flex flex-wrap items-center gap-2 bg-base-200 rounded-box p-2">
+                      class="admin-bulk-bar w-full flex flex-wrap items-center gap-2 bg-base-200 rounded-box p-2">
                     @csrf
                     <template x-for="id in selected" :key="id">
                         <input type="hidden" name="ids[]" :value="id">
@@ -198,7 +216,7 @@
                 @else
                 <form method="POST" action="{{ route('admin.orders.bulk') }}"
                       x-show="selected.length" x-cloak
-                      class="w-full flex flex-wrap items-center gap-2 bg-base-200 rounded-box p-2">
+                      class="admin-bulk-bar w-full flex flex-wrap items-center gap-2 bg-base-200 rounded-box p-2">
                     @csrf
                     <template x-for="id in selected" :key="id">
                         <input type="hidden" name="ids[]" :value="id">
@@ -251,13 +269,16 @@
                 </div>
             @else
                 <div class="overflow-x-auto">
-                    <table class="table">
+                    <table class="table admin-cards admin-order-cards">
                         <thead>
                             <tr>
-                                <th class="w-10">
-                                    <input type="checkbox" class="checkbox checkbox-sm" aria-label="{{ __('Select all on this page') }}"
-                                           x-on:change="selected = $event.target.checked ? @js($orders->pluck('id')->map(fn ($id) => (string) $id)) : []"
-                                           :checked="selected.length === {{ $orders->count() }}">
+                                <th class="w-10" data-cell="check">
+                                    <label class="flex items-center gap-3">
+                                        <input type="checkbox" class="checkbox checkbox-sm" aria-label="{{ __('Select all on this page') }}"
+                                               x-on:change="selected = $event.target.checked ? @js($orders->pluck('id')->map(fn ($id) => (string) $id)) : []"
+                                               :checked="selected.length === {{ $orders->count() }}">
+                                        <span class="md:hidden font-normal normal-case">{{ __('Select all on this page') }}</span>
+                                    </label>
                                 </th>
                                 <th>{{ __('Order') }}</th>
                                 <th>{{ __('Customer') }}</th>
@@ -271,22 +292,22 @@
                         <tbody>
                             @foreach ($orders as $order)
                                 <tr class="hover:bg-base-200/50" :class="selected.includes('{{ $order->id }}') && 'bg-primary/5'">
-                                    <td>
+                                    <td data-cell="check">
                                         <input type="checkbox" class="checkbox checkbox-sm" value="{{ $order->id }}" x-model="selected"
                                                aria-label="{{ $order->order_number }}">
                                     </td>
-                                    <td class="whitespace-nowrap">
+                                    <td class="whitespace-nowrap" data-cell="order">
                                         <a href="{{ route('admin.orders.show', $order) }}" class="font-mono font-medium link link-hover">{{ $order->order_number }}</a>
                                         <div class="text-xs opacity-50" title="{{ $order->created_at->format('Y-m-d H:i') }}">{{ $order->created_at->format('d.m.Y H:i') }}</div>
                                     </td>
-                                    <td>
+                                    <td data-cell="customer">
                                         <div class="font-medium">{{ $order->company_name ?: $order->customerLabel() }}</div>
                                         <div class="text-xs opacity-60">
                                             @if ($order->company_name){{ $order->customerLabel() }} · @endif{{ collect([$order->phone, $order->email])->filter()->implode(' · ') }}
                                         </div>
                                     </td>
-                                    <td class="text-end font-semibold tabular-nums whitespace-nowrap">{{ $order->adminMoney($order->total) }}</td>
-                                    <td>
+                                    <td class="text-end font-semibold tabular-nums whitespace-nowrap" data-cell="total">{{ $order->adminMoney($order->total) }}</td>
+                                    <td data-cell="payment">
                                         <span class="badge badge-sm whitespace-nowrap {{ PaymentState::badge($order->payment_state) }}">{{ PaymentState::label($order->payment_state) }}</span>
                                         @if ($order->payment_method_name)
                                             <div class="text-xs opacity-50 mt-0.5 truncate max-w-40">{{ $order->paymentMethodLabel() }}</div>
@@ -294,7 +315,7 @@
                                     </td>
                                     @if ($trashed)
                                         @php $rowStatus = $statuses->get($order->status); @endphp
-                                        <td>
+                                        <td data-cell="status">
                                             <span class="inline-flex items-center gap-1.5 text-xs">
                                                 <span class="h-2 w-2 rounded-full inline-block" style="background-color: {{ $rowStatus?->color ?? '#999' }}"></span>
                                                 {{ $rowStatus?->t('name') ?? $order->status }}
@@ -303,14 +324,14 @@
                                     @else
                                         @include('torgash.checkout::admin.orders._status_cell', ['order' => $order, 'statuses' => $statuses])
                                     @endif
-                                    <td class="text-sm">
+                                    <td class="text-sm" data-cell="manager">
                                         @if ($order->manager)
                                             {{ $order->manager->name }}
                                         @else
                                             <span class="opacity-40">{{ __('Not assigned') }}</span>
                                         @endif
                                     </td>
-                                    <td class="text-end whitespace-nowrap">
+                                    <td class="text-end whitespace-nowrap" data-cell="actions">
                                         @if ($trashed)
                                         <div class="inline-flex items-center gap-1">
                                             <button form="restore-order-{{ $order->id }}" class="btn btn-ghost btn-sm btn-square"

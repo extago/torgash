@@ -17,8 +17,8 @@
         @csrf
         @if ($item->exists) @method('PUT') @endif
 
-        <div class="sticky top-16 z-20 -mx-6 px-6 py-3 bg-base-200/95 backdrop-blur border-b border-base-300 flex items-center gap-3">
-            <a href="{{ route('admin.menus.items', $menu) }}" class="btn btn-ghost btn-sm btn-square" title="{{ __('Back to items') }}">
+        <x-admin.form-bar>
+            <a href="{{ route('admin.menus.items', $menu) }}" class="btn btn-ghost btn-sm btn-square" title="{{ __('Back to items') }}" aria-label="{{ __('Back to items') }}">
                 <x-icon name="arrow-left" size="lg" />
             </a>
             <div class="flex-1 min-w-0">
@@ -26,7 +26,7 @@
                 <div class="font-semibold truncate leading-tight">{{ $item->exists ? ($item->adminLabel() ?: __('Edit item')) : __('New item') }}</div>
             </div>
             <div class="dropdown dropdown-end">
-                <div tabindex="0" role="button" class="btn btn-ghost btn-sm btn-square" title="{{ __('More actions') }}">
+                <div tabindex="0" role="button" class="btn btn-ghost btn-sm btn-square" title="{{ __('More actions') }}" aria-label="{{ __('More actions') }}">
                     <x-icon name="settings" size="lg" />
                 </div>
                 <ul tabindex="0" class="dropdown-content menu menu-sm bg-base-100 rounded-box shadow-md w-60 mt-2 p-2 z-50 border border-base-300">
@@ -37,9 +37,11 @@
                     @endif
                 </ul>
             </div>
-            <a href="{{ route('admin.menus.items', $menu) }}" class="btn btn-ghost btn-sm">{{ __('Cancel') }}</a>
-            <button class="btn btn-primary btn-sm">{{ $item->exists ? __('Save') : __('Create') }}</button>
-        </div>
+            <x-slot:actions>
+                <a href="{{ route('admin.menus.items', $menu) }}" class="btn btn-ghost btn-sm">{{ __('Cancel') }}</a>
+                <button class="btn btn-primary btn-sm">{{ $item->exists ? __('Save') : __('Create') }}</button>
+            </x-slot:actions>
+        </x-admin.form-bar>
 
         @if (session('status'))
             <div class="alert alert-success text-sm">{{ session('status') }}</div>
@@ -150,7 +152,7 @@
                 </div>
 
                 <label class="label cursor-pointer justify-start gap-2 p-0" x-show="showWhen !== 'always'" x-cloak>
-                    <input type="checkbox" name="options[hide_empty]" value="1" class="checkbox checkbox-sm checkbox-primary" @checked($opt('hide_empty', false))>
+                    <input type="checkbox" name="options[hide_empty]" value="1" class="checkbox checkbox-sm" @checked($opt('hide_empty', false))>
                     <span class="label-text">{{ __('Hide the item itself when its category is empty by the same rule') }}</span>
                 </label>
 
@@ -170,19 +172,19 @@
 
                 <div class="flex flex-col gap-2">
                     <label class="label cursor-pointer justify-start gap-2 p-0">
-                        <input type="checkbox" name="options[replace]" value="1" class="checkbox checkbox-sm checkbox-primary" @checked($opt('replace', false))>
+                        <input type="checkbox" name="options[replace]" value="1" class="checkbox checkbox-sm" @checked($opt('replace', false))>
                         <span class="label-text">{{ __('Put the subcategories in place of the item') }} <span class="opacity-60">— {{ __('"the whole catalogue" this way becomes the list of departments, and stays up to date by itself') }}</span></span>
                     </label>
                     <label class="label cursor-pointer justify-start gap-2 p-0">
-                        <input type="checkbox" name="options[all_link]" value="1" class="checkbox checkbox-sm checkbox-primary" @checked($opt('all_link', false))>
+                        <input type="checkbox" name="options[all_link]" value="1" class="checkbox checkbox-sm" @checked($opt('all_link', false))>
                         <span class="label-text">{{ __('"Everything in …" as the first entry of the submenu') }}</span>
                     </label>
                     <label class="label cursor-pointer justify-start gap-2 p-0">
-                        <input type="checkbox" name="options[counts]" value="1" class="checkbox checkbox-sm checkbox-primary" @checked($opt('counts', false))>
+                        <input type="checkbox" name="options[counts]" value="1" class="checkbox checkbox-sm" @checked($opt('counts', false))>
                         <span class="label-text">{{ __('Show the number of products') }}</span>
                     </label>
                     <label class="label cursor-pointer justify-start gap-2 p-0">
-                        <input type="checkbox" name="options[child_icons]" value="1" class="checkbox checkbox-sm checkbox-primary" @checked($opt('child_icons', true))>
+                        <input type="checkbox" name="options[child_icons]" value="1" class="checkbox checkbox-sm" @checked($opt('child_icons', true))>
                         <span class="label-text">{{ __('Subcategories with their own icons') }}</span>
                     </label>
                 </div>
@@ -216,7 +218,7 @@
                             @if ($item->icon && is_file(resource_path('icons/lucide/'.$item->icon.'.svg')))
                                 <span class="w-10 h-10 rounded-lg bg-base-200 flex items-center justify-center shrink-0"><x-icon :name="$item->icon" /></span>
                             @endif
-                            <input name="icon" value="{{ old('icon', $item->icon) }}" class="input input-bordered w-full font-mono" placeholder="badge-percent">
+                            <input name="icon" autocapitalize="off" autocorrect="off" spellcheck="false" value="{{ old('icon', $item->icon) }}" class="input input-bordered w-full font-mono" placeholder="badge-percent">
                         </div>
                         <div class="text-xs opacity-60">{!! __('A name from :link. Empty — the page\'s or category\'s own icon, if it has one.', ['link' => '<a href="https://lucide.dev/icons/" target="_blank" rel="noopener" class="link">lucide.dev</a>']) !!}</div>
                     </fieldset>
@@ -237,7 +239,7 @@
                         <div class="flex flex-wrap gap-2">
                             @foreach (\Torgash\Menus\Models\MenuItem::BADGE_STYLES as $badgeStyle)
                                 <label class="cursor-pointer flex items-center gap-1.5">
-                                    <input type="radio" name="badge_style" value="{{ $badgeStyle }}" class="radio radio-xs" @checked(old('badge_style', $item->badge_style ?? 'primary') === $badgeStyle)>
+                                    <input type="radio" name="badge_style" value="{{ $badgeStyle }}" class="radio radio-sm" @checked(old('badge_style', $item->badge_style ?? 'primary') === $badgeStyle)>
                                     <span class="badge badge-{{ $badgeStyle }} badge-sm">{{ __('Badge') }}</span>
                                 </label>
                             @endforeach
@@ -250,7 +252,7 @@
 
                 <div class="grid md:grid-cols-2 gap-4">
                     <fieldset class="fieldset p-0"><legend class="fieldset-legend">{{ __('Custom CSS class') }}</legend>
-                        <input name="css_class" value="{{ old('css_class', $item->css_class) }}" class="input input-bordered w-full font-mono" placeholder="menu-item--sale">
+                        <input name="css_class" autocapitalize="off" autocorrect="off" spellcheck="false" value="{{ old('css_class', $item->css_class) }}" class="input input-bordered w-full font-mono" placeholder="menu-item--sale">
                     </fieldset>
                     <fieldset class="fieldset p-0"><legend class="fieldset-legend">{{ __('Sort order') }}</legend>
                         <input name="sort" type="number" value="{{ old('sort', $item->sort ?? 0) }}" class="input input-bordered w-full">
@@ -259,11 +261,11 @@
 
                 <div class="flex flex-wrap gap-6">
                     <label class="label cursor-pointer justify-start gap-2 p-0">
-                        <input type="checkbox" name="highlight" value="1" class="checkbox checkbox-sm checkbox-primary" @checked(old('highlight', $item->highlight ?? false))>
+                        <input type="checkbox" name="highlight" value="1" class="checkbox checkbox-sm" @checked(old('highlight', $item->highlight ?? false))>
                         <span class="label-text">{{ __('Set off in the shop\'s colour') }}</span>
                     </label>
                     <label class="label cursor-pointer justify-start gap-2 p-0">
-                        <input type="checkbox" name="new_tab" value="1" class="checkbox checkbox-sm checkbox-primary" @checked(old('new_tab', $item->new_tab ?? false))>
+                        <input type="checkbox" name="new_tab" value="1" class="checkbox checkbox-sm" @checked(old('new_tab', $item->new_tab ?? false))>
                         <span class="label-text">{{ __('Open in a new tab') }}</span>
                     </label>
                 </div>
@@ -277,7 +279,7 @@
                                        :heading="__('Show this item only when…')" />
                 <label class="label cursor-pointer justify-start gap-2 p-0">
                     <input type="hidden" name="enabled" value="0">
-                    <input type="checkbox" name="enabled" value="1" class="toggle toggle-sm toggle-primary" @checked(old('enabled', $item->enabled ?? true))>
+                    <input type="checkbox" name="enabled" value="1" class="toggle toggle-sm toggle-success" @checked(old('enabled', $item->enabled ?? true))>
                     <span class="label-text">{{ __('Enabled') }}</span>
                 </label>
             </div>

@@ -91,5 +91,8 @@
     "Views": "Перегляди",
     "from": "з",
     "made from the name": "складеться з назви",
-    "made from the title": "складеться із заголовка"
+    "Rows per page": "Рядків на сторінці",
+    ":n per page": ":n на сторінці",
+    "made from the title": "складеться із заголовка",
+    "Articles in rubrics, published by their date: a scheduled one appears on time, drafts and hidden ones never reach the storefront.": "Статті за рубриками, що публікуються за датою: запланована вийде вчасно, чернетки та приховані на вітрину не потрапляють."
 }

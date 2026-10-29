@@ -1,23 +1,20 @@
 @extends('admin.layout')
 
 @section('title', __('Shop rating criteria'))
+@section('title_hint', __('What a customer rates the shop by — delivery, service, the site. The overall mark of a review is the average of the criteria they filled in; with none switched on, one overall mark is asked.'))
+@section('title_actions')
+    <a href="{{ route('admin.shopreviews.criteria.create') }}" class="btn btn-primary">+ {{ __('New criterion') }}</a>
+@endsection
 
 @section('content')
     @if (session('status'))
         <div class="alert alert-success">{{ session('status') }}</div>
     @endif
 
+    @include('torgash.shopreviews::admin._nav')
+
     <div class="card bg-base-100 border border-base-300">
         <div class="card-body gap-4">
-            <div class="flex justify-between items-start gap-3 flex-wrap">
-                <p class="text-sm opacity-70 max-w-3xl">
-                    {{ __('What a customer rates the shop by — delivery, service, the site. The overall mark of a review is the average of the criteria they filled in; with none switched on, one overall mark is asked.') }}
-                </p>
-                <div class="flex flex-wrap items-center gap-2">
-                    @include('torgash.shopreviews::admin._nav')
-                    <a href="{{ route('admin.shopreviews.criteria.create') }}" class="btn btn-primary btn-sm">+ {{ __('New criterion') }}</a>
-                </div>
-            </div>
 
             @if ($criteria->isEmpty())
                 <div class="text-center py-12 opacity-60">

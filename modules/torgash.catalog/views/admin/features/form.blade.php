@@ -50,17 +50,19 @@
 
         {{-- The same sticky bar every edit form has: the way back, the name,
              and Save where the hand already is. --}}
-        <div class="sticky top-16 z-20 -mx-6 px-6 py-3 bg-base-200/95 backdrop-blur border-b border-base-300 flex items-center gap-3">
-            <a href="{{ route('admin.catalog.features.index') }}" class="btn btn-ghost btn-sm btn-square" title="{{ __('Back to characteristics') }}">
+        <x-admin.form-bar>
+            <a href="{{ route('admin.catalog.features.index') }}" class="btn btn-ghost btn-sm btn-square" title="{{ __('Back to characteristics') }}" aria-label="{{ __('Back to characteristics') }}">
                 <x-icon name="arrow-left" size="lg" />
             </a>
             <div class="flex-1 min-w-0">
                 <div class="text-xs uppercase tracking-wide opacity-50 leading-none">{{ $feature->exists ? __('Edit characteristic') : __('New characteristic') }}</div>
                 <div class="font-semibold truncate leading-tight">{{ $feature->exists ? $feature->t('name', $locale) : __('New characteristic') }}</div>
             </div>
-            <a href="{{ route('admin.catalog.features.index') }}" class="btn btn-ghost btn-sm">{{ __('Cancel') }}</a>
-            <button class="btn btn-primary btn-sm">{{ $feature->exists ? __('Save') : __('Create') }}</button>
-        </div>
+            <x-slot:actions>
+                <a href="{{ route('admin.catalog.features.index') }}" class="btn btn-ghost btn-sm">{{ __('Cancel') }}</a>
+                <button class="btn btn-primary btn-sm">{{ $feature->exists ? __('Save') : __('Create') }}</button>
+            </x-slot:actions>
+        </x-admin.form-bar>
 
         @if ($errors->any())
             <div class="alert alert-error text-sm">{{ $errors->first() }}</div>
@@ -74,7 +76,7 @@
 
                     <div class="grid md:grid-cols-2 gap-4">
                         <fieldset class="fieldset p-0"><legend class="fieldset-legend">{{ __('Code') }}</legend>
-                            <input name="code" value="{{ old('code', $feature->code) }}" class="input input-bordered w-full font-mono"
+                            <input name="code" autocapitalize="off" autocorrect="off" spellcheck="false" value="{{ old('code', $feature->code) }}" class="input input-bordered w-full font-mono"
                                    placeholder="{{ __('auto from name, e.g. COLOR') }}">
                         </fieldset>
                         <fieldset class="fieldset p-0"><legend class="fieldset-legend">{{ __('Group') }}</legend>
@@ -106,7 +108,7 @@
                         <div class="flex items-center justify-between gap-3 flex-wrap">
                             <h3 class="font-semibold">{{ __('Values') }} <span class="opacity-50 font-normal text-sm">{{ strtoupper($locale) }}</span></h3>
                             <label class="label cursor-pointer gap-2 p-0">
-                                <input type="checkbox" name="is_color" value="1" x-model="isColor" class="toggle toggle-sm toggle-primary">
+                                <input type="checkbox" name="is_color" value="1" x-model="isColor" class="toggle toggle-sm toggle-success">
                                 <span class="label-text">{{ __('A colour — values get a swatch') }}</span>
                             </label>
                         </div>
@@ -123,7 +125,7 @@
                                 @foreach (array_slice($spellingGroups, 0, 3) as $group)
                                     <span class="inline-flex flex-wrap gap-1">
                                         @foreach ($group as $twin)
-                                            <span class="badge badge-ghost">{{ $twin->display($locale) }}</span>
+                                            <span class="badge badge-sm badge-ghost">{{ $twin->display($locale) }}</span>
                                         @endforeach
                                     </span>
                                 @endforeach
@@ -134,7 +136,9 @@
                             </div>
                         @endif
 
-                        <div class="flex flex-col gap-2">
+                        {{-- On a phone the rows keep their columns and scroll sideways. --}}
+                        <div class="max-sm:overflow-x-auto">
+                        <div class="flex flex-col gap-2 max-sm:min-w-[28rem]">
                             <div class="flex gap-2 items-center text-xs opacity-60 px-0.5" x-show="values.length">
                                 <span class="w-16 shrink-0">{{ __('Sort order') }}</span>
                                 <span class="w-16 shrink-0" x-show="isColor">{{ __('Swatch') }}</span>
@@ -148,7 +152,7 @@
                                            class="input input-bordered w-16 shrink-0 tabular-nums">
                                     <span class="w-16 shrink-0" x-show="isColor">
                                         <input type="color" x-model="row.swatch" aria-label="{{ __('Swatch') }}"
-                                               class="w-9 h-8 rounded border border-base-300 p-0.5 bg-base-100 block">
+                                               class="w-9 h-8 pointer-coarse:w-10 pointer-coarse:h-10 rounded border border-base-300 p-0.5 bg-base-100 block">
                                     </span>
                                     <div class="grow min-w-0 flex flex-col gap-1">
                                         <input type="text" x-model="row.value[locale]" aria-label="{{ __('Value') }}"
@@ -163,7 +167,7 @@
                                                     <span class="badge badge-ghost badge-sm gap-0.5 pe-0.5">
                                                         <span x-text="aliasWord(alias)"></span>
                                                         <button type="button" @click="row.aliases.splice(a, 1)" class="btn btn-ghost btn-xs btn-circle min-h-0 h-4 w-4"
-                                                                title="{{ __('Forget this spelling — the next import makes it a value of its own') }}">
+                                                                title="{{ __('Forget this spelling — the next import makes it a value of its own') }}" aria-label="{{ __('Forget this spelling — the next import makes it a value of its own') }}">
                                                             <x-icon name="x" size="sm" />
                                                         </button>
                                                     </span>
@@ -178,7 +182,7 @@
                                             <a x-show="purpose === 'brand' && row.id" :href="'{{ url('admin/catalog/features/'.$feature->id.'/values') }}/' + row.id + '/edit'"
                                                class="btn btn-ghost btn-sm" title="{{ __('Edit brand page') }}">{{ __('Page') }}</a>
                                         @endif
-                                        <button type="button" @click="removeValue(i)" class="btn btn-ghost btn-sm btn-square text-error" title="{{ __('Remove') }}">
+                                        <button type="button" @click="removeValue(i)" class="btn btn-ghost btn-sm btn-square text-error" title="{{ __('Remove') }}" aria-label="{{ __('Remove') }}">
                                             <x-icon name="x" size="sm" />
                                         </button>
                                     </span>
@@ -186,9 +190,10 @@
                             </template>
                             <div x-show="! values.length" class="text-sm opacity-60">{{ __('No values yet.') }}</div>
                         </div>
+                        </div>
                         <div class="flex items-center justify-between gap-3 flex-wrap">
                             <div class="flex items-center gap-1">
-                                <button type="button" @click="addValue()" class="btn btn-ghost btn-sm gap-1"><x-icon name="plus" size="sm" /> {{ __('Add value') }}</button>
+                                <button type="button" @click="addValue()" class="btn btn-sm gap-1"><x-icon name="plus" size="sm" /> {{ __('Add value') }}</button>
                                 @if ($feature->exists && $feature->values->count() > 1)
                                     <button type="button" class="btn btn-ghost btn-sm gap-1" data-open-dialog="modal-merge-values"><x-icon name="merge" size="sm" /> {{ __('Merge values') }}</button>
                                 @endif
@@ -349,7 +354,7 @@
                             <div class="flex items-center justify-between gap-3 rounded-box bg-base-200/60 px-3 py-1.5">
                                 <span class="flex flex-wrap gap-1 min-w-0">
                                     @foreach ($suggestion['words'] as $word)
-                                        <span class="badge badge-ghost">{{ $word }}</span>
+                                        <span class="badge badge-sm badge-ghost">{{ $word }}</span>
                                     @endforeach
                                 </span>
                                 <button type="button" class="btn btn-ghost btn-sm shrink-0"

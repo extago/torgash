@@ -86,7 +86,7 @@
                                         <td class="pl-8 text-sm opacity-80">{{ $child->name ?: '—' }}</td>
                                         <td><code class="font-mono text-xs opacity-40 break-all">{{ $child->guid }}</code></td>
                                         <td>
-                                            <select name="rows[{{ $child->id }}]" class="select select-bordered select-xs w-full">
+                                            <select name="rows[{{ $child->id }}]" class="select select-bordered select-sm w-full">
                                                 <option value="{{ Link::ASK }}" @selected($chosen($child) === Link::ASK)>
                                                     — {{ __('not decided') }}
                                                 </option>

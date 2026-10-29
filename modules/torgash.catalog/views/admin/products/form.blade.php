@@ -119,8 +119,8 @@
             @endforeach
         @endif
 
-        <div class="sticky top-16 z-20 -mx-6 px-6 py-3 bg-base-200/95 backdrop-blur border-b border-base-300 flex items-center gap-3">
-            <a href="{{ route('admin.catalog.products.index') }}" class="btn btn-ghost btn-sm btn-square" title="{{ __('Back to products') }}">
+        <x-admin.form-bar>
+            <a href="{{ route('admin.catalog.products.index') }}" class="btn btn-ghost btn-sm btn-square" title="{{ __('Back to products') }}" aria-label="{{ __('Back to products') }}">
                 <x-icon name="arrow-left" size="lg" />
             </a>
             <div class="flex-1 min-w-0">
@@ -131,14 +131,14 @@
             @if ($product->exists && (($prevProduct ?? null) || ($nextProduct ?? null)))
                 <div class="join">
                     @if ($prevProduct ?? null)
-                        <a href="{{ route('admin.catalog.products.edit', $prevProduct) }}" class="btn btn-sm join-item" title="{{ __('Previous product') }}">
+                        <a href="{{ route('admin.catalog.products.edit', $prevProduct) }}" class="btn btn-sm join-item" title="{{ __('Previous product') }}" aria-label="{{ __('Previous product') }}">
                             <x-icon name="chevron-left" />
                         </a>
                     @else
                         <span class="btn btn-sm join-item btn-disabled"><x-icon name="chevron-left" /></span>
                     @endif
                     @if ($nextProduct ?? null)
-                        <a href="{{ route('admin.catalog.products.edit', $nextProduct) }}" class="btn btn-sm join-item" title="{{ __('Next product') }}">
+                        <a href="{{ route('admin.catalog.products.edit', $nextProduct) }}" class="btn btn-sm join-item" title="{{ __('Next product') }}" aria-label="{{ __('Next product') }}">
                             <x-icon name="chevron-right" />
                         </a>
                     @else
@@ -152,7 +152,7 @@
                      via the HTML "form" attribute — a nested <form> here would leak
                      its _method into this product's own submit. --}}
                 <div class="dropdown dropdown-end">
-                    <div tabindex="0" role="button" class="btn btn-ghost btn-sm btn-square" title="{{ __('More actions') }}">
+                    <div tabindex="0" role="button" class="btn btn-ghost btn-sm btn-square" title="{{ __('More actions') }}" aria-label="{{ __('More actions') }}">
                         <x-icon name="settings" size="lg" />
                     </div>
                     <ul tabindex="0" class="dropdown-content menu menu-sm bg-base-100 rounded-box shadow-md w-56 mt-2 p-2 z-50 border border-base-300">
@@ -180,10 +180,12 @@
                     </ul>
                 </div>
             @endif
-            <a href="{{ route('admin.catalog.products.index') }}" class="btn btn-ghost btn-sm">{{ __('Cancel') }}</a>
-            <button class="btn btn-primary btn-sm">{{ $product->exists ? __('Save') : __('Create') }}</button>
+            <x-slot:actions>
+                <a href="{{ route('admin.catalog.products.index') }}" class="btn btn-ghost btn-sm">{{ __('Cancel') }}</a>
+                <button class="btn btn-primary btn-sm">{{ $product->exists ? __('Save') : __('Create') }}</button>
 
-        </div>
+            </x-slot:actions>
+        </x-admin.form-bar>
 
         @if ($errors->any())
             <div class="alert alert-error text-sm flex-col items-start gap-1">
@@ -194,7 +196,7 @@
         @endif
 
         <div class="flex items-end gap-3 flex-wrap">
-            <div role="tablist" class="tabs tabs-bordered flex-1" x-show="view === 'tabs'" style="{{ '' }}">
+            <div role="tablist" class="tabs tabs-border flex-1" x-show="view === 'tabs'">
                 @foreach ($tabs as $key => $label)
                     <a role="tab" class="tab" :class="tab === '{{ $key }}' ? 'tab-active font-semibold' : ''"
                        @click.prevent="tab = '{{ $key }}'" href="#">{{ $label }}</a>
@@ -363,11 +365,11 @@
                             {{-- A new product may leave it blank: the model fills it in
                                  (a template of torgash.sku, else P-<id>). --}}
                             <label class="fieldset p-0"><span class="fieldset-legend">{{ __('SKU') }}{{ $product->exists ? ' *' : '' }}</span>
-                                <input name="sku" value="{{ old('sku', $product->sku) }}" @required($product->exists) class="input input-bordered w-full"
+                                <input name="sku" autocapitalize="off" autocorrect="off" spellcheck="false" value="{{ old('sku', $product->sku) }}" @required($product->exists) class="input input-bordered w-full"
                                        @unless ($product->exists) placeholder="{{ __('Leave blank to assign one') }}" @endunless>
                             </label>
                             <label class="fieldset p-0"><span class="fieldset-legend">{{ __('Slug') }}</span>
-                                <input name="slug" value="{{ old('slug', $product->slug) }}" class="input input-bordered w-full" placeholder="{{ __('auto from name') }}">
+                                <input name="slug" autocapitalize="off" autocorrect="off" spellcheck="false" value="{{ old('slug', $product->slug) }}" class="input input-bordered w-full" placeholder="{{ __('auto from name') }}">
                             </label>
                         </div>
                     </div>
@@ -494,7 +496,7 @@
                             <div class="text-sm font-medium">
                                 {{ __('Pricing tiers') }}
                                 @if ($product->exists && $product->price_currency)
-                                    <span class="badge badge-xs badge-ghost font-mono">{{ $product->price_currency }}</span>
+                                    <span class="badge badge-sm badge-ghost font-mono">{{ $product->price_currency }}</span>
                                 @endif
                             </div>
                             <div class="text-xs opacity-50 mb-2">
@@ -520,8 +522,9 @@
                                      sits under a price; full-size fields like every
                                      other field of this card. --}}
                                 <template x-for="(row, i) in rows" :key="i">
-                                    <div class="grid grid-cols-[minmax(0,2fr)_7rem_minmax(0,3fr)_2.5rem] gap-2 items-center">
-                                        <select x-model="row.customer_group_id" aria-label="{{ __('Customer group') }}" class="select select-bordered w-full">
+                                    {{-- On a phone the group takes a line of its own over the numbers. --}}
+                                    <div class="grid grid-cols-[minmax(0,2fr)_7rem_minmax(0,3fr)_2.5rem] max-sm:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_2.5rem] gap-2 items-center">
+                                        <select x-model="row.customer_group_id" aria-label="{{ __('Customer group') }}" class="select select-bordered w-full max-sm:col-span-3">
                                             <option value="">{{ __('All customers') }}</option>
                                             @foreach ($customerGroups as $group)
                                                 <option value="{{ $group->id }}">{{ $group->t('name') }}</option>
@@ -535,7 +538,7 @@
                                         </button>
                                     </div>
                                 </template>
-                                <button type="button" @click="addRow()" class="btn btn-ghost btn-sm self-start gap-1.5"><x-icon name="plus" size="sm" /> {{ __('Add tier') }}</button>
+                                <button type="button" @click="addRow()" class="btn btn-sm self-start gap-1.5"><x-icon name="plus" size="sm" /> {{ __('Add tier') }}</button>
                                 <input type="hidden" name="price_tiers" :value="JSON.stringify(rows)">
                             </div>
                         </div>
@@ -545,7 +548,7 @@
                                 <div class="text-sm font-medium">
                                     {{ __('Price groups') }}
                                     @if ($product->exists && $product->price_currency)
-                                        <span class="badge badge-xs badge-ghost font-mono">{{ $product->price_currency }}</span>
+                                        <span class="badge badge-sm badge-ghost font-mono">{{ $product->price_currency }}</span>
                                     @endif
                                 </div>
                                 <div class="text-xs opacity-50 mb-2">
@@ -556,10 +559,10 @@
                                 </div>
                                 <div class="flex flex-col gap-2">
                                     @foreach ($priceTypes as $type)
-                                        <div class="grid grid-cols-[minmax(0,2fr)_7rem_minmax(0,3fr)_2.5rem] gap-2 items-center">
-                                            <div class="col-span-2 text-sm flex items-center gap-1.5">
+                                        <div class="grid grid-cols-[minmax(0,2fr)_7rem_minmax(0,3fr)_2.5rem] max-sm:grid-cols-[minmax(0,1fr)_2.5rem] gap-2 items-center">
+                                            <div class="col-span-2 max-sm:col-span-2 text-sm flex items-center gap-1.5">
                                                 {{ $type->t('name', admin_content_locale()) }}
-                                                <span class="badge badge-xs badge-ghost font-mono">{{ $type->code }}</span>
+                                                <span class="badge badge-sm badge-ghost font-mono">{{ $type->code }}</span>
                                             </div>
                                             <input type="number" name="overrides[{{ $type->id }}]" min="0" step="0.01"
                                                    value="{{ old('overrides.'.$type->id, ($priceOverrides[$type->id] ?? null) !== null ? $priceOverrides[$type->id] / 100 : '') }}"
@@ -624,7 +627,7 @@
                         <input type="hidden" name="needs_delivery_form" value="1">
                         <input type="hidden" name="needs_delivery" value="0">
                         <label class="label cursor-pointer justify-start gap-3">
-                            <input type="checkbox" name="needs_delivery" value="1" class="toggle toggle-sm"
+                            <input type="checkbox" name="needs_delivery" value="1" class="toggle toggle-sm toggle-success"
                                    @checked(old('needs_delivery', $product->needs_delivery ?? true))>
                             <span class="label-text">{{ __('Needs delivery') }}</span>
                             <span class="text-xs opacity-60">{{ __('Off for a service, a download or an electronic gift card: an order of only such goods asks for no address and no delivery.') }}</span>
@@ -709,50 +712,73 @@
         <div x-show="shows('attributes')" style="{{ $panelStyle('attributes') }}" class="flex flex-col gap-4">
             <h2 class="text-lg font-semibold pt-2" x-show="view === 'all'" x-cloak>{{ __('Attributes') }}</h2>
 
-            @if ($globalFeatures->isNotEmpty())
-              <section class="card bg-base-100 border border-base-300 xl:max-w-[calc(100%-23rem)]"><div class="card-body gap-4">
-                <div>
-                    <h3 class="font-semibold">{{ __('Global characteristics') }}</h3>
-                    <div class="text-xs opacity-50 mb-2">
-                        {!! __('Managed in :link — shared, filterable specs. Leave a field empty to skip it for this product.', [
-                            'link' => '<a href="'.route('admin.catalog.features.index').'" class="link">'.__('Features').'</a>',
-                        ]) !!}
+            {{-- The shop's characteristics this product's form shows: its own
+                 set (Features\ProductFeatureSet — what its categories declare
+                 plus what it already has), by group, a filter over the names
+                 that hides rows without a request, and a box to bring in any
+                 other by name for this edit. The save touches only what the
+                 form sent (PLAN §63.9). --}}
+            <section class="card bg-base-100 border border-base-300 xl:max-w-[calc(100%-23rem)]"
+                     x-data="{ featureQ: '', featureMatches(el) { const q = this.featureQ.trim().toLowerCase(); return q === '' || (el.dataset.featureName || '').includes(q); } }">
+              <div class="card-body gap-4">
+                <div class="flex flex-wrap items-start gap-3">
+                    <div class="grow min-w-48">
+                        <h3 class="font-semibold">{{ __('Global characteristics') }}</h3>
+                        <div class="text-xs opacity-50">
+                            {!! __('Managed in :link — shared, filterable specs. Leave a field empty to skip it for this product.', [
+                                'link' => '<a href="'.route('admin.catalog.features.index').'" class="link">'.__('Features').'</a>',
+                            ]) !!}
+                            {{ __('Shown: the ones bound to this product\'s categories and the ones it already has; any other joins by name below.') }}
+                        </div>
                     </div>
-                    <div class="grid md:grid-cols-2 2xl:grid-cols-3 gap-4">
-                        @foreach ($globalFeatures as $gf)
-                            @php $assigned = $assignedFeatures->get($gf->id); @endphp
-                            <fieldset class="fieldset p-0">
-                                <legend class="fieldset-legend">{{ $gf->group ? $gf->group->t('name', $locale).' — ' : '' }}{{ $gf->t('name', $locale) }}</legend>
-                                @if ($gf->isChoiceType())
-                                    <select name="global_features[{{ $gf->id }}]" class="select select-bordered w-full">
-                                        <option value="">— {{ __('not set') }} —</option>
-                                        @foreach ($gf->values as $val)
-                                            <option value="{{ $val->id }}" @selected(old('global_features.'.$gf->id, $assigned?->feature_value_id) == $val->id)>
-                                                {{ $val->display($locale) }}
-                                            </option>
-                                        @endforeach
-                                    </select>
-                                @elseif ($gf->isTypedText() && ! content_locale_is_base())
-                                    {{-- Another content language: this language's word for the
-                                         base value, which shows as the placeholder. Nothing to
-                                         translate until the base language has a value. --}}
-                                    <input name="global_features_words[{{ $gf->id }}]" type="text"
-                                           value="{{ old('global_features_words.'.$gf->id, ($assigned?->value_translations ?? [])[$locale] ?? '') }}"
-                                           placeholder="{{ $assigned?->value_text }}"
-                                           @disabled(! $assigned?->value_text)
-                                           @if (! $assigned?->value_text) title="{{ __('Fill it in the base language first') }}" @endif
-                                           class="input input-bordered w-full">
-                                @else
-                                    <input name="global_features[{{ $gf->id }}]" type="{{ $gf->input_type === 'number' ? 'number' : 'text' }}"
-                                           value="{{ old('global_features.'.$gf->id, $assigned?->value_text) }}"
-                                           class="input input-bordered w-full">
-                                @endif
-                            </fieldset>
-                        @endforeach
-                    </div>
+                    @if ($globalFeatures->count() > 8)
+                        <label class="input input-sm w-64 gap-2">
+                            <x-icon name="list-filter" size="sm" class="opacity-50" />
+                            <input type="search" x-model="featureQ" class="grow" placeholder="{{ __('Filter by name…') }}" aria-label="{{ __('Filter by name…') }}">
+                        </label>
+                    @endif
                 </div>
-              </div></section>
-            @endif
+
+                @php
+                    $featureLocale = $locale;
+                    $featureGroups = $globalFeatures->groupBy(fn ($gf) => $gf->group_id ?? 0);
+                @endphp
+                @forelse ($featureGroups as $featureGroupId => $featureGroupItems)
+                    @php
+                        $featureGroupName = $featureGroupItems->first()->group?->t('name', $locale);
+                        $featureGroupFilled = $featureGroupItems->filter(fn ($gf) => $assignedFeatures->has($gf->id))->count();
+                    @endphp
+                    <details class="group/features" open>
+                        <summary class="cursor-pointer select-none flex items-center gap-2 text-sm font-medium py-1">
+                            <x-icon name="chevron-right" size="sm" class="opacity-50 transition-transform group-open/features:rotate-90" />
+                            {{ $featureGroupName ?: __('Without a group') }}
+                            <span class="badge badge-sm badge-ghost tabular-nums">{{ $featureGroupFilled }} / {{ $featureGroupItems->count() }}</span>
+                        </summary>
+                        <div class="grid md:grid-cols-2 2xl:grid-cols-3 gap-4 pt-2 pb-1">
+                            @foreach ($featureGroupItems as $gf)
+                                @include('torgash.catalog::admin.products._feature_field', ['featureField' => $gf, 'featureAssigned' => $assignedFeatures->get($gf->id)])
+                            @endforeach
+                        </div>
+                    </details>
+                @empty
+                    <p class="text-sm opacity-60">{{ __('No characteristic is bound to this product\'s categories yet — add one by name below, or bind them on the Features screen.') }}</p>
+                @endforelse
+
+                {{-- Any other characteristic, for this edit: found by name,
+                     drawn in as the same field, saved like the rest. --}}
+                <div id="product-features-added" class="grid md:grid-cols-2 2xl:grid-cols-3 gap-4 empty:hidden"></div>
+                <div>
+                    <label class="input input-sm w-full max-w-md gap-2">
+                        <x-icon name="plus" size="sm" class="opacity-50" />
+                        <input type="search" name="feature_q" autocomplete="off" class="grow" placeholder="{{ __('Add a characteristic by name…') }}"
+                               hx-get="{{ route('admin.catalog.products.features.search', ['product' => $product->id]) }}" hx-trigger="input changed delay:300ms, search"
+                               hx-target="#product-features-found"
+                               hx-vals='js:{on_form: [...document.querySelectorAll(".product-feature-field")].map((f) => f.dataset.featureId)}'>
+                    </label>
+                    <div id="product-features-found"></div>
+                </div>
+              </div>
+            </section>
 
             <section class="card bg-base-100 border border-base-300 min-w-0 xl:max-w-[calc(100%-23rem)]"><div class="card-body gap-4">
             <div>
@@ -798,20 +824,25 @@
 @if (content_locale_is_base() || ! $product->exists)
                 <div x-data="{
                         mode: 'fields',
+                        /* Every row carries a number of its own (`_id`): the list is
+                           keyed by it, so a row dragged to a new place takes its
+                           fields with it — keyed by position, Alpine would have kept
+                           the elements where they were and only swapped their words. */
+                        nextId: 1,
                         rows: {{ \Illuminate\Support\Js::from($initialFeaturesRows) }},
+                        init() { this.rows = this.rows.map((r) => this.numbered(r)) },
+                        numbered(row) { return Object.assign(row, { _id: this.nextId++ }) },
                         json: {{ \Illuminate\Support\Js::from(json_encode($initialFeatures ?: (object) [], JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT)) }},
-                        dragging: null,
-                        addRow() { this.rows.push({ type: 'feature', key: '', value: '', label: '' }) },
-                        addSection() { this.rows.push({ type: 'section', key: '', value: '', label: '' }) },
+                        addRow() { this.rows.push(this.numbered({ type: 'feature', key: '', value: '', label: '' })) },
+                        addSection() { this.rows.push(this.numbered({ type: 'section', key: '', value: '', label: '' })) },
                         removeRow(i) { this.rows.splice(i, 1) },
-                        /* Native drag and drop rather than a library: the whole
-                           behaviour is pick up, move over, drop, and vendoring a
-                           sortable for that is a dependency to keep for ever. */
-                        drop(i) {
-                            if (this.dragging === null || this.dragging === i) return;
-                            const [row] = this.rows.splice(this.dragging, 1);
-                            this.rows.splice(i, 0, row);
-                            this.dragging = null;
+                        /* By a drag (x-sort — Alpine Sort, which works under a
+                           finger; PLAN §62) or by the arrows a finger gets. */
+                        move(id, to) {
+                            const from = this.rows.findIndex(r => r._id === id);
+                            if (from === -1 || from === to || to < 0 || to >= this.rows.length) return;
+                            const [row] = this.rows.splice(from, 1);
+                            this.rows.splice(to, 0, row);
                         },
                         str(v) { return typeof v === 'string' ? v : JSON.stringify(v) },
                         values() {
@@ -847,9 +878,9 @@
                                 const parsed = JSON.parse(this.json || '{}');
 
                                 this.rows = Array.isArray(parsed)
-                                    ? parsed.map(r => r && r.type === 'section'
+                                    ? parsed.map(r => this.numbered(r && r.type === 'section'
                                         ? { type: 'section', label: this.str(r.label ?? ''), key: '', value: '' }
-                                        : { type: 'feature', key: this.str(r?.key ?? ''), value: this.str(r?.value ?? ''), label: '' })
+                                        : { type: 'feature', key: this.str(r?.key ?? ''), value: this.str(r?.value ?? ''), label: '' }))
                                     : this.merged(parsed);
                             } catch (e) { /* keep existing rows if JSON is invalid */ }
                             this.mode = 'fields';
@@ -859,7 +890,7 @@
                             kept.forEach(r => { if (r.type !== 'section') r.value = this.str(obj[r.key]); });
                             const known = kept.filter(r => r.type !== 'section').map(r => r.key);
                             Object.keys(obj).filter(k => !known.includes(k))
-                                .forEach(k => kept.push({ type: 'feature', key: k, value: this.str(obj[k]), label: '' }));
+                                .forEach(k => kept.push(this.numbered({ type: 'feature', key: k, value: this.str(obj[k]), label: '' })));
 
                             return kept;
                         },
@@ -900,20 +931,20 @@
                     </div>
 
                     <template x-if="mode === 'fields'">
-                        <div class="flex flex-col gap-2">
-                            <template x-for="(row, i) in rows" :key="i">
-                                <div class="flex gap-2 items-center"
-                                     draggable="true"
-                                     @dragstart="dragging = i"
-                                     @dragover.prevent
-                                     @drop.prevent="drop(i)"
-                                     :class="dragging === i ? 'opacity-40' : ''">
-                                    {{-- The handle is the whole row's grip: the
-                                         inputs stay clickable because a drag
-                                         starting inside a text field is the
-                                         browser's own text-selection drag. --}}
-                                    <span class="cursor-grab opacity-30 hover:opacity-70 shrink-0" title="{{ __('Drag to reorder') }}">
+                        <div class="flex flex-col gap-2" x-sort="move($item, $position)" x-sort:config="{ delay: 150, delayOnTouchOnly: true }">
+                            <template x-for="(row, i) in rows" :key="row._id">
+                                <div class="flex gap-2 items-center" x-sort:item="row._id">
+                                    {{-- The grip is the handle: a drag starting
+                                         inside a text field stays the browser's
+                                         own text selection. --}}
+                                    <span class="cursor-grab opacity-30 hover:opacity-70 shrink-0 pointer-coarse:p-2" title="{{ __('Drag to reorder') }}" x-sort:handle>
                                         <x-icon name="grip-vertical" size="sm" />
+                                    </span>
+                                    <span class="hidden pointer-coarse:inline-flex items-center shrink-0">
+                                        <button type="button" class="btn btn-ghost btn-sm btn-square" :disabled="i === 0"
+                                                title="{{ __('Move earlier') }}" aria-label="{{ __('Move earlier') }}" @click="move(row._id, i - 1)"><x-icon name="arrow-up" size="sm" /></button>
+                                        <button type="button" class="btn btn-ghost btn-sm btn-square" :disabled="i === rows.length - 1"
+                                                title="{{ __('Move later') }}" aria-label="{{ __('Move later') }}" @click="move(row._id, i + 1)"><x-icon name="arrow-down" size="sm" /></button>
                                     </span>
 
                                     <template x-if="row.type === 'section'">
@@ -934,8 +965,8 @@
                                 </div>
                             </template>
                             <div class="flex gap-2">
-                                <button type="button" @click="addRow()" class="btn btn-ghost btn-sm self-start">+ {{ __('Add field') }}</button>
-                                <button type="button" @click="addSection()" class="btn btn-ghost btn-sm self-start">+ {{ __('Add section') }}</button>
+                                <button type="button" @click="addRow()" class="btn btn-sm self-start">+ {{ __('Add field') }}</button>
+                                <button type="button" @click="addSection()" class="btn btn-sm self-start">+ {{ __('Add section') }}</button>
                             </div>
                         </div>
                     </template>
@@ -1091,7 +1122,7 @@
                                         <td>
                                             @if ($isThis)
                                                 <span class="font-medium">{{ $variant->t('name', $locale) }}</span>
-                                                <span class="badge badge-primary badge-xs ms-1">{{ __('this product') }}</span>
+                                                <span class="badge badge-primary badge-sm ms-1">{{ __('this product') }}</span>
                                             @else
                                                 <a href="{{ route('admin.catalog.products.edit', $variant) }}" class="link link-hover">{{ $variant->t('name', $locale) }}</a>
                                             @endif
@@ -1136,7 +1167,7 @@
 
         {{-- ── SEO ───────────────────────────────────────────────────────── --}}
         <div x-show="shows('seo')" style="{{ $panelStyle('seo') }}" class="xl:max-w-[calc(100%-23rem)]">
-            <x-seo.fields :record="$product"
+            <x-seo.fields :record="$product" picture
                           :url-preview="$product->slug ? url('/product/'.$product->slug) : null" />
         </div>
 

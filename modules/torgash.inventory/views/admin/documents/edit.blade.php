@@ -7,8 +7,8 @@
     {{-- Anything but a draft is read only: posted, or posted and revoked. --}}
     @php $posted = ! $document->isDraft(); @endphp
 
-    <div class="sticky top-16 z-20 -mx-6 px-6 py-3 bg-base-200/95 backdrop-blur border-b border-base-300 flex items-center gap-3">
-        <a href="{{ route('admin.inventory.documents.index') }}" class="btn btn-ghost btn-sm btn-square" title="{{ __('Stock documents') }}">
+    <x-admin.form-bar>
+        <a href="{{ route('admin.inventory.documents.index') }}" class="btn btn-ghost btn-sm btn-square" title="{{ __('Stock documents') }}" aria-label="{{ __('Stock documents') }}">
             <x-icon name="arrow-left" size="lg" />
         </a>
         <div class="flex-1 min-w-0">
@@ -27,14 +27,16 @@
         <a href="{{ route('admin.inventory.documents.print', $document) }}" target="_blank" rel="noopener" class="btn btn-sm gap-1.5">
             <x-icon name="printer" size="sm" /> {{ __('Print') }}
         </a>
-        @unless ($posted)
-            <button type="submit" form="document-form" name="after" value="save" class="btn btn-sm">{{ __('Save') }}</button>
-            <button type="submit" form="document-form" name="after" value="post" class="btn btn-sm btn-primary gap-1.5"
-                    data-confirm="{{ __('Post this document? The stock moves now, and the document can no longer be changed.') }}">
-                <x-icon name="send" size="sm" /> {{ __('Save and post') }}
-            </button>
-        @endunless
-    </div>
+        <x-slot:actions>
+            @unless ($posted)
+                <button type="submit" form="document-form" name="after" value="save" class="btn btn-sm btn-primary">{{ __('Save') }}</button>
+                <button type="submit" form="document-form" name="after" value="post" class="btn btn-sm btn-primary gap-1.5"
+                        data-confirm="{{ __('Post this document? The stock moves now, and the document can no longer be changed.') }}">
+                    <x-icon name="send" size="sm" /> {{ __('Save and post') }}
+                </button>
+            @endunless
+        </x-slot:actions>
+    </x-admin.form-bar>
 
     @if (session('status'))
         <div class="alert alert-success text-sm">{{ session('status') }}</div>
@@ -64,7 +66,7 @@
                     @csrf
                     <label class="input input-bordered flex items-center gap-2 grow sm:grow-0 sm:w-80">
                         <x-icon name="scan-barcode" size="sm" class="opacity-50" />
-                        <input type="text" name="code" autocomplete="off" autofocus class="grow" placeholder="{{ __('SKU — Enter adds it') }}"
+                        <input type="text" name="code" autocapitalize="off" autocorrect="off" spellcheck="false" autocomplete="off" autofocus class="grow" placeholder="{{ __('SKU — Enter adds it') }}"
                                hx-get="{{ route('admin.inventory.documents.search', $document) }}" hx-trigger="input changed delay:300ms"
                                hx-target="#document-search" hx-swap="innerHTML">
                     </label>
@@ -169,7 +171,7 @@
                             <input type="password" name="current_password" required autocomplete="current-password" class="input input-bordered w-full">
                         </fieldset>
                         <div>
-                            <button class="btn btn-error btn-sm gap-1.5"><x-icon name="undo-2" size="sm" /> {{ __('Revoke') }}</button>
+                            <button class="btn btn-sm btn-error btn-outline gap-1.5"><x-icon name="undo-2" size="sm" /> {{ __('Revoke') }}</button>
                         </div>
                     </form>
                 @endif

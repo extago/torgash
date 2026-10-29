@@ -26,6 +26,7 @@ use App\Http\Controllers\WellKnownController;
 use App\Models\BackgroundTask;
 use App\Models\Currency;
 use Illuminate\Cache\RateLimiting\Limit;
+use Illuminate\Console\Events\CommandStarting;
 use Illuminate\Console\Scheduling\Schedule;
 use Illuminate\Database\Events\QueryExecuted;
 use Illuminate\Http\Request;
@@ -38,6 +39,9 @@ use Illuminate\Support\ServiceProvider;
 
 class CoreServiceProvider extends ServiceProvider
 {
+    /** PsySH's settings where it must not fork — tinkerWithoutFork(). */
+    public const PSYSH_CONFIG = __DIR__.'/Support/psysh-config.php';
+
     public function register(): void
     {
         $this->app->singleton(HookBus::class);
@@ -319,6 +323,7 @@ class CoreServiceProvider extends ServiceProvider
         $this->watchRates();
         $this->watchTasks();
         $this->watchUpdates();
+        $this->tinkerWithoutFork();
         \App\Core\Admin\CoreWidgets::register();
 
         // The kinds of question a display rule may ask that core itself can
@@ -328,6 +333,23 @@ class CoreServiceProvider extends ServiceProvider
 
         // Core's own personal data: the account, addresses, verification codes.
         hook_listen('core.personal_data', fn (array $context) => \App\Core\Privacy\CorePersonalData::register($context['registry']));
+    }
+
+    /**
+     * Tinker on FrankenPHP's `php-cli`. Where pcntl is, PsySH runs its loop in
+     * a forked child, and the child calls cli_set_process_title() — which only
+     * PHP's own CLI has: tinker died at its prompt and on `tinker file.php`,
+     * only `--execute` worked (reported from the live shop, 2026-10-29).
+     * Told not to fork, it keeps the loop in this process, as on Windows. A
+     * PSYSH_CONFIG the server set itself is left alone.
+     */
+    protected function tinkerWithoutFork(): void
+    {
+        $this->app['events']->listen(CommandStarting::class, function (CommandStarting $event) {
+            if ($event->command === 'tinker' && ! function_exists('cli_set_process_title') && empty($_SERVER['PSYSH_CONFIG'])) {
+                $_SERVER['PSYSH_CONFIG'] = self::PSYSH_CONFIG;
+            }
+        });
     }
 
     /**

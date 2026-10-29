@@ -61,6 +61,8 @@ Route::middleware(['auth', 'can:admin.access'])->group(function () {
     Route::get('/', [DashboardController::class, 'index'])->name('dashboard');
     // One person's own arrangement of it — what they hide, what order they read.
     Route::post('dashboard/layout', [DashboardController::class, 'layout'])->name('dashboard.layout');
+    // The sidebar folded into a strip of icons — this person's, remembered (PLAN §62).
+    Route::post('preferences/sidebar', [\App\Http\Controllers\Admin\PreferencesController::class, 'sidebar'])->name('preferences.sidebar');
     // "Where is that set?" — screens and settings by the words for them.
     Route::get('search', [SearchController::class, 'index'])->name('search');
     // The bell's own refresh (App\Core\Admin\AdminNotifications).

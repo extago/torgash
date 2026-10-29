@@ -23,14 +23,14 @@
 @endphp
 
 @section('content')
-    <div class="sticky top-16 z-20 -mx-6 px-6 py-3 bg-base-200/95 backdrop-blur border-b border-base-300 flex items-center gap-3 flex-wrap">
-        <a href="{{ route('admin.blocks.index') }}" class="btn btn-ghost btn-sm btn-square" title="{{ __('All zones') }}">
+    <x-admin.form-bar class="flex-wrap">
+        <a href="{{ route('admin.blocks.index') }}" class="btn btn-ghost btn-sm btn-square" title="{{ __('All zones') }}" aria-label="{{ __('All zones') }}">
             <x-icon name="arrow-left" size="lg" />
         </a>
         <div class="flex-1 min-w-0">
             <div class="text-xs opacity-50 leading-none flex items-center gap-2">
                 <span class="font-mono">{{ $zone['name'] }}</span>
-                <span class="badge badge-ghost badge-xs">{{ __(ZoneRegistry::SHAPES[$shape] ?? $shape) }}</span>
+                <span class="badge badge-ghost badge-sm">{{ __(ZoneRegistry::SHAPES[$shape] ?? $shape) }}</span>
             </div>
             <div class="font-semibold truncate leading-tight">{{ label_text($zone['label'] ?? null, null, $zone['name']) }}</div>
         </div>
@@ -40,10 +40,12 @@
             <input type="checkbox" class="toggle toggle-sm toggle-success" @checked($zoneEnabled) data-submit-on-change
                    aria-label="{{ $zoneEnabled ? __('Disable zone') : __('Enable zone') }}">
         </form>
-        <button type="button" class="btn btn-primary btn-sm" data-open-dialog="modal-block-picker">
-            + {{ __('Add block') }}
-        </button>
-    </div>
+        <x-slot:actions>
+            <button type="button" class="btn btn-primary btn-sm" data-open-dialog="modal-block-picker">
+                + {{ __('Add block') }}
+            </button>
+        </x-slot:actions>
+    </x-admin.form-bar>
 
     @if (session('status'))
         <div class="alert alert-success text-sm">{{ session('status') }}</div>

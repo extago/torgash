@@ -33,7 +33,7 @@
     @endif
 
     <label class="label cursor-pointer justify-start gap-3">
-        <input type="checkbox" class="checkbox" x-model="gift">
+        <input type="checkbox" class="checkbox checkbox-primary" x-model="gift">
         <span class="label-text">{{ __('It is a present — send it to somebody') }}</span>
     </label>
 

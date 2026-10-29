@@ -1,6 +1,17 @@
 @extends('admin.layout')
 
 @section('title', __('Blocks'))
+@section('title_hint', __('The places on the storefront a block can be put: the homepage, under a category, beside a product, the header, the phone menu. Open one to arrange its blocks — one under another, side by side as columns, or as tabs.'))
+@section('title_actions')
+    {{-- The way back to what the theme intended. Here rather than on each
+         zone, because it is one screen answering "which zones, and add or
+         replace" — and because the zone you want back is usually the one you
+         emptied, which shows nothing to hang a button on. --}}
+    <a href="{{ route('admin.blocks.theme_defaults') }}" class="btn btn-ghost gap-1.5">
+        <x-icon name="rotate-ccw" size="sm" />
+        {{ __('Restore from the theme') }}
+    </a>
+@endsection
 
 @section('content')
     @if (session('status'))
@@ -9,21 +20,6 @@
 
     <div class="card bg-base-100 border border-base-300">
         <div class="card-body gap-4">
-            <div class="flex flex-wrap items-start justify-between gap-3">
-                <p class="text-sm opacity-70 max-w-3xl">
-                    {{ __('The places on the storefront a block can be put: the homepage, under a category, beside a product, the header, the phone menu. Open one to arrange its blocks — one under another, side by side as columns, or as tabs.') }}
-                </p>
-
-                {{-- The way back to what the theme intended. Here rather than on
-                     each zone, because it is one screen answering "which zones,
-                     and add or replace" — and because the zone you want back is
-                     usually the one you emptied, which shows nothing to hang a
-                     button on. --}}
-                <a href="{{ route('admin.blocks.theme_defaults') }}" class="btn btn-outline btn-sm gap-1.5">
-                    <x-icon name="rotate-ccw" size="sm" />
-                    {{ __('Restore from the theme') }}
-                </a>
-            </div>
 
             @forelse ($grouped as $group => $zones)
                 <div>

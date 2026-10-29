@@ -133,6 +133,23 @@ this file is the reasoning. Read it before changing anything it covers.
   form's warning above the own rows; the invariant
   `catalog.characteristics_in_one_place` is the same rule in SQL
   (`CharacteristicStoresTest` keeps the two agreeing).
+- **The product form shows the product's SET of characteristics, never the
+  shop's thousand** (`Features\ProductFeatureSet`, PLAN §63.9): the ones bound
+  to any of its categories (`Feature::categories()`, empty = every category)
+  plus the ones it already has a value for, by group, with a filter over the
+  names; any other is brought in by name through `products.features.search`
+  and drawn as the same `_feature_field` partial. The save
+  (`syncGlobalFeatures`) touches ONLY the `global_features[]` keys the form
+  sent — an empty box removes the value, a characteristic the form never
+  drew is not an emptied one. Nothing paginates inside the form: a field on
+  another page would never be submitted.
+- **A characteristic group has a screen of its own** (`FeatureGroupsController`,
+  PLAN §63.10): named in every content language one language per save
+  (`put_translation`), ordered by a drag (`feature-groups/sort`, posted at
+  once), deleted without its characteristics (they stay, ungrouped). The
+  "Group" box on a characteristic's form still makes a new group from a new
+  word (`resolveGroupId`, matched against the name in any language) — this
+  screen is where that group is then renamed, translated and ordered.
 - **Where a characteristic is SHOWN is a different question from what it
   FILTERS.** `purpose` says what it IS (plain / variation axis / brand — `info`
   is gone, it was never about that); `shown_in` is a list of place KEYS from

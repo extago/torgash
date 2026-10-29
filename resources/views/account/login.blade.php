@@ -28,7 +28,7 @@
                 </label>
 
                 <label class="label cursor-pointer justify-start gap-2">
-                    <input type="checkbox" name="remember" class="checkbox">
+                    <input type="checkbox" name="remember" class="checkbox checkbox-primary">
                     <span class="label-text">{{ __('Remember me') }}</span>
                 </label>
 

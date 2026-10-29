@@ -16,8 +16,8 @@
         @csrf
         @if ($key !== '') @method('PUT') @endif
 
-        <div class="sticky top-16 z-20 -mx-6 px-6 py-3 bg-base-200/95 backdrop-blur border-b border-base-300 flex items-center gap-3">
-            <a href="{{ route('admin.catalog.availability-statuses.index') }}" class="btn btn-ghost btn-sm btn-square" title="{{ __('Back to statuses') }}">
+        <x-admin.form-bar>
+            <a href="{{ route('admin.catalog.availability-statuses.index') }}" class="btn btn-ghost btn-sm btn-square" title="{{ __('Back to statuses') }}" aria-label="{{ __('Back to statuses') }}">
                 <x-icon name="arrow-left" size="lg" />
             </a>
             <div class="flex-1 min-w-0">
@@ -30,7 +30,7 @@
                      "form" attribute: a nested <form> would leak its
                      _method=DELETE into this one's submit. --}}
                 <div class="dropdown dropdown-end">
-                    <div tabindex="0" role="button" class="btn btn-ghost btn-sm btn-square" title="{{ __('More actions') }}">
+                    <div tabindex="0" role="button" class="btn btn-ghost btn-sm btn-square" title="{{ __('More actions') }}" aria-label="{{ __('More actions') }}">
                         <x-icon name="settings" size="lg" />
                     </div>
                     <ul tabindex="0" class="dropdown-content menu menu-sm bg-base-100 rounded-box shadow-md w-64 mt-2 p-2 z-50 border border-base-300">
@@ -63,9 +63,11 @@
                     </ul>
                 </div>
             @endif
-            <a href="{{ route('admin.catalog.availability-statuses.index') }}" class="btn btn-ghost btn-sm">{{ __('Cancel') }}</a>
-            <button class="btn btn-primary btn-sm">{{ $key === '' ? __('Create') : __('Save') }}</button>
-        </div>
+            <x-slot:actions>
+                <a href="{{ route('admin.catalog.availability-statuses.index') }}" class="btn btn-ghost btn-sm">{{ __('Cancel') }}</a>
+                <button class="btn btn-primary btn-sm">{{ $key === '' ? __('Create') : __('Save') }}</button>
+            </x-slot:actions>
+        </x-admin.form-bar>
 
         @if (session('status'))
             <div class="alert alert-success text-sm">{{ session('status') }}</div>
@@ -90,7 +92,7 @@
 
                         <fieldset class="fieldset p-0"><legend class="fieldset-legend">{{ __('Code') }}</legend>
                             @if ($key === '')
-                                <input name="key" value="{{ old('key') }}" class="input input-bordered w-full max-w-xs font-mono"
+                                <input name="key" autocapitalize="off" autocorrect="off" spellcheck="false" value="{{ old('key') }}" class="input input-bordered w-full max-w-xs font-mono"
                                        placeholder="{{ __('auto from the name, e.g. made_to_order') }}">
                             @else
                                 <input value="{{ $key }}" class="input input-bordered w-full max-w-xs font-mono" disabled>
@@ -107,14 +109,14 @@
 
                             <label class="label cursor-pointer justify-start gap-2 p-0">
                                 <input type="hidden" name="orderable" value="0">
-                                <input type="checkbox" name="orderable" value="1" class="checkbox checkbox-sm checkbox-primary" @checked(old('orderable', $def['orderable']))>
+                                <input type="checkbox" name="orderable" value="1" class="checkbox checkbox-sm" @checked(old('orderable', $def['orderable']))>
                                 <span class="label-text">{{ __('Can be bought') }}</span>
                             </label>
                             <p class="text-xs opacity-60 -mt-2 ms-7">{{ __('Off: the product stays on the site and cannot be added to the cart, whatever its stock.') }}</p>
 
                             <label class="label cursor-pointer justify-start gap-2 p-0">
                                 <input type="hidden" name="tracks_stock" value="0">
-                                <input type="checkbox" name="tracks_stock" value="1" x-model="tracks" class="checkbox checkbox-sm checkbox-primary">
+                                <input type="checkbox" name="tracks_stock" value="1" x-model="tracks" class="checkbox checkbox-sm">
                                 <span class="label-text">{{ __('Counts stock') }}</span>
                             </label>
                             <p class="text-xs opacity-60 -mt-2 ms-7">{{ __('Off: the stock number is only for information — orders do not change it and it never stops a purchase.') }}</p>
@@ -122,7 +124,7 @@
                             <div x-show="tracks">
                                 <label class="label cursor-pointer justify-start gap-2 p-0">
                                     <input type="hidden" name="allow_negative" value="0">
-                                    <input type="checkbox" name="allow_negative" value="1" class="checkbox checkbox-sm checkbox-primary" @checked(old('allow_negative', $def['allow_negative']))>
+                                    <input type="checkbox" name="allow_negative" value="1" class="checkbox checkbox-sm" @checked(old('allow_negative', $def['allow_negative']))>
                                     <span class="label-text">{{ __('May be sold below zero') }}</span>
                                 </label>
                                 <p class="text-xs opacity-60 mt-1 ms-7">{{ __('As a preorder does: the number goes negative and the buy button stays. Off: the product cannot be bought once stock reaches zero.') }}</p>

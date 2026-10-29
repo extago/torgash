@@ -43,7 +43,7 @@
                         @if (($field['type'] ?? 'text') === 'checkbox')
                             <label class="label cursor-pointer justify-start gap-2">
                                 <input type="checkbox" name="gateway_config[{{ $key }}][{{ $name }}]" value="1"
-                                       class="toggle toggle-primary" @checked($stored)>
+                                       class="toggle toggle-sm toggle-success" @checked($stored)>
                                 <span class="label-text">{{ __('On') }}</span>
                             </label>
                         @elseif (($field['type'] ?? 'text') === 'password')
@@ -71,7 +71,7 @@
                 @endforeach
 
                 <label class="label cursor-pointer justify-start gap-2">
-                    <input type="checkbox" name="gateway_test_mode" value="1" class="toggle toggle-warning"
+                    <input type="checkbox" name="gateway_test_mode" value="1" class="toggle toggle-sm toggle-warning"
                            @checked($binding?->gateway === $key && $binding->test_mode)>
                     <span class="label-text">{{ __('Test mode') }}</span>
                 </label>

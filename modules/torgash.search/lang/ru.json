@@ -191,5 +191,7 @@
     "Price": "Цена",
     "Product": "Товар",
     "Select all on this page": "Выбрать все на странице",
-    "selected": "выбрано"
+    "selected": "выбрано",
+    "The index the storefront searches and a trial box: type what a customer would and see the answer in the same order — and why.": "Индекс, по которому ищет витрина, и проба: наберите то, что набрал бы покупатель, и увидите ответ в том же порядке — и почему.",
+    "What customers searched for in the period, how often, and what they clicked. A search that found nothing is a synonym or a phrase waiting to be written.": "Что покупатели искали за период, как часто и на что нажимали. Поиск, который ничего не нашёл, — это синоним или фраза, которую пора написать."
 }

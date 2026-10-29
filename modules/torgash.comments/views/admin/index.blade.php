@@ -1,6 +1,7 @@
 @extends('admin.layout')
 
 @section('title', __('Comments'))
+@section('title_hint', __('What visitors wrote under pages and posts. Nothing is shown on the storefront until it is published; answering a comment publishes it with the answer.'))
 
 @section('content')
     @php
@@ -29,17 +30,25 @@
         <div class="alert alert-error text-sm">{{ $errors->first() }}</div>
     @endif
 
+    {{-- The states as one row of tabs over the card (app.css, `admin-tabs`):
+         LINKS carrying every other filter; comments waiting are amber. --}}
+    <nav class="admin-tabs" aria-label="{{ __('Comments') }}">
+        @foreach ($tabs as $tabKey => $tabLabel)
+            <a href="{{ route('admin.comments.index', $filterQuery + ['status' => $tabKey]) }}"
+               @class(['admin-tab', 'is-active' => $filters['status'] === $tabKey])>
+                {{ $tabLabel }}
+                <span @class(['admin-tab-count', 'is-warning' => $tabKey === Comment::PENDING && ($statusCounts[$tabKey] ?? 0) > 0])>{{ $statusCounts[$tabKey] ?? 0 }}</span>
+            </a>
+        @endforeach
+    </nav>
+
     <div class="card bg-base-100 border border-base-300"
          x-data="{ selected: [], found: false, pageIds: @js($pageIds), open: {} }"
          x-init="$watch('selected', v => { if (v.length < pageIds.length) found = false })">
         <div class="card-body gap-4">
-            <p class="text-sm opacity-70 max-w-3xl">
-                {{ __('What visitors wrote under pages and posts. Nothing is shown on the storefront until it is published; answering a comment publishes it with the answer.') }}
-            </p>
-
             <form method="GET" class="flex flex-wrap items-center gap-2">
                 <input type="hidden" name="status" value="{{ $filters['status'] }}">
-                <label class="input input-sm w-full sm:w-80 gap-2">
+                <label class="input input-sm grow min-w-48 gap-2">
                     <x-icon name="search" size="sm" class="opacity-50" />
                     <input type="search" name="q" value="{{ $filters['q'] }}" class="grow" placeholder="{{ __('Text, name or email…') }}">
                 </label>
@@ -64,20 +73,6 @@
                     <a href="{{ route('admin.comments.index', ['status' => $filters['status']]) }}" class="btn btn-ghost btn-sm">{{ __('Reset') }}</a>
                 @endif
             </form>
-
-            {{-- LINKS carrying every other filter, not a second control in the form. --}}
-            <div class="join flex-wrap -mt-1">
-                @foreach ($tabs as $tabKey => $tabLabel)
-                    <a href="{{ route('admin.comments.index', $filterQuery + ['status' => $tabKey]) }}"
-                       @class(['btn btn-sm join-item', 'btn-active' => $filters['status'] === $tabKey])>
-                        {{ $tabLabel }}
-                        <span @class([
-                            'badge badge-sm badge-warning' => $tabKey === Comment::PENDING && ($statusCounts[$tabKey] ?? 0) > 0,
-                            'opacity-50' => ! ($tabKey === Comment::PENDING && ($statusCounts[$tabKey] ?? 0) > 0),
-                        ])>{{ $statusCounts[$tabKey] ?? 0 }}</span>
-                    </a>
-                @endforeach
-            </div>
 
             <div class="min-h-12 flex items-center">
                 <p x-show="!selected.length" class="text-xs opacity-50">
@@ -151,7 +146,7 @@
                                     @endif
                                     <span class="text-xs opacity-50">{{ $comment->created_at?->format('d.m.Y H:i') }}</span>
                                     @if ($shopReplied)
-                                        <span class="badge badge-sm badge-primary badge-outline gap-1"><x-icon name="message-square-reply" size="sm" /> {{ __('Answered by the shop') }}</span>
+                                        <span class="badge badge-sm badge-primary gap-1"><x-icon name="message-square-reply" size="sm" /> {{ __('Answered by the shop') }}</span>
                                     @endif
                                 </div>
 

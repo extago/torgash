@@ -1,6 +1,7 @@
 @extends('admin.layout')
 
 @section('title', __('Characteristics'))
+@section('title_hint', __('Shared, catalogued characteristics: filtered by, shown in the specifications, switching variations. A one-off property of a single product belongs in that product\'s Individual attributes instead.'))
 
 @section('content')
     @if (session('status'))
@@ -22,37 +23,46 @@
         $allCount = $purposeCounts->sum();
     @endphp
 
+    {{-- The purposes as one row of tabs over the card, the screen's action at
+         its end (app.css, `admin-tabs`); LINKS carrying the search. --}}
+    <div class="admin-tabs-row">
+        <nav class="admin-tabs" aria-label="{{ __('Characteristics') }}">
+            @foreach (['' => __('All')] + $purposeLabels as $purposeKey => $purposeLabel)
+                <a href="{{ route('admin.catalog.features.index', array_filter(['purpose' => $purposeKey, 'q' => $filters['q'], 'per' => $filters['per'] !== \Torgash\Catalog\Http\Admin\FeaturesController::PER_PAGE[0] ? $filters['per'] : null], fn ($v) => $v !== null && $v !== '')) }}"
+                   @class(['admin-tab', 'is-active' => (string) $filters['purpose'] === (string) $purposeKey])>
+                    {{ $purposeLabel }} <span class="admin-tab-count">{{ $purposeKey === '' ? $allCount : ($purposeCounts[$purposeKey] ?? 0) }}</span>
+                </a>
+            @endforeach
+        </nav>
+        <div class="admin-tabs-actions">
+            <a href="{{ route('admin.catalog.feature-groups.index') }}" class="btn btn-ghost gap-1.5"><x-icon name="layers" size="sm" /> {{ __('Groups') }}</a>
+            <a href="{{ route('admin.catalog.features.create') }}" class="btn btn-primary">+ {{ __('New characteristic') }}</a>
+        </div>
+    </div>
+
     {{-- One Alpine root: the bulk bar and every row's checkbox share
          `selected` — the product list's own arrangement. --}}
     <div class="card bg-base-100 border border-base-300" x-data="{ selected: [] }">
         <div class="card-body gap-4">
-            <div class="flex justify-between items-start gap-3 flex-wrap">
-                <p class="text-sm opacity-70 max-w-3xl">
-                    {{ __('Shared, catalogued characteristics: filtered by, shown in the specifications, switching variations. A one-off property of a single product belongs in that product\'s Individual attributes instead.') }}
-                </p>
-                <a href="{{ route('admin.catalog.features.create') }}" class="btn btn-primary btn-sm">+ {{ __('New characteristic') }}</a>
-            </div>
-
-            {{-- Search + purpose. A GET form: every state is an address. --}}
+            {{-- Search. A GET form: every state is an address. --}}
             <form method="GET" class="flex flex-wrap items-center gap-2">
-                <label class="input input-sm w-full sm:w-72 gap-2">
+                @if ($filters['purpose'])
+                    <input type="hidden" name="purpose" value="{{ $filters['purpose'] }}">
+                @endif
+                <label class="input input-sm grow min-w-48 gap-2">
                     <x-icon name="search" size="sm" class="opacity-50" />
                     <input type="search" name="q" value="{{ $filters['q'] }}" class="grow"
                            placeholder="{{ __('Search by name or code…') }}">
                 </label>
-                <div class="join">
-                    <button type="submit" name="purpose" value="" @class(['btn btn-sm join-item', 'btn-active' => ! $filters['purpose']])>
-                        {{ __('All') }} <span class="opacity-50">{{ $allCount }}</span>
-                    </button>
-                    @foreach ($purposeLabels as $purposeKey => $purposeLabel)
-                        <button type="submit" name="purpose" value="{{ $purposeKey }}" @class(['btn btn-sm join-item', 'btn-active' => $filters['purpose'] === $purposeKey])>
-                            {{ $purposeLabel }} <span class="opacity-50">{{ $purposeCounts[$purposeKey] ?? 0 }}</span>
-                        </button>
-                    @endforeach
-                </div>
                 @if ($filters['q'] !== '' || $filters['purpose'])
                     <a href="{{ route('admin.catalog.features.index') }}" class="btn btn-ghost btn-sm">{{ __('Reset') }}</a>
                 @endif
+                {{-- How many rows a page shows; a change asks the list again. --}}
+                <select name="per" class="select select-sm w-auto shrink-0" data-submit-on-change aria-label="{{ __('Rows per page') }}">
+                    @foreach (\Torgash\Catalog\Http\Admin\FeaturesController::PER_PAGE as $perOption)
+                        <option value="{{ $perOption }}" @selected($filters['per'] === $perOption)>{{ __(':n per page', ['n' => $perOption]) }}</option>
+                    @endforeach
+                </select>
             </form>
 
             {{-- The same always-48px strip as the product list: a hint or the
@@ -121,7 +131,7 @@
                                     </td>
                                     <td><span class="font-mono text-xs opacity-70">{{ $feature->code }}</span></td>
                                     <td>
-                                        <span @class(['badge badge-sm whitespace-nowrap', 'badge-primary badge-soft' => $feature->purpose === 'variation', 'badge-accent badge-soft' => $feature->purpose === 'brand', 'badge-ghost' => $feature->purpose === 'filter'])>
+                                        <span class="badge badge-sm badge-ghost whitespace-nowrap">
                                             {{ $purposeLabels[$feature->purpose] ?? $feature->purpose }}
                                         </span>
                                     </td>
@@ -131,7 +141,7 @@
                                     <td>
                                         @php $shownIn = array_filter($places, fn ($p) => $feature->shows($p['key'])); @endphp
                                         @if ($shownIn === [])
-                                            <span class="badge badge-sm badge-warning badge-outline">{{ __('Nowhere') }}</span>
+                                            <span class="badge badge-sm badge-warning">{{ __('Nowhere') }}</span>
                                         @else
                                             <span class="flex flex-wrap gap-1">
                                                 @foreach ($shownIn as $place)

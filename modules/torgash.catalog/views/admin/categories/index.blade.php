@@ -1,6 +1,7 @@
 @extends('admin.layout')
 
 @section('title', __('Categories'))
+@section('title_hint', __('The catalogue\'s tree. A category is its subcategories too: its page shows the products of the whole branch, and every rule that names it takes the branch.'))
 
 @section('content')
     @if (session('status'))
@@ -9,37 +10,39 @@
 
     @php $locale = admin_content_locale(); @endphp
 
+    {{-- The states as one row of tabs over the card, the screen's actions at
+         its end (app.css, `admin-tabs`); LINKS carrying the search. --}}
+    <div class="admin-tabs-row">
+        <nav class="admin-tabs" aria-label="{{ __('Categories') }}">
+            @foreach (['' => __('All')] + \Torgash\Catalog\Models\Category::statusLabels() as $statusKey => $statusLabel)
+                <a href="{{ route('admin.catalog.categories.index', array_filter(['status' => $statusKey, 'q' => $filters['q']], fn ($v) => $v !== null && $v !== '')) }}"
+                   @class(['admin-tab', 'is-active' => (string) $filters['status'] === (string) $statusKey])>
+                    {{ $statusLabel }} <span class="admin-tab-count">{{ $statusCounts[$statusKey] }}</span>
+                </a>
+            @endforeach
+        </nav>
+        <div class="admin-tabs-actions">
+            @if ($trashedCount)
+                <a href="{{ route('admin.catalog.categories.trash') }}" class="btn btn-ghost gap-1.5">
+                    <x-icon name="trash-2" /> {{ __('Trash') }} <span class="badge badge-sm">{{ $trashedCount }}</span>
+                </a>
+            @endif
+            <a href="{{ route('admin.catalog.categories.create') }}" class="btn btn-primary">+ {{ __('New category') }}</a>
+        </div>
+    </div>
+
     {{-- One Alpine root: the bulk bar and every row's checkbox share
          `selected` — the product list's own arrangement. --}}
     <div class="card bg-base-100 border border-base-300" x-data="{ selected: [] }">
         <div class="card-body gap-4">
-            <div class="flex justify-between items-start gap-3 flex-wrap">
-                <p class="text-sm opacity-70 max-w-3xl">
-                    {{ __('The catalogue\'s tree. A category is its subcategories too: its page shows the products of the whole branch, and every rule that names it takes the branch.') }}
-                </p>
-                <div class="flex items-center gap-2">
-                    @if ($trashedCount)
-                        <a href="{{ route('admin.catalog.categories.trash') }}" class="btn btn-ghost btn-sm gap-1.5">
-                            <x-icon name="trash-2" /> {{ __('Trash') }} <span class="badge badge-sm">{{ $trashedCount }}</span>
-                        </a>
-                    @endif
-                    <a href="{{ route('admin.catalog.categories.create') }}" class="btn btn-primary btn-sm">+ {{ __('New category') }}</a>
-                </div>
-            </div>
-
             <form method="GET" class="flex flex-wrap items-center gap-2">
-                <label class="input input-sm w-full sm:w-72 gap-2">
+                @if ($filters['status'])
+                    <input type="hidden" name="status" value="{{ $filters['status'] }}">
+                @endif
+                <label class="input input-sm grow min-w-48 gap-2">
                     <x-icon name="search" size="sm" class="opacity-50" />
                     <input type="search" name="q" value="{{ $filters['q'] }}" class="grow" placeholder="{{ __('Search by name or address…') }}">
                 </label>
-                <div class="join">
-                    @foreach (['' => __('All')] + \Torgash\Catalog\Models\Category::statusLabels() as $statusKey => $statusLabel)
-                        <button type="submit" name="status" value="{{ $statusKey }}"
-                                @class(['btn btn-sm join-item', 'btn-active' => (string) $filters['status'] === (string) $statusKey])>
-                            {{ $statusLabel }} <span class="opacity-50">{{ $statusCounts[$statusKey] }}</span>
-                        </button>
-                    @endforeach
-                </div>
                 @if ($filters['q'] !== '' || $filters['status'])
                     <a href="{{ route('admin.catalog.categories.index') }}" class="btn btn-ghost btn-sm">{{ __('Reset') }}</a>
                 @endif

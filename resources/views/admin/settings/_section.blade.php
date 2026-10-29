@@ -105,7 +105,7 @@
                 <div>
                     <label class="label cursor-pointer justify-start gap-2 p-0">
                         <input type="hidden" name="{{ $field['key'] }}" value="0">
-                        <input type="checkbox" name="{{ $field['key'] }}" value="1" class="checkbox checkbox-sm checkbox-primary" @checked($field['value'])>
+                        <input type="checkbox" name="{{ $field['key'] }}" value="1" class="checkbox checkbox-sm" @checked($field['value'])>
                         <span class="label-text">{{ $label }}</span>
                     </label>
                     @if ($help)<div class="text-xs opacity-50 mt-1">{{ $help }}</div>@endif
@@ -131,7 +131,7 @@
                         @foreach ($field['options'] ?? [] as $optValue => $optLabel)
                             <label class="label cursor-pointer justify-start gap-2 p-0">
                                 <input type="checkbox" name="{{ $field['key'] }}[]" value="{{ $optValue }}"
-                                       class="checkbox checkbox-sm checkbox-primary"
+                                       class="checkbox checkbox-sm"
                                        @checked(in_array((string) $optValue, $chosen, true))>
                                 {{-- A plain string option is an English source string the
                                      module already translates elsewhere; a map is a

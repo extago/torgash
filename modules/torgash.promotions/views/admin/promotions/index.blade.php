@@ -1,6 +1,7 @@
 @extends('admin.layout')
 
 @section('title', __('Promotions'))
+@section('title_hint', __('Discounts that change a product\'s price in the catalogue, or take something off the order in the cart. Each promotion is a list of tiers tried top to bottom; dates and a repeating window say when it runs.'))
 
 @section('content')
     @php
@@ -38,22 +39,29 @@
         <div class="alert alert-error text-sm">{{ $errors->first() }}</div>
     @endif
 
+    {{-- The states as one row of tabs over the card, the screen's actions at
+         its end (app.css, `admin-tabs`); LINKS carrying every other filter. --}}
+    <div class="admin-tabs-row">
+        <nav class="admin-tabs" aria-label="{{ __('Promotions') }}">
+            @foreach ($stateTabs as $stateKey => $stateLabel)
+                <a href="{{ request()->fullUrlWithQuery(['state' => $stateKey ?: null, 'page' => null]) }}"
+                   @class(['admin-tab', 'is-active' => $filters['state'] === $stateKey])>
+                    {{ \Illuminate\Support\Str::ucfirst($stateLabel) }} <span class="admin-tab-count">{{ $stateCounts[$stateKey] }}</span>
+                </a>
+            @endforeach
+        </nav>
+        <div class="admin-tabs-actions">
+            <a href="{{ route('admin.promotions.usage') }}" class="btn btn-ghost gap-1.5"><x-icon name="list-checks" size="sm" /> {{ __('Usage log') }}</a>
+            <a href="{{ route('admin.promotions.create') }}" class="btn btn-primary">+ {{ __('New promotion') }}</a>
+        </div>
+    </div>
+
     {{-- One Alpine root: the bulk bar and every row's checkbox share
          `selected` — the categories list's own arrangement. --}}
     <div class="card bg-base-100 border border-base-300" x-data="{ selected: [] }">
         <div class="card-body gap-4">
-            <div class="flex justify-between items-start gap-3 flex-wrap">
-                <p class="text-sm opacity-70 max-w-3xl">
-                    {{ __('Discounts that change a product\'s price in the catalogue, or take something off the order in the cart. Each promotion is a list of tiers tried top to bottom; dates and a repeating window say when it runs.') }}
-                </p>
-                <div class="flex items-center gap-2">
-                    <a href="{{ route('admin.promotions.usage') }}" class="btn btn-sm gap-1.5"><x-icon name="list-checks" size="sm" /> {{ __('Usage log') }}</a>
-                    <a href="{{ route('admin.promotions.create') }}" class="btn btn-primary btn-sm">+ {{ __('New promotion') }}</a>
-                </div>
-            </div>
-
             <form method="GET" class="flex flex-wrap items-center gap-2">
-                <label class="input input-sm w-full sm:w-72 gap-2">
+                <label class="input input-sm grow min-w-48 gap-2">
                     <x-icon name="search" size="sm" class="opacity-50" />
                     <input type="search" name="q" value="{{ $filters['q'] }}" class="grow" placeholder="{{ __('Search by name…') }}">
                 </label>
@@ -69,15 +77,6 @@
                     <a href="{{ route('admin.promotions.index') }}" class="btn btn-ghost btn-sm">{{ __('Reset') }}</a>
                 @endif
             </form>
-
-            <div class="join flex-wrap -mt-1">
-                @foreach ($stateTabs as $stateKey => $stateLabel)
-                    <a href="{{ request()->fullUrlWithQuery(['state' => $stateKey ?: null]) }}"
-                       @class(['btn btn-sm join-item', 'btn-active' => $filters['state'] === $stateKey])>
-                        {{ \Illuminate\Support\Str::ucfirst($stateLabel) }} <span class="opacity-50">{{ $stateCounts[$stateKey] }}</span>
-                    </a>
-                @endforeach
-            </div>
 
             <div class="min-h-12 flex items-center">
                 <p x-show="!selected.length" class="text-xs opacity-50">

@@ -13,7 +13,7 @@
                 <form method="POST" action="{{ route('admin.giftcards.orders.detach', [$order, $paid['card']]) }}"
                       data-confirm="{{ __('Take this card off the order? What it paid goes back onto it.') }}">
                     @csrf
-                    <button class="btn btn-ghost btn-sm text-error" title="{{ __('Take it off the order') }}"><x-icon name="x" size="sm" /></button>
+                    <button class="btn btn-ghost btn-sm text-error" title="{{ __('Take it off the order') }}" aria-label="{{ __('Take it off the order') }}"><x-icon name="x" size="sm" /></button>
                 </form>
             </span>
         </div>
@@ -23,7 +23,7 @@
         <form method="POST" action="{{ route('admin.giftcards.orders.attach', $order) }}" class="flex flex-col gap-1">
             @csrf
             <div class="join w-full">
-                <input name="code" required maxlength="40" autocomplete="off" class="input input-bordered input-sm join-item w-full font-mono uppercase"
+                <input name="code" autocapitalize="off" autocorrect="off" spellcheck="false" required maxlength="40" autocomplete="off" class="input input-bordered input-sm join-item w-full font-mono uppercase"
                        placeholder="{{ __('Gift card code') }}">
                 <input name="limit" inputmode="decimal" class="input input-bordered input-sm join-item w-24" placeholder="{{ __('all') }}"
                        title="{{ __('Take no more than') }}">

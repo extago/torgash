@@ -47,7 +47,7 @@
                                     @foreach ($operations as $operation)
                                         <li>
                                             <a href="#{{ $anchor($operation['method'], $operation['path']) }}" class="gap-2">
-                                                <span class="badge badge-xs {{ $verbClass[$operation['method']] ?? '' }} font-mono uppercase w-12 shrink-0">{{ $operation['method'] }}</span>
+                                                <span class="badge badge-sm {{ $verbClass[$operation['method']] ?? '' }} font-mono uppercase w-12 shrink-0">{{ $operation['method'] }}</span>
                                                 <span class="truncate text-xs">{{ $operation['summary'] ?? $operation['path'] }}</span>
                                             </a>
                                         </li>
@@ -65,7 +65,7 @@
                 <div class="card-body gap-3">
                     <div class="flex flex-wrap items-center gap-3">
                         <h2 class="card-title text-lg">{{ $document['info']['title'] }}</h2>
-                        <span class="badge badge-ghost font-mono">v{{ $document['info']['version'] }}</span>
+                        <span class="badge badge-sm badge-ghost font-mono">v{{ $document['info']['version'] }}</span>
                         <a href="{{ url('/api/v2/openapi.json') }}" target="_blank" class="btn btn-ghost btn-sm gap-1.5 ml-auto">
                             <x-icon name="file-json" size="sm" />
                             openapi.json
@@ -137,9 +137,9 @@
                                             <code class="font-mono text-sm">{{ $operation['path'] }}</code>
                                             <span class="text-sm opacity-60 truncate">{{ $operation['summary'] ?? '' }}</span>
                                             @if (empty($operation['security']))
-                                                <span class="badge badge-ghost badge-xs ml-auto">{{ __('public') }}</span>
+                                                <span class="badge badge-ghost badge-sm ml-auto">{{ __('public') }}</span>
                                             @else
-                                                <span class="badge badge-outline badge-xs ml-auto gap-1"><x-icon name="lock" size="sm" class="w-3 h-3" />{{ __('token') }}</span>
+                                                <span class="badge badge-ghost badge-sm ml-auto gap-1"><x-icon name="lock" size="sm" class="w-3 h-3" />{{ __('token') }}</span>
                                             @endif
                                         </summary>
 
@@ -225,13 +225,13 @@
                                                     @foreach ($pathParams as $parameter)
                                                         <fieldset class="fieldset p-0">
                                                             <legend class="fieldset-legend text-xs font-mono">{{ $parameter['name'] }}</legend>
-                                                            <input x-model="path['{{ $parameter['name'] }}']" class="input input-bordered input-xs w-44 font-mono">
+                                                            <input x-model="path['{{ $parameter['name'] }}']" class="input input-bordered input-sm w-44 font-mono">
                                                         </fieldset>
                                                     @endforeach
                                                     @foreach ($queryParams->take(6) as $parameter)
                                                         <fieldset class="fieldset p-0">
                                                             <legend class="fieldset-legend text-xs font-mono">{{ $parameter['name'] }}</legend>
-                                                            <input x-model="query['{{ $parameter['name'] }}']" class="input input-bordered input-xs w-32 font-mono"
+                                                            <input x-model="query['{{ $parameter['name'] }}']" class="input input-bordered input-sm w-32 font-mono"
                                                                    placeholder="{{ $parameter['example'] ?? '' }}">
                                                         </fieldset>
                                                     @endforeach

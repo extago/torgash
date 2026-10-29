@@ -209,7 +209,7 @@
 
                 @auth
                     <label class="label cursor-pointer justify-start gap-2" x-show="needsAddress">
-                        <input type="checkbox" name="save_address" value="1" class="checkbox">
+                        <input type="checkbox" name="save_address" value="1" class="checkbox checkbox-primary">
                         <span class="label-text">{{ __('Save this address to my account') }}</span>
                     </label>
                 @endauth

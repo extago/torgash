@@ -78,8 +78,8 @@
         @csrf
         @if ($label->exists) @method('PUT') @endif
 
-        <div class="sticky top-16 z-20 -mx-6 px-6 py-3 bg-base-200/95 backdrop-blur border-b border-base-300 flex items-center gap-3">
-            <a href="{{ route('admin.catalog.labels.index') }}" class="btn btn-ghost btn-sm btn-square" title="{{ __('Back to labels') }}">
+        <x-admin.form-bar>
+            <a href="{{ route('admin.catalog.labels.index') }}" class="btn btn-ghost btn-sm btn-square" title="{{ __('Back to labels') }}" aria-label="{{ __('Back to labels') }}">
                 <x-icon name="arrow-left" size="lg" />
             </a>
             <div class="flex-1 min-w-0">
@@ -90,14 +90,14 @@
             @if ($label->exists && (($prevLabel ?? null) || ($nextLabel ?? null)))
                 <div class="join">
                     @if ($prevLabel ?? null)
-                        <a href="{{ route('admin.catalog.labels.edit', $prevLabel) }}" class="btn btn-sm join-item" title="{{ __('Previous label') }}">
+                        <a href="{{ route('admin.catalog.labels.edit', $prevLabel) }}" class="btn btn-sm join-item" title="{{ __('Previous label') }}" aria-label="{{ __('Previous label') }}">
                             <x-icon name="chevron-left" />
                         </a>
                     @else
                         <span class="btn btn-sm join-item btn-disabled"><x-icon name="chevron-left" /></span>
                     @endif
                     @if ($nextLabel ?? null)
-                        <a href="{{ route('admin.catalog.labels.edit', $nextLabel) }}" class="btn btn-sm join-item" title="{{ __('Next label') }}">
+                        <a href="{{ route('admin.catalog.labels.edit', $nextLabel) }}" class="btn btn-sm join-item" title="{{ __('Next label') }}" aria-label="{{ __('Next label') }}">
                             <x-icon name="chevron-right" />
                         </a>
                     @else
@@ -111,7 +111,7 @@
                      "form" attribute — a nested <form> would leak its
                      _method=DELETE into this label's own submit. --}}
                 <div class="dropdown dropdown-end">
-                    <div tabindex="0" role="button" class="btn btn-ghost btn-sm btn-square" title="{{ __('More actions') }}">
+                    <div tabindex="0" role="button" class="btn btn-ghost btn-sm btn-square" title="{{ __('More actions') }}" aria-label="{{ __('More actions') }}">
                         <x-icon name="settings" size="lg" />
                     </div>
                     <ul tabindex="0" class="dropdown-content menu menu-sm bg-base-100 rounded-box shadow-md w-56 mt-2 p-2 z-50 border border-base-300">
@@ -130,9 +130,11 @@
                     </ul>
                 </div>
             @endif
-            <a href="{{ route('admin.catalog.labels.index') }}" class="btn btn-ghost btn-sm">{{ __('Cancel') }}</a>
-            <button class="btn btn-primary btn-sm">{{ $label->exists ? __('Save') : __('Create') }}</button>
-        </div>
+            <x-slot:actions>
+                <a href="{{ route('admin.catalog.labels.index') }}" class="btn btn-ghost btn-sm">{{ __('Cancel') }}</a>
+                <button class="btn btn-primary btn-sm">{{ $label->exists ? __('Save') : __('Create') }}</button>
+            </x-slot:actions>
+        </x-admin.form-bar>
 
         @if (session('status'))
             <div class="alert alert-success text-sm">{{ session('status') }}</div>
@@ -201,13 +203,13 @@
                                  decides what "accent" looks like, and this is it. --}}
                             <div class="flex flex-wrap gap-2">
                                 @foreach (\Torgash\Catalog\Http\Admin\LabelsController::COLORS as $colorName)
-                                    <label class="cursor-pointer rounded-lg p-1 border-2"
+                                    <label class="cursor-pointer rounded-lg p-1 border-2 pointer-coarse:inline-flex pointer-coarse:items-center pointer-coarse:min-h-10"
                                            :class="color === '{{ $colorName }}' ? 'border-primary' : 'border-transparent'">
                                         <input type="radio" name="color" value="{{ $colorName }}" x-model="color" class="hidden">
                                         <span class="badge badge-{{ $colorName }}" x-text="previewName || @js(__('Badge'))"></span>
                                     </label>
                                 @endforeach
-                                <label class="cursor-pointer rounded-lg p-1 border-2"
+                                <label class="cursor-pointer rounded-lg p-1 border-2 pointer-coarse:inline-flex pointer-coarse:items-center pointer-coarse:min-h-10"
                                        :class="color === 'custom' ? 'border-primary' : 'border-transparent'">
                                     <input type="radio" name="color" value="custom" x-model="color" class="hidden">
                                     <span class="badge gap-1" :style="'background:' + lightBg + ';border-color:' + lightBg + ';color:' + lightText">
@@ -262,7 +264,7 @@
                                     {{-- The sizes drawn, not named: "md" tells nobody anything. --}}
                                     <div class="flex flex-wrap items-center gap-1.5">
                                         @foreach (\Torgash\Catalog\Models\Label::SIZES as $sizeStep)
-                                            <label class="cursor-pointer rounded-lg px-1.5 py-1 border-2 flex items-center"
+                                            <label class="cursor-pointer rounded-lg px-1.5 py-1 border-2 flex items-center pointer-coarse:min-h-10"
                                                    :class="{{ $sizeModel }} === '{{ $sizeStep }}' ? 'border-primary' : 'border-transparent'">
                                                 <input type="radio" name="{{ $sizeField }}" value="{{ $sizeStep }}" x-model="{{ $sizeModel }}" class="hidden">
                                                 <span :class="badgeClass('{{ $sizeStep }}')" :style="badgeStyle(false)">Aa</span>
@@ -282,7 +284,7 @@
                                 <p class="label text-xs opacity-60">{{ __('Up to 2 MB. A new file replaces the old one.') }}</p>
                             </fieldset>
                             <fieldset class="fieldset p-0 w-56" x-show="style === 'tile'" x-cloak><legend class="fieldset-legend">{{ __('Icon instead of a picture') }}</legend>
-                                <input name="icon" value="{{ old('icon', $label->icon) }}" class="input input-bordered w-full font-mono" placeholder="cpu">
+                                <input name="icon" autocapitalize="off" autocorrect="off" spellcheck="false" value="{{ old('icon', $label->icon) }}" class="input input-bordered w-full font-mono" placeholder="cpu">
                                 <p class="label text-xs opacity-60 whitespace-normal">{!! __('A name from :link, like smartphone or gamepad-2.', ['link' => '<a href="https://lucide.dev/icons" target="_blank" rel="noopener" class="link">lucide.dev</a>']) !!}</p>
                             </fieldset>
                             @if ($label->exists && $label->style === 'tile')
@@ -439,7 +441,7 @@
                     <div class="card-body gap-3">
                         <h3 class="font-semibold">{{ __('Status') }}</h3>
                         <label class="label cursor-pointer justify-start gap-3">
-                            <input type="checkbox" name="enabled" value="1" class="toggle toggle-sm toggle-primary" @checked(old('enabled', $label->enabled ?? true))>
+                            <input type="checkbox" name="enabled" value="1" class="toggle toggle-sm toggle-success" @checked(old('enabled', $label->enabled ?? true))>
                             <span class="label-text">{{ __('Enabled') }}</span>
                         </label>
                         <div class="flex items-center gap-3 rounded-lg bg-base-200 p-3" x-show="style === 'text'" style="{{ $labelPaletteVars }}">

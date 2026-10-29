@@ -59,9 +59,9 @@
                     <div class="flex items-center gap-2">
                         <code class="font-mono text-sm select-all">{{ $legacy->url() }}</code>
                         @if ($legacy->isOurs())
-                            <span class="badge badge-sm badge-success badge-outline">{{ __('answering') }}</span>
+                            <span class="badge badge-sm badge-success">{{ __('answering') }}</span>
                         @elseif ($legacy->exists())
-                            <span class="badge badge-sm badge-warning badge-outline">{{ __('occupied') }}</span>
+                            <span class="badge badge-sm badge-warning">{{ __('occupied') }}</span>
                         @else
                             <span class="badge badge-sm badge-ghost">{{ __('not answering') }}</span>
                         @endif

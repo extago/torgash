@@ -53,14 +53,14 @@
                 @if ($srAsk('ask_recommend'))
                     <label class="flex items-center gap-3 cursor-pointer">
                         <input type="hidden" name="recommend" value="0">
-                        <input type="checkbox" name="recommend" value="1" class="checkbox" @checked(old('recommend', '1') === '1')>
+                        <input type="checkbox" name="recommend" value="1" class="checkbox checkbox-primary" @checked(old('recommend', '1') === '1')>
                         <span>{{ __('I would recommend this shop to people I know') }}</span>
                     </label>
                 @endif
                 @if ($srAsk('ask_return'))
                     <label class="flex items-center gap-3 cursor-pointer">
                         <input type="hidden" name="will_return" value="0">
-                        <input type="checkbox" name="will_return" value="1" class="checkbox" @checked(old('will_return', '1') === '1')>
+                        <input type="checkbox" name="will_return" value="1" class="checkbox checkbox-primary" @checked(old('will_return', '1') === '1')>
                         <span>{{ __('I will buy here again') }}</span>
                     </label>
                 @endif

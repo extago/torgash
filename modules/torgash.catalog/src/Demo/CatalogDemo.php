@@ -67,7 +67,7 @@ class CatalogDemo
             $feature = Feature::create([
                 'code' => $row['code'],
                 'name' => $row['name'],
-                'purpose' => $row['purpose'] ?? 'filter',
+                'purpose' => in_array($row['purpose'] ?? null, Feature::PURPOSES, true) ? $row['purpose'] : 'filter',
                 'input_type' => $row['input_type'] ?? 'select',
                 'shown_in' => $row['shown_in'] ?? ['filters', 'specs', 'buy_box'],
                 'product_style' => $row['product_style'] ?? 'labels',

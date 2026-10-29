@@ -29,6 +29,18 @@ this file is the reasoning. Read it before changing anything it covers.
   PlaceOrder, and the answer is the order's own page (`HX-Redirect`). Offered
   only while every line passes `one_click_statuses`; drawn through cart's
   `cart.summary_actions`, so the cart still knows nothing of checkout.
+  **A manager's order from the admin is the same call** (`Orders\ManagerOrder`,
+  PLAN §63.8), made the way a return's exchange makes it: a throwaway
+  `onBehalf()` basket of the typed lines, the deliveries quoted for the typed
+  address (the checkout's own town field, so a town picked from the registry
+  travels as its place id; the payment methods are those that take the
+  shop's currency — `paymentMethods(shop_currency())`, never the admin's
+  session currency), `as: [user_id, storefront_id, locale, charge_currency => null]` so
+  nothing of the manager (account, storefront, browsed currency) lands on the
+  row; the manager's own line prices are applied AFTER placement through the
+  editor's recalculation, so stock, a promotion's gift and the tax snapshot
+  happen exactly as for a customer. No goods, no order: a service is a service
+  product that keeps no stock, or its profit cannot be counted.
 ## Orders: what changed, and where the money is
 
 An order announces its own edits through **`checkout.order.changed`**

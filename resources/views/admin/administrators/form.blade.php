@@ -8,8 +8,8 @@
         $isYou = $administrator->exists && $administrator->is(auth()->user());
     @endphp
 
-    <div class="sticky top-16 z-20 -mx-6 px-6 py-3 bg-base-200/95 backdrop-blur border-b border-base-300 flex items-center gap-3">
-        <a href="{{ route('admin.administrators.index') }}" class="btn btn-ghost btn-sm btn-square" title="{{ __('Back to administrators') }}">
+    <x-admin.form-bar>
+        <a href="{{ route('admin.administrators.index') }}" class="btn btn-ghost btn-sm btn-square" title="{{ __('Back to administrators') }}" aria-label="{{ __('Back to administrators') }}">
             <x-icon name="arrow-left" size="lg" />
         </a>
         @if ($administrator->exists)
@@ -24,7 +24,7 @@
             <div class="font-semibold truncate leading-tight">{{ $administrator->exists ? $administrator->name : __('New administrator') }}</div>
         </div>
         <div class="dropdown dropdown-end">
-            <div tabindex="0" role="button" class="btn btn-ghost btn-sm btn-square" title="{{ __('More actions') }}">
+            <div tabindex="0" role="button" class="btn btn-ghost btn-sm btn-square" title="{{ __('More actions') }}" aria-label="{{ __('More actions') }}">
                 <x-icon name="settings" size="lg" />
             </div>
             <ul tabindex="0" class="dropdown-content menu menu-sm bg-base-100 rounded-box shadow-md w-60 mt-2 p-2 z-50 border border-base-300">
@@ -38,9 +38,11 @@
                 @endif
             </ul>
         </div>
-        <a href="{{ route('admin.administrators.index') }}" class="btn btn-ghost btn-sm">{{ __('Cancel') }}</a>
-        <button type="submit" form="administrator-form" class="btn btn-primary btn-sm">{{ __('Save') }}</button>
-    </div>
+        <x-slot:actions>
+            <a href="{{ route('admin.administrators.index') }}" class="btn btn-ghost btn-sm">{{ __('Cancel') }}</a>
+            <button type="submit" form="administrator-form" class="btn btn-primary btn-sm">{{ __('Save') }}</button>
+        </x-slot:actions>
+    </x-admin.form-bar>
 
     @if (session('status'))
         <div class="alert alert-success text-sm">{{ session('status') }}</div>

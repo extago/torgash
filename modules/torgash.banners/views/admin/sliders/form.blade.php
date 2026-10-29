@@ -25,7 +25,7 @@
     <form method="POST" action="{{ $slider->exists ? route('admin.banners.sliders.update', $slider) : route('admin.banners.sliders.store') }}"
           class="flex flex-col gap-4"
           x-data="{
-              rows: @js($sliderRows), others: @js($sliderOthers), adding: '', dragIndex: null,
+              rows: @js($sliderRows), others: @js($sliderOthers), adding: '',
               frame: {{ (int) old('frame_id', $slider->frame_id) }}, frames: @js($frameInfo), shapeNames: @js($shapeNames),
               get shape() { return this.frames[this.frame]?.shape || 'wide' },
               get turns() { return this.frames[this.frame]?.turns ?? true },
@@ -37,18 +37,20 @@
                   this.adding = '';
               },
               remove(i) { this.others.unshift(this.rows.splice(i, 1)[0]); },
-              drop(target) {
-                  if (this.dragIndex === null || this.dragIndex === target) return;
-                  const moved = this.rows.splice(this.dragIndex, 1)[0];
-                  this.rows.splice(target, 0, moved);
-                  this.dragIndex = null;
+              /* By a drag (x-sort, which works under a finger) or by the arrows a
+                 finger gets. Named by the banner's id: Alpine Sort drops a key of 0 as "none". */
+              move(id, to) {
+                  const from = this.rows.findIndex((row) => row.id === id);
+                  if (from === -1 || from === to || to < 0 || to >= this.rows.length) return;
+                  const moved = this.rows.splice(from, 1)[0];
+                  this.rows.splice(to, 0, moved);
               },
           }">
         @csrf
         @if ($slider->exists) @method('PUT') @endif
 
-        <div class="sticky top-16 z-20 -mx-6 px-6 py-3 bg-base-200/95 backdrop-blur border-b border-base-300 flex items-center gap-3">
-            <a href="{{ route('admin.banners.sliders.index') }}" class="btn btn-ghost btn-sm btn-square" title="{{ __('Back to sliders') }}">
+        <x-admin.form-bar>
+            <a href="{{ route('admin.banners.sliders.index') }}" class="btn btn-ghost btn-sm btn-square" title="{{ __('Back to sliders') }}" aria-label="{{ __('Back to sliders') }}">
                 <x-icon name="arrow-left" size="lg" />
             </a>
             <div class="flex-1 min-w-0">
@@ -57,7 +59,7 @@
             </div>
             @if ($slider->exists)
                 <div class="dropdown dropdown-end">
-                    <div tabindex="0" role="button" class="btn btn-ghost btn-sm btn-square" title="{{ __('More actions') }}">
+                    <div tabindex="0" role="button" class="btn btn-ghost btn-sm btn-square" title="{{ __('More actions') }}" aria-label="{{ __('More actions') }}">
                         <x-icon name="settings" size="lg" />
                     </div>
                     <ul tabindex="0" class="dropdown-content menu menu-sm bg-base-100 rounded-box shadow-md w-60 mt-2 p-2 z-50 border border-base-300">
@@ -67,9 +69,11 @@
                     </ul>
                 </div>
             @endif
-            <a href="{{ route('admin.banners.sliders.index') }}" class="btn btn-ghost btn-sm">{{ __('Cancel') }}</a>
-            <button class="btn btn-primary btn-sm">{{ $slider->exists ? __('Save') : __('Create') }}</button>
-        </div>
+            <x-slot:actions>
+                <a href="{{ route('admin.banners.sliders.index') }}" class="btn btn-ghost btn-sm">{{ __('Cancel') }}</a>
+                <button class="btn btn-primary btn-sm">{{ $slider->exists ? __('Save') : __('Create') }}</button>
+            </x-slot:actions>
+        </x-admin.form-bar>
 
         @if (session('status'))
             <div class="alert alert-success text-sm">{{ session('status') }}</div>
@@ -95,14 +99,17 @@
                             @endif
                         </div>
 
-                        <div class="flex flex-col gap-2">
+                        <div class="flex flex-col gap-2" x-sort="move($item, $position)" x-sort:config="{ delay: 150, delayOnTouchOnly: true }">
                             <template x-for="(row, i) in rows" :key="row.id">
-                                <div class="flex items-center gap-3 rounded-box border border-base-300 p-2 bg-base-100"
-                                     :class="dragIndex === i ? 'opacity-40' : ''"
-                                     draggable="true" @dragstart="dragIndex = i" @dragend="dragIndex = null"
-                                     @dragover.prevent @drop.prevent="drop(i)">
+                                <div class="flex items-center gap-3 rounded-box border border-base-300 p-2 bg-base-100" x-sort:item="row.id">
                                     <input type="hidden" name="banners[]" :value="row.id">
-                                    <span class="cursor-move opacity-40" aria-hidden="true"><x-icon name="grip-vertical" size="sm" /></span>
+                                    <span class="cursor-move opacity-40 pointer-coarse:p-2" aria-hidden="true" x-sort:handle><x-icon name="grip-vertical" size="sm" /></span>
+                                    <span class="hidden pointer-coarse:inline-flex items-center shrink-0">
+                                        <button type="button" class="btn btn-ghost btn-sm btn-square" :disabled="i === 0"
+                                                title="{{ __('Move earlier') }}" aria-label="{{ __('Move earlier') }}" @click="move(row.id, i - 1)"><x-icon name="arrow-up" size="sm" /></button>
+                                        <button type="button" class="btn btn-ghost btn-sm btn-square" :disabled="i === rows.length - 1"
+                                                title="{{ __('Move later') }}" aria-label="{{ __('Move later') }}" @click="move(row.id, i + 1)"><x-icon name="arrow-down" size="sm" /></button>
+                                    </span>
                                     <span class="w-20 aspect-video rounded-lg overflow-hidden bg-base-200 border border-base-300 shrink-0">
                                         <img x-show="row.thumb" :src="row.thumb" alt="" class="w-full h-full object-cover" draggable="false">
                                     </span>
@@ -156,7 +163,7 @@
                                 </fieldset>
                             </div>
                             <label class="label cursor-pointer justify-start gap-3">
-                                <input type="checkbox" name="listing_once" value="1" class="toggle toggle-sm" @checked(old('listing_once', $listing['once']))>
+                                <input type="checkbox" name="listing_once" value="1" class="toggle toggle-sm toggle-success" @checked(old('listing_once', $listing['once']))>
                                 <span class="label-text whitespace-normal">{{ __('Each banner once on a page, not round and round') }}</span>
                             </label>
                             <x-admin.display-rules
@@ -260,7 +267,7 @@
                             <p class="label text-xs opacity-60 whitespace-normal">{{ __('0 — only by the visitor. It waits while the pointer is over it, and never turns by itself for a visitor who asked their system for less motion.') }}</p>
                         </fieldset>
                         <label class="label cursor-pointer justify-start gap-3">
-                            <input type="checkbox" name="loop" value="1" class="toggle toggle-sm" @checked(old('loop', $options['loop']))>
+                            <input type="checkbox" name="loop" value="1" class="toggle toggle-sm toggle-success" @checked(old('loop', $options['loop']))>
                             <span class="label-text">{{ __('Round and round') }}</span>
                         </label>
                     </div>

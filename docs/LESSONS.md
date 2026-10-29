@@ -809,3 +809,49 @@ Same day: the Redis check on Admin → Cache wrote `SET key ok EX 30`; phpredis'
 `set()` takes the expiry as an options array and refused the fourth argument,
 so a working Redis was reported as not answering. `SETEX` reads the same in
 both clients.
+
+## An absolutely positioned child of a grid keeps its `grid-area`
+
+The phone's folded tables (`admin-auto-cards`, PLAN §62.9) take the row's
+checkbox out of the grid with `position: absolute; top: 0.875rem` — and it
+sat 60px down, level with the third line. The cell still carried
+`grid-area: check` from the shared `.admin-cards` rule, and for an
+absolutely positioned child of a grid container the named lines of its
+`grid-area` are what its containing block is made of; a name the grid does
+not define becomes an implicit line somewhere below. `grid-area: auto` on
+the absolutely positioned cell, and `top` means the row's top. In the same
+family: an `auto` column beside a `1fr` one is sized to its content's
+MINIMUM, so a badge in it stood 5px past the card — `minmax(max-content,
+auto)` for a column that holds a badge. Found 2026-10-29.
+
+Also that day: a pseudo-element drawn past an element's edge to take taps
+(`::after { inset: -0.5rem }`) adds to the scrollable overflow of a box
+with `overflow-x: auto`, which then scrolls those pixels — invisibly, but
+`scrollWidth` says so and a "there is more" shadow appeared. A box around
+cards is `overflow-x: clip`.
+
+## `x-sort` names an item by a key, and 0 is no key; an index is no key either
+
+Alpine Sort (`@alpinejs/sort`, vendored 2026-10-29 for dragging under a
+finger, PLAN §62 phase 3) reads `x-sort:item` into `_x_sort_key` and in
+`onSort` looks for the first element whose key is TRUTHY — so an item
+keyed `0` (the first one, when the key is the loop index) is handed to the
+handler as `undefined`. And the handler runs AFTER SortableJS has already
+moved the node in the DOM, with nothing put back: Alpine's `x-for` must
+then reconcile a DOM in the new order with data in the new order, which
+it does only when the list is keyed by something that travels with the
+row. Keyed by index, every key stays where it was, Alpine moves nothing
+and only re-binds each element's words — the dragged row lands back
+where it came from with its neighbour's fields. So: `x-sort:item` is the
+row's own id (`item.id`, or an `_id` given to rows that have none, as the
+product's own characteristics got), `:key` is the same id, and the
+handler finds the index from it. Measured on the gallery and the
+characteristics editor by calling the Sortable instance's `onSort` after
+moving the node by hand — a synthetic pointer drag never starts
+SortableJS's native drag (a browser's own drag session cannot be faked),
+so that is how a drop is tested from a script.
+
+Same day, the sidebar's strip: a `<summary>` cannot carry `popovertarget`
+(only a button can), so the strip toggles the section's popover from the
+summary's `click`; and an inline script that looks up an element written
+further down the page finds nothing — look it up when it is needed.

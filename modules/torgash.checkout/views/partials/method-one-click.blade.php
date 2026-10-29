@@ -12,7 +12,7 @@
         <h3 class="font-semibold">{{ __('Buying in one click') }}</h3>
 
         <label class="label cursor-pointer justify-start gap-3 p-0">
-            <input type="checkbox" name="{{ $oneClickField }}" value="1" class="checkbox"
+            <input type="checkbox" name="{{ $oneClickField }}" value="1" class="checkbox checkbox-sm"
                    @checked($oneClickChosen)>
             <span>{{ __('Use this one for orders placed in one click') }}</span>
         </label>

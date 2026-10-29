@@ -416,7 +416,14 @@ it — three modules that do not know each other must not own three corners.
   is the visitor's, picked in the browser after the page is drawn (and a
   guest's page is kept ready for all), so both are printed and
   `.torgash-logo-light` / `-dark` (app.css) hide one — by `data-theme` or,
-  with none, the system's preference, the two ways the palette is chosen. A
+  with none, the system's preference, the two ways the palette is chosen.
+  **The scheme is always written on `<html>`** (2026-10-29): the script
+  `<x-theme.style>` prints sets `data-theme` before the first paint — the
+  visitor's choice, else the shop's `mode`, else the system's, followed
+  live until a choice is saved — so a `[data-theme="torgash-dark"]` rule in
+  app.css holds for a visitor whose system is dark and who never touched
+  the switch (the brand logos' plates did not). Only a page with no script
+  falls back to the media query, which the palette and the logo pair have. A
   footer band's zones pass `'place' => 'footer'` in their context, and
   `{logo}` / `{logo_dark}` drawn there take the footer's own pair first
   (`footer_logo`; `footer_logo_dark`, empty — the one before). The shop's

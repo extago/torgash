@@ -28,5 +28,8 @@
     "Link": "Посилання",
     "The file could not be saved.": "Файл не вдалося зберегти.",
     "The file did not arrive. It may be bigger than the server accepts.": "Файл не дійшов. Можливо, він більший, ніж приймає сервер.",
+    "Move earlier": "Перемістити раніше",
+    "Move later": "Перемістити пізніше",
+    "The arrows change the order; titles and order are saved with the rest of the form.": "Порядок змінюється стрілками; підписи й порядок зберігаються разом із формою.",
     "Who sees it": "Хто бачить"
 }

@@ -5,13 +5,13 @@
 @section('own_heading', '1')
 
 @section('content')
-    <form method="POST" class="flex flex-col gap-4"
+    <form method="POST" enctype="multipart/form-data" class="flex flex-col gap-4"
           action="{{ $post->exists ? route('admin.blog.update', $post) : route('admin.blog.store') }}">
         @csrf
         @if ($post->exists) @method('PUT') @endif
 
-        <div class="sticky top-16 z-20 -mx-6 px-6 py-3 bg-base-200/95 backdrop-blur border-b border-base-300 flex items-center gap-3">
-            <a href="{{ route('admin.blog.index') }}" class="btn btn-ghost btn-sm btn-square" title="{{ __('Back to the blog') }}">
+        <x-admin.form-bar>
+            <a href="{{ route('admin.blog.index') }}" class="btn btn-ghost btn-sm btn-square" title="{{ __('Back to the blog') }}" aria-label="{{ __('Back to the blog') }}">
                 <x-icon name="arrow-left" size="lg" />
             </a>
             <div class="flex-1 min-w-0">
@@ -19,7 +19,7 @@
                 <div class="font-semibold truncate leading-tight">{{ $post->t('title', $formLocale) ?: __('New article') }}</div>
             </div>
             <div class="dropdown dropdown-end">
-                <div tabindex="0" role="button" class="btn btn-ghost btn-sm btn-square" title="{{ __('More actions') }}">
+                <div tabindex="0" role="button" class="btn btn-ghost btn-sm btn-square" title="{{ __('More actions') }}" aria-label="{{ __('More actions') }}">
                     <x-icon name="settings" size="lg" />
                 </div>
                 <ul tabindex="0" class="dropdown-content menu menu-sm bg-base-100 rounded-box shadow-md w-60 mt-2 p-2 z-50 border border-base-300">
@@ -33,9 +33,11 @@
                     @endif
                 </ul>
             </div>
-            <a href="{{ route('admin.blog.index') }}" class="btn btn-ghost btn-sm">{{ __('Cancel') }}</a>
-            <button class="btn btn-primary btn-sm">{{ $post->exists ? __('Save') : __('Create') }}</button>
-        </div>
+            <x-slot:actions>
+                <a href="{{ route('admin.blog.index') }}" class="btn btn-ghost btn-sm">{{ __('Cancel') }}</a>
+                <button class="btn btn-primary btn-sm">{{ $post->exists ? __('Save') : __('Create') }}</button>
+            </x-slot:actions>
+        </x-admin.form-bar>
 
         @if (session('status'))
             <div class="alert alert-success text-sm">{{ session('status') }}</div>
@@ -77,7 +79,7 @@
                      Inside the form: whatever it draws is saved with the article. --}}
                 {!! hook_filter('blog.post.form_sections', '', ['record' => $post]) !!}
 
-                <x-seo.fields :record="$post" :url-preview="$post->exists ? $post->url() : null" />
+                <x-seo.fields :record="$post" picture :url-preview="$post->exists ? $post->url() : null" />
             </div>
 
             <div class="flex flex-col gap-4">
@@ -106,11 +108,11 @@
                         </fieldset>
                         <fieldset class="fieldset p-0">
                             <legend class="fieldset-legend">{{ __('Address') }}</legend>
-                            <input name="slug" value="{{ old('slug', $post->slug) }}" class="input input-bordered w-full" placeholder="{{ __('made from the title') }}">
+                            <input name="slug" autocapitalize="off" autocorrect="off" spellcheck="false" value="{{ old('slug', $post->slug) }}" class="input input-bordered w-full" placeholder="{{ __('made from the title') }}">
                             <p class="label text-xs opacity-60 whitespace-normal">{{ __('Renaming it later leaves a 301 behind, so old links keep working.') }}</p>
                         </fieldset>
                         <label class="label cursor-pointer justify-start gap-3">
-                            <input type="checkbox" name="comments_enabled" value="1" class="toggle toggle-sm toggle-primary" @checked(old('comments_enabled', $post->comments_enabled ?? true))>
+                            <input type="checkbox" name="comments_enabled" value="1" class="toggle toggle-sm toggle-success" @checked(old('comments_enabled', $post->comments_enabled ?? true))>
                             <span class="label-text">{{ __('Comments') }}</span>
                         </label>
                         @if ($post->exists)

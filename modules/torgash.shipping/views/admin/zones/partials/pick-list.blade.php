@@ -6,7 +6,7 @@
 {{-- Chosen, as removable chips. --}}
 <div class="flex flex-wrap gap-1" x-show="chosen.length">
     <template x-for="value in chosen" :key="value">
-        <button type="button" class="badge badge-primary gap-1 cursor-pointer" @click="toggle(value)">
+        <button type="button" class="badge badge-sm badge-primary gap-1 cursor-pointer" @click="toggle(value)">
             <span x-text="labelFor(value)"></span>
             <span aria-hidden="true">&times;</span>
         </button>

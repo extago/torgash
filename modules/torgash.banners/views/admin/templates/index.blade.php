@@ -1,6 +1,18 @@
 @extends('admin.layout')
 
 @section('title', __('Banner templates'))
+@section('title_hint', __('A template is HTML with {tokens} and its CSS. A banner template draws one banner — as a wide slide, an upright card or a low strip; a frame draws a slider around its slides. Each {token} you write becomes a field of the banner\'s form.'))
+@section('title_actions')
+    <form method="POST" action="{{ route('admin.banners.templates.import') }}" enctype="multipart/form-data" x-data>
+        @csrf
+        <label class="btn btn-ghost gap-1.5">
+            <x-icon name="upload" size="sm" /> {{ __('Import') }}
+            <input type="file" name="file" accept=".json,application/json" class="hidden" @change="$el.form.submit()">
+        </label>
+    </form>
+    <a href="{{ route('admin.banners.templates.create', ['kind' => 'frame']) }}" class="btn">+ {{ __('New frame') }}</a>
+    <a href="{{ route('admin.banners.templates.create') }}" class="btn btn-primary">+ {{ __('New banner template') }}</a>
+@endsection
 
 @section('content')
     @include('torgash.banners::admin._nav', ['bannersScreen' => 'templates'])
@@ -16,22 +28,6 @@
 
     <div class="card bg-base-100 border border-base-300">
         <div class="card-body gap-4">
-            <div class="flex justify-between items-start gap-3 flex-wrap">
-                <p class="text-sm opacity-70 max-w-3xl">
-                    {{ __('A template is HTML with {tokens} and its CSS. A banner template draws one banner — as a wide slide, an upright card or a low strip; a frame draws a slider around its slides. Each {token} you write becomes a field of the banner\'s form.') }}
-                </p>
-                <div class="flex flex-wrap gap-2">
-                    <form method="POST" action="{{ route('admin.banners.templates.import') }}" enctype="multipart/form-data" x-data>
-                        @csrf
-                        <label class="btn btn-sm gap-1.5">
-                            <x-icon name="upload" size="sm" /> {{ __('Import') }}
-                            <input type="file" name="file" accept=".json,application/json" class="hidden" @change="$el.form.submit()">
-                        </label>
-                    </form>
-                    <a href="{{ route('admin.banners.templates.create', ['kind' => 'frame']) }}" class="btn btn-sm">+ {{ __('New frame') }}</a>
-                    <a href="{{ route('admin.banners.templates.create') }}" class="btn btn-primary btn-sm">+ {{ __('New banner template') }}</a>
-                </div>
-            </div>
 
             @if ($missing !== [])
                 <div class="alert text-sm flex flex-wrap justify-between gap-2">

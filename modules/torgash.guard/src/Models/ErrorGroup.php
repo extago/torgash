@@ -132,8 +132,7 @@ class ErrorGroup extends Model
     public function badge(): string
     {
         return match ($this->level) {
-            'emergency', 'alert', 'critical' => 'badge-error',
-            'error' => 'badge-error badge-outline',
+            'emergency', 'alert', 'critical', 'error' => 'badge-error',
             'warning' => 'badge-warning',
             default => 'badge-ghost',
         };

@@ -10,17 +10,19 @@
     <form method="POST" action="{{ route('admin.shopreviews.store') }}" class="flex flex-col gap-4">
         @csrf
 
-        <div class="sticky top-16 z-20 -mx-6 px-6 py-3 bg-base-200/95 backdrop-blur border-b border-base-300 flex items-center gap-3">
-            <a href="{{ route('admin.shopreviews.index') }}" class="btn btn-ghost btn-sm btn-square" title="{{ __('Back to reviews') }}">
+        <x-admin.form-bar>
+            <a href="{{ route('admin.shopreviews.index') }}" class="btn btn-ghost btn-sm btn-square" title="{{ __('Back to reviews') }}" aria-label="{{ __('Back to reviews') }}">
                 <x-icon name="arrow-left" size="lg" />
             </a>
             <div class="flex-1 min-w-0">
                 <div class="text-xs opacity-50 leading-none">{{ __('Shop reviews') }}</div>
                 <div class="font-semibold truncate leading-tight">{{ __('Add a review') }}</div>
             </div>
-            <a href="{{ route('admin.shopreviews.index') }}" class="btn btn-ghost btn-sm">{{ __('Cancel') }}</a>
-            <button class="btn btn-primary btn-sm">{{ __('Create') }}</button>
-        </div>
+            <x-slot:actions>
+                <a href="{{ route('admin.shopreviews.index') }}" class="btn btn-ghost btn-sm">{{ __('Cancel') }}</a>
+                <button class="btn btn-primary btn-sm">{{ __('Create') }}</button>
+            </x-slot:actions>
+        </x-admin.form-bar>
 
         @if ($errors->any())
             <div class="alert alert-error text-sm">{{ $errors->first() }}</div>

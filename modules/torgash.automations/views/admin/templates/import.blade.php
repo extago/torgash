@@ -64,7 +64,7 @@
                             <legend class="fieldset-legend">
                                 {{ $need['label'] }}
                                 @if ($need['secret'])
-                                    <span class="badge badge-ghost badge-xs ml-1">{{ __('not included in the template') }}</span>
+                                    <span class="badge badge-ghost badge-sm ml-1">{{ __('not included in the template') }}</span>
                                 @endif
                             </legend>
                             <input name="answers[{{ $need['path'] }}]"

@@ -31,7 +31,7 @@
                     @if ($user->customerGroup)
                         <div class="flex flex-wrap items-center gap-2 text-sm">
                             <span class="opacity-70">{{ __('Pricing tier') }}:</span>
-                            <span class="badge badge-soft badge-primary font-medium">{{ $user->customerGroup->t('name') }}</span>
+                            <span class="badge badge-primary font-medium">{{ $user->customerGroup->t('name') }}</span>
                             @if ($user->customerGroup->discount_percent > 0)
                                 <span class="opacity-70">{{ $user->customerGroup->discount_percent }}% {{ __('off list price') }}</span>
                             @endif

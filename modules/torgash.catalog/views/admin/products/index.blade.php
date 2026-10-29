@@ -1,6 +1,7 @@
 @extends('admin.layout')
 
 @section('title', __('Products'))
+@section('title_hint', __('Find products by any mix of the filters, tick them — or everything found — and change them together: prices, stock, availability, categories, labels.'))
 
 @php
     use Torgash\Catalog\Models\Product;
@@ -38,6 +39,31 @@
         <div class="alert alert-error">{{ $errors->first() }}</div>
     @endif
 
+    {{-- The states as one row of tabs over the card (app.css, `admin-tabs`):
+         LINKS carrying the search and the other filters, so a tab is a
+         question, never a reset. --}}
+    <div class="admin-tabs-row">
+        <nav class="admin-tabs" aria-label="{{ __('Products') }}">
+            @foreach ($statusTabs as $value => $label)
+                @php $count = $value === '' ? $totalCount : ($statusCounts[$value] ?? 0); @endphp
+                <a href="{{ route('admin.catalog.products.index', array_filter(['status' => $value] + request()->except(['status', 'page']), fn ($v) => $v !== null && $v !== '')) }}"
+                   @class(['admin-tab', 'is-active' => (string) ($filters['status'] ?? '') === (string) $value])>
+                    {{ $label }} <span class="admin-tab-count">{{ $count }}</span>
+                </a>
+            @endforeach
+        </nav>
+        {{-- The screen's actions, level with the tabs and as tall. --}}
+        <div class="admin-tabs-actions">
+            @if ($trashedCount)
+                <a href="{{ route('admin.catalog.products.trash') }}" class="btn btn-ghost gap-1.5">
+                    <x-icon name="trash-2" />
+                    {{ __('Trash') }} <span class="badge badge-sm">{{ $trashedCount }}</span>
+                </a>
+            @endif
+            <a href="{{ route('admin.catalog.products.create') }}" class="btn btn-primary">+ {{ __('New product') }}</a>
+        </div>
+    </div>
+
     {{-- One Alpine root over the whole screen: the bulk bar and every row
          checkbox share this `selected` array. Rows are swapped by HTMX after a
          quick edit, and Alpine re-binds the new checkbox to this same scope.
@@ -47,62 +73,46 @@
          x-data="{ selected: [], found: false, pageIds: @js($pageIds) }"
          x-init="$watch('selected', v => { if (v.length < pageIds.length) found = false })">
         <div class="card-body gap-4">
-            <div class="flex justify-between items-start gap-3 flex-wrap">
-                <p class="text-sm opacity-70 max-w-3xl">
-                    {{ __('Find products by any mix of the filters, tick them — or everything found — and change them together: prices, stock, availability, categories, labels.') }}
-                </p>
-                <div class="flex items-center gap-2">
-                    @if ($trashedCount)
-                        <a href="{{ route('admin.catalog.products.trash') }}" class="btn btn-ghost btn-sm gap-1.5">
-                            <x-icon name="trash-2" />
-                            {{ __('Trash') }} <span class="badge badge-sm">{{ $trashedCount }}</span>
-                        </a>
-                    @endif
-                    <a href="{{ route('admin.catalog.products.create') }}" class="btn btn-primary btn-sm">+ {{ __('New product') }}</a>
-                </div>
-            </div>
-
             {{-- Search + filters. A plain GET form, so every state this screen
-                 can be in is a shareable, back-button-able URL. --}}
+                 can be in is a shareable, back-button-able URL. The screen's
+                 actions stand in the tabs' row above; what the screen is for
+                 is the hint beside the heading. --}}
             <form method="GET" class="flex flex-col gap-2" x-data="{ more: @js($moreFilters) }">
                 <input type="hidden" name="sort" value="{{ $filters['sort'] }}">
                 <input type="hidden" name="dir" value="{{ $filters['dir'] }}">
-                <button name="status" value="{{ $filters['status'] }}" class="sr-only" tabindex="-1" aria-hidden="true"></button>
+                {{-- The state the tabs above chose rides along with every search
+                     and every change of a filter (they are links now, so a
+                     hidden field no longer outvotes anything). --}}
+                @if ($filters['status'] !== null && $filters['status'] !== '')
+                    <input type="hidden" name="status" value="{{ $filters['status'] }}">
+                @endif
                 <div class="flex flex-wrap items-center gap-2">
-                    <label class="input input-sm w-full sm:w-72 gap-2">
+                    {{-- The search takes the width the row has to give. --}}
+                    <label class="input input-sm grow min-w-48 gap-2">
                         <x-icon name="search" size="sm" class="opacity-50" />
                         <input type="search" name="q" value="{{ $filters['q'] }}" class="grow"
                                placeholder="{{ __('Search by SKU or name…') }}">
                     </label>
 
-                    <div class="join">
-                        @foreach ($statusTabs as $value => $label)
-                            @php $count = $value === '' ? $totalCount : ($statusCounts[$value] ?? 0); @endphp
-                            <button type="submit" name="status" value="{{ $value }}"
-                                    @class([
-                                        'btn btn-sm join-item',
-                                        'btn-active' => (string) ($filters['status'] ?? '') === (string) $value,
-                                    ])>
-                                {{ $label }} <span class="opacity-50">{{ $count }}</span>
-                            </button>
-                        @endforeach
-                    </div>
-
                     <button type="button" class="btn btn-ghost btn-sm gap-1.5" x-on:click="more = !more" :aria-expanded="more">
                         <x-icon name="sliders-horizontal" size="sm" /> {{ __('More filters') }}
                         @if ($moreFilters)
-                            <span class="badge badge-primary badge-xs">{{ $narrowing->except(['q', 'status'])->count() }}</span>
+                            <span class="badge badge-primary badge-sm">{{ $narrowing->except(['q', 'status'])->count() }}</span>
                         @endif
                     </button>
 
                     @if ($narrowing->isNotEmpty())
                         <a href="{{ route('admin.catalog.products.index') }}" class="btn btn-ghost btn-sm">{{ __('Reset') }}</a>
                     @endif
+
+                    {{-- How many rows a page shows; a change asks the list again. --}}
+                    <select name="per" class="select select-sm w-auto shrink-0" data-submit-on-change aria-label="{{ __('Rows per page') }}">
+                        @foreach (\Torgash\Catalog\Http\Admin\ProductsController::PER_PAGE as $perOption)
+                            <option value="{{ $perOption }}" @selected($filters['per'] === $perOption)>{{ __(':n per page', ['n' => $perOption]) }}</option>
+                        @endforeach
+                    </select>
                 </div>
 
-                {{-- `status` is sent only by a BUTTON — the tabs, "Find" and the
-                     hidden default one Enter presses — never by a hidden field,
-                     which would ride along with every tab and outvote it. --}}
                 <div x-show="more" x-cloak class="flex flex-wrap items-end gap-2 bg-base-200/60 rounded-box p-3">
                     <fieldset class="fieldset p-0 w-full sm:w-64"><legend class="fieldset-legend text-xs pb-1">{{ __('Category') }}</legend>
                         <select name="category" class="select select-sm w-full">
@@ -133,7 +143,7 @@
                             <input type="number" step="any" min="0" name="price_max" value="{{ $filters['price_max'] }}" class="input input-sm join-item w-24" placeholder="{{ __('to') }}">
                         </div>
                     </fieldset>
-                    <button name="status" value="{{ $filters['status'] }}" class="btn btn-sm btn-primary">{{ __('Find') }}</button>
+                    <button class="btn btn-sm btn-primary">{{ __('Find') }}</button>
                 </div>
             </form>
 
@@ -145,7 +155,7 @@
                 out from under the pointer. Reserving the space means the
                 content swaps in place and nothing below it ever moves.
             --}}
-            <div class="min-h-12 flex items-center">
+            <div class="min-h-12 max-md:min-h-0 flex items-center">
                 <p x-show="!selected.length" class="text-xs opacity-50">
                     {{ __('Found: :n.', ['n' => $foundCount]) }}
                     {{ __('Tip: click anywhere on a row to edit its SKU, price and stock inline.') }}
@@ -153,7 +163,7 @@
 
                 <form method="POST" action="{{ route('admin.catalog.products.bulk') }}" id="products-bulk"
                       x-show="selected.length" x-cloak
-                      class="w-full flex flex-wrap items-center gap-2 bg-base-200 rounded-box p-2">
+                      class="admin-bulk-bar w-full flex flex-wrap items-center gap-2 bg-base-200 rounded-box p-2">
                     @csrf
                     {{-- First in the form, so Enter inside the dialog applies the
                          dialog rather than pressing the first status button. --}}
@@ -223,7 +233,9 @@
                         column 16px wider — the whole grid twitched. Fixed
                         layout makes column widths independent of cell content.
                     --}}
-                    <table class="table table-fixed min-w-3xl">
+                    {{-- On a phone the same table is a list of cards (app.css,
+                         `admin-product-cards`; the cells are named in _row). --}}
+                    <table class="table table-fixed min-w-3xl admin-cards admin-product-cards">
                         <colgroup>
                             <col class="w-12">
                             <col class="w-16">
@@ -235,12 +247,15 @@
                         </colgroup>
                         <thead>
                             <tr>
-                                <th>
+                                <th data-cell="check">
                                     {{-- Select-all covers this page; "Select all N found"
                                          in the bar above is what widens it past the page. --}}
-                                    <input type="checkbox" class="checkbox checkbox-sm" aria-label="{{ __('Select all on this page') }}"
-                                           x-on:change="selected = $event.target.checked ? [...pageIds] : []"
-                                           :checked="selected.length === pageIds.length">
+                                    <label class="flex items-center gap-3">
+                                        <input type="checkbox" class="checkbox checkbox-sm" aria-label="{{ __('Select all on this page') }}"
+                                               x-on:change="selected = $event.target.checked ? [...pageIds] : []"
+                                               :checked="selected.length === pageIds.length">
+                                        <span class="md:hidden font-normal normal-case">{{ __('Select all on this page') }}</span>
+                                    </label>
                                 </th>
                                 <th></th>
                                 <th><a class="link link-hover" href="{{ $sortLink('sku') }}">{{ __('Name') }} / SKU</a></th>

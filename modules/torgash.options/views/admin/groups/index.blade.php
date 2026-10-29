@@ -1,6 +1,7 @@
 @extends('admin.layout')
 
 @section('title', __('Option groups'))
+@section('title_hint', __('What a product offers beyond itself: a processor to pick, licences to tick, a warranty, an installation. A group with no product of its own is placed by conditions — a category with everything under it, a characteristic — and prices itself by formula; a group written for one product is edited on that product.'))
 
 @section('content')
     @if (session('status'))
@@ -13,43 +14,39 @@
         $tabUrl = fn (array $change) => route('admin.options.groups.index', array_filter(array_merge($filters, $change), fn ($v) => $v !== null && $v !== ''));
     @endphp
 
+    {{-- Whose the groups are, as one row of tabs over the card, the screen's
+         action at its end (app.css, `admin-tabs`); the status is a filter in
+         the toolbar. --}}
+    <div class="admin-tabs-row">
+        <nav class="admin-tabs" aria-label="{{ __('Option groups') }}">
+            @foreach (['' => [__('All'), $counts->all_n], 'shared' => [__('Shared'), $counts->shared_n], 'product' => [__('One product\'s'), $counts->product_n]] as $whoseKey => [$whoseText, $whoseN])
+                <a href="{{ $tabUrl(['whose' => $whoseKey]) }}" @class(['admin-tab', 'is-active' => (string) $filters['whose'] === $whoseKey])>
+                    {{ $whoseText }} <span class="admin-tab-count">{{ $whoseN }}</span>
+                </a>
+            @endforeach
+        </nav>
+        <div class="admin-tabs-actions">
+            <a href="{{ route('admin.options.groups.create') }}" class="btn btn-primary">+ {{ __('New group') }}</a>
+        </div>
+    </div>
+
     {{-- One Alpine root: the bulk bar and every row's checkbox share
          `selected` — the categories list's own arrangement. --}}
     <div class="card bg-base-100 border border-base-300" x-data="{ selected: [] }">
         <div class="card-body gap-4">
-            <div class="flex justify-between items-start gap-3 flex-wrap">
-                <p class="text-sm opacity-70 max-w-3xl">
-                    {{ __('What a product offers beyond itself: a processor to pick, licences to tick, a warranty, an installation. A group with no product of its own is placed by conditions — a category with everything under it, a characteristic — and prices itself by formula; a group written for one product is edited on that product.') }}
-                </p>
-                <a href="{{ route('admin.options.groups.create') }}" class="btn btn-primary btn-sm">+ {{ __('New group') }}</a>
-            </div>
-
             <form method="GET" class="flex flex-wrap items-center gap-2">
-                @foreach (['whose', 'status'] as $kept)
-                    @if ($filters[$kept])
-                        <input type="hidden" name="{{ $kept }}" value="{{ $filters[$kept] }}">
-                    @endif
-                @endforeach
-                <label class="input input-sm w-full sm:w-72 gap-2">
+                @if ($filters['whose'])
+                    <input type="hidden" name="whose" value="{{ $filters['whose'] }}">
+                @endif
+                <label class="input input-sm grow min-w-48 gap-2">
                     <x-icon name="search" size="sm" class="opacity-50" />
                     <input type="search" name="q" value="{{ $filters['q'] }}" class="grow" placeholder="{{ __('Search by name or product…') }}">
                 </label>
-                <div class="join">
-                    @foreach (['' => [__('All'), $counts->all_n], 'shared' => [__('Shared'), $counts->shared_n], 'product' => [__('One product\'s'), $counts->product_n]] as $whoseKey => [$whoseText, $whoseN])
-                        <a href="{{ $tabUrl(['whose' => $whoseKey]) }}"
-                           @class(['btn btn-sm join-item', 'btn-active' => (string) $filters['whose'] === $whoseKey])>
-                            {{ $whoseText }} <span class="opacity-50">{{ $whoseN }}</span>
-                        </a>
-                    @endforeach
-                </div>
-                <div class="join">
+                <select name="status" class="select select-sm w-auto" data-submit-on-change aria-label="{{ __('Status') }}">
                     @foreach (['' => [__('Any status'), null], 'enabled' => [__('Enabled'), $counts->enabled_n], 'disabled' => [__('Disabled'), $counts->disabled_n]] as $statusKey => [$statusText, $statusN])
-                        <a href="{{ $tabUrl(['status' => $statusKey]) }}"
-                           @class(['btn btn-sm join-item', 'btn-active' => (string) $filters['status'] === $statusKey])>
-                            {{ $statusText }} @if ($statusN !== null)<span class="opacity-50">{{ $statusN }}</span>@endif
-                        </a>
+                        <option value="{{ $statusKey }}" @selected((string) $filters['status'] === $statusKey)>{{ $statusText }}@if ($statusN !== null) ({{ $statusN }})@endif</option>
                     @endforeach
-                </div>
+                </select>
                 @if ($filters['q'] !== '' || $filters['whose'] || $filters['status'])
                     <a href="{{ route('admin.options.groups.index') }}" class="btn btn-ghost btn-sm">{{ __('Reset') }}</a>
                 @endif
@@ -115,10 +112,10 @@
                                                 {{ $group->admin_name }}
                                             </a>
                                             @if ($group->required)
-                                                <span class="badge badge-xs badge-outline badge-warning whitespace-nowrap">{{ __('Required') }}</span>
+                                                <span class="badge badge-sm badge-ghost whitespace-nowrap">{{ __('Required') }}</span>
                                             @endif
                                             @if ($group->depends_on_group_id)
-                                                <span class="badge badge-xs badge-ghost whitespace-nowrap" title="{{ __('Asked only after another option is answered') }}">{{ __('depends') }}</span>
+                                                <span class="badge badge-sm badge-ghost whitespace-nowrap" title="{{ __('Asked only after another option is answered') }}">{{ __('depends') }}</span>
                                             @endif
                                         </div>
                                         <div class="text-xs opacity-50">{{ __('The customer sees:') }} {{ $group->t('name', $locale) ?: '—' }}</div>

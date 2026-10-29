@@ -1,6 +1,7 @@
 @extends('admin.layout')
 
 @section('title', __('Errors'))
+@section('title_hint', __('What broke on the shop\'s pages and in its jobs, grouped by place: when each last happened, how often, and whether the code has changed since.'))
 
 {{--
     What broke, grouped.
@@ -26,14 +27,17 @@
         $tabUrl = fn (string $tab) => route('admin.guard.errors.index', array_filter(['tab' => $tab === 'open' ? null : $tab, 'q' => $filters['q'] ?: null, 'level' => $filters['level'] ?: null]));
     @endphp
 
-    <div role="tablist" class="tabs tabs-border">
+    {{-- The states as one row of tabs over the card (app.css, `admin-tabs`);
+         "code changed since" worth a look is blue. --}}
+    <nav class="admin-tabs" aria-label="{{ __('Errors') }}">
         @foreach ($tabs as $tabKey => [$tabLabel, $tabIcon])
-            <a role="tab" href="{{ $tabUrl($tabKey) }}" @class(['tab gap-2', 'tab-active' => $filters['tab'] === $tabKey])>
+            @php $notable = $tabKey === 'changed' && $tabCounts['changed']; @endphp
+            <a href="{{ $tabUrl($tabKey) }}" @class(['admin-tab', 'is-active' => $filters['tab'] === $tabKey])>
                 <x-icon :name="$tabIcon" size="sm" /> {{ $tabLabel }}
-                <span class="badge badge-sm {{ $tabKey === 'changed' && $tabCounts['changed'] ? 'badge-info' : 'badge-ghost' }}">{{ $tabCounts[$tabKey] }}</span>
+                <span @class(['admin-tab-count', 'is-info' => $notable])>{{ $tabCounts[$tabKey] }}</span>
             </a>
         @endforeach
-    </div>
+    </nav>
 
     {{-- One Alpine root: the bulk bar and every row's box share `selected`. --}}
     <div class="card bg-base-100 border border-base-300" x-data="{ selected: [] }">
@@ -42,7 +46,7 @@
                 @if ($filters['tab'] !== 'open')
                     <input type="hidden" name="tab" value="{{ $filters['tab'] }}">
                 @endif
-                <label class="input input-sm w-full sm:w-80 gap-2">
+                <label class="input input-sm grow min-w-48 gap-2">
                     <x-icon name="search" size="sm" class="opacity-50" />
                     <input type="search" name="q" value="{{ $filters['q'] }}" class="grow" placeholder="{{ __('Message, class or file…') }}">
                 </label>
@@ -96,9 +100,9 @@
                             <span class="flex flex-wrap items-center gap-2 font-medium">
                                 {{ $error->title() }}
                                 @if ($state === 'changed')
-                                    <span class="badge badge-info badge-sm badge-soft gap-1"><x-icon name="file-pen" size="sm" /> {{ __('Code changed since') }}</span>
+                                    <span class="badge badge-ghost badge-sm gap-1"><x-icon name="file-pen" size="sm" /> {{ __('Code changed since') }}</span>
                                 @elseif ($state === 'gone')
-                                    <span class="badge badge-info badge-sm badge-soft gap-1"><x-icon name="file-x" size="sm" /> {{ __('File no longer exists') }}</span>
+                                    <span class="badge badge-ghost badge-sm gap-1"><x-icon name="file-x" size="sm" /> {{ __('File no longer exists') }}</span>
                                 @endif
                             </span>
                             <span class="block text-sm opacity-70 truncate">{{ $error->message }}</span>

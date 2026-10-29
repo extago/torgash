@@ -4,13 +4,13 @@
 @section('own_heading', '1')
 
 @section('content')
-    <form method="POST" class="flex flex-col gap-4"
+    <form method="POST" enctype="multipart/form-data" class="flex flex-col gap-4"
           action="{{ $page->exists ? route('admin.pages.update', $page) : route('admin.pages.store') }}">
         @csrf
         @if ($page->exists) @method('PUT') @endif
 
-        <div class="sticky top-16 z-20 -mx-6 px-6 py-3 bg-base-200/95 backdrop-blur border-b border-base-300 flex items-center gap-3">
-            <a href="{{ route('admin.pages.index') }}" class="btn btn-ghost btn-sm btn-square" title="{{ __('Back to pages') }}">
+        <x-admin.form-bar>
+            <a href="{{ route('admin.pages.index') }}" class="btn btn-ghost btn-sm btn-square" title="{{ __('Back to pages') }}" aria-label="{{ __('Back to pages') }}">
                 <x-icon name="arrow-left" size="lg" />
             </a>
             <div class="flex-1 min-w-0">
@@ -20,7 +20,7 @@
                 </div>
             </div>
             <div class="dropdown dropdown-end">
-                <div tabindex="0" role="button" class="btn btn-ghost btn-sm btn-square" title="{{ __('More actions') }}">
+                <div tabindex="0" role="button" class="btn btn-ghost btn-sm btn-square" title="{{ __('More actions') }}" aria-label="{{ __('More actions') }}">
                     <x-icon name="settings" size="lg" />
                 </div>
                 <ul tabindex="0" class="dropdown-content menu menu-sm bg-base-100 rounded-box shadow-md w-60 mt-2 p-2 z-50 border border-base-300">
@@ -33,9 +33,11 @@
                     @endif
                 </ul>
             </div>
-            <a href="{{ route('admin.pages.index') }}" class="btn btn-ghost btn-sm">{{ __('Cancel') }}</a>
-            <button class="btn btn-primary btn-sm">{{ $page->exists ? __('Save') : __('Create') }}</button>
-        </div>
+            <x-slot:actions>
+                <a href="{{ route('admin.pages.index') }}" class="btn btn-ghost btn-sm">{{ __('Cancel') }}</a>
+                <button class="btn btn-primary btn-sm">{{ $page->exists ? __('Save') : __('Create') }}</button>
+            </x-slot:actions>
+        </x-admin.form-bar>
 
         @if (session('status'))
             <div class="alert alert-success text-sm">{{ session('status') }}</div>
@@ -81,7 +83,7 @@
                 {{-- The same card as the product, the category and the brand carry, so
                      the fields, the wording and the hints are learnt once. `page_title`
                      is this module's own column name — see App\Core\Seo\MetaFields. --}}
-                <x-seo.fields :record="$page" title-field="page_title"
+                <x-seo.fields :record="$page" picture title-field="page_title"
                               :url-preview="$page->path ? url('/'.$page->path) : null" />
             </div>
 
@@ -95,12 +97,12 @@
                             <span class="label-text">{{ __('Published') }}</span>
                         </label>
                         <label class="label cursor-pointer justify-start gap-3">
-                            <input type="checkbox" name="in_sitemap" value="1" class="toggle toggle-sm toggle-primary"
+                            <input type="checkbox" name="in_sitemap" value="1" class="toggle toggle-sm toggle-success"
                                    @checked(old('in_sitemap', $page->in_sitemap ?? true))>
                             <span class="label-text">{{ __('In the sitemap') }}</span>
                         </label>
                         <label class="label cursor-pointer justify-start gap-3 whitespace-normal">
-                            <input type="checkbox" name="show_section_nav" value="1" class="toggle toggle-sm toggle-primary"
+                            <input type="checkbox" name="show_section_nav" value="1" class="toggle toggle-sm toggle-success"
                                    @checked(old('show_section_nav', $page->show_section_nav ?? true))>
                             <span class="label-text">{{ __('Section navigation') }}</span>
                         </label>
@@ -125,7 +127,7 @@
 
                         <fieldset class="fieldset p-0">
                             <legend class="fieldset-legend">{{ __('Address') }}</legend>
-                            <input name="slug" value="{{ old('slug', $page->slug) }}"
+                            <input name="slug" autocapitalize="off" autocorrect="off" spellcheck="false" value="{{ old('slug', $page->slug) }}"
                                    class="input input-bordered w-full" placeholder="{{ __('made from the title') }}">
                             <p class="label text-xs opacity-60 whitespace-normal break-all">
                                 {{-- The full address is the section's plus this segment, and

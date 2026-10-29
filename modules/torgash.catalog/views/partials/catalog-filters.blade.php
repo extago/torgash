@@ -107,7 +107,7 @@
     <div class="bg-base-100 border border-base-300 rounded-box p-4 flex flex-col gap-1.5" data-filter-block>
         @foreach ($filters['flags'] as $flag)
             <label class="flex items-center gap-2 py-0.5 text-sm cursor-pointer hover:text-primary">
-                <input type="checkbox" name="{{ $flag }}" value="1" class="checkbox"
+                <input type="checkbox" name="{{ $flag }}" value="1" class="checkbox checkbox-primary"
                        @checked(in_array($flag, $filters['flags_on'] ?? [], true))>
                 <span>{{ $flags->label($flag) }}</span>
             </label>
@@ -187,7 +187,7 @@
                              both have a code, it also carries the readable name,
                              and the form's own handler builds the spoken address
                              out of those — see index.blade.php. --}}
-                        <input type="checkbox" name="feature[{{ $feature->id }}][]" value="{{ $value->id }}" class="checkbox"
+                        <input type="checkbox" name="feature[{{ $feature->id }}][]" value="{{ $value->id }}" class="checkbox checkbox-primary"
                                @if ($spoken) data-param="{{ $filters['params'][$feature->id]['param'] }}" data-value="{{ $spoken }}" @endif
                                @checked(in_array((int) $value->id, $filterTicked, true))>
                         @include('torgash.catalog::partials.feature-value-swatch', ['feature' => $feature, 'value' => $value])

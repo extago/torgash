@@ -8,17 +8,19 @@
           x-data="{ mode: {{ \Illuminate\Support\Js::from(old('mode', 'single')) }} }">
         @csrf
 
-        <div class="sticky top-16 z-20 -mx-6 px-6 py-3 bg-base-200/95 backdrop-blur border-b border-base-300 flex items-center gap-3">
-            <a href="{{ route('admin.giftcards.index') }}" class="btn btn-ghost btn-sm btn-square" title="{{ __('Back to gift cards') }}">
+        <x-admin.form-bar>
+            <a href="{{ route('admin.giftcards.index') }}" class="btn btn-ghost btn-sm btn-square" title="{{ __('Back to gift cards') }}" aria-label="{{ __('Back to gift cards') }}">
                 <x-icon name="arrow-left" size="lg" />
             </a>
             <div class="flex-1 min-w-0">
                 <div class="text-xs opacity-50 leading-none">{{ __('Gift cards') }}</div>
                 <div class="font-semibold truncate leading-tight">{{ __('Issue gift cards') }}</div>
             </div>
-            <a href="{{ route('admin.giftcards.index') }}" class="btn btn-ghost btn-sm">{{ __('Cancel') }}</a>
-            <button class="btn btn-primary btn-sm">{{ __('Issue') }}</button>
-        </div>
+            <x-slot:actions>
+                <a href="{{ route('admin.giftcards.index') }}" class="btn btn-ghost btn-sm">{{ __('Cancel') }}</a>
+                <button class="btn btn-primary btn-sm">{{ __('Issue') }}</button>
+            </x-slot:actions>
+        </x-admin.form-bar>
 
         @if ($errors->any())
             <div class="alert alert-error text-sm">{{ $errors->first() }}</div>

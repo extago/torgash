@@ -16,8 +16,8 @@
     @endphp
 
     {{-- The order's own bar: what it is, where it stands, and what to do with it. --}}
-    <div class="sticky top-16 z-20 -mx-6 px-6 py-3 bg-base-200/95 backdrop-blur border-b border-base-300 flex items-center gap-3">
-        <a href="{{ route('admin.orders.index') }}" class="btn btn-ghost btn-sm btn-square" title="{{ __('Back to orders') }}">
+    <x-admin.form-bar>
+        <a href="{{ route('admin.orders.index') }}" class="btn btn-ghost btn-sm btn-square" title="{{ __('Back to orders') }}" aria-label="{{ __('Back to orders') }}">
             <x-icon name="arrow-left" size="lg" />
         </a>
         <div class="flex-1 min-w-0">
@@ -28,20 +28,21 @@
                     <span class="h-2 w-2 rounded-full inline-block" style="background-color: {{ $currentStatus?->color ?? '#999' }}"></span>
                     {{ $currentStatus?->t('name') ?? $order->status }}
                 </span>
-                <span class="badge badge-sm {{ PaymentState::badge($order->payment_state) }}">{{ PaymentState::label($order->payment_state) }}</span>
+                <span class="badge badge-sm max-sm:hidden {{ PaymentState::badge($order->payment_state) }}">{{ PaymentState::label($order->payment_state) }}</span>
             </div>
         </div>
 
         <span class="hidden md:inline text-lg font-semibold tabular-nums">{{ $order->adminMoney($order->total) }}</span>
 
-        <a href="{{ route('admin.orders.invoice', $order) }}" target="_blank" rel="noopener" class="btn btn-sm gap-1.5">
-            <x-icon name="printer" size="sm" /> {{ __('Invoice') }}
+        <a href="{{ route('admin.orders.invoice', $order) }}" target="_blank" rel="noopener" class="btn btn-sm gap-1.5 max-md:btn-square"
+           title="{{ __('Invoice') }}" aria-label="{{ __('Invoice') }}">
+            <x-icon name="printer" size="sm" /> <span class="max-md:hidden">{{ __('Invoice') }}</span>
         </a>
 
         {{-- Delete submits the standalone form below through the HTML "form"
              attribute — the page holds several forms of its own. --}}
         <div class="dropdown dropdown-end">
-            <div tabindex="0" role="button" class="btn btn-ghost btn-sm btn-square" title="{{ __('More actions') }}">
+            <div tabindex="0" role="button" class="btn btn-ghost btn-sm btn-square" title="{{ __('More actions') }}" aria-label="{{ __('More actions') }}">
                 <x-icon name="settings" size="lg" />
             </div>
             <ul tabindex="0" class="dropdown-content menu menu-sm bg-base-100 rounded-box shadow-md w-64 mt-2 p-2 z-50 border border-base-300">
@@ -76,7 +77,7 @@
                 </li>
             </ul>
         </div>
-    </div>
+    </x-admin.form-bar>
 
     @if (session('status'))
         <div class="alert alert-success text-sm">{{ session('status') }}</div>
@@ -121,18 +122,22 @@
         </div>
     @endforeach
 
+    {{-- Below the wide screen the two columns dissolve into one (their cards
+         become the grid's own) and stand in the order of a manager's day:
+         what to do with it, whether it is paid, what is in it, who to ring,
+         how it travels, the modules' cards, what has happened. --}}
     <div class="grid gap-4 xl:grid-cols-[minmax(0,1fr)_22rem] items-start">
         {{-- Left, the wide column: what was bought, how it travels and is paid
              (the delivery editor a module draws there needs the width), and
              what has happened to the order since. --}}
-        <div class="flex flex-col gap-4 min-w-0">
-            <section class="card bg-base-100 border border-base-300">
+        <div class="flex flex-col gap-4 min-w-0 max-xl:contents">
+            <section class="card bg-base-100 border border-base-300 min-w-0 max-xl:order-3">
                 <div class="card-body">
                     @include('torgash.checkout::admin.orders._editor', ['order' => $order, 'editing' => $editing])
                 </div>
             </section>
 
-            <section class="card bg-base-100 border border-base-300">
+            <section class="card bg-base-100 border border-base-300 min-w-0 max-xl:order-5">
                 <div class="card-body gap-2">
                     <h3 class="font-semibold">{{ __('Delivery') }}</h3>
                     <div class="text-sm">{{ $order->shippingMethodLabel() ?? '—' }}</div>
@@ -145,7 +150,7 @@
                 </div>
             </section>
 
-            <section class="card bg-base-100 border border-base-300">
+            <section class="card bg-base-100 border border-base-300 min-w-0 max-xl:order-2">
                 <div class="card-body gap-3">
                     <h3 class="font-semibold">{{ __('Payment') }}</h3>
                     <fieldset class="fieldset p-0">
@@ -163,7 +168,7 @@
                 </div>
             </section>
 
-            <section class="card bg-base-100 border border-base-300">
+            <section class="card bg-base-100 border border-base-300 min-w-0 max-xl:order-7">
                 <div class="card-body gap-3">
                     <h3 class="font-semibold">{{ __('Activity') }}</h3>
                     @include('torgash.checkout::admin.orders._activity', ['order' => $order])
@@ -172,8 +177,8 @@
         </div>
 
         {{-- Right: the work on it and who bought it. --}}
-        <div class="flex flex-col gap-4">
-            <section class="card bg-base-100 border border-base-300">
+        <div class="flex flex-col gap-4 max-xl:contents">
+            <section class="card bg-base-100 border border-base-300 min-w-0 max-xl:order-1">
                 <div class="card-body gap-3">
                     <h3 class="font-semibold">{{ __('Work on the order') }}</h3>
                     <fieldset class="fieldset p-0">
@@ -184,16 +189,37 @@
                         <legend class="fieldset-legend">{{ __('Manager') }}</legend>
                         @include('torgash.checkout::admin.orders._manager', ['order' => $order, 'managers' => $managers])
                     </fieldset>
+                    {{-- On a phone the customer's card is further down: the
+                         two things a manager does with a phone, here. --}}
+                    @if ($order->phone || $order->email)
+                        <div class="flex gap-2 md:hidden">
+                            @if ($order->phone)
+                                <a href="tel:{{ preg_replace('/[^0-9+]/', '', $order->phone) }}" class="btn btn-sm flex-1 gap-1.5"><x-icon name="phone" size="sm" /> {{ __('Call') }}</a>
+                            @endif
+                            @if ($order->email)
+                                <a href="mailto:{{ $order->email }}" class="btn btn-sm flex-1 gap-1.5"><x-icon name="mail" size="sm" /> {{ __('Write') }}</a>
+                            @endif
+                        </div>
+                    @endif
                 </div>
             </section>
 
             {{-- A module's own card about this order — its money, its stock —
-                 in the order it asks for (`position`); checkout names no module. --}}
-            @foreach (collect(hook_filter('checkout.order.side_panels', [], ['order' => $order]))->filter(fn ($panel) => ($panel['html'] ?? '') !== '')->sortBy('position') as $panel)
-                {!! $panel['html'] !!}
-            @endforeach
+                 in the order it asks for (`position`); checkout names no module.
+                 One block, so a phone can put them all in their place. --}}
+            @php
+                $sidePanels = collect(hook_filter('checkout.order.side_panels', [], ['order' => $order]))
+                    ->filter(fn ($panel) => ($panel['html'] ?? '') !== '')->sortBy('position');
+            @endphp
+            @if ($sidePanels->isNotEmpty())
+                <div class="flex flex-col gap-4 min-w-0 max-xl:order-6">
+                    @foreach ($sidePanels as $panel)
+                        {!! $panel['html'] !!}
+                    @endforeach
+                </div>
+            @endif
 
-            <section class="card bg-base-100 border border-base-300">
+            <section class="card bg-base-100 border border-base-300 min-w-0 max-xl:order-4">
                 <div class="card-body gap-2">
                     <h3 class="font-semibold">{{ __('Customer') }}</h3>
                     {{-- A company's order names the company first: that is who is

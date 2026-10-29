@@ -1,13 +1,11 @@
 @extends('admin.layout')
 
 @section('title', __('Stock journal'))
+@section('title_hint', __('Every change of stock and why: orders and returns, documents, imports and 1C, a number typed by hand. A mistake is corrected by the next movement, never by editing this one.'))
 
 @section('content')
     <div class="card bg-base-100 border border-base-300">
         <div class="card-body gap-4">
-            <p class="text-sm opacity-70 max-w-3xl">
-                {{ __('Every change of stock and why: orders and returns, documents, imports and 1C, a number typed by hand. A mistake is corrected by the next movement, never by editing this one.') }}
-            </p>
 
             @if ($product)
                 <div class="alert text-sm">

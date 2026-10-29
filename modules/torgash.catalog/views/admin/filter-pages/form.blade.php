@@ -6,14 +6,14 @@
 @section('content')
     @php $selected = old('values', $page->valueSet() ?: []); @endphp
 
-    <form method="POST"
+    <form method="POST" enctype="multipart/form-data"
           action="{{ $page->exists ? route('admin.catalog.filter-pages.update', $page) : route('admin.catalog.filter-pages.store') }}"
           id="filter-page-form" class="flex flex-col gap-4">
         @csrf
         @if ($page->exists) @method('PUT') @endif
 
-        <div class="sticky top-16 z-20 -mx-6 px-6 py-3 bg-base-200/95 backdrop-blur border-b border-base-300 flex items-center gap-3">
-            <a href="{{ route('admin.catalog.filter-pages.index') }}" class="btn btn-ghost btn-sm btn-square" title="{{ __('Back to filter pages') }}">
+        <x-admin.form-bar>
+            <a href="{{ route('admin.catalog.filter-pages.index') }}" class="btn btn-ghost btn-sm btn-square" title="{{ __('Back to filter pages') }}" aria-label="{{ __('Back to filter pages') }}">
                 <x-icon name="arrow-left" size="lg" />
             </a>
             <div class="flex-1 min-w-0">
@@ -21,13 +21,13 @@
                 <div class="font-semibold truncate leading-tight">{{ $page->exists ? $page->title(admin_content_locale()) : __('New filter page') }}</div>
             </div>
             @if ($page->exists && $page->category)
-                <a href="{{ $page->url() }}" target="_blank" rel="noopener" class="btn btn-ghost btn-sm btn-square" title="{{ __('Open on the storefront') }}">
+                <a href="{{ $page->url() }}" target="_blank" rel="noopener" class="btn btn-ghost btn-sm btn-square" title="{{ __('Open on the storefront') }}" aria-label="{{ __('Open on the storefront') }}">
                     <x-icon name="external-link" size="lg" />
                 </a>
             @endif
             @if ($page->exists)
                 <div class="dropdown dropdown-end">
-                    <div tabindex="0" role="button" class="btn btn-ghost btn-sm btn-square" title="{{ __('More actions') }}">
+                    <div tabindex="0" role="button" class="btn btn-ghost btn-sm btn-square" title="{{ __('More actions') }}" aria-label="{{ __('More actions') }}">
                         <x-icon name="settings" size="lg" />
                     </div>
                     <ul tabindex="0" class="dropdown-content menu menu-sm bg-base-100 rounded-box shadow-md w-60 mt-2 p-2 z-50 border border-base-300">
@@ -37,9 +37,11 @@
                     </ul>
                 </div>
             @endif
-            <a href="{{ route('admin.catalog.filter-pages.index') }}" class="btn btn-ghost btn-sm">{{ __('Cancel') }}</a>
-            <button class="btn btn-primary btn-sm">{{ $page->exists ? __('Save') : __('Create') }}</button>
-        </div>
+            <x-slot:actions>
+                <a href="{{ route('admin.catalog.filter-pages.index') }}" class="btn btn-ghost btn-sm">{{ __('Cancel') }}</a>
+                <button class="btn btn-primary btn-sm">{{ $page->exists ? __('Save') : __('Create') }}</button>
+            </x-slot:actions>
+        </x-admin.form-bar>
 
         @if (session('status'))
             <div class="alert alert-success">{{ session('status') }}</div>
@@ -167,7 +169,7 @@
                 <fieldset class="fieldset p-0"><legend class="fieldset-legend">{{ __('Address') }}</legend>
                     <label class="input input-bordered flex items-center gap-1 w-full">
                         <span class="opacity-50 text-xs whitespace-nowrap">/catalog/{{ $page->category?->slug ?? '…' }}/</span>
-                        <input name="slug" value="{{ old('slug', $page->slug) }}" class="grow" placeholder="{{ __('auto from the name') }}">
+                        <input name="slug" autocapitalize="off" autocorrect="off" spellcheck="false" value="{{ old('slug', $page->slug) }}" class="grow" placeholder="{{ __('auto from the name') }}">
                     </label>
                     <p class="text-xs opacity-60">{{ __('Changing this leaves a 301 from the old address.') }}</p>
                 </fieldset>
@@ -177,7 +179,7 @@
             </div>
         </div>
 
-        <x-seo.fields :record="$page"
+        <x-seo.fields :record="$page" picture
                       :url-preview="$page->exists && $page->category ? $page->url() : null" />
         </div>
 
@@ -192,11 +194,11 @@
                         <span class="label-text">{{ __('Published') }}</span>
                     </label>
                     <label class="label cursor-pointer justify-start items-start gap-2 whitespace-normal">
-                        <input type="checkbox" name="in_sitemap" value="1" class="toggle toggle-sm toggle-primary" @checked(old('in_sitemap', $page->in_sitemap ?? true))>
+                        <input type="checkbox" name="in_sitemap" value="1" class="toggle toggle-sm toggle-success" @checked(old('in_sitemap', $page->in_sitemap ?? true))>
                         <span class="label-text">{{ __('In the sitemap') }}</span>
                     </label>
                     <label class="label cursor-pointer justify-start items-start gap-2 whitespace-normal">
-                        <input type="checkbox" name="in_list" value="1" class="toggle toggle-sm toggle-primary" @checked(old('in_list', $page->in_list ?? true))>
+                        <input type="checkbox" name="in_list" value="1" class="toggle toggle-sm toggle-success" @checked(old('in_list', $page->in_list ?? true))>
                         <span class="label-text">{{ __('Linked from the category') }}</span>
                     </label>
                 </div>

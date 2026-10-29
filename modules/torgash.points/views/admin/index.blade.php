@@ -1,6 +1,10 @@
 @extends('admin.layout')
 
 @section('title', __('Bonus points'))
+@section('title_hint', __('Points customers earn for orders and spend in the basket as a discount. How many an order earns, when they are credited and what a point is worth are in the module\'s settings; here are the multipliers and every movement.'))
+@section('title_actions')
+    <a href="{{ url('/admin/settings/torgash.points') }}" class="btn btn-ghost gap-1.5"><x-icon name="settings" size="sm" /> {{ __('Settings') }}</a>
+@endsection
 
 @section('content')
     @if (session('status'))
@@ -13,16 +17,10 @@
     <div class="grid gap-4 xl:grid-cols-[minmax(0,1fr)_24rem] items-start">
         <div class="card bg-base-100 border border-base-300">
             <div class="card-body gap-4">
-                <div class="flex justify-between items-start gap-3 flex-wrap">
-                    <p class="text-sm opacity-70 max-w-3xl">
-                        {{ __('Points customers earn for orders and spend in the basket as a discount. How many an order earns, when they are credited and what a point is worth are in the module\'s settings; here are the multipliers and every movement.') }}
-                    </p>
-                    <a href="{{ url('/admin/settings/torgash.points') }}" class="btn btn-ghost btn-sm gap-1.5"><x-icon name="settings" size="sm" /> {{ __('Settings') }}</a>
-                </div>
                 <p class="text-sm">{{ __('Points customers hold') }}: <span class="font-semibold tabular-nums">{{ number_format($outstanding, 0, '.', ' ') }}</span></p>
 
                 <form method="GET" class="flex items-center gap-2">
-                    <label class="input input-sm w-full sm:w-80 gap-2">
+                    <label class="input input-sm grow min-w-48 gap-2">
                         <x-icon name="search" size="sm" class="opacity-50" />
                         <input type="search" name="q" value="{{ $q }}" class="grow" placeholder="{{ __('Customer\'s name or email…') }}">
                     </label>
@@ -106,10 +104,10 @@
                                 {{ $ruleNames[$rule->kind][$rule->target_id] ?? '#'.$rule->target_id }}
                             </span>
                             <span class="flex items-center gap-1">
-                                <span class="badge badge-neutral">×{{ rtrim(rtrim(number_format((float) $rule->multiplier, 2, '.', ''), '0'), '.') }}</span>
+                                <span class="badge badge-sm badge-neutral">×{{ rtrim(rtrim(number_format((float) $rule->multiplier, 2, '.', ''), '0'), '.') }}</span>
                                 <form method="POST" action="{{ route('admin.points.rules.destroy', $rule->id) }}">
                                     @csrf @method('DELETE')
-                                    <button class="btn btn-ghost btn-sm btn-square text-error" title="{{ __('Delete') }}"><x-icon name="trash-2" size="sm" /></button>
+                                    <button class="btn btn-ghost btn-sm btn-square text-error" title="{{ __('Delete') }}" aria-label="{{ __('Delete') }}"><x-icon name="trash-2" size="sm" /></button>
                                 </form>
                             </span>
                         </div>

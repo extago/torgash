@@ -12,8 +12,8 @@
         @csrf
         @if ($rule->exists) @method('PUT') @endif
 
-        <div class="sticky top-16 z-20 -mx-6 px-6 py-3 bg-base-200/95 backdrop-blur border-b border-base-300 flex items-center gap-3">
-            <a href="{{ route('admin.catalog.filter-rules.index') }}" class="btn btn-ghost btn-sm btn-square" title="{{ __('Back to rules') }}">
+        <x-admin.form-bar>
+            <a href="{{ route('admin.catalog.filter-rules.index') }}" class="btn btn-ghost btn-sm btn-square" title="{{ __('Back to rules') }}" aria-label="{{ __('Back to rules') }}">
                 <x-icon name="arrow-left" size="lg" />
             </a>
             <div class="flex-1 min-w-0">
@@ -22,7 +22,7 @@
             </div>
             @if ($rule->exists)
                 <div class="dropdown dropdown-end">
-                    <div tabindex="0" role="button" class="btn btn-ghost btn-sm btn-square" title="{{ __('More actions') }}">
+                    <div tabindex="0" role="button" class="btn btn-ghost btn-sm btn-square" title="{{ __('More actions') }}" aria-label="{{ __('More actions') }}">
                         <x-icon name="settings" size="lg" />
                     </div>
                     <ul tabindex="0" class="dropdown-content menu menu-sm bg-base-100 rounded-box shadow-md w-60 mt-2 p-2 z-50 border border-base-300">
@@ -33,9 +33,11 @@
                     </ul>
                 </div>
             @endif
-            <a href="{{ route('admin.catalog.filter-rules.index') }}" class="btn btn-ghost btn-sm">{{ __('Cancel') }}</a>
-            <button class="btn btn-primary btn-sm">{{ $rule->exists ? __('Save') : __('Create') }}</button>
-        </div>
+            <x-slot:actions>
+                <a href="{{ route('admin.catalog.filter-rules.index') }}" class="btn btn-ghost btn-sm">{{ __('Cancel') }}</a>
+                <button class="btn btn-primary btn-sm">{{ $rule->exists ? __('Save') : __('Create') }}</button>
+            </x-slot:actions>
+        </x-admin.form-bar>
 
         @if (session('status'))
             <div class="alert alert-success">{{ session('status') }}</div>
@@ -127,10 +129,10 @@
 
                                 <div class="flex flex-wrap gap-1.5 mt-2">
                                     <template x-for="town in chosen" :key="town.id">
-                                        <span class="badge badge-outline gap-1.5 py-3">
+                                        <span class="badge badge-sm badge-ghost gap-1.5 py-3">
                                             <span x-text="town.label"></span>
                                             <input type="hidden" name="place_ids[]" :value="town.id">
-                                            <button type="button" class="opacity-50 hover:opacity-100" @click="drop(town.id)">&times;</button>
+                                            <button type="button" class="opacity-50 hover:opacity-100" @click="drop(town.id)" aria-label="{{ __('Remove') }}">&times;</button>
                                         </span>
                                     </template>
                                 </div>
@@ -167,7 +169,7 @@
                 </fieldset>
 
                 <label class="label cursor-pointer justify-start gap-2">
-                    <input type="checkbox" name="with_children" value="1" class="toggle toggle-sm toggle-primary" @checked(old('with_children', $rule->with_children ?? true))>
+                    <input type="checkbox" name="with_children" value="1" class="toggle toggle-sm toggle-success" @checked(old('with_children', $rule->with_children ?? true))>
                     <span class="label-text">{{ __('…and everything under them') }}</span>
                 </label>
             </div>
@@ -209,11 +211,11 @@
                         <span class="label-text">{{ __('Enabled') }}</span>
                     </label>
                     <label class="label cursor-pointer justify-start items-start gap-2 whitespace-normal">
-                        <input type="checkbox" name="in_sitemap" value="1" class="toggle toggle-sm toggle-primary" @checked(old('in_sitemap', $rule->in_sitemap ?? true))>
+                        <input type="checkbox" name="in_sitemap" value="1" class="toggle toggle-sm toggle-success" @checked(old('in_sitemap', $rule->in_sitemap ?? true))>
                         <span class="label-text">{{ __('Its pages go in the sitemap') }}</span>
                     </label>
                     <label class="label cursor-pointer justify-start items-start gap-2 whitespace-normal">
-                        <input type="checkbox" name="in_list" value="1" class="toggle toggle-sm toggle-primary" @checked(old('in_list', $rule->in_list ?? true))>
+                        <input type="checkbox" name="in_list" value="1" class="toggle toggle-sm toggle-success" @checked(old('in_list', $rule->in_list ?? true))>
                         <span class="label-text">{{ __('Its pages are linked from the category') }}</span>
                     </label>
                 </div>

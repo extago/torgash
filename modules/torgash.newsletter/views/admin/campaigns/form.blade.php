@@ -31,8 +31,8 @@
         @csrf
         @if ($campaign->exists) @method('PUT') @endif
 
-        <div class="sticky top-16 z-20 -mx-6 px-6 py-3 bg-base-200/95 backdrop-blur border-b border-base-300 flex items-center gap-3">
-            <a href="{{ route('admin.newsletter.campaigns.index') }}" class="btn btn-ghost btn-sm btn-square" title="{{ __('Back to campaigns') }}">
+        <x-admin.form-bar>
+            <a href="{{ route('admin.newsletter.campaigns.index') }}" class="btn btn-ghost btn-sm btn-square" title="{{ __('Back to campaigns') }}" aria-label="{{ __('Back to campaigns') }}">
                 <x-icon name="arrow-left" size="lg" />
             </a>
             <div class="flex-1 min-w-0">
@@ -45,7 +45,7 @@
 
             @if ($campaign->exists)
                 <div class="dropdown dropdown-end">
-                    <div tabindex="0" role="button" class="btn btn-ghost btn-sm btn-square" title="{{ __('More actions') }}">
+                    <div tabindex="0" role="button" class="btn btn-ghost btn-sm btn-square" title="{{ __('More actions') }}" aria-label="{{ __('More actions') }}">
                         <x-icon name="settings" size="lg" />
                     </div>
                     <ul tabindex="0" class="dropdown-content menu menu-sm bg-base-100 rounded-box shadow-md w-60 mt-2 p-2 z-50 border border-base-300">
@@ -65,11 +65,13 @@
                     </ul>
                 </div>
             @endif
-            <a href="{{ route('admin.newsletter.campaigns.index') }}" class="btn btn-ghost btn-sm">{{ $campaignEditable ? __('Cancel') : __('Back') }}</a>
-            @if ($campaignEditable)
-                <button class="btn btn-primary btn-sm">{{ $campaign->exists ? __('Save') : __('Create') }}</button>
-            @endif
-        </div>
+            <x-slot:actions>
+                <a href="{{ route('admin.newsletter.campaigns.index') }}" class="btn btn-ghost btn-sm">{{ $campaignEditable ? __('Cancel') : __('Back') }}</a>
+                @if ($campaignEditable)
+                    <button class="btn btn-primary btn-sm">{{ $campaign->exists ? __('Save') : __('Create') }}</button>
+                @endif
+            </x-slot:actions>
+        </x-admin.form-bar>
 
         @if (session('status'))
             <div class="alert alert-success text-sm">{{ session('status') }}</div>
@@ -135,7 +137,7 @@
                     <div class="card-body gap-3">
                         <div class="flex items-baseline justify-between gap-2">
                             <h3 class="font-semibold">{{ __('Who receives it') }}</h3>
-                            <span class="badge badge-primary" x-ref="audience"
+                            <span class="badge badge-sm badge-primary" x-ref="audience"
                                   hx-get="{{ route('admin.newsletter.campaigns.count') }}" hx-include="[name^='rules[']" hx-trigger="recount, change from:#campaign-rules delay:300ms">
                                 {{ trans_choice(':count address|:count addresses', $campaign->status === 'sent' || $campaign->status === 'sending' ? $campaign->recipients : $audience) }}
                             </span>
@@ -152,7 +154,7 @@
                                             </template>
                                         </select>
                                         @if ($campaignEditable)
-                                            <button type="button" class="btn btn-ghost btn-sm btn-square text-error" x-on:click="remove(i)" title="{{ __('Remove the condition') }}"><x-icon name="x" /></button>
+                                            <button type="button" class="btn btn-ghost btn-sm btn-square text-error" x-on:click="remove(i)" title="{{ __('Remove the condition') }}" aria-label="{{ __('Remove the condition') }}"><x-icon name="x" /></button>
                                         @endif
                                     </div>
                                     <template x-for="field in (kinds[rule.kind]?.fields || [])" :key="rule.kind + field.key">

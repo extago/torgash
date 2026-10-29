@@ -35,7 +35,7 @@
                 <form method="POST" action="{{ route('admin.payments.act', [$order, $capability]) }}">
                     @csrf
                     <input type="hidden" name="payment" value="{{ $payment->id }}">
-                    <button class="btn btn-xs">{{ match ($capability) {
+                    <button class="btn btn-sm">{{ match ($capability) {
                         'void' => __('Release the hold'),
                         'capture' => __('Capture'),
                         'refund' => __('Refund'),
@@ -50,7 +50,7 @@
     @if ($refresh)
         <form method="POST" action="{{ route('admin.payments.act', [$order, 'refresh']) }}">
             @csrf
-            <button class="btn btn-xs">{{ __('Refresh') }}</button>
+            <button class="btn btn-sm">{{ __('Refresh') }}</button>
         </form>
     @endif
 

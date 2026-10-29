@@ -29,7 +29,7 @@
     </style>
 
     <div class="flex items-center gap-3 mb-4">
-        <a href="{{ route('admin.modules') }}" class="btn btn-ghost btn-sm btn-square" title="{{ __('Modules') }}">
+        <a href="{{ route('admin.modules') }}" class="btn btn-ghost btn-sm btn-square" title="{{ __('Modules') }}" aria-label="{{ __('Modules') }}">
             <x-icon name="arrow-left" />
         </a>
         <div>

@@ -80,6 +80,26 @@ class ThemeLogoTest extends TestCase
         $this->assertStringNotContainsString('apple-touch-icon', $page, 'a phone\'s home screen takes no SVG');
     }
 
+    /**
+     * The colour scheme is written on <html> by the theme's head on every
+     * page it draws, the closed one too — so a dark-scheme rule keyed on
+     * data-theme holds for a visitor whose system chose it — and the script
+     * runs under the page's content security policy.
+     */
+    public function test_the_colour_scheme_is_written_by_the_themes_head_on_every_page(): void
+    {
+        $open = $this->get('http://localhost/')->assertOk();
+        $this->storefront->update(['closed' => true, 'closed_token' => 'secret-preview-token']);
+        $closed = $this->get('http://localhost/');
+
+        foreach (['open' => $open, 'closed' => $closed] as $which => $response) {
+            $page = (string) $response->getContent();
+            $this->assertSame(1, preg_match_all('/<script nonce="([^"]+)">\s*\(function \(\) \{\s*var root = document\.documentElement/', $page, $found), $which.': written once');
+            $this->assertStringContainsString("'nonce-".$found[1][0]."'", (string) $response->headers->get('Content-Security-Policy'), $which.': allowed to run');
+            $this->assertStringContainsString("system.addEventListener('change'", $page, $which.': "auto" follows the system');
+        }
+    }
+
     /** A band that runs across the page puts its edge where every other one does. */
     public function test_every_band_across_the_page_keeps_to_the_one_gutter(): void
     {

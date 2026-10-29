@@ -10,8 +10,8 @@
         @csrf
         @if ($snippet->exists) @method('PUT') @endif
 
-        <div class="sticky top-16 z-20 -mx-6 px-6 py-3 bg-base-200/95 backdrop-blur border-b border-base-300 flex items-center gap-3">
-            <a href="{{ route('admin.snippets.index') }}" class="btn btn-ghost btn-sm btn-square" title="{{ __('Back to snippets') }}">
+        <x-admin.form-bar>
+            <a href="{{ route('admin.snippets.index') }}" class="btn btn-ghost btn-sm btn-square" title="{{ __('Back to snippets') }}" aria-label="{{ __('Back to snippets') }}">
                 <x-icon name="arrow-left" size="lg" />
             </a>
             <div class="flex-1 min-w-0">
@@ -20,7 +20,7 @@
             </div>
             @if ($snippet->exists)
                 <div class="dropdown dropdown-end">
-                    <div tabindex="0" role="button" class="btn btn-ghost btn-sm btn-square" title="{{ __('More actions') }}">
+                    <div tabindex="0" role="button" class="btn btn-ghost btn-sm btn-square" title="{{ __('More actions') }}" aria-label="{{ __('More actions') }}">
                         <x-icon name="settings" size="lg" />
                     </div>
                     <ul tabindex="0" class="dropdown-content menu menu-sm bg-base-100 rounded-box shadow-md w-60 mt-2 p-2 z-50 border border-base-300">
@@ -31,9 +31,11 @@
                     </ul>
                 </div>
             @endif
-            <a href="{{ route('admin.snippets.index') }}" class="btn btn-ghost btn-sm">{{ __('Cancel') }}</a>
-            <button class="btn btn-primary btn-sm">{{ $snippet->exists ? __('Save') : __('Create') }}</button>
-        </div>
+            <x-slot:actions>
+                <a href="{{ route('admin.snippets.index') }}" class="btn btn-ghost btn-sm">{{ __('Cancel') }}</a>
+                <button class="btn btn-primary btn-sm">{{ $snippet->exists ? __('Save') : __('Create') }}</button>
+            </x-slot:actions>
+        </x-admin.form-bar>
 
         @if (session('status'))
             <div class="alert alert-success text-sm">{{ session('status') }}</div>
@@ -112,7 +114,7 @@
                                 <p class="text-xs text-warning whitespace-normal">{{ __('The addresses in this code look like ":category".', ['category' => __(\App\Core\Privacy\Consent::CATEGORIES[$snippetGuess])]) }}</p>
                             @endif
                             <label class="label cursor-pointer justify-start gap-3 mt-2">
-                                <input type="checkbox" name="on_click" value="1" class="toggle toggle-sm" x-model="onClick">
+                                <input type="checkbox" name="on_click" value="1" class="toggle toggle-sm toggle-success" x-model="onClick">
                                 <span class="label-text whitespace-normal">{{ __('Load on click — a button on the page, the code only after it is pressed') }}</span>
                             </label>
                             <div x-show="onClick" class="mt-1">

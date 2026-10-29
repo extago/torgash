@@ -22,20 +22,24 @@
          the corrected value is one keystroke away rather than retyped. --}}
     x-data="{ editing: {{ ($rowError ?? null) ? 'true' : 'false' }} }"
     x-on:click="if (!$event.target.closest('a,button,input,select,label,.dropdown')) editing = !editing"
-    :class="{ 'bg-base-200/60': editing, 'bg-primary/5': ! editing && selected.includes('{{ $product->id }}') }"
+    :class="{ 'bg-base-200/60 is-editing': editing, 'bg-primary/5': ! editing && selected.includes('{{ $product->id }}') }"
     class="hover:bg-base-200/40 cursor-default">
 
     {{--
         Every cell that swaps text for an input keeps both states inside the
-        same fixed-height box (h-7). Without it the row grew ~5px the moment it
+        same fixed-height box (h-8, the height of an `input-sm`). Without it the row grew ~5px the moment it
         opened for editing, so the rows underneath jumped down while you were
         aiming at them.
+
+        `data-cell` names each cell for the phone, where this row is a card
+        (`admin-product-cards` in app.css) — the same cells, the same
+        controls; `is-editing` on the row lets the card spread the fields.
     --}}
-    <td x-on:click.stop>
-        <input type="checkbox" class="checkbox checkbox-sm" x-model="selected" value="{{ $product->id }}">
+    <td x-on:click.stop data-cell="check">
+        <input type="checkbox" class="checkbox checkbox-sm" x-model="selected" value="{{ $product->id }}" aria-label="{{ $product->sku }}">
     </td>
 
-    <td>
+    <td data-cell="photo">
         {{-- The photo sits in the same fixed box as the placeholder: a bare
              <img> carries max-width:100% and the table squeezed it to 32px
              while the empty box beside it kept its 40. --}}
@@ -50,14 +54,14 @@
         @endif
     </td>
 
-    <td class="min-w-0">
+    <td class="min-w-0" data-cell="name">
         <a href="{{ route('admin.catalog.products.edit', $product) }}" class="link link-hover font-medium block truncate">
             {{ $product->t('name', admin_content_locale()) ?: '—' }}
         </a>
-        <div class="h-7 flex items-center">
+        <div class="h-8 flex items-center">
             <span x-show="!editing" class="font-mono text-xs opacity-50">{{ $product->sku }}</span>
-            <input x-show="editing" x-cloak name="sku" value="{{ $product->sku }}"
-                   class="input input-xs font-mono w-full max-w-56" aria-label="{{ __('SKU') }}">
+            <input x-show="editing" x-cloak name="sku" autocapitalize="off" autocorrect="off" spellcheck="false" value="{{ $product->sku }}"
+                   class="input input-sm font-mono w-full max-w-56" aria-label="{{ __('SKU') }}">
         </div>
         @if ($rowError ?? null)
             <div class="text-xs text-error mb-1 flex items-center gap-1">
@@ -66,8 +70,8 @@
         @endif
     </td>
 
-    <td>
-        <div class="h-7 flex items-center">
+    <td data-cell="price">
+        <div class="h-8 flex items-center">
             {{-- Read in whatever the admin picked; TYPED in the currency it is
                  stored in. The two halves of this cell deliberately disagree
                  when a viewing currency is on: converting the input as well
@@ -76,7 +80,7 @@
             <span x-show="!editing" class="truncate">{{ $product->adminPrice() }}</span>
             <input x-show="editing" x-cloak type="number" step="0.01" min="0" name="price"
                    value="{{ number_format($product->typedPrice() / 100, 2, '.', '') }}"
-                   class="input input-xs w-full" aria-label="{{ __('Price') }}">
+                   class="input input-sm w-full" aria-label="{{ __('Price') }}">
             {{-- Which currency that box is in, when it is not the shop's own.
                  The list has no picker on purpose: a number typed here means
                  "the same currency as last time", and changing which currency a
@@ -87,8 +91,8 @@
         </div>
     </td>
 
-    <td>
-        <div class="h-7 flex items-center">
+    <td data-cell="stock" data-label="{{ __('Stock') }}">
+        <div class="h-8 flex items-center">
             <span x-show="!editing">{{ $product->stock }}</span>
             @if ($locked)
                 {{-- Aggregate owned by the warehouses module; editable there only. --}}
@@ -98,12 +102,12 @@
                 </span>
             @else
                 <input x-show="editing" x-cloak type="number" name="stock" value="{{ $product->stock }}"
-                       class="input input-xs w-full" aria-label="{{ __('Stock') }}">
+                       class="input input-sm w-full" aria-label="{{ __('Stock') }}">
             @endif
         </div>
     </td>
 
-    <td>
+    <td data-cell="status">
         <div class="dropdown dropdown-end">
             <div tabindex="0" role="button" class="badge {{ $statusClass }} badge-sm gap-1 cursor-pointer">
                 {{ $product->statusLabel() }}
@@ -125,7 +129,7 @@
         </div>
     </td>
 
-    <td class="text-right whitespace-nowrap">
+    <td class="text-right whitespace-nowrap" data-cell="actions">
         {{-- Preview, edit, and — set apart — the trash, as on the categories
              list: the harmless click and the destructive one are not neighbours. --}}
         <div x-show="!editing" class="h-8 flex items-center justify-end gap-1">

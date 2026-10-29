@@ -21,7 +21,7 @@
             @foreach (['point' => __('To a pickup point'), 'door' => __('By courier')] as $value => $label)
                 <label class="label cursor-pointer justify-start gap-2 p-0">
                     <input type="radio" name="provider_config[delivery]" value="{{ $value }}"
-                           class="radio radio-primary" x-model="delivery" @checked($delivery === $value)>
+                           class="radio radio-sm" x-model="delivery" @checked($delivery === $value)>
                     <span class="label-text">{{ $label }}</span>
                 </label>
             @endforeach
@@ -34,7 +34,7 @@
             @foreach (PointType::all() as $type => $label)
                 <label class="label cursor-pointer justify-start gap-2 p-0">
                     <input type="checkbox" name="provider_config[point_types][]" value="{{ $type }}"
-                           class="checkbox checkbox-primary" @checked(in_array($type, $pointTypes, true))>
+                           class="checkbox checkbox-sm" @checked(in_array($type, $pointTypes, true))>
                     <span class="label-text">{{ $label }}</span>
                 </label>
             @endforeach
@@ -58,7 +58,7 @@
             @foreach (['office' => __('At a CDEK office'), 'door' => __('CDEK’s courier collects them')] as $value => $label)
                 <label class="label cursor-pointer justify-start gap-2 p-0">
                     <input type="radio" name="provider_config[handover]" value="{{ $value }}"
-                           class="radio radio-primary" @checked($handover === $value)>
+                           class="radio radio-sm" @checked($handover === $value)>
                     <span class="label-text">{{ $label }}</span>
                 </label>
             @endforeach
@@ -69,7 +69,7 @@
     <label class="label cursor-pointer justify-start gap-2 p-0">
         <input type="hidden" name="provider_config[calculate]" value="0">
         <input type="checkbox" name="provider_config[calculate]" value="1"
-               class="checkbox checkbox-primary" @checked($calculate)>
+               class="checkbox checkbox-sm" @checked($calculate)>
         <span class="label-text">{{ __('Ask CDEK for the price') }}</span>
     </label>
     <div class="text-xs opacity-50 -mt-2">

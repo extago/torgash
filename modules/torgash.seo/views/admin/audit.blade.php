@@ -1,6 +1,7 @@
 @extends('admin.layout')
 
 @section('title', __('SEO'))
+@section('title_hint', __('Every page of one kind, with what it says about itself. Type over anything here, or tick the rows and let the template that governs them fill them in.'))
 
 @section('content')
     @include('torgash.seo::admin._nav', ['seoScreen' => 'audit'])
@@ -9,48 +10,43 @@
         <div class="alert alert-success">{{ session('status') }}</div>
     @endif
 
+    {{-- Kinds of page as one row of tabs over the card (app.css, `admin-tabs`),
+         each with how many titles are still missing — amber when any is. --}}
+    <nav class="admin-tabs" aria-label="{{ __('SEO') }}">
+        @foreach ($subjects->options() as $value => $label)
+            @php $auditEmpty = (int) (($emptyPerKind ?? [])[$value] ?? 0); @endphp
+            <a href="{{ route('admin.seo.audit', ['subject' => $value]) }}"
+               @class(['admin-tab', 'is-active' => $kind === $value])>
+                {{ $label }}
+                @if ($auditEmpty > 0)
+                    <span class="admin-tab-count is-warning" title="{{ __('Without a title') }}">{{ $auditEmpty }}</span>
+                @endif
+            </a>
+        @endforeach
+    </nav>
+
     <div class="card bg-base-100 border border-base-300" x-data="{ selected: [] }">
         <div class="card-body gap-4">
-            <p class="text-sm opacity-70 max-w-3xl">
-                {{ __('Every page of one kind, with what it says about itself. Type over anything here, or tick the rows and let the template that governs them fill them in.') }}
-            </p>
-
-            {{-- Kinds of page, each with how many titles are still missing. --}}
-            <div class="join flex-wrap">
-                @foreach ($subjects->options() as $value => $label)
-                    <a href="{{ route('admin.seo.audit', ['subject' => $value]) }}"
-                       @class(['btn btn-sm join-item gap-1.5', 'btn-active' => $kind === $value])>
-                        {{ $label }}
-                        @if ((($emptyPerKind ?? [])[$value] ?? 0) > 0)
-                            <span class="badge badge-xs badge-warning" title="{{ __('Without a title') }}">{{ $emptyPerKind[$value] }}</span>
-                        @endif
-                    </a>
-                @endforeach
-            </div>
-
             @if ($rows === null)
                 <div class="alert">{{ __('Nothing here answers for a kind of page yet — install the catalogue or the pages module.') }}</div>
             @else
+                {{-- The search, and whether the title is there — a select
+                     with the counts, one control for the three answers. --}}
                 <form method="GET" class="flex flex-wrap items-center gap-2">
                     <input type="hidden" name="subject" value="{{ $kind }}">
-                    <input type="hidden" name="filled" value="{{ $filter }}">
-                    <label class="input input-sm w-full sm:w-72 gap-2">
+                    <label class="input input-sm grow min-w-48 gap-2">
                         <x-icon name="search" size="sm" class="opacity-50" />
                         <input type="search" name="q" value="{{ $term }}" class="grow" placeholder="{{ __('Search by title or id…') }}">
                     </label>
+                    <select name="filled" class="select select-sm w-auto" data-submit-on-change aria-label="{{ __('Title') }}">
+                        @foreach (['' => __('All'), 'empty' => __('Without a title'), 'filled' => __('With a title')] as $filterKey => $filterLabel)
+                            <option value="{{ $filterKey }}" @selected($filter === $filterKey)>{{ $filterLabel }} ({{ $counts[$filterKey] }})</option>
+                        @endforeach
+                    </select>
                     @if ($term !== '' || $filter !== '')
                         <a href="{{ route('admin.seo.audit', ['subject' => $kind]) }}" class="btn btn-ghost btn-sm">{{ __('Reset') }}</a>
                     @endif
                 </form>
-
-                <div class="join flex-wrap -mt-1">
-                    @foreach (['' => __('All'), 'empty' => __('Without a title'), 'filled' => __('With a title')] as $filterKey => $filterLabel)
-                        <a href="{{ request()->fullUrlWithQuery(['filled' => $filterKey ?: null, 'page' => null]) }}"
-                           @class(['btn btn-sm join-item', 'btn-active' => $filter === $filterKey])>
-                            {{ $filterLabel }} <span class="opacity-50">{{ $counts[$filterKey] }}</span>
-                        </a>
-                    @endforeach
-                </div>
 
                 @if ($rows->isEmpty())
                     <div class="text-center py-12 opacity-60">

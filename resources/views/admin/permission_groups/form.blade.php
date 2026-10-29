@@ -4,8 +4,8 @@
 @section('own_heading', '1')
 
 @section('content')
-    <div class="sticky top-16 z-20 -mx-6 px-6 py-3 bg-base-200/95 backdrop-blur border-b border-base-300 flex items-center gap-3">
-        <a href="{{ route('admin.permission-groups.index') }}" class="btn btn-ghost btn-sm btn-square" title="{{ __('Back to permission groups') }}">
+    <x-admin.form-bar>
+        <a href="{{ route('admin.permission-groups.index') }}" class="btn btn-ghost btn-sm btn-square" title="{{ __('Back to permission groups') }}" aria-label="{{ __('Back to permission groups') }}">
             <x-icon name="arrow-left" size="lg" />
         </a>
         <div class="flex-1 min-w-0">
@@ -16,7 +16,7 @@
         </div>
         @unless ($isSuper)
             <div class="dropdown dropdown-end">
-                <div tabindex="0" role="button" class="btn btn-ghost btn-sm btn-square" title="{{ __('More actions') }}">
+                <div tabindex="0" role="button" class="btn btn-ghost btn-sm btn-square" title="{{ __('More actions') }}" aria-label="{{ __('More actions') }}">
                     <x-icon name="settings" size="lg" />
                 </div>
                 <ul tabindex="0" class="dropdown-content menu menu-sm bg-base-100 rounded-box shadow-md w-64 mt-2 p-2 z-50 border border-base-300">
@@ -32,11 +32,13 @@
                 </ul>
             </div>
         @endunless
-        <a href="{{ route('admin.permission-groups.index') }}" class="btn btn-ghost btn-sm">{{ $isSuper ? __('Back') : __('Cancel') }}</a>
-        @unless ($isSuper)
-            <button type="submit" form="group-form" class="btn btn-primary btn-sm">{{ __('Save') }}</button>
-        @endunless
-    </div>
+        <x-slot:actions>
+            <a href="{{ route('admin.permission-groups.index') }}" class="btn btn-ghost btn-sm">{{ $isSuper ? __('Back') : __('Cancel') }}</a>
+            @unless ($isSuper)
+                <button type="submit" form="group-form" class="btn btn-primary btn-sm">{{ __('Save') }}</button>
+            @endunless
+        </x-slot:actions>
+    </x-admin.form-bar>
 
     @if (session('status'))
         <div class="alert alert-success text-sm">{{ session('status') }}</div>

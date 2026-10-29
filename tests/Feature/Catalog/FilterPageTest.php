@@ -149,6 +149,31 @@ class FilterPageTest extends TestCase
     }
 
     /**
+     * The page's own words take the placeholders a template takes: the owner
+     * wrote {min_price} into a page's own text and got it printed as typed
+     * (2026-10-29). The title, the heading, the introduction, and the
+     * description made of the introduction.
+     */
+    public function test_its_own_words_take_placeholders(): void
+    {
+        $this->product('FP-21', 'Air', $this->apple);
+        $page = $this->page([$this->feature->id => [$this->apple->id]], 'apple');
+        $page->update([
+            'h1' => ['en' => '{filter} laptops: {total_products}'],
+            'meta_title' => ['en' => 'Buy {filter} laptops'],
+            'description' => ['en' => '<p>All {filter} laptops, {total_products} of them.</p>'],
+        ]);
+
+        $html = $this->get('http://localhost'.$page->path())->assertOk()->getContent();
+
+        $this->assertStringContainsString('>Apple laptops: 1</h1>', $html);
+        $this->assertMatchesRegularExpression('#<title>Buy Apple laptops[^<]*</title>#', $html);
+        $this->assertStringContainsString('<meta name="description" content="All Apple laptops, 1 of them.">', $html);
+        $this->assertMatchesRegularExpression('#class="torgash-intro-body[^"]*"><p>All Apple laptops, 1 of them\.</p>#', $html);
+        $this->assertStringNotContainsString('{filter}', $html);
+    }
+
+    /**
      * ...including one written for its CATEGORY, which is the branch this kind
      * of page needed in Templates: a filter page hangs under exactly one
      * category, where a product hangs under several.

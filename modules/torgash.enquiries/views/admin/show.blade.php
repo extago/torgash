@@ -16,12 +16,14 @@
 
 @section('content')
     <div class="flex flex-col gap-4">
-        <div class="sticky top-16 z-20 -mx-6 px-6 py-3 bg-base-200/95 backdrop-blur border-b border-base-300 flex items-center gap-3 flex-wrap">
-            <a href="{{ route('admin.enquiries.index') }}" class="btn btn-ghost btn-sm btn-square" title="{{ __('All enquiries') }}">
+        <x-admin.form-bar class="flex-wrap">
+            <a href="{{ route('admin.enquiries.index') }}" class="btn btn-ghost btn-sm btn-square" title="{{ __('All enquiries') }}" aria-label="{{ __('All enquiries') }}">
                 <x-icon name="arrow-left" size="lg" />
             </a>
             <div class="flex-1 min-w-0">
-                <div class="text-xs opacity-50 leading-none">
+                {{-- One line: on a phone, wrapped beside "Take it myself", it
+                     stood four lines tall in a bar that stays on the screen. --}}
+                <div class="text-xs opacity-50 leading-none truncate">
                     #{{ $enquiry->id }} · {{ $enquiry->kindLabel() }} · {{ $enquiry->created_at?->format('d.m.Y H:i') }}
                 </div>
                 <h1 class="font-semibold truncate leading-tight flex items-center gap-2">
@@ -47,7 +49,7 @@
             @endunless
 
             <div class="dropdown dropdown-end">
-                <div tabindex="0" role="button" class="btn btn-ghost btn-sm btn-square" title="{{ __('More actions') }}">
+                <div tabindex="0" role="button" class="btn btn-ghost btn-sm btn-square" title="{{ __('More actions') }}" aria-label="{{ __('More actions') }}">
                     <x-icon name="settings" size="lg" />
                 </div>
                 <ul tabindex="0" class="dropdown-content menu menu-sm bg-base-100 rounded-box shadow-md w-60 mt-2 p-2 z-50 border border-base-300">
@@ -71,7 +73,7 @@
             @else
                 <span class="btn btn-sm btn-disabled gap-1.5">{{ __('The queue is empty') }}</span>
             @endif
-        </div>
+        </x-admin.form-bar>
 
         {{-- The forms the header's buttons submit, beside everything rather than
              inside anything: a nested form is dropped by the parser while its
@@ -353,7 +355,7 @@
                             @forelse ($samePerson as $other)
                                 <a href="{{ route('admin.enquiries.show', $other) }}"
                                    class="flex items-center gap-2 text-sm rounded-box px-2 py-1 -mx-2 hover:bg-base-200">
-                                    <span class="badge badge-xs {{ Status::badge($other->status) }}" title="{{ Status::label($other->status) }}"></span>
+                                    <span class="badge badge-sm {{ Status::badge($other->status) }}" title="{{ Status::label($other->status) }}"></span>
                                     <span class="truncate">{{ $other->kindLabel() }}</span>
                                     <span class="text-xs opacity-50 ms-auto whitespace-nowrap">#{{ $other->id }} · {{ $other->created_at?->format('d.m.Y') }}</span>
                                 </a>

@@ -26,10 +26,10 @@
             <x-icon name="arrow-left" size="sm" />
             {{ __('All errors') }}
         </a>
-        <span class="badge {{ $error->badge() }}">{{ $error->level }}</span>
-        <span class="badge badge-ghost">× {{ $error->count }}</span>
+        <span class="badge badge-sm {{ $error->badge() }}">{{ $error->level }}</span>
+        <span class="badge badge-sm badge-ghost">× {{ $error->count }}</span>
         @if ($error->resolved_at)
-            <span class="badge badge-success badge-outline">{{ __('Dealt with') }}</span>
+            <span class="badge badge-sm badge-success">{{ __('Dealt with') }}</span>
         @endif
     </div>
 

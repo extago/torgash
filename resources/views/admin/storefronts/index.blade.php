@@ -1,6 +1,10 @@
 @extends('admin.layout')
 
 @section('title', __('Storefronts'))
+@section('title_hint', __('A storefront is a site of the shop: the domains it answers on, its languages and currencies, its theme and its contact details. An address no storefront claims is served by the default one.'))
+@section('title_actions')
+    <a href="{{ route('admin.storefronts.create') }}" class="btn btn-primary">+ {{ __('New storefront') }}</a>
+@endsection
 
 @section('content')
     @if (session('status'))
@@ -12,12 +16,6 @@
 
     <div class="card bg-base-100 border border-base-300">
         <div class="card-body gap-4">
-            <div class="flex flex-wrap items-start justify-between gap-3">
-                <p class="text-sm opacity-70 max-w-3xl">
-                    {{ __('A storefront is a site of the shop: the domains it answers on, its languages and currencies, its theme and its contact details. An address no storefront claims is served by the default one.') }}
-                </p>
-                <a href="{{ route('admin.storefronts.create') }}" class="btn btn-primary btn-sm">+ {{ __('New storefront') }}</a>
-            </div>
 
             <div class="overflow-x-auto">
                 <table class="table">
@@ -79,7 +77,7 @@
                                             <form method="POST" action="{{ route('admin.storefronts.default', $storefront) }}" class="inline"
                                                   data-confirm="{{ __('Make :name the default storefront? Every address no storefront claims will be served by it.', ['name' => $storefront->name]) }}">
                                                 @csrf
-                                                <button class="btn btn-ghost btn-sm btn-square opacity-0 group-hover:opacity-100 focus:opacity-100"
+                                                <button class="btn btn-ghost btn-sm btn-square opacity-0 group-hover:opacity-100 focus:opacity-100 pointer-coarse:opacity-100"
                                                         title="{{ __('Make it the default storefront') }}" aria-label="{{ __('Make it the default storefront') }}"><x-icon name="star" /></button>
                                             </form>
                                         @endunless

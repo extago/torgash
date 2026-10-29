@@ -124,8 +124,8 @@
 
     <div class="flex flex-wrap gap-2">
         <template x-for="(option, i) in selected" :key="option.id">
-            <span class="badge gap-1 pr-1 h-7"
-                  :class="option.color ? 'badge-' + option.color + ' badge-outline' : ''">
+            <span class="badge badge-sm gap-1 pr-1"
+                  :class="option.color ? 'badge-' + option.color : 'badge-ghost'">
                 <span x-text="option.label"></span>
                 <button type="button" @click="remove(i)" class="btn btn-circle btn-ghost btn-xs min-h-0 h-5 w-5" aria-label="{{ __('Remove') }}">
                     <x-icon name="x" size="sm" />

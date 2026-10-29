@@ -9,8 +9,8 @@
         @csrf
         @if ($place->exists) @method('PUT') @endif
 
-        <div class="sticky top-16 z-20 -mx-6 px-6 py-3 bg-base-200/95 backdrop-blur border-b border-base-300 flex items-center gap-3">
-            <a href="{{ route('admin.locations.index') }}" class="btn btn-ghost btn-sm btn-square" title="{{ __('Back to locations') }}">
+        <x-admin.form-bar>
+            <a href="{{ route('admin.locations.index') }}" class="btn btn-ghost btn-sm btn-square" title="{{ __('Back to locations') }}" aria-label="{{ __('Back to locations') }}">
                 <x-icon name="arrow-left" size="lg" />
             </a>
             <div class="flex-1 min-w-0">
@@ -18,7 +18,7 @@
                 <div class="font-semibold truncate leading-tight">{{ $place->exists ? ($place->t('name', admin_content_locale()) ?? $place->t('name', 'en')) : __('Add place') }}</div>
             </div>
             <div class="dropdown dropdown-end">
-                <div tabindex="0" role="button" class="btn btn-ghost btn-sm btn-square" title="{{ __('More actions') }}">
+                <div tabindex="0" role="button" class="btn btn-ghost btn-sm btn-square" title="{{ __('More actions') }}" aria-label="{{ __('More actions') }}">
                     <x-icon name="settings" size="lg" />
                 </div>
                 <ul tabindex="0" class="dropdown-content menu menu-sm bg-base-100 rounded-box shadow-md w-64 mt-2 p-2 z-50 border border-base-300">
@@ -29,9 +29,11 @@
                     @endif
                 </ul>
             </div>
-            <a href="{{ route('admin.locations.index') }}" class="btn btn-ghost btn-sm">{{ __('Cancel') }}</a>
-            <button class="btn btn-primary btn-sm">{{ $place->exists ? __('Save') : __('Create') }}</button>
-        </div>
+            <x-slot:actions>
+                <a href="{{ route('admin.locations.index') }}" class="btn btn-ghost btn-sm">{{ __('Cancel') }}</a>
+                <button class="btn btn-primary btn-sm">{{ $place->exists ? __('Save') : __('Create') }}</button>
+            </x-slot:actions>
+        </x-admin.form-bar>
 
         @if (session('status'))
             <div class="alert alert-success text-sm">{{ session('status') }}</div>
@@ -194,7 +196,7 @@
                         <input name="postal_to" value="{{ old('postal_to', $place->postal_to) }}" class="input input-bordered w-full">
                     </fieldset>
                     <label class="label cursor-pointer justify-start gap-2 p-0 self-end pb-2">
-                        <input type="checkbox" name="enabled" value="1" class="checkbox checkbox-sm checkbox-primary"
+                        <input type="checkbox" name="enabled" value="1" class="checkbox checkbox-sm"
                                @checked(old('enabled', $place->enabled ?? true))>
                         <span class="label-text">{{ __('Available at checkout') }}</span>
                     </label>

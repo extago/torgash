@@ -18,11 +18,16 @@ use Torgash\Seo\Models\Template;
  * in PageMeta. By the time this runs the controller has put the product's name
  * in the title, so a template asking "is it empty?" of the merged values would
  * never fire once — which is the bug that makes this worth a paragraph.
+ *
+ * The templates are asked for at every call, never held: this object is made
+ * once, when the application boots, and a persistent worker keeps it for every
+ * request it serves, while the memo of templates lives for one request. Held
+ * in a property it was the memo the worker booted with, and a template written
+ * later reached no page until the workers were restarted (reported from the
+ * live shop, 2026-10-29).
  */
 class Metadata
 {
-    public function __construct(protected Templates $templates) {}
-
     public function register(): void
     {
         hook_listen('core.page.meta', $this->apply(...), 5);
@@ -42,14 +47,15 @@ class Metadata
             return $values;
         }
 
-        $template = $this->templates->for($subject);
+        $templates = app(Templates::class);
+        $template = $templates->for($subject);
 
         if ($template === null || $template->mode === Template::MODE_SKIP) {
             return $values;
         }
 
         $own = $subject->pageMeta();
-        $rendered = $this->templates->render($template, $subject);
+        $rendered = $templates->render($template, $subject);
 
         foreach ($rendered as $field => $text) {
             if ($text === '') {

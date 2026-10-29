@@ -8,18 +8,33 @@
     $rulesFiltered = $filters['q'] !== '' || $filters['state'] !== '';
     $rulesAddLabel = ['synonyms' => __('New synonym'), 'exclusions' => __('New exclusion'), 'phrases' => __('New phrase')][$kind];
 @endphp
+{{-- What this kind of rule is for goes to the heading's hint. --}}
+@section('title_hint', $rulesIntro)
+
+{{-- The states as one row of tabs over the card, "+ New" at its end
+     (app.css, `admin-tabs`); LINKS carrying the search. Inside the Alpine
+     root frame.blade.php opened, so the button reaches `adding`. --}}
+<div class="admin-tabs-row">
+    <nav class="admin-tabs" aria-label="{{ $rulesAddLabel }}">
+        @foreach ($rulesStateTabs as $rulesStateKey => $rulesStateLabel)
+            <a href="{{ route('admin.search-engine.rules.index', array_filter(['kind' => $kind, 'q' => $filters['q'] ?: null, 'state' => $rulesStateKey ?: null])) }}"
+               @class(['admin-tab', 'is-active' => $filters['state'] === $rulesStateKey])>
+                {{ $rulesStateLabel }} <span class="admin-tab-count">{{ $stateCounts[$rulesStateKey] }}</span>
+            </a>
+        @endforeach
+    </nav>
+    <div class="admin-tabs-actions">
+        <button type="button" class="btn btn-primary" x-show="!adding"
+                @click="adding = true; $nextTick(() => document.getElementById('rule-form')?.querySelector('textarea, input:not([type=hidden]):not([type=checkbox])')?.focus())">
+            + {{ $rulesAddLabel }}
+        </button>
+    </div>
+</div>
+
 <section class="card bg-base-100 border border-base-300" x-data="{ selected: [] }">
     <div class="card-body gap-4">
-        <div class="flex justify-between items-start gap-3 flex-wrap">
-            <p class="text-sm opacity-70 max-w-3xl">{{ $rulesIntro }}</p>
-            <button type="button" class="btn btn-primary btn-sm" x-show="!adding"
-                    @click="adding = true; $nextTick(() => document.getElementById('rule-form')?.querySelector('textarea, input:not([type=hidden]):not([type=checkbox])')?.focus())">
-                + {{ $rulesAddLabel }}
-            </button>
-        </div>
-
         <form method="GET" action="{{ route('admin.search-engine.rules.index', $kind) }}" class="flex flex-wrap items-center gap-2">
-            <label class="input input-sm w-full sm:w-72 gap-2">
+            <label class="input input-sm grow min-w-48 gap-2">
                 <x-icon name="search" size="sm" class="opacity-50" />
                 <input type="search" name="q" value="{{ $filters['q'] }}" class="grow" placeholder="{{ __('Find a word…') }}">
             </label>
@@ -28,15 +43,6 @@
                 <a href="{{ route('admin.search-engine.rules.index', $kind) }}" class="btn btn-ghost btn-sm">{{ __('Reset') }}</a>
             @endif
         </form>
-
-        <div class="join flex-wrap -mt-1">
-            @foreach ($rulesStateTabs as $rulesStateKey => $rulesStateLabel)
-                <a href="{{ route('admin.search-engine.rules.index', array_filter(['kind' => $kind, 'q' => $filters['q'] ?: null, 'state' => $rulesStateKey ?: null])) }}"
-                   @class(['btn btn-sm join-item', 'btn-active' => $filters['state'] === $rulesStateKey])>
-                    {{ $rulesStateLabel }} <span class="opacity-50">{{ $stateCounts[$rulesStateKey] }}</span>
-                </a>
-            @endforeach
-        </div>
 
         <div class="min-h-12 flex items-center">
             <p x-show="!selected.length" class="text-xs opacity-50">{{ __('Tick rules to switch several on or off at once, or delete them.') }}</p>

@@ -2,6 +2,7 @@
 
 namespace App\Core\Seo;
 
+use App\Core\Content\Placeholders;
 use App\Core\Storefronts\LocaleResolver;
 use Illuminate\Support\Facades\Route;
 
@@ -88,11 +89,21 @@ class PageMeta
         $this->subject = $subject;
         $meta = $subject->pageMeta();
 
+        // The record's own words take the placeholders an SEO template takes
+        // ({min_price} in a filter page's own title), with the same context —
+        // unescaped, as there: the head and the h1 escape what they print.
+        $context = static::contextOf($subject);
+        $expand = fn (?string $text) => $text === null ? null
+            : trim(app(Placeholders::class)->expand($text, $context, false));
+
         $this->set([
-            'title' => $meta['title'] ?? null,
-            'description' => $meta['description'] ?? null,
-            'h1' => $meta['h1'] ?? null,
+            'title' => $expand($meta['title'] ?? null),
+            'description' => $expand($meta['description'] ?? null),
+            'h1' => $expand($meta['h1'] ?? null),
             'canonical' => $meta['canonical'] ?? null,
+            // The record's own picture for a shared link, over the one the
+            // controller found (a product's photo, a category's tile).
+            'image' => $meta['image'] ?? null,
         ]);
 
         if ($meta['noindex'] ?? false) {
@@ -105,6 +116,29 @@ class PageMeta
     public function subject(): ?PageSubject
     {
         return $this->subject;
+    }
+
+    /**
+     * What a placeholder in a record's words may ask about: the record under
+     * its own kind, which is exactly what the catalogue's tokens look for, and
+     * as `subject`, plus whatever the record adds itself — asked of the record
+     * rather than typed here, so a city page hands over the town it is about
+     * (`place_id`, read by a token `torgash.locations` registers) and core
+     * names neither module's classes. One context for the record's own fields,
+     * its texts on the page (`safe_html($text, PageMeta::contextOf($page))`)
+     * and an SEO template, so a token means the same thing in all three.
+     *
+     * @return array<string, mixed>
+     */
+    public static function contextOf(PageSubject $subject): array
+    {
+        $context = [$subject->pageMetaKind() => $subject, 'subject' => $subject];
+
+        if (method_exists($subject, 'pageMetaContext')) {
+            $context += $subject->pageMetaContext();
+        }
+
+        return $context;
     }
 
     /** product | category | brand | page — or '' on a page that is about nothing in particular. */
@@ -191,10 +225,15 @@ class PageMeta
         return $this->resolve()->values['type'] ?? 'website';
     }
 
-    /** The preview picture: this page's own, else the shop's default for pages that have none. */
+    /**
+     * The preview picture: this page's own, else its storefront's (Admin →
+     * Storefronts — the home page's and every other page's that has none),
+     * else the address in the core setting, the way it was done before.
+     */
     public function image(): string
     {
         return $this->resolve()->values['image']
+            ?? SharePicture::url(current_storefront()?->share_image)
             ?? (string) setting('core', 'og_image', '');
     }
 

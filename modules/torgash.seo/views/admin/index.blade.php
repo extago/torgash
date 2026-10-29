@@ -1,6 +1,7 @@
 @extends('admin.layout')
 
 @section('title', __('SEO'))
+@section('title_hint', __('A title, a description and a heading written once and applied to every page of one kind. A template written for a category also governs everything under it, and the nearest one wins.'))
 
 @section('content')
     @php
@@ -17,17 +18,26 @@
         <div class="alert alert-error text-sm">{{ $errors->first() }}</div>
     @endif
 
+    {{-- The subjects as one row of tabs over the card, the screen's action at
+         its end (app.css, `admin-tabs`); LINKS carrying the search. --}}
+    <div class="admin-tabs-row">
+        <nav class="admin-tabs" aria-label="{{ __('SEO') }}">
+            @foreach (['' => __('All')] + $subjects->options() as $subjectKey => $subjectLabel)
+                <a href="{{ request()->fullUrlWithQuery(['subject' => $subjectKey ?: null, 'page' => null]) }}"
+                   @class(['admin-tab', 'is-active' => $filters['subject'] === $subjectKey])>
+                    {{ $subjectLabel }} <span class="admin-tab-count">{{ $subjectCounts[$subjectKey] ?? 0 }}</span>
+                </a>
+            @endforeach
+        </nav>
+        <div class="admin-tabs-actions">
+            <a href="{{ route('admin.seo.create', array_filter(['subject' => $filters['subject']])) }}" class="btn btn-primary">+ {{ __('New template') }}</a>
+        </div>
+    </div>
+
     <div class="card bg-base-100 border border-base-300" x-data="{ selected: [] }">
         <div class="card-body gap-4">
-            <div class="flex justify-between items-start gap-3 flex-wrap">
-                <p class="text-sm opacity-70 max-w-3xl">
-                    {{ __('A title, a description and a heading written once and applied to every page of one kind. A template written for a category also governs everything under it, and the nearest one wins.') }}
-                </p>
-                <a href="{{ route('admin.seo.create', array_filter(['subject' => $filters['subject']])) }}" class="btn btn-primary btn-sm">+ {{ __('New template') }}</a>
-            </div>
-
             <form method="GET" class="flex flex-wrap items-center gap-2">
-                <label class="input input-sm w-full sm:w-72 gap-2">
+                <label class="input input-sm grow min-w-48 gap-2">
                     <x-icon name="search" size="sm" class="opacity-50" />
                     <input type="search" name="q" value="{{ $filters['q'] }}" class="grow" placeholder="{{ __('Search in the texts…') }}">
                 </label>
@@ -36,15 +46,6 @@
                     <a href="{{ route('admin.seo.index') }}" class="btn btn-ghost btn-sm">{{ __('Reset') }}</a>
                 @endif
             </form>
-
-            <div class="join flex-wrap -mt-1">
-                @foreach (['' => __('All')] + $subjects->options() as $subjectKey => $subjectLabel)
-                    <a href="{{ request()->fullUrlWithQuery(['subject' => $subjectKey ?: null]) }}"
-                       @class(['btn btn-sm join-item', 'btn-active' => $filters['subject'] === $subjectKey])>
-                        {{ $subjectLabel }} <span class="opacity-50">{{ $subjectCounts[$subjectKey] ?? 0 }}</span>
-                    </a>
-                @endforeach
-            </div>
 
             <div class="min-h-12 flex items-center">
                 <p x-show="!selected.length" class="text-xs opacity-50">

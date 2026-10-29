@@ -17,7 +17,7 @@
             <a href="{{ route('admin.blocks.edit', $block) }}" class="font-medium link link-hover block truncate">{{ $block->displayTitle() }}</a>
             <div class="text-xs opacity-60 flex items-center gap-1.5 flex-wrap">
                 @if ($block->typeIsMissing())
-                    <span class="badge badge-warning badge-xs">{{ __('Type unavailable') }}</span>
+                    <span class="badge badge-warning badge-sm">{{ __('Type unavailable') }}</span>
                 @else
                     {{ $block->typeLabel() }}
                 @endif

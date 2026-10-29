@@ -8,7 +8,7 @@
          the shop — so the way back is to those settings. --}}
     <div class="flex items-center gap-3 mb-4">
         <a href="{{ auth()->user()?->can('settings.manage') ? route('admin.settings.edit', 'torgash.novaposhta') : route('admin.dashboard') }}" class="btn btn-ghost btn-sm btn-square"
-           title="{{ __('Back to module settings') }}">
+           title="{{ __('Back to module settings') }}" aria-label="{{ __('Back to module settings') }}">
             <x-icon name="arrow-left" size="lg" />
         </a>
         <div>

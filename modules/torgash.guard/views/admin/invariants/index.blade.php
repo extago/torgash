@@ -1,6 +1,7 @@
 @extends('admin.layout')
 
 @section('title', __('Invariants'))
+@section('title_hint', __('What must always be true of the shop\'s own data — stock, totals, links between rows. The guard checks each statement and names the rows that break it.'))
 
 {{--
     Things that must be true about this shop.
@@ -37,29 +38,29 @@
         $anyFindings = $groups->flatten(1)->contains(fn ($s) => ($filters['tab'] === 'hidden' ? $s['hidden'] : $s['live'])->isNotEmpty());
     @endphp
 
-    <div role="tablist" class="tabs tabs-border">
+    {{-- The verdicts as one row of tabs over the card (app.css, `admin-tabs`);
+         broken is red, never checked amber. --}}
+    <nav class="admin-tabs" aria-label="{{ __('Invariants') }}">
         @foreach ($tabs as $tabKey => [$tabLabel, $tabIcon])
-            <a role="tab" href="{{ $tabUrl($tabKey) }}" @class(['tab gap-2', 'tab-active' => $filters['tab'] === $tabKey])>
+            @php
+                $alarm = ($tabKey === 'broken' && $counts['broken']) ? 'is-error' : (($tabKey === 'unchecked' && $counts['unchecked']) ? 'is-warning' : null);
+            @endphp
+            <a href="{{ $tabUrl($tabKey) }}" @class(['admin-tab', 'is-active' => $filters['tab'] === $tabKey])>
                 <x-icon :name="$tabIcon" size="sm" /> {{ $tabLabel }}
-                <span @class([
-                    'badge badge-sm',
-                    'badge-error' => $tabKey === 'broken' && $counts['broken'],
-                    'badge-warning' => $tabKey === 'unchecked' && $counts['unchecked'],
-                    'badge-ghost' => ! (($tabKey === 'broken' && $counts['broken']) || ($tabKey === 'unchecked' && $counts['unchecked'])),
-                ])>{{ $counts[$tabKey] }}</span>
+                <span @class(['admin-tab-count', $alarm => $alarm])>{{ $counts[$tabKey] }}</span>
             </a>
         @endforeach
-    </div>
+    </nav>
 
     {{-- One Alpine root: the bulk bar and every finding's box share `selected`. --}}
     <div class="card bg-base-100 border border-base-300" x-data="{ selected: [] }">
         <div class="card-body gap-4">
             <div class="flex flex-wrap items-center gap-2">
-                <form method="GET" class="flex flex-wrap items-center gap-2">
+                <form method="GET" class="flex flex-wrap items-center gap-2 grow">
                     @if ($filters['tab'] !== 'all')
                         <input type="hidden" name="tab" value="{{ $filters['tab'] }}">
                     @endif
-                    <label class="input input-sm w-full sm:w-80 gap-2">
+                    <label class="input input-sm grow min-w-48 gap-2">
                         <x-icon name="search" size="sm" class="opacity-50" />
                         <input type="search" name="q" value="{{ $filters['q'] }}" class="grow" placeholder="{{ __('Statement, key or what it found…') }}">
                     </label>

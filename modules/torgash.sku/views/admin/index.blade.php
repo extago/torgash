@@ -61,7 +61,7 @@
                             <div class="flex flex-col gap-2">
                                 @foreach ($onCreateOptions as $optionKey => $optionLabel)
                                     <label class="flex items-center gap-2 text-sm cursor-pointer">
-                                        <input type="radio" name="on_create" value="{{ $optionKey }}" class="radio" @checked(old('on_create', $onCreate) === $optionKey)>
+                                        <input type="radio" name="on_create" value="{{ $optionKey }}" class="radio radio-sm" @checked(old('on_create', $onCreate) === $optionKey)>
                                         {{ $optionLabel }}
                                     </label>
                                 @endforeach
@@ -144,18 +144,18 @@
                 @csrf
                 <div class="flex flex-col gap-2">
                     <label class="flex items-start gap-2 text-sm cursor-pointer">
-                        <input type="radio" name="scope" value="fallback" class="radio mt-0.5" checked>
+                        <input type="radio" name="scope" value="fallback" class="radio radio-sm mt-0.5" checked>
                         <span>
                             {{ __('Only the products nobody gave a SKU (P-…)') }}
                             <span class="badge badge-sm ml-1">{{ $fallbackCount }}</span>
                         </span>
                     </label>
                     <label class="flex items-start gap-2 text-sm cursor-pointer">
-                        <input type="radio" name="scope" value="all" class="radio mt-0.5">
+                        <input type="radio" name="scope" value="all" class="radio radio-sm mt-0.5">
                         <span>{{ __('Every product, a SKU typed by hand included — the running number goes on') }}</span>
                     </label>
                     <label class="flex items-start gap-2 text-sm cursor-pointer">
-                        <input type="radio" name="scope" value="restart" class="radio mt-0.5">
+                        <input type="radio" name="scope" value="restart" class="radio radio-sm mt-0.5">
                         <span>
                             {{ __('Clear every SKU and number all the products again from 1') }}
                             <span class="block text-xs opacity-60">{{ __('The whole shop, whatever category is chosen below: the old SKUs are freed first, so the numbering comes out without holes and in the order the products were added.') }}</span>

@@ -8,8 +8,8 @@
         $isBooks = $currency->exists && isset($inUse[$currency->code]);
     @endphp
 
-    <div class="sticky top-16 z-20 -mx-6 px-6 py-3 bg-base-200/95 backdrop-blur border-b border-base-300 flex items-center gap-3">
-        <a href="{{ route('admin.currencies.index') }}" class="btn btn-ghost btn-sm btn-square" title="{{ __('Back to currencies') }}">
+    <x-admin.form-bar>
+        <a href="{{ route('admin.currencies.index') }}" class="btn btn-ghost btn-sm btn-square" title="{{ __('Back to currencies') }}" aria-label="{{ __('Back to currencies') }}">
             <x-icon name="arrow-left" size="lg" />
         </a>
         <div class="flex-1 min-w-0">
@@ -19,7 +19,7 @@
             </div>
         </div>
         <div class="dropdown dropdown-end">
-            <div tabindex="0" role="button" class="btn btn-ghost btn-sm btn-square" title="{{ __('More actions') }}">
+            <div tabindex="0" role="button" class="btn btn-ghost btn-sm btn-square" title="{{ __('More actions') }}" aria-label="{{ __('More actions') }}">
                 <x-icon name="settings" size="lg" />
             </div>
             <ul tabindex="0" class="dropdown-content menu menu-sm bg-base-100 rounded-box shadow-md w-60 mt-2 p-2 z-50 border border-base-300">
@@ -30,9 +30,11 @@
                 @endif
             </ul>
         </div>
-        <a href="{{ route('admin.currencies.index') }}" class="btn btn-ghost btn-sm">{{ __('Cancel') }}</a>
-        <button type="submit" form="currency-form" class="btn btn-primary btn-sm">{{ __('Save') }}</button>
-    </div>
+        <x-slot:actions>
+            <a href="{{ route('admin.currencies.index') }}" class="btn btn-ghost btn-sm">{{ __('Cancel') }}</a>
+            <button type="submit" form="currency-form" class="btn btn-primary btn-sm">{{ __('Save') }}</button>
+        </x-slot:actions>
+    </x-admin.form-bar>
 
     @if (session('status'))
         <div class="alert alert-success text-sm">{{ session('status') }}</div>
@@ -53,7 +55,7 @@
                     <h3 class="font-semibold">{{ __('Currency') }}</h3>
                     <div class="grid sm:grid-cols-[8rem_8rem_minmax(0,1fr)] gap-4">
                         <fieldset class="fieldset p-0"><legend class="fieldset-legend">{{ __('Code') }} *</legend>
-                            <input name="code" value="{{ old('code', $currency->code) }}" required maxlength="3" class="input input-bordered w-full font-mono uppercase" placeholder="USD">
+                            <input name="code" autocapitalize="off" autocorrect="off" spellcheck="false" value="{{ old('code', $currency->code) }}" required maxlength="3" class="input input-bordered w-full font-mono uppercase" placeholder="USD">
                             <p class="label">ISO 4217</p>
                         </fieldset>
                         <fieldset class="fieldset p-0"><legend class="fieldset-legend">{{ __('Symbol') }} *</legend>
@@ -139,7 +141,7 @@
                     @endif
 
                     <label @class(['label justify-start gap-2 p-0', 'cursor-pointer' => ! $isBooks, 'opacity-50' => $isBooks])>
-                        <input type="checkbox" name="auto_rate" value="1" class="toggle toggle-primary toggle-sm"
+                        <input type="checkbox" name="auto_rate" value="1" class="toggle toggle-success toggle-sm"
                                @checked(old('auto_rate', $currency->auto_rate ?? true)) @disabled($isBooks)>
                         <span class="label-text whitespace-normal">{{ __('Update this rate from the shop\'s rate source') }}</span>
                     </label>
@@ -168,7 +170,7 @@
             <section class="card bg-base-100 border border-base-300">
                 <div class="card-body gap-3">
                     <label @class(['label justify-start gap-2 p-0', 'cursor-pointer' => ! $isBooks])>
-                        <input type="checkbox" name="enabled" value="1" class="toggle toggle-primary toggle-sm"
+                        <input type="checkbox" name="enabled" value="1" class="toggle toggle-success toggle-sm"
                                @checked(old('enabled', $currency->enabled ?? true)) @disabled($isBooks)>
                         <span class="label-text whitespace-normal">{{ __('Offered on the storefront') }}</span>
                     </label>

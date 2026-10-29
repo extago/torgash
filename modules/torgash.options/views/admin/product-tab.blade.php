@@ -26,7 +26,7 @@
                         <span class="opacity-50 text-xs">{{ $group->typeLabel() }}</span>
                         <span class="badge badge-ghost badge-sm">{{ $group->choices->count() }}</span>
                         @if ($group->required)
-                            <span class="badge badge-sm badge-warning badge-outline">{{ __('Required') }}</span>
+                            <span class="badge badge-sm badge-ghost">{{ __('Required') }}</span>
                         @endif
                         @unless ($group->enabled)
                             <span class="badge badge-ghost badge-sm">{{ __('Disabled') }}</span>

@@ -34,8 +34,8 @@
     @endphp
 
     <div x-data="{ tab: '{{ $initialTab }}' }" class="flex flex-col gap-4">
-        <div class="sticky top-16 z-20 -mx-6 px-6 py-3 bg-base-200/95 backdrop-blur border-b border-base-300 flex items-center gap-3">
-            <a href="{{ route('admin.shipping.methods.index') }}" class="btn btn-ghost btn-sm btn-square" title="{{ __('Back to shipping methods') }}">
+        <x-admin.form-bar>
+            <a href="{{ route('admin.shipping.methods.index') }}" class="btn btn-ghost btn-sm btn-square" title="{{ __('Back to shipping methods') }}" aria-label="{{ __('Back to shipping methods') }}">
                 <x-icon name="arrow-left" size="lg" />
             </a>
             <div class="flex-1 min-w-0">
@@ -47,7 +47,7 @@
                 </div>
             </div>
             <div class="dropdown dropdown-end">
-                <div tabindex="0" role="button" class="btn btn-ghost btn-sm btn-square" title="{{ __('More actions') }}">
+                <div tabindex="0" role="button" class="btn btn-ghost btn-sm btn-square" title="{{ __('More actions') }}" aria-label="{{ __('More actions') }}">
                     <x-icon name="settings" size="lg" />
                 </div>
                 <ul tabindex="0" class="dropdown-content menu menu-sm bg-base-100 rounded-box shadow-md w-60 mt-2 p-2 z-50 border border-base-300">
@@ -58,13 +58,15 @@
                     @endif
                 </ul>
             </div>
-            <a href="{{ route('admin.shipping.methods.index') }}" class="btn btn-ghost btn-sm">{{ __('Cancel') }}</a>
-            {{-- Outside the form element, so it names it: the rates tab lives
-                 beside that form and may not be nested in it. --}}
-            <button form="shipping-method-form" class="btn btn-primary btn-sm">
-                {{ $method->exists ? __('Save') : __('Create') }}
-            </button>
-        </div>
+            <x-slot:actions>
+                <a href="{{ route('admin.shipping.methods.index') }}" class="btn btn-ghost btn-sm">{{ __('Cancel') }}</a>
+                {{-- Outside the form element, so it names it: the rates tab lives
+                     beside that form and may not be nested in it. --}}
+                <button form="shipping-method-form" class="btn btn-primary btn-sm">
+                    {{ $method->exists ? __('Save') : __('Create') }}
+                </button>
+            </x-slot:actions>
+        </x-admin.form-bar>
 
         @if (session('status'))
             <div class="alert alert-success text-sm">{{ session('status') }}</div>
@@ -105,7 +107,7 @@
                              itself, so the box is for methods without one. --}}
                         <label class="label cursor-pointer justify-start gap-2 p-0">
                             <input type="hidden" name="needs_address" value="0">
-                            <input type="checkbox" name="needs_address" value="1" class="checkbox checkbox-primary"
+                            <input type="checkbox" name="needs_address" value="1" class="checkbox checkbox-sm"
                                    @checked(old('needs_address', $method->needs_address ?? true))>
                             <span class="label-text">{{ __('The customer gives a delivery address') }}</span>
                         </label>

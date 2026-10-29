@@ -1,7 +1,7 @@
 @php use Torgash\Enquiries\Status; @endphp
 {{-- One enquiry's state, switched in place — the categories list's control.
      A kind with a second axis (a return's own state) says so beside it. --}}
-<td id="enquiry-status-{{ $enquiry->id }}" class="whitespace-nowrap">
+<td id="enquiry-status-{{ $enquiry->id }}" class="whitespace-nowrap" data-cell="status">
     <div class="dropdown dropdown-end">
         <div tabindex="0" role="button" class="badge badge-sm gap-1 cursor-pointer {{ Status::badge($enquiry->status) }}"
              title="{{ __('Change status') }}">

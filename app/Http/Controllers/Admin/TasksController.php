@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Admin;
 use App\Core\Tasks\Tasks;
 use App\Http\Controllers\Controller;
 use App\Models\BackgroundTask;
+use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\DB;
@@ -84,10 +85,20 @@ class TasksController extends Controller
         $tab = in_array($request->query('tab'), self::TABS, true) ? $request->query('tab') : 'all';
         $tasks = app(Tasks::class);
 
+        // Who started it — a person, or nobody (`auto`: the scheduler, a
+        // console command) — and which module's work it is. Both narrow the
+        // rows the tabs count, so the badges say what the screen shows.
+        $user = (string) $request->query('user');
+        $module = (string) $request->query('module');
+
         // The newest two hundred, sorted into tabs here rather than in SQL: which
         // tab a running row belongs to depends on whether it went stale, and
         // that is a question for the model (BackgroundTask::tab()).
-        $recent = BackgroundTask::with('user')->latest('id')->limit(200)->get();
+        $recent = BackgroundTask::with('user')
+            ->when($user === 'auto', fn ($q) => $q->whereNull('user_id'))
+            ->when(ctype_digit($user), fn ($q) => $q->where('user_id', (int) $user))
+            ->when($module !== '', fn ($q) => $q->where('module', $module))
+            ->latest('id')->limit(200)->get();
         $counts = ['all' => $recent->count()] + $recent->countBy(fn (BackgroundTask $t) => $t->tab())->all();
 
         $failed = DB::table('failed_jobs')->orderByDesc('id')->limit(50)->get()
@@ -120,6 +131,12 @@ class TasksController extends Controller
 
         return [
             'tab' => $tab,
+            'filters' => ['user' => ctype_digit($user) || $user === 'auto' ? $user : '', 'module' => $module],
+            // Only what has ever started something: a list of every account
+            // would mostly name people who never did.
+            'starters' => User::whereIn('id', BackgroundTask::whereNotNull('user_id')->distinct()->pluck('user_id'))
+                ->orderBy('name')->get(['id', 'name']),
+            'modules' => BackgroundTask::whereNotNull('module')->distinct()->orderBy('module')->pluck('module'),
             'counts' => $counts,
             'tasks' => $tab === 'all' ? $recent->take(50) : $recent->filter(fn ($t) => $t->tab() === $tab)->take(50),
             'failed' => $failed,

@@ -2,6 +2,7 @@
 
 namespace Tests\Feature\Core;
 
+use App\Core\Hooks\HookBus;
 use App\Core\Settings\SettingsManager;
 use App\Core\Support\WebWorkers;
 use App\Core\Themes\ThemeManager;
@@ -10,6 +11,8 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\View;
 use Tests\Concerns\RunsInOctaneWorker;
 use Tests\TestCase;
+use Torgash\Catalog\Models\Product;
+use Torgash\Seo\Models\Template;
 
 /**
  * Requests served by ONE booted application, the way FrankenPHP's worker mode
@@ -144,6 +147,71 @@ class WorkerModeTest extends TestCase
         $this->assertStringNotContainsString('BAND', $off[0]->getContent());
     }
 
+    /**
+     * Reported from the live shop (2026-10-29): a title template written while
+     * the workers ran reached no page until they were restarted. The SEO
+     * module's listener was made at boot holding the memo of templates — the
+     * memo of the request it was made in, kept for good.
+     */
+    public function test_a_title_template_written_while_a_worker_runs_reaches_its_pages(): void
+    {
+        Template::query()->delete();
+        Product::create([
+            'sku' => 'WORKER-SEO', 'name' => ['en' => 'Worker Laptop'], 'slug' => 'worker-laptop',
+            'price' => 100_00, 'stock' => 1, 'status' => 'active',
+        ]);
+
+        $before = $this->serveInWorker([$this->workerGet('http://localhost/product/worker-laptop')]);
+
+        Template::create([
+            'subject' => 'product', 'scope' => 'global', 'mode' => Template::MODE_OVERRIDE, 'enabled' => true,
+            'title' => ['en' => 'Template says {product}'],
+        ]);
+
+        $after = $this->serveInWorker([$this->workerGet('http://localhost/product/worker-laptop')]);
+
+        $this->assertStringStartsWith('Worker Laptop', (string) $this->title($before[0]->getContent()));
+        $this->assertStringStartsWith('Template says Worker Laptop', (string) $this->title($after[0]->getContent()));
+    }
+
+    /**
+     * The rule behind the test above, for every listener at once. A listener
+     * is made while the worker boots and serves every request after it, so a
+     * memo it holds — bound `scoped()`, or forgotten by PerRequest — is the
+     * one of the request it was made in. Each listener's object, and what
+     * that object holds, is compared with what the container hands THIS
+     * request: another instance of a shared binding is a memo kept past its
+     * request (resolve it inside the listener instead — CLAUDE.md).
+     */
+    public function test_no_hook_listener_holds_a_memo_of_an_earlier_request(): void
+    {
+        $this->workerRoute('/__worker/listeners', function () {
+            $listeners = (fn () => $this->listeners)->call(app(HookBus::class));
+            $stale = [];
+
+            foreach ($listeners as $hook => $entries) {
+                foreach ($entries as $entry) {
+                    foreach ($this->heldBy($entry['callback']) as $path => $object) {
+                        $abstract = app()->getAlias($object::class);
+
+                        if (app()->bound($abstract) && app()->isShared($abstract) && app($abstract) !== $object) {
+                            $stale[] = $hook.': '.$path.' is '.$object::class;
+                        }
+                    }
+                }
+            }
+
+            return implode("\n", array_unique($stale));
+        });
+
+        $responses = $this->serveInWorker([
+            $this->workerGet('http://localhost/'),
+            $this->workerGet('http://localhost/__worker/listeners'),
+        ]);
+
+        $this->assertSame('', $responses[1]->getContent());
+    }
+
     public function test_changed_code_and_a_new_storefront_language_tell_the_workers(): void
     {
         $stamp = fn () => is_file(storage_path(WebWorkers::STAMP)) ? file_get_contents(storage_path(WebWorkers::STAMP)) : '';
@@ -197,6 +265,54 @@ class WorkerModeTest extends TestCase
         $router = $this->octaneApp()['router'];
         $router->get($uri, $action);
         $router->getRoutes()->refreshNameLookups();
+    }
+
+    /**
+     * The objects a listener holds: its own (the closure's `$this`, the
+     * object of an [object, method] pair, an invokable), what the closure
+     * captured, and one level down, their properties. The application itself
+     * is skipped — a provider's closure holds it, and is meant to.
+     *
+     * @return array<string, object>
+     */
+    protected function heldBy(mixed $callback): array
+    {
+        $roots = [];
+
+        if ($callback instanceof \Closure) {
+            $reflection = new \ReflectionFunction($callback);
+            if ($owner = $reflection->getClosureThis()) {
+                $roots['$this'] = $owner;
+            }
+            foreach ($reflection->getClosureUsedVariables() as $name => $value) {
+                if (is_object($value)) {
+                    $roots['$'.$name] = $value;
+                }
+            }
+        } elseif (is_array($callback) && is_object($callback[0] ?? null)) {
+            $roots[$callback[0]::class] = $callback[0];
+        } elseif (is_object($callback)) {
+            $roots[$callback::class] = $callback;
+        }
+
+        $held = [];
+        foreach ($roots as $path => $root) {
+            if ($root instanceof \Illuminate\Contracts\Container\Container || $root instanceof \Closure) {
+                continue;
+            }
+            $held[$path] = $root;
+            foreach ((new \ReflectionObject($root))->getProperties() as $property) {
+                if ($property->isStatic() || ! $property->isInitialized($root)) {
+                    continue;
+                }
+                $value = $property->getValue($root);
+                if (is_object($value) && ! $value instanceof \Closure && ! $value instanceof \Illuminate\Contracts\Container\Container) {
+                    $held[$path.'->'.$property->getName()] = $value;
+                }
+            }
+        }
+
+        return $held;
     }
 
     protected function lang(string $html): ?string

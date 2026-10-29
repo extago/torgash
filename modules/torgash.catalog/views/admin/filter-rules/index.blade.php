@@ -1,6 +1,7 @@
 @extends('admin.layout')
 
 @section('title', __('Filter pages'))
+@section('title_hint', __('A rule makes one page per value of a characteristic, in the categories you name. Running it again adds what is missing and never removes a page: an address that has been published is not withdrawn because stock moved. Titles and descriptions come from the SEO templates, not from here.'))
 
 @section('content')
     @php
@@ -17,27 +18,34 @@
         <div class="alert alert-error text-sm">{{ $errors->first() }}</div>
     @endif
 
+    {{-- The states as one row of tabs over the card, the screen's actions at
+         its end (app.css, `admin-tabs`); LINKS carrying the search. --}}
+    <div class="admin-tabs-row">
+        <nav class="admin-tabs" aria-label="{{ __('Filter pages') }}">
+            @foreach (['' => __('All'), 'on' => __('Enabled'), 'off' => __('Disabled')] as $tabKey => $tabLabel)
+                <a href="{{ request()->fullUrlWithQuery(['tab' => $tabKey ?: null, 'page' => null]) }}"
+                   @class(['admin-tab', 'is-active' => $filters['tab'] === $tabKey])>
+                    {{ $tabLabel }} <span class="admin-tab-count">{{ $counts[$tabKey] }}</span>
+                </a>
+            @endforeach
+        </nav>
+        <div class="admin-tabs-actions">
+            @if ($counts['on'] > 0)
+                <form method="POST" action="{{ route('admin.catalog.filter-rules.generate') }}" class="inline">
+                    @csrf
+                    <button class="btn btn-ghost gap-1.5" title="{{ __('Runs in the background; watch it under System → Background tasks.') }}">
+                        <x-icon name="wand-sparkles" size="sm" /> {{ __('Run all rules') }}
+                    </button>
+                </form>
+            @endif
+            <a href="{{ route('admin.catalog.filter-rules.create') }}" class="btn btn-primary">+ {{ __('New rule') }}</a>
+        </div>
+    </div>
+
     <div class="card bg-base-100 border border-base-300" x-data="{ selected: [] }">
         <div class="card-body gap-4">
-            <div class="flex justify-between items-start gap-3 flex-wrap">
-                <p class="text-sm opacity-70 max-w-3xl">
-                    {{ __('A rule makes one page per value of a characteristic, in the categories you name. Running it again adds what is missing and never removes a page: an address that has been published is not withdrawn because stock moved. Titles and descriptions come from the SEO templates, not from here.') }}
-                </p>
-                <div class="flex gap-2">
-                    @if ($counts['on'] > 0)
-                        <form method="POST" action="{{ route('admin.catalog.filter-rules.generate') }}" class="inline">
-                            @csrf
-                            <button class="btn btn-outline btn-sm gap-1.5" title="{{ __('Runs in the background; watch it under System → Background tasks.') }}">
-                                <x-icon name="wand-sparkles" size="sm" /> {{ __('Run all rules') }}
-                            </button>
-                        </form>
-                    @endif
-                    <a href="{{ route('admin.catalog.filter-rules.create') }}" class="btn btn-primary btn-sm">+ {{ __('New rule') }}</a>
-                </div>
-            </div>
-
             <form method="GET" class="flex flex-wrap items-center gap-2">
-                <label class="input input-sm w-full sm:w-72 gap-2">
+                <label class="input input-sm grow min-w-48 gap-2">
                     <x-icon name="search" size="sm" class="opacity-50" />
                     <input type="search" name="q" value="{{ $filters['q'] }}" class="grow" placeholder="{{ __('Search by name…') }}">
                 </label>
@@ -46,15 +54,6 @@
                     <a href="{{ route('admin.catalog.filter-rules.index') }}" class="btn btn-ghost btn-sm">{{ __('Reset') }}</a>
                 @endif
             </form>
-
-            <div class="join flex-wrap -mt-1">
-                @foreach (['' => __('All'), 'on' => __('Enabled'), 'off' => __('Disabled')] as $tabKey => $tabLabel)
-                    <a href="{{ request()->fullUrlWithQuery(['tab' => $tabKey ?: null]) }}"
-                       @class(['btn btn-sm join-item', 'btn-active' => $filters['tab'] === $tabKey])>
-                        {{ $tabLabel }} <span class="opacity-50">{{ $counts[$tabKey] }}</span>
-                    </a>
-                @endforeach
-            </div>
 
             <div class="min-h-12 flex items-center">
                 <p x-show="!selected.length" class="text-xs opacity-50">

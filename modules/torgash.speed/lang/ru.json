@@ -100,5 +100,7 @@
     "In total": "Всего",
     "a folder on this server": "папка на этом сервере",
     "the database": "база данных",
-    "Change": "Изменить"
+    "Change": "Изменить",
+    "Period": "Период",
+    "Real visits measured and added up by the hour: what a page typically costs, what one in twenty costs, where the time goes. Trace your own pages for a full timeline.": "Реальные визиты, измеренные и сложенные по часам: сколько обычно стоит страница, сколько — каждая двадцатая, куда уходит время. Проследите свои страницы ради полной ленты времени."
 }

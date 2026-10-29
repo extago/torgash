@@ -100,6 +100,19 @@ class CategoryListTest extends TestCase
         $this->get('http://localhost/catalog/cl-described?page=2&per_page=1')->assertOk()->assertDontSee('<p>All about CL tents.</p>', false);
     }
 
+    /** Its placeholders are the category's, under the goods and in the description made of it. */
+    public function test_the_description_takes_placeholders(): void
+    {
+        $category = $this->category('CL Counted');
+        $category->update(['description' => ['en' => '<p>{category}: {total_products} on the shelf.</p>']]);
+        Product::create(['sku' => 'CL-C1', 'name' => ['en' => 'CL-C1'], 'slug' => 'cl-c1', 'price' => 10_00, 'stock' => 1, 'status' => 'active'])
+            ->categories()->attach($category->id);
+
+        $this->get('http://localhost/catalog/'.$category->slug)->assertOk()
+            ->assertSee('<p>CL Counted: 1 on the shelf.</p>', false)
+            ->assertSee('<meta name="description" content="CL Counted: 1 on the shelf.">', false);
+    }
+
     public function test_a_row_switches_its_status_in_place(): void
     {
         $category = $this->category('CL Switch');

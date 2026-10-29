@@ -1,6 +1,7 @@
 @extends('admin.layout')
 
 @section('title', __('Labels'))
+@section('title_hint', __('Badges on product cards and pages — "New", "Sale", your own. A label is put on a product by hand (on the product form), by its rules, or both: whichever applies, the badge shows.'))
 
 @section('content')
     @if (session('status'))
@@ -9,30 +10,34 @@
 
     @php $locale = admin_content_locale(); @endphp
 
+    {{-- The states as one row of tabs over the card, the screen's action at
+         its end (app.css, `admin-tabs`); LINKS carrying the search. --}}
+    <div class="admin-tabs-row">
+        <nav class="admin-tabs" aria-label="{{ __('Labels') }}">
+            @foreach (['' => __('All'), 'enabled' => __('Enabled'), 'disabled' => __('Disabled')] as $statusKey => $statusLabel)
+                <a href="{{ route('admin.catalog.labels.index', array_filter(['status' => $statusKey, 'q' => $filters['q']], fn ($v) => $v !== null && $v !== '')) }}"
+                   @class(['admin-tab', 'is-active' => (string) $filters['status'] === (string) $statusKey])>
+                    {{ $statusLabel }} <span class="admin-tab-count">{{ $statusCounts[$statusKey] }}</span>
+                </a>
+            @endforeach
+        </nav>
+        <div class="admin-tabs-actions">
+            <a href="{{ route('admin.catalog.labels.create') }}" class="btn btn-primary">+ {{ __('New label') }}</a>
+        </div>
+    </div>
+
     {{-- One Alpine root: the bulk bar and every row's checkbox share
          `selected` — the categories list's own arrangement. --}}
     <div class="card bg-base-100 border border-base-300" x-data="{ selected: [] }">
         <div class="card-body gap-4">
-            <div class="flex justify-between items-start gap-3 flex-wrap">
-                <p class="text-sm opacity-70 max-w-3xl">
-                    {{ __('Badges on product cards and pages — "New", "Sale", your own. A label is put on a product by hand (on the product form), by its rules, or both: whichever applies, the badge shows.') }}
-                </p>
-                <a href="{{ route('admin.catalog.labels.create') }}" class="btn btn-primary btn-sm">+ {{ __('New label') }}</a>
-            </div>
-
             <form method="GET" class="flex flex-wrap items-center gap-2">
-                <label class="input input-sm w-full sm:w-72 gap-2">
+                @if ($filters['status'])
+                    <input type="hidden" name="status" value="{{ $filters['status'] }}">
+                @endif
+                <label class="input input-sm grow min-w-48 gap-2">
                     <x-icon name="search" size="sm" class="opacity-50" />
                     <input type="search" name="q" value="{{ $filters['q'] }}" class="grow" placeholder="{{ __('Search by name…') }}">
                 </label>
-                <div class="join">
-                    @foreach (['' => __('All'), 'enabled' => __('Enabled'), 'disabled' => __('Disabled')] as $statusKey => $statusLabel)
-                        <button type="submit" name="status" value="{{ $statusKey }}"
-                                @class(['btn btn-sm join-item', 'btn-active' => (string) $filters['status'] === (string) $statusKey])>
-                            {{ $statusLabel }} <span class="opacity-50">{{ $statusCounts[$statusKey] }}</span>
-                        </button>
-                    @endforeach
-                </div>
                 @if ($filters['q'] !== '' || $filters['status'])
                     <a href="{{ route('admin.catalog.labels.index') }}" class="btn btn-ghost btn-sm">{{ __('Reset') }}</a>
                 @endif

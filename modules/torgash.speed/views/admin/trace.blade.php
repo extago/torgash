@@ -18,7 +18,7 @@
 
     <div class="speed-viz flex flex-col gap-6">
         <div class="flex flex-wrap items-center gap-3">
-            <a href="{{ route('admin.speed.route', ['r' => $trace->route]) }}" class="btn btn-ghost btn-sm btn-square" title="{{ __('Back to the page') }}">
+            <a href="{{ route('admin.speed.route', ['r' => $trace->route]) }}" class="btn btn-ghost btn-sm btn-square" title="{{ __('Back to the page') }}" aria-label="{{ __('Back to the page') }}">
                 <x-icon name="arrow-left" size="lg" />
             </a>
             <div class="flex-1 min-w-0">
@@ -56,18 +56,20 @@
             <div class="card bg-base-100 border border-warning/40 shadow-sm">
                 <div class="card-body gap-2">
                     <h2 class="card-title text-base"><x-icon name="repeat" class="text-warning" /> {{ __('Asked again and again on this page') }}</h2>
-                    <table class="table table-sm">
-                        <tbody>
-                            @foreach ($trace->summary['repeated'] as $q)
-                                <tr class="align-top">
-                                    <td class="text-right font-semibold text-warning tabular-nums">×{{ $q['count'] }}</td>
-                                    <td class="text-right tabular-nums">{{ Format::ms($q['ms']) }}</td>
-                                    <td class="font-mono text-xs break-all">{{ $q['caller'] ?? '—' }}</td>
-                                    <td class="font-mono text-xs opacity-70 break-all">{{ \Illuminate\Support\Str::limit($q['sql'], 200) }}</td>
-                                </tr>
-                            @endforeach
-                        </tbody>
-                    </table>
+                    <div class="overflow-x-auto">
+                        <table class="table table-sm">
+                            <tbody>
+                                @foreach ($trace->summary['repeated'] as $q)
+                                    <tr class="align-top">
+                                        <td class="text-right font-semibold text-warning tabular-nums">×{{ $q['count'] }}</td>
+                                        <td class="text-right tabular-nums">{{ Format::ms($q['ms']) }}</td>
+                                        <td class="font-mono text-xs break-all">{{ $q['caller'] ?? '—' }}</td>
+                                        <td class="font-mono text-xs opacity-70 break-all">{{ \Illuminate\Support\Str::limit($q['sql'], 200) }}</td>
+                                    </tr>
+                                @endforeach
+                            </tbody>
+                        </table>
+                    </div>
                 </div>
             </div>
         @endif
@@ -78,7 +80,7 @@
                     <h2 class="card-title text-base">{{ __('Modules on this page') }}</h2>
                     <div class="flex flex-wrap gap-2">
                         @foreach ($trace->summary['modules'] as $module => $m)
-                            <span class="badge badge-ghost gap-1 font-mono text-xs" title="{{ number_format($m['calls']) }} {{ __('calls') }} · {{ __('Of it, database') }}: {{ Format::ms($m['db_ms']) }}">
+                            <span class="badge badge-sm badge-ghost gap-1 font-mono text-xs" title="{{ number_format($m['calls']) }} {{ __('calls') }} · {{ __('Of it, database') }}: {{ Format::ms($m['db_ms']) }}">
                                 {{ $module }} <strong class="tabular-nums">{{ Format::ms($m['ms']) }}</strong>
                             </span>
                         @endforeach

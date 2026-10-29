@@ -22,8 +22,8 @@
         @csrf
         @if ($landing->exists) @method('PUT') @endif
 
-        <div class="sticky top-16 z-20 -mx-6 px-6 py-3 bg-base-200/95 backdrop-blur border-b border-base-300 flex items-center gap-3">
-            <a href="{{ route('admin.landings.index') }}" class="btn btn-ghost btn-sm btn-square" title="{{ __('Back to landings') }}">
+        <x-admin.form-bar>
+            <a href="{{ route('admin.landings.index') }}" class="btn btn-ghost btn-sm btn-square" title="{{ __('Back to landings') }}" aria-label="{{ __('Back to landings') }}">
                 <x-icon name="arrow-left" size="lg" />
             </a>
             <div class="flex-1 min-w-0">
@@ -69,7 +69,7 @@
                     </div>
                 @endif
                 <div class="dropdown dropdown-end">
-                    <div tabindex="0" role="button" class="btn btn-ghost btn-sm btn-square" title="{{ __('More actions') }}">
+                    <div tabindex="0" role="button" class="btn btn-ghost btn-sm btn-square" title="{{ __('More actions') }}" aria-label="{{ __('More actions') }}">
                         <x-icon name="settings" size="lg" />
                     </div>
                     <ul tabindex="0" class="dropdown-content menu menu-sm bg-base-100 rounded-box shadow-md w-60 mt-2 p-2 z-50 border border-base-300">
@@ -81,9 +81,11 @@
                     </ul>
                 </div>
             @endif
-            <a href="{{ route('admin.landings.index') }}" class="btn btn-ghost btn-sm">{{ __('Cancel') }}</a>
-            <button class="btn btn-primary btn-sm">{{ $landing->exists ? __('Save') : __('Create') }}</button>
-        </div>
+            <x-slot:actions>
+                <a href="{{ route('admin.landings.index') }}" class="btn btn-ghost btn-sm">{{ __('Cancel') }}</a>
+                <button class="btn btn-primary btn-sm">{{ $landing->exists ? __('Save') : __('Create') }}</button>
+            </x-slot:actions>
+        </x-admin.form-bar>
 
         @if (session('status'))
             <div class="alert alert-success text-sm">{{ session('status') }}</div>
@@ -152,7 +154,7 @@
                     <div class="card-body gap-4">
                         <label class="flex items-center justify-between gap-3 cursor-pointer">
                             <span class="font-medium">{{ __('Shown') }}</span>
-                            <input type="checkbox" name="enabled" value="1" class="toggle toggle-success" @checked(old('enabled', $landing->exists ? $landing->enabled : true))>
+                            <input type="checkbox" name="enabled" value="1" class="toggle toggle-sm toggle-success" @checked(old('enabled', $landing->exists ? $landing->enabled : true))>
                         </label>
 
                         <div class="fieldset p-0">
@@ -160,7 +162,7 @@
                             <div class="flex flex-col gap-2">
                                 @foreach ($landingPlacements as $placementKey => [$placementLabel, $placementHelp])
                                     <label class="flex items-start gap-2 cursor-pointer">
-                                        <input type="radio" name="placement" value="{{ $placementKey }}" class="radio mt-0.5" x-model="placement" @checked($landingPlacement === $placementKey)>
+                                        <input type="radio" name="placement" value="{{ $placementKey }}" class="radio radio-sm mt-0.5" x-model="placement" @checked($landingPlacement === $placementKey)>
                                         <span class="text-sm">{{ $placementLabel }}<span class="block text-xs opacity-60">{{ $placementHelp }}</span></span>
                                     </label>
                                 @endforeach
@@ -193,7 +195,7 @@
 
                         {{-- A long landing folds as the description does, at the catalogue's height. --}}
                         <label class="flex items-start gap-3 cursor-pointer" x-show="placement !== 'tab'">
-                            <input type="checkbox" name="fold" value="1" class="checkbox mt-0.5" @checked(old('fold', $landing->fold ?? false))>
+                            <input type="checkbox" name="fold" value="1" class="checkbox checkbox-sm mt-0.5" @checked(old('fold', $landing->fold ?? false))>
                             <span class="text-sm">{{ __('Fold like the description') }}
                                 <span class="block text-xs opacity-60">{{ __('A long landing shows its first screenful and "Read in full", at the height set for the description (Settings → Catalogue).') }}</span>
                             </span>
@@ -235,7 +237,7 @@
                                     @endif
                                     <span class="font-mono text-xs truncate flex-1 min-w-0" title="{{ $landingFile['path'] }}">{{ $landingFile['path'] }}</span>
                                     <button type="submit" form="landing-file-delete" name="path" value="{{ $landingFile['path'] }}"
-                                            class="btn btn-ghost btn-xs btn-square text-error" title="{{ __('Delete') }}" aria-label="{{ __('Delete') }} {{ $landingFile['path'] }}">
+                                            class="btn btn-ghost btn-sm btn-square text-error" title="{{ __('Delete') }}" aria-label="{{ __('Delete') }} {{ $landingFile['path'] }}">
                                         <x-icon name="trash-2" size="sm" />
                                     </button>
                                 </div>

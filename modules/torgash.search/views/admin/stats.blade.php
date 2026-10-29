@@ -1,6 +1,7 @@
 @extends('admin.layout')
 
 @section('title', __('Search statistics'))
+@section('title_hint', __('What customers searched for in the period, how often, and what they clicked. A search that found nothing is a synonym or a phrase waiting to be written.'))
 
 @section('content')
     @include('torgash.search::admin.header', ['searchTab' => 'stats'])
@@ -9,16 +10,14 @@
         <div class="alert alert-warning">{{ __('Counting is switched off in the settings — nothing new is being added.') }}</div>
     @endunless
 
-    <div class="flex flex-wrap items-center gap-2">
-        <span class="text-sm opacity-60">{{ __('Period') }}:</span>
-        <div class="join">
-            @foreach (\Torgash\Search\Http\Admin\StatsController::PERIODS as $statsPeriod)
-                <a href="{{ route('admin.search-engine.stats', ['days' => $statsPeriod]) }}" @class(['btn btn-sm join-item', 'btn-active' => $statsPeriod === $days])>
-                    {{ trans_choice(':count day|:count days', $statsPeriod) }}
-                </a>
-            @endforeach
-        </div>
-    </div>
+    {{-- The period as one row of tabs over the figures (app.css, `admin-tabs`). --}}
+    <nav class="admin-tabs" aria-label="{{ __('Period') }}">
+        @foreach (\Torgash\Search\Http\Admin\StatsController::PERIODS as $statsPeriod)
+            <a href="{{ route('admin.search-engine.stats', ['days' => $statsPeriod]) }}" @class(['admin-tab', 'is-active' => $statsPeriod === $days])>
+                {{ trans_choice(':count day|:count days', $statsPeriod) }}
+            </a>
+        @endforeach
+    </nav>
 
     {{-- Three headline numbers: stat tiles, not a chart — each is one figure. --}}
     @php

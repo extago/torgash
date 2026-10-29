@@ -43,7 +43,7 @@ class MetaFields
             $rules[$input] = 'nullable|string|max:'.($input === 'meta_description' ? 500 : 255);
         }
 
-        return $rules;
+        return $rules + SharePicture::rules();
     }
 
     /**
@@ -76,6 +76,13 @@ class MetaFields
 
         $attributes['noindex'] = $request->boolean('noindex');
         $attributes['canonical_url'] = trim((string) $request->input('canonical_url', '')) ?: null;
+
+        // Only when the card carried the picture (`<x-seo.fields picture>`,
+        // for a record with a `share_image` column) and something was done
+        // with it — a form without it never touches the column.
+        if (SharePicture::submitted($request)) {
+            $attributes['share_image'] = SharePicture::fromRequest($request, $record?->share_image);
+        }
 
         return $attributes;
     }

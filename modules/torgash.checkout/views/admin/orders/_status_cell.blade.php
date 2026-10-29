@@ -2,7 +2,7 @@
      OrderStatusChanger its own page uses (stock, the log, the customer's
      email). The dot is the shop's own colour for the status. --}}
 @php $rowStatus = $statuses->get($order->status); @endphp
-<td id="order-status-{{ $order->id }}">
+<td id="order-status-{{ $order->id }}" data-cell="status">
     @if ($order->status === \Torgash\Checkout\Models\OrderStatus::MERGED)
         {{-- Closed: shown, never changed (PLAN §40.10/4). --}}
         <span class="badge badge-sm gap-1.5 bg-base-100 border-base-300 whitespace-nowrap">

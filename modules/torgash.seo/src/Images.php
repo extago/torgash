@@ -20,11 +20,12 @@ use Torgash\Seo\Models\Template;
  * nothing about media's storage. Answered only for an owner that is a
  * PageSubject — a photograph belonging to something with no page of its own has
  * no template to be named by.
+ *
+ * The templates are asked for at every call, never held — see Metadata: this
+ * object lives as long as the worker, their memo only as long as the request.
  */
 class Images
 {
-    public function __construct(protected Templates $templates) {}
-
     public function register(): void
     {
         hook_listen('media.image.alt', fn ($value, array $context) => $this->text('image_alt', $value, $context));
@@ -56,7 +57,8 @@ class Images
             return $value;
         }
 
-        $template = $this->templates->for($model);
+        $templates = app(Templates::class);
+        $template = $templates->for($model);
 
         if ($template === null || $template->mode === Template::MODE_SKIP) {
             return $value;
@@ -76,7 +78,7 @@ class Images
 
         $expanded = trim(app(Placeholders::class)->expand(
             $text,
-            $this->templates->context($model) + ['index' => (int) ($context['index'] ?? 0)],
+            $templates->context($model) + ['index' => (int) ($context['index'] ?? 0)],
             false,
         ));
 

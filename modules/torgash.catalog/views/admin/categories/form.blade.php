@@ -13,8 +13,8 @@
         @csrf
         @if ($category->exists) @method('PUT') @endif
 
-        <div class="sticky top-16 z-20 -mx-6 px-6 py-3 bg-base-200/95 backdrop-blur border-b border-base-300 flex items-center gap-3">
-            <a href="{{ route('admin.catalog.categories.index') }}" class="btn btn-ghost btn-sm btn-square" title="{{ __('Back to categories') }}">
+        <x-admin.form-bar>
+            <a href="{{ route('admin.catalog.categories.index') }}" class="btn btn-ghost btn-sm btn-square" title="{{ __('Back to categories') }}" aria-label="{{ __('Back to categories') }}">
                 <x-icon name="arrow-left" size="lg" />
             </a>
             <div class="flex-1 min-w-0">
@@ -24,14 +24,14 @@
             @if ($category->exists && (($prevCategory ?? null) || ($nextCategory ?? null)))
                 <div class="join">
                     @if ($prevCategory ?? null)
-                        <a href="{{ route('admin.catalog.categories.edit', $prevCategory) }}" class="btn btn-sm join-item" title="{{ __('Previous category') }}">
+                        <a href="{{ route('admin.catalog.categories.edit', $prevCategory) }}" class="btn btn-sm join-item" title="{{ __('Previous category') }}" aria-label="{{ __('Previous category') }}">
                             <x-icon name="chevron-left" />
                         </a>
                     @else
                         <span class="btn btn-sm join-item btn-disabled"><x-icon name="chevron-left" /></span>
                     @endif
                     @if ($nextCategory ?? null)
-                        <a href="{{ route('admin.catalog.categories.edit', $nextCategory) }}" class="btn btn-sm join-item" title="{{ __('Next category') }}">
+                        <a href="{{ route('admin.catalog.categories.edit', $nextCategory) }}" class="btn btn-sm join-item" title="{{ __('Next category') }}" aria-label="{{ __('Next category') }}">
                             <x-icon name="chevron-right" />
                         </a>
                     @else
@@ -45,7 +45,7 @@
                      HTML "form" attribute — a nested <form> here would leak its
                      _method=DELETE into this category's own submit. --}}
                 <div class="dropdown dropdown-end">
-                    <div tabindex="0" role="button" class="btn btn-ghost btn-sm btn-square" title="{{ __('More actions') }}">
+                    <div tabindex="0" role="button" class="btn btn-ghost btn-sm btn-square" title="{{ __('More actions') }}" aria-label="{{ __('More actions') }}">
                         <x-icon name="settings" size="lg" />
                     </div>
                     <ul tabindex="0" class="dropdown-content menu menu-sm bg-base-100 rounded-box shadow-md w-60 mt-2 p-2 z-50 border border-base-300">
@@ -92,9 +92,11 @@
                     </ul>
                 </div>
             @endif
-            <a href="{{ route('admin.catalog.categories.index') }}" class="btn btn-ghost btn-sm">{{ __('Cancel') }}</a>
-            <button class="btn btn-primary btn-sm">{{ $category->exists ? __('Save') : __('Create') }}</button>
-        </div>
+            <x-slot:actions>
+                <a href="{{ route('admin.catalog.categories.index') }}" class="btn btn-ghost btn-sm">{{ __('Cancel') }}</a>
+                <button class="btn btn-primary btn-sm">{{ $category->exists ? __('Save') : __('Create') }}</button>
+            </x-slot:actions>
+        </x-admin.form-bar>
 
         @if (session('status'))
             <div class="alert alert-success text-sm">{{ session('status') }}</div>
@@ -115,7 +117,7 @@
                         <fieldset class="fieldset p-0"><legend class="fieldset-legend">{{ __('Address') }}</legend>
                             <label class="input input-bordered w-full gap-0">
                                 <span class="opacity-50 font-mono text-sm">/catalog/</span>
-                                <input name="slug" value="{{ old('slug', $category->slug) }}" class="grow font-mono text-sm" placeholder="{{ __('from the name') }}">
+                                <input name="slug" autocapitalize="off" autocorrect="off" spellcheck="false" value="{{ old('slug', $category->slug) }}" class="grow font-mono text-sm" placeholder="{{ __('from the name') }}">
                             </label>
                             <p class="label whitespace-normal">{{ __('Changing it later leaves a redirect from the old address.') }}</p>
                         </fieldset>
@@ -125,7 +127,7 @@
                     </div>
                 </section>
 
-                <x-seo.fields :record="$category"
+                <x-seo.fields :record="$category" picture
                               :url-preview="$category->slug ? url('/catalog/'.$category->slug) : null" />
             </div>
 
@@ -222,7 +224,7 @@
                         <h3 class="font-semibold">{{ __('Icon') }}</h3>
                         <fieldset class="fieldset p-0"><legend class="fieldset-legend">{{ __('Icon name') }}</legend>
                             <div class="flex items-center gap-2">
-                                <input name="icon" value="{{ $categoryIcon }}" class="input input-bordered w-full font-mono" placeholder="shirt">
+                                <input name="icon" autocapitalize="off" autocorrect="off" spellcheck="false" value="{{ $categoryIcon }}" class="input input-bordered w-full font-mono" placeholder="shirt">
                                 <span class="w-10 h-10 shrink-0 rounded-field bg-base-200 flex items-center justify-center">
                                     @if ($categoryIcon && preg_match('/^[a-z0-9-]+$/', $categoryIcon) && is_file(resource_path('icons/lucide/'.$categoryIcon.'.svg')))
                                         <x-icon :name="$categoryIcon" size="lg" />

@@ -111,15 +111,15 @@
                         <p class="label text-xs opacity-60 whitespace-normal">{{ $onS3 ? __('The bucket keeps a copy away from the server it protects.') : __('Both are on this server while files are a local folder — download the backups now and then.') }}</p>
                     </fieldset>
                     <label class="label cursor-pointer justify-start gap-3">
-                        <input type="checkbox" name="files" value="1" class="toggle toggle-sm" @checked($settings['files'])>
+                        <input type="checkbox" name="files" value="1" class="toggle toggle-sm toggle-success" @checked($settings['files'])>
                         <span class="label-text whitespace-normal">{{ $onS3 ? __('Uploaded files (they are in the bucket — not copied)') : __('Uploaded files') }}</span>
                     </label>
                     <label class="label cursor-pointer justify-start gap-3">
-                        <input type="checkbox" name="code" value="1" class="toggle toggle-sm" @checked($settings['code'])>
+                        <input type="checkbox" name="code" value="1" class="toggle toggle-sm toggle-success" @checked($settings['code'])>
                         <span class="label-text whitespace-normal">{{ __('Modules and themes') }}</span>
                     </label>
                     <p class="text-xs opacity-60">{{ $pgDump ?: '' }}</p>
-                    <button class="btn btn-sm">{{ __('Save') }}</button>
+                    <button class="btn btn-sm btn-primary">{{ __('Save') }}</button>
                 </div>
             </form>
         </div>

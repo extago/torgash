@@ -1,6 +1,7 @@
 @extends('admin.layout')
 
 @section('title', __('Regions'))
+@section('title_hint', __('Regions group the places of a country. A disabled region hides all of its places from customers.'))
 
 @section('content')
     @include('torgash.locations::admin.partials.tabs')
@@ -9,24 +10,36 @@
         <div class="alert alert-success">{{ session('status') }}</div>
     @endif
 
+    {{-- The states as one row of tabs over the card, the screen's action at
+         its end (app.css, `admin-tabs`); LINKS carrying every other filter. --}}
+    <div class="admin-tabs-row">
+        <nav class="admin-tabs" aria-label="{{ __('Regions') }}">
+            @foreach (['' => __('All'), 'enabled' => __('Enabled'), 'disabled' => __('Disabled')] as $statusKey => $statusLabel)
+                <a href="{{ request()->fullUrlWithQuery(['status' => $statusKey ?: null, 'page' => null]) }}"
+                   @class(['admin-tab', 'is-active' => $filters['status'] === $statusKey])>
+                    {{ $statusLabel }} <span class="admin-tab-count">{{ $statusCounts[$statusKey] }}</span>
+                </a>
+            @endforeach
+        </nav>
+        <div class="admin-tabs-actions">
+            <a href="{{ route('admin.locations.regions.create', ['country' => $filters['country']]) }}" class="btn btn-primary">
+                + {{ __('Add region') }}
+            </a>
+        </div>
+    </div>
+
     <div class="card bg-base-100 border border-base-300">
         <div class="card-body gap-4">
-            <div class="flex justify-between items-start gap-3 flex-wrap">
-                <p class="text-sm opacity-70 max-w-3xl">
-                    {{ __('Regions group the places of a country. A disabled region hides all of its places from customers.') }}
-                </p>
-                <a href="{{ route('admin.locations.regions.create', ['country' => $filters['country']]) }}" class="btn btn-primary btn-sm">
-                    + {{ __('Add region') }}
-                </a>
-            </div>
-
             <form method="GET" class="flex flex-wrap items-center gap-2">
-                <label class="input input-sm w-full sm:w-72 gap-2">
+                @if ($filters['status'] !== '')
+                    <input type="hidden" name="status" value="{{ $filters['status'] }}">
+                @endif
+                <label class="input input-sm grow min-w-48 gap-2">
                     <x-icon name="search" size="sm" class="opacity-50" />
                     <input type="search" name="q" value="{{ $filters['q'] }}" class="grow" placeholder="{{ __('Name or code') }}">
                 </label>
                 @if ($countries->count() > 1)
-                    <select name="country" class="select select-bordered select-sm w-auto" data-submit-on-change aria-label="{{ __('Country') }}">
+                    <select name="country" class="select select-sm w-auto" data-submit-on-change aria-label="{{ __('Country') }}">
                         <option value="">{{ __('Any country') }}</option>
                         @foreach ($countries as $code)
                             <option value="{{ $code }}" @selected($filters['country'] === $code)>
@@ -35,14 +48,6 @@
                         @endforeach
                     </select>
                 @endif
-                <div class="join">
-                    @foreach (['' => __('All'), 'enabled' => __('Enabled'), 'disabled' => __('Disabled')] as $statusKey => $statusLabel)
-                        <button type="submit" name="status" value="{{ $statusKey }}"
-                                @class(['btn btn-sm join-item', 'btn-active' => $filters['status'] === $statusKey])>
-                            {{ $statusLabel }} <span class="opacity-50">{{ $statusCounts[$statusKey] }}</span>
-                        </button>
-                    @endforeach
-                </div>
                 @if (array_filter($filters))
                     <a href="{{ route('admin.locations.regions') }}" class="btn btn-ghost btn-sm">{{ __('Reset') }}</a>
                 @endif

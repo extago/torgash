@@ -1,6 +1,13 @@
 @extends('admin.layout')
 
 @section('title', __('Blog rubrics'))
+@section('title_hint', __('The coloured plates over an article\'s title, each with a feed of its own. An article can be in several.'))
+
+{{-- No states to tab: the screen's actions stand level with the heading. --}}
+@section('title_actions')
+    <a href="{{ route('admin.blog.index') }}" class="btn btn-ghost gap-1.5"><x-icon name="newspaper" size="sm" /> {{ __('Articles') }}</a>
+    <a href="{{ route('admin.blog.rubrics.create') }}" class="btn btn-primary gap-1.5"><x-icon name="plus" size="sm" /> {{ __('New rubric') }}</a>
+@endsection
 
 @section('content')
     @if (session('status'))
@@ -9,16 +16,11 @@
 
     <div class="card bg-base-100 border border-base-300">
         <div class="card-body gap-4">
-            <div class="flex flex-wrap items-center justify-between gap-3">
-                <p class="text-sm opacity-70 max-w-2xl">{{ __('The coloured plates over an article\'s title, each with a feed of its own. An article can be in several.') }}</p>
-                <div class="flex gap-2">
-                    <a href="{{ route('admin.blog.index') }}" class="btn btn-ghost btn-sm gap-1.5"><x-icon name="newspaper" size="sm" /> {{ __('Articles') }}</a>
-                    <a href="{{ route('admin.blog.rubrics.create') }}" class="btn btn-primary btn-sm gap-1.5"><x-icon name="plus" size="sm" /> {{ __('New rubric') }}</a>
-                </div>
-            </div>
-
             @if ($rubrics->isEmpty())
-                <div class="text-center py-12 opacity-60">{{ __('No rubrics yet.') }}</div>
+                <div class="text-center py-12 opacity-60">
+                    <x-icon name="tags" size="xl" class="opacity-40" />
+                    <p class="mt-2">{{ __('No rubrics yet.') }}</p>
+                </div>
             @else
                 <div class="overflow-x-auto">
                     <table class="table">

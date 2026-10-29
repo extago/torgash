@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Admin;
 
+use App\Core\Seo\SharePicture;
 use App\Core\Themes\ThemeManager;
 use App\Http\Controllers\Controller;
 use App\Models\Currency;
@@ -189,6 +190,7 @@ class StorefrontsController extends Controller
             'home_title' => 'nullable|string|max:255',
             'home_description' => 'nullable|string|max:500',
             'closed_message' => 'nullable|string|max:2000',
+            ...SharePicture::rules(),
         ], [
             'code.regex' => __('Latin letters, digits, dashes and underscores only.'),
         ]);
@@ -253,6 +255,7 @@ class StorefrontsController extends Controller
             'closed_token' => $storefront->closed_token ?: ($closed ? Str::random(32) : null),
             'home_title' => $homeTitle ?: null,
             'home_description' => $homeDescription ?: null,
+            'share_image' => SharePicture::fromRequest($request, $storefront->share_image),
             'contacts' => $contacts ?: null,
             'code' => $validated['code'],
             'name' => $validated['name'],

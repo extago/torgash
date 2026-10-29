@@ -20,7 +20,6 @@
                     busy: false,
                     errors: [],
                     confirming: null,
-                    dragIndex: null,
 
                     async send(path, options = {}) {
                         this.busy = true;
@@ -70,11 +69,14 @@
                         return this.send('/' + item.id, { method: 'DELETE' });
                     },
 
-                    drop(target) {
-                        if (this.dragIndex === null || this.dragIndex === target) return;
-                        const moved = this.items.splice(this.dragIndex, 1)[0];
-                        this.items.splice(target, 0, moved);
-                        this.dragIndex = null;
+                    /* By a drag (x-sort — Alpine Sort, which works under a finger;
+                       PLAN §62) or by the arrows a finger gets. Named by the
+                       item's id, not its index: Alpine Sort drops a key of 0 as "none". */
+                    move(id, to) {
+                        const from = this.items.findIndex((item) => item.id === id);
+                        if (from === -1 || from === to || to < 0 || to >= this.items.length) return;
+                        const moved = this.items.splice(from, 1)[0];
+                        this.items.splice(to, 0, moved);
                     },
                 }));
             });
@@ -132,13 +134,17 @@
                     </div>
                 </template>
 
-                <div class="flex flex-col gap-2">
+                <div class="flex flex-col gap-2" x-sort="move($item, $position)" x-sort:config="{ delay: 150, delayOnTouchOnly: true }">
                     <template x-for="(item, i) in items" :key="item.id">
-                        <div class="flex gap-3 items-center rounded-box border border-base-300 bg-base-100 p-2"
-                             :class="dragIndex === i ? 'opacity-40' : ''"
-                             draggable="true" @dragstart="dragIndex = i" @dragend="dragIndex = null"
-                             @dragover.prevent @drop.prevent="drop(i)">
-                            <span class="cursor-move opacity-40" aria-hidden="true"><x-icon name="grip-vertical" size="sm" /></span>
+                        <div class="flex gap-3 items-center rounded-box border border-base-300 bg-base-100 p-2" x-sort:item="item.id">
+                            {{-- The grip, and under a finger the arrows beneath it. --}}
+                            <span class="flex flex-col items-center shrink-0">
+                                <span class="cursor-move opacity-40" aria-hidden="true" x-sort:handle><x-icon name="grip-vertical" size="sm" /></span>
+                                <button type="button" class="btn btn-ghost btn-sm btn-square hidden pointer-coarse:inline-flex" :disabled="i === 0"
+                                        title="{{ __('Move earlier') }}" aria-label="{{ __('Move earlier') }}" @click="move(item.id, i - 1)"><x-icon name="arrow-up" size="sm" /></button>
+                                <button type="button" class="btn btn-ghost btn-sm btn-square hidden pointer-coarse:inline-flex" :disabled="i === items.length - 1"
+                                        title="{{ __('Move later') }}" aria-label="{{ __('Move later') }}" @click="move(item.id, i + 1)"><x-icon name="arrow-down" size="sm" /></button>
+                            </span>
 
                             <div class="grow min-w-0 flex flex-col gap-1.5">
                                 <div class="flex items-center gap-2 text-xs min-w-0">
@@ -171,7 +177,7 @@
                                 </template>
                                 <template x-if="confirming === item.id">
                                     <span class="flex items-center gap-1 text-sm">
-                                        <button type="button" class="btn btn-error btn-sm" @click="destroy(item)">{{ __('Remove') }}</button>
+                                        <button type="button" class="btn btn-ghost btn-sm text-error" @click="destroy(item)">{{ __('Remove') }}</button>
                                         <button type="button" class="btn btn-ghost btn-sm" @click="confirming = null">{{ __('Cancel') }}</button>
                                     </span>
                                 </template>
@@ -180,7 +186,10 @@
                     </template>
                 </div>
 
-                <p x-show="items.length > 1" x-cloak class="text-xs opacity-50">{{ __('Drag to change the order; titles and order are saved with the rest of the form.') }}</p>
+                <p x-show="items.length > 1" x-cloak class="text-xs opacity-50">
+                    <span class="pointer-coarse:hidden">{{ __('Drag to change the order; titles and order are saved with the rest of the form.') }}</span>
+                    <span class="hidden pointer-coarse:inline">{{ __('The arrows change the order; titles and order are saved with the rest of the form.') }}</span>
+                </p>
             </div>
         @endif
     </div>

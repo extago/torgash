@@ -69,7 +69,7 @@
         </label>
     </td>
     <td class="w-8 text-right">
-        <button type="button" class="btn btn-ghost btn-sm btn-square text-error" title="{{ __('Remove') }}"
+        <button type="button" class="btn btn-ghost btn-sm btn-square text-error" title="{{ __('Remove') }}" aria-label="{{ __('Remove') }}"
                 @click="$el.closest('tr').remove()">
             <x-icon name="trash-2" />
         </button>

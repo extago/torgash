@@ -140,6 +140,51 @@ class StructuredData
             $organisation['email'] = $email;
         }
 
+        // The numbers beyond the main one, each under what it is for.
+        $points = [];
+        foreach ($storefront->contactList('phones') as $row) {
+            if ($row['number'] !== '' && $row['number'] !== $phone) {
+                $points[] = [
+                    $at.'type' => 'ContactPoint',
+                    'telephone' => $row['number'],
+                    'contactType' => $row['label'] !== '' ? $row['label'] : 'customer service',
+                ];
+            }
+        }
+        if ($points) {
+            $organisation['contactPoint'] = $points;
+        }
+
+        // The legal address is one typed line, so it is the street part of a
+        // PostalAddress with the shop's country beside it: the shape a search
+        // engine reads, where a bare string is merely tolerated.
+        if ($address = $storefront->contact('address')) {
+            $organisation['address'] = array_filter([
+                $at.'type' => 'PostalAddress',
+                'streetAddress' => preg_replace('/\s+/u', ' ', $address),
+                'addressCountry' => strtoupper(trim((string) setting('core', 'default_country'))),
+            ]);
+        }
+
+        // The logo for a light background — what a search result sits on.
+        if ($logo = theme_image('logo')) {
+            $organisation['logo'] = url($logo);
+        }
+
+        // The shop's own pages elsewhere: how a search engine learns that this
+        // shop and that account on a social network are one.
+        $profiles = array_values(array_filter(
+            array_column($storefront->contactList('socials'), 'url'),
+            fn (string $url) => (bool) preg_match('#^https?://#i', $url),
+        ));
+        if ($profiles) {
+            $organisation['sameAs'] = $profiles;
+        }
+
+        // Opening hours stay out: schema.org gives them to a place (a
+        // LocalBusiness), not to an Organization, and ours are free text that
+        // no machine-readable `openingHours` can be made of.
+
         $site = [
             $at.'type' => 'WebSite',
             $at.'id' => $root.'#website',

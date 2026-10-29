@@ -19,8 +19,8 @@
         @csrf
         @if ($banner->exists) @method('PUT') @endif
 
-        <div class="sticky top-16 z-20 -mx-6 px-6 py-3 bg-base-200/95 backdrop-blur border-b border-base-300 flex items-center gap-3">
-            <a href="{{ route('admin.banners.index') }}" class="btn btn-ghost btn-sm btn-square" title="{{ __('Back to banners') }}">
+        <x-admin.form-bar>
+            <a href="{{ route('admin.banners.index') }}" class="btn btn-ghost btn-sm btn-square" title="{{ __('Back to banners') }}" aria-label="{{ __('Back to banners') }}">
                 <x-icon name="arrow-left" size="lg" />
             </a>
             <div class="flex-1 min-w-0">
@@ -29,7 +29,7 @@
             </div>
             @if ($banner->exists)
                 <div class="dropdown dropdown-end">
-                    <div tabindex="0" role="button" class="btn btn-ghost btn-sm btn-square" title="{{ __('More actions') }}">
+                    <div tabindex="0" role="button" class="btn btn-ghost btn-sm btn-square" title="{{ __('More actions') }}" aria-label="{{ __('More actions') }}">
                         <x-icon name="settings" size="lg" />
                     </div>
                     <ul tabindex="0" class="dropdown-content menu menu-sm bg-base-100 rounded-box shadow-md w-60 mt-2 p-2 z-50 border border-base-300">
@@ -40,9 +40,11 @@
                     </ul>
                 </div>
             @endif
-            <a href="{{ route('admin.banners.index') }}" class="btn btn-ghost btn-sm">{{ __('Cancel') }}</a>
-            <button class="btn btn-primary btn-sm">{{ $banner->exists ? __('Save') : __('Create') }}</button>
-        </div>
+            <x-slot:actions>
+                <a href="{{ route('admin.banners.index') }}" class="btn btn-ghost btn-sm">{{ __('Cancel') }}</a>
+                <button class="btn btn-primary btn-sm">{{ $banner->exists ? __('Save') : __('Create') }}</button>
+            </x-slot:actions>
+        </x-admin.form-bar>
 
         @if (session('status'))
             <div class="alert alert-success text-sm">{{ session('status') }}</div>
@@ -70,7 +72,7 @@
                             @foreach ($templates as $choice)
                                 <label class="flex gap-3 items-start rounded-box border p-3 cursor-pointer transition-colors"
                                        :class="tpl === {{ $choice->id }} ? 'border-primary bg-primary/5' : 'border-base-300 hover:border-base-content/30'">
-                                    <input type="radio" name="template_id" value="{{ $choice->id }}" x-model.number="tpl" class="radio radio-sm radio-primary mt-0.5">
+                                    <input type="radio" name="template_id" value="{{ $choice->id }}" x-model.number="tpl" class="radio radio-sm mt-0.5">
                                     <span class="min-w-0">
                                         <span class="block font-medium">{{ $choice->label() }}</span>
                                         <span class="flex flex-wrap gap-1 mt-1">

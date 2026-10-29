@@ -8,7 +8,7 @@
 
         <label class="label cursor-pointer justify-start gap-3">
             <input type="hidden" name="giftcard[is]" value="0">
-            <input type="checkbox" name="giftcard[is]" value="1" class="toggle toggle-sm toggle-primary" x-model="isGift">
+            <input type="checkbox" name="giftcard[is]" value="1" class="toggle toggle-sm toggle-success" x-model="isGift">
             <span class="label-text font-medium">{{ __('This product is a gift card') }}</span>
         </label>
         <p class="text-xs opacity-60 -mt-2 max-w-3xl">

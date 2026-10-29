@@ -19,7 +19,7 @@ namespace App\Core\Seo;
  */
 trait HasPageMeta
 {
-    /** @return array{title: ?string, description: ?string, h1: ?string, noindex: bool, canonical: ?string} */
+    /** @return array{title: ?string, description: ?string, h1: ?string, noindex: bool, canonical: ?string, image: ?string} */
     public function pageMeta(): array
     {
         return [
@@ -28,6 +28,8 @@ trait HasPageMeta
             'h1' => $this->pageMetaText('h1'),
             'noindex' => (bool) ($this->noindex ?? false),
             'canonical' => $this->canonical_url ?: null,
+            // Read from the row: a model that has no such column has no picture.
+            'image' => SharePicture::url($this->getAttributes()['share_image'] ?? null),
         ];
     }
 

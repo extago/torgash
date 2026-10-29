@@ -1,6 +1,11 @@
 @extends('admin.layout')
 
 @section('title', __('Availability statuses'))
+@section('title_hint', __('Whether a product can be bought right now — a second axis beside its Status (active / hidden). Chosen on each product, beside its stock.'))
+{{-- No states to filter by: the action stands level with the heading. --}}
+@section('title_actions')
+    <a href="{{ route('admin.catalog.availability-statuses.create') }}" class="btn btn-primary">+ {{ __('New status') }}</a>
+@endsection
 
 @section('content')
     @if (session('status'))
@@ -15,12 +20,6 @@
 
     <div class="card bg-base-100 border border-base-300">
         <div class="card-body gap-4">
-            <div class="flex justify-between items-start gap-3 flex-wrap">
-                <p class="text-sm opacity-70 max-w-3xl">
-                    {{ __('Whether a product can be bought right now — a second axis beside its Status (active / hidden). Chosen on each product, beside its stock.') }}
-                </p>
-                <a href="{{ route('admin.catalog.availability-statuses.create') }}" class="btn btn-primary btn-sm">+ {{ __('New status') }}</a>
-            </div>
 
             {{-- The weights below do nothing while the tumbler is off, and a column
                  of numbers that silently does nothing is the one thing this screen
@@ -41,7 +40,7 @@
             </div>
 
             <form method="GET" class="flex flex-wrap items-center gap-2">
-                <label class="input input-sm w-full sm:w-72 gap-2">
+                <label class="input input-sm grow min-w-48 gap-2">
                     <x-icon name="search" size="sm" class="opacity-50" />
                     <input type="search" name="q" value="{{ $filters['q'] }}" class="grow" placeholder="{{ __('Search by name or code…') }}">
                 </label>
@@ -76,7 +75,7 @@
                                     <td>
                                         <div class="flex flex-wrap items-center gap-1">
                                             @if ($row['source'] === 'shop')
-                                                <span class="badge badge-sm badge-outline badge-primary whitespace-nowrap">{{ __('your own') }}</span>
+                                                <span class="badge badge-sm badge-ghost whitespace-nowrap">{{ __('your own') }}</span>
                                             @else
                                                 <span class="badge badge-sm badge-ghost whitespace-nowrap">{{ __('built in') }}</span>
                                             @endif
@@ -169,7 +168,7 @@
             <div>{{ __('Its module was removed or the status deleted, so these products cannot be bought and rank last. Give them a status that exists.') }}</div>
             <div class="flex flex-wrap gap-2">
                 @foreach ($orphans as $orphanKey => $n)
-                    <span class="badge badge-ghost font-mono">{{ $orphanKey }} · {{ $n }}</span>
+                    <span class="badge badge-sm badge-ghost font-mono">{{ $orphanKey }} · {{ $n }}</span>
                 @endforeach
             </div>
         </div>

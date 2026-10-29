@@ -45,8 +45,8 @@
         @csrf
         @if ($rule->exists) @method('PUT') @endif
 
-        <div class="sticky top-16 z-20 -mx-6 px-6 py-3 bg-base-200/95 backdrop-blur border-b border-base-300 flex items-center gap-3">
-            <a href="{{ route('admin.catalog.price-types.edit', $priceType) }}#rules" class="btn btn-ghost btn-sm btn-square" title="{{ __('Back to the price type') }}">
+        <x-admin.form-bar>
+            <a href="{{ route('admin.catalog.price-types.edit', $priceType) }}#rules" class="btn btn-ghost btn-sm btn-square" title="{{ __('Back to the price type') }}" aria-label="{{ __('Back to the price type') }}">
                 <x-icon name="arrow-left" size="lg" />
             </a>
             <div class="flex-1 min-w-0">
@@ -57,14 +57,14 @@
             @if ($rule->exists && (($prevRule ?? null) || ($nextRule ?? null)))
                 <div class="join">
                     @if ($prevRule ?? null)
-                        <a href="{{ route('admin.catalog.price-types.rules.edit', [$priceType, $prevRule]) }}" class="btn btn-sm join-item" title="{{ __('Previous rule') }}">
+                        <a href="{{ route('admin.catalog.price-types.rules.edit', [$priceType, $prevRule]) }}" class="btn btn-sm join-item" title="{{ __('Previous rule') }}" aria-label="{{ __('Previous rule') }}">
                             <x-icon name="chevron-left" />
                         </a>
                     @else
                         <span class="btn btn-sm join-item btn-disabled"><x-icon name="chevron-left" /></span>
                     @endif
                     @if ($nextRule ?? null)
-                        <a href="{{ route('admin.catalog.price-types.rules.edit', [$priceType, $nextRule]) }}" class="btn btn-sm join-item" title="{{ __('Next rule') }}">
+                        <a href="{{ route('admin.catalog.price-types.rules.edit', [$priceType, $nextRule]) }}" class="btn btn-sm join-item" title="{{ __('Next rule') }}" aria-label="{{ __('Next rule') }}">
                             <x-icon name="chevron-right" />
                         </a>
                     @else
@@ -75,7 +75,7 @@
 
             @if ($rule->exists)
                 <div class="dropdown dropdown-end">
-                    <div tabindex="0" role="button" class="btn btn-ghost btn-sm btn-square" title="{{ __('More actions') }}">
+                    <div tabindex="0" role="button" class="btn btn-ghost btn-sm btn-square" title="{{ __('More actions') }}" aria-label="{{ __('More actions') }}">
                         <x-icon name="settings" size="lg" />
                     </div>
                     <ul tabindex="0" class="dropdown-content menu menu-sm bg-base-100 rounded-box shadow-md w-56 mt-2 p-2 z-50 border border-base-300">
@@ -93,9 +93,11 @@
                     </ul>
                 </div>
             @endif
-            <a href="{{ route('admin.catalog.price-types.edit', $priceType) }}#rules" class="btn btn-ghost btn-sm">{{ __('Cancel') }}</a>
-            <button class="btn btn-primary btn-sm">{{ $rule->exists ? __('Save') : __('Create') }}</button>
-        </div>
+            <x-slot:actions>
+                <a href="{{ route('admin.catalog.price-types.edit', $priceType) }}#rules" class="btn btn-ghost btn-sm">{{ __('Cancel') }}</a>
+                <button class="btn btn-primary btn-sm">{{ $rule->exists ? __('Save') : __('Create') }}</button>
+            </x-slot:actions>
+        </x-admin.form-bar>
 
         @if (session('status'))
             <div class="alert alert-success text-sm">{{ session('status') }}</div>
@@ -192,7 +194,7 @@
                     <div class="card-body gap-3">
                         <h3 class="font-semibold">{{ __('Status') }}</h3>
                         <label class="label cursor-pointer justify-start gap-3">
-                            <input type="checkbox" name="enabled" value="1" class="toggle toggle-sm toggle-primary" @checked(old('enabled', $rule->enabled ?? true))>
+                            <input type="checkbox" name="enabled" value="1" class="toggle toggle-sm toggle-success" @checked(old('enabled', $rule->enabled ?? true))>
                             <span class="label-text">{{ __('Enabled') }}</span>
                         </label>
                         <fieldset class="fieldset p-0"><legend class="fieldset-legend">{{ __('Priority') }}</legend>

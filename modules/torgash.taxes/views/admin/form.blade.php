@@ -14,8 +14,8 @@
         @csrf
         @if ($tax->exists) @method('PUT') @endif
 
-        <div class="sticky top-16 z-20 -mx-6 px-6 py-3 bg-base-200/95 backdrop-blur border-b border-base-300 flex items-center gap-3">
-            <a href="{{ route('admin.taxes.index') }}" class="btn btn-ghost btn-sm btn-square" title="{{ __('Back to taxes') }}">
+        <x-admin.form-bar>
+            <a href="{{ route('admin.taxes.index') }}" class="btn btn-ghost btn-sm btn-square" title="{{ __('Back to taxes') }}" aria-label="{{ __('Back to taxes') }}">
                 <x-icon name="arrow-left" size="lg" />
             </a>
             <div class="flex-1 min-w-0">
@@ -26,7 +26,7 @@
             </div>
             @if ($tax->exists)
                 <div class="dropdown dropdown-end">
-                    <div tabindex="0" role="button" class="btn btn-ghost btn-sm btn-square" title="{{ __('More actions') }}">
+                    <div tabindex="0" role="button" class="btn btn-ghost btn-sm btn-square" title="{{ __('More actions') }}" aria-label="{{ __('More actions') }}">
                         <x-icon name="settings" size="lg" />
                     </div>
                     <ul tabindex="0" class="dropdown-content menu menu-sm bg-base-100 rounded-box shadow-md w-60 mt-2 p-2 z-50 border border-base-300">
@@ -38,9 +38,11 @@
                     </ul>
                 </div>
             @endif
-            <a href="{{ route('admin.taxes.index') }}" class="btn btn-ghost btn-sm">{{ __('Cancel') }}</a>
-            <button class="btn btn-primary btn-sm">{{ $tax->exists ? __('Save') : __('Create') }}</button>
-        </div>
+            <x-slot:actions>
+                <a href="{{ route('admin.taxes.index') }}" class="btn btn-ghost btn-sm">{{ __('Cancel') }}</a>
+                <button class="btn btn-primary btn-sm">{{ $tax->exists ? __('Save') : __('Create') }}</button>
+            </x-slot:actions>
+        </x-admin.form-bar>
 
         @if (session('status'))
             <div class="alert alert-success text-sm">{{ session('status') }}</div>
@@ -61,7 +63,7 @@
                             <x-admin.translatable-field name="name" label="{{ __('Name') }}" :value="$tax->name ?? []" required />
 
                             <fieldset class="fieldset p-0"><legend class="fieldset-legend">{{ __('Code') }} *</legend>
-                                <input name="code" value="{{ old('code', $tax->code) }}" class="input input-bordered w-full font-mono" required placeholder="vat20">
+                                <input name="code" autocapitalize="off" autocorrect="off" spellcheck="false" value="{{ old('code', $tax->code) }}" class="input input-bordered w-full font-mono" required placeholder="vat20">
                                 <p class="label text-xs opacity-60 whitespace-normal">{{ __('Used in imports and exports. Latin letters and digits, e.g. vat20.') }}</p>
                             </fieldset>
                         </div>
@@ -136,7 +138,7 @@
                         </div>
 
                         <label class="label cursor-pointer justify-start gap-3 p-0">
-                            <input type="checkbox" name="only_listed" value="1" class="toggle toggle-sm toggle-primary"
+                            <input type="checkbox" name="only_listed" value="1" class="toggle toggle-sm toggle-success"
                                    @checked(old('only_listed', $tax->only_listed ?? false))>
                             <span class="label-text whitespace-normal">{{ __('Charged only in the places listed') }}</span>
                         </label>
@@ -174,7 +176,7 @@
                             0 => ['circle-plus', __('Added at checkout'), __('Added on top, so the customer sees the price grow at checkout. Sales tax in the US.')],
                         ] as $value => [$icon, $title, $text])
                             <label class="flex items-start gap-3 rounded-box border border-base-300 p-3 cursor-pointer has-[:checked]:border-primary has-[:checked]:bg-primary/5">
-                                <input type="radio" name="price_includes_tax" value="{{ $value }}" class="radio radio-sm radio-primary mt-0.5"
+                                <input type="radio" name="price_includes_tax" value="{{ $value }}" class="radio radio-sm mt-0.5"
                                        @checked($includes === (bool) $value)>
                                 <div>
                                     <div class="font-medium flex items-center gap-1.5"><x-icon :name="$icon" size="sm" class="opacity-60" /> {{ $title }}</div>
@@ -189,12 +191,12 @@
                     <div class="card-body gap-3">
                         <h3 class="font-semibold">{{ __('What it applies to') }}</h3>
                         <label class="label cursor-pointer justify-start gap-3 p-0">
-                            <input type="checkbox" name="applies_by_default" value="1" class="toggle toggle-sm toggle-primary"
+                            <input type="checkbox" name="applies_by_default" value="1" class="toggle toggle-sm toggle-success"
                                    @checked(old('applies_by_default', $tax->applies_by_default ?? true))>
                             <span class="label-text whitespace-normal">{{ __('Applies to every product') }}</span>
                         </label>
                         <label class="label cursor-pointer justify-start gap-3 p-0">
-                            <input type="checkbox" name="applies_to_shipping" value="1" class="toggle toggle-sm toggle-primary"
+                            <input type="checkbox" name="applies_to_shipping" value="1" class="toggle toggle-sm toggle-success"
                                    @checked(old('applies_to_shipping', $tax->applies_to_shipping ?? false))>
                             <span class="label-text whitespace-normal">{{ __('Also applies to shipping') }}</span>
                         </label>

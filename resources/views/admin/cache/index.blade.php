@@ -54,7 +54,7 @@
                         <div class="grid sm:grid-cols-3 gap-2">
                             @foreach ($choices as $key => [$icon, $label, $explain])
                                 <label class="flex gap-3 rounded-box border border-base-300 p-3 cursor-pointer has-[:checked]:border-primary has-[:checked]:bg-primary/5">
-                                    <input type="radio" name="{{ $field }}" value="{{ $key }}" class="radio radio-primary radio-sm mt-0.5" x-model="{{ $field }}" @checked($picked[$field] === $key)>
+                                    <input type="radio" name="{{ $field }}" value="{{ $key }}" class="radio radio-sm mt-0.5" x-model="{{ $field }}" @checked($picked[$field] === $key)>
                                     <span class="flex flex-col gap-0.5">
                                         <span class="font-medium flex items-center gap-1.5">
                                             <x-icon :name="$icon" size="sm" /> {{ $label }}

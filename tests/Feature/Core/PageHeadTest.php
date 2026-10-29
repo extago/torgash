@@ -4,6 +4,8 @@ namespace Tests\Feature\Core;
 
 use App\Core\Seo\NormaliseUrl;
 use App\Core\Settings\SettingsManager;
+use App\Core\Themes\ThemeSettings;
+use App\Models\Storefront;
 use Illuminate\Http\Request;
 use Tests\TestCase;
 use Torgash\Catalog\Models\Category;
@@ -181,6 +183,39 @@ class PageHeadTest extends TestCase
         // The last crumb is the page itself and carries no URL — a link to
         // where you are is noise to a reader and a self-reference in the graph.
         $this->assertArrayNotHasKey('item', end($crumbs['itemListElement']));
+    }
+
+    /**
+     * Who the shop is, from what its storefront says about itself — the other
+     * numbers, the legal address, the logo and its pages elsewhere. Reported
+     * from the live shop (2026-10-29): name, address, telephone and e-mail
+     * were all the graph knew of it.
+     */
+    public function test_the_organization_tells_what_the_storefront_does(): void
+    {
+        $storefront = Storefront::query()->firstOrFail();
+        $storefront->update(['theme' => 'default', 'contacts' => [
+            'phone' => '+380441234567',
+            'address' => "Kyiv,\n  1 Main street",
+            'hours' => 'Mon–Fri 9–18',
+            'phones' => [['number' => '+380441234567', 'label' => 'Main'], ['number' => '+380447654321', 'label' => 'Service']],
+            'socials' => [['url' => 'https://instagram.com/shop', 'network' => 'instagram'], ['url' => 'javascript:alert(1)', 'network' => '']],
+        ]]);
+        app(SettingsManager::class)->set('core', 'default_country', 'ua');
+        app(SettingsManager::class)->set('theme.default', 'logo', 'theme-images/'.$storefront->id.'/logo-'.str_repeat('A', 16).'.png', $storefront->id);
+        app()->forgetInstance(ThemeSettings::class);
+
+        $body = $this->get('http://localhost/product/head-widget')->assertOk()->getContent();
+        preg_match('#<script type="application/ld\+json">(.*?)</script>#s', $body, $match);
+        $shop = collect(json_decode($match[1] ?? '', true)['@graph'] ?? [])->firstWhere('@type', 'Organization');
+
+        $this->assertSame('+380441234567', $shop['telephone']);
+        $this->assertSame([['@type' => 'ContactPoint', 'telephone' => '+380447654321', 'contactType' => 'Service']], $shop['contactPoint'], 'the main number once');
+        $this->assertSame(['@type' => 'PostalAddress', 'streetAddress' => 'Kyiv, 1 Main street', 'addressCountry' => 'UA'], $shop['address']);
+        $this->assertStringStartsWith('http', $shop['logo']);
+        $this->assertStringEndsWith('/logo-'.str_repeat('A', 16).'.png', $shop['logo']);
+        $this->assertSame(['https://instagram.com/shop'], $shop['sameAs'], 'only the address of a page');
+        $this->assertArrayNotHasKey('openingHours', $shop, 'an Organization has none, and free text is not its format');
     }
 
     /** The trail a visitor reads is the same list the graph is built from. */

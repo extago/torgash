@@ -73,7 +73,7 @@ class PlaceOrder
      *
      * @return array<string, mixed>
      */
-    public function rules(Quote $quote, ?string $shippingMethodId, bool $needsDelivery = true): array
+    public function rules(Quote $quote, ?string $shippingMethodId, bool $needsDelivery = true, ?string $currency = null): array
     {
         // An order that is collected has no street to be taken to. Asked of the
         // option actually chosen, never a shop-wide setting. An order of goods
@@ -124,7 +124,7 @@ class PlaceOrder
             'postal_code' => ($postal === 'required' && $needsDelivery ? 'required' : 'nullable').'|string|max:20',
             'notes' => 'nullable|string|max:1000',
             'shipping_method_id' => $shippingActive ? ['required', Rule::in($quote->offerIds())] : ['nullable'],
-            'payment_method_id' => ['required', Rule::in($this->paymentMethods()->modelKeys())],
+            'payment_method_id' => ['required', Rule::in($this->paymentMethods($currency)->modelKeys())],
         ];
     }
 
@@ -176,9 +176,12 @@ class PlaceOrder
      *
      * @return Collection<int, PaymentMethod>
      */
-    public function paymentMethods(): Collection
+    public function paymentMethods(?string $currency = null): Collection
     {
-        $quoted = current_currency();
+        // The currency the ORDER is quoted in: the visitor's own on the
+        // storefront; the shop's books for a manager's order, whatever the
+        // admin was last browsing in.
+        $quoted = $currency ?? current_currency();
         $currencies = app(Currencies::class);
 
         return PaymentMethod::with('media')->where('enabled', true)->orderBy('position')->get()

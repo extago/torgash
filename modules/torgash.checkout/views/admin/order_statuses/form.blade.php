@@ -19,8 +19,8 @@
         @csrf
         @if ($status->exists) @method('PUT') @endif
 
-        <div class="sticky top-16 z-20 -mx-6 px-6 py-3 bg-base-200/95 backdrop-blur border-b border-base-300 flex items-center gap-3">
-            <a href="{{ route('admin.orders.statuses.index') }}" class="btn btn-ghost btn-sm btn-square" title="{{ __('Back to statuses') }}">
+        <x-admin.form-bar>
+            <a href="{{ route('admin.orders.statuses.index') }}" class="btn btn-ghost btn-sm btn-square" title="{{ __('Back to statuses') }}" aria-label="{{ __('Back to statuses') }}">
                 <x-icon name="arrow-left" size="lg" />
             </a>
             <div class="flex-1 min-w-0">
@@ -29,7 +29,7 @@
             </div>
             @if ($status->exists)
                 <div class="dropdown dropdown-end">
-                    <div tabindex="0" role="button" class="btn btn-ghost btn-sm btn-square" title="{{ __('More actions') }}">
+                    <div tabindex="0" role="button" class="btn btn-ghost btn-sm btn-square" title="{{ __('More actions') }}" aria-label="{{ __('More actions') }}">
                         <x-icon name="settings" size="lg" />
                     </div>
                     <ul tabindex="0" class="dropdown-content menu menu-sm bg-base-100 rounded-box shadow-md w-60 mt-2 p-2 z-50 border border-base-300">
@@ -46,9 +46,11 @@
                     </ul>
                 </div>
             @endif
-            <a href="{{ route('admin.orders.statuses.index') }}" class="btn btn-ghost btn-sm">{{ __('Cancel') }}</a>
-            <button class="btn btn-primary btn-sm">{{ $status->exists ? __('Save') : __('Create') }}</button>
-        </div>
+            <x-slot:actions>
+                <a href="{{ route('admin.orders.statuses.index') }}" class="btn btn-ghost btn-sm">{{ __('Cancel') }}</a>
+                <button class="btn btn-primary btn-sm">{{ $status->exists ? __('Save') : __('Create') }}</button>
+            </x-slot:actions>
+        </x-admin.form-bar>
 
         @if (session('status'))
             <div class="alert alert-success text-sm">{{ session('status') }}</div>
@@ -65,7 +67,7 @@
                         <x-admin.translatable-field name="name" :label="__('Name')" :value="$status->name ?? []" required x-model="name"
                                                     :placeholder="__('e.g. Shipped')" />
                         <fieldset class="fieldset p-0"><legend class="fieldset-legend">{{ __('Code') }} *</legend>
-                            <input name="code" value="{{ old('code', $status->code) }}" required pattern="[A-Za-z0-9_-]+"
+                            <input name="code" autocapitalize="off" autocorrect="off" spellcheck="false" value="{{ old('code', $status->code) }}" required pattern="[A-Za-z0-9_-]+"
                                    class="input input-bordered w-full max-w-xs font-mono" placeholder="shipped" @disabled($status->exists)>
                             <p class="label text-xs opacity-60 whitespace-normal">
                                 {{ $status->exists
@@ -82,7 +84,7 @@
                         <div class="flex flex-col gap-2">
                             @foreach ($stockChoices as $value => [$icon, $title, $text])
                                 <label class="flex items-start gap-3 rounded-box border p-3 cursor-pointer has-[:checked]:border-primary has-[:checked]:bg-primary/5 border-base-300">
-                                    <input type="radio" name="inventory_action" value="{{ $value }}" class="radio radio-sm radio-primary mt-0.5" @checked($action === $value)>
+                                    <input type="radio" name="inventory_action" value="{{ $value }}" class="radio radio-sm mt-0.5" @checked($action === $value)>
                                     <div>
                                         <div class="font-medium flex items-center gap-1.5"><x-icon :name="$icon" size="sm" class="opacity-60" /> {{ $title }}</div>
                                         <div class="text-xs opacity-60 mt-0.5">{{ $text }}</div>
@@ -117,7 +119,7 @@
                     <div class="card-body gap-2">
                         <h3 class="font-semibold">{{ __('For new orders') }}</h3>
                         <label class="label cursor-pointer justify-start gap-3">
-                            <input type="checkbox" name="is_default" value="1" class="toggle toggle-sm toggle-primary"
+                            <input type="checkbox" name="is_default" value="1" class="toggle toggle-sm toggle-success"
                                    @checked(old('is_default', $status->is_default ?? false))>
                             <span class="label-text whitespace-normal">{{ __('A new order gets this status') }}</span>
                         </label>

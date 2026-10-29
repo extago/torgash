@@ -3,6 +3,7 @@
 use Illuminate\Support\Facades\Route;
 use Torgash\Catalog\Http\Admin\AvailabilityStatusesController;
 use Torgash\Catalog\Http\Admin\CategoriesController;
+use Torgash\Catalog\Http\Admin\FeatureGroupsController;
 use Torgash\Catalog\Http\Admin\FeaturesController;
 use Torgash\Catalog\Http\Admin\FeatureValuesController;
 use Torgash\Catalog\Http\Admin\FilterPagesController;
@@ -25,6 +26,12 @@ Route::post('products/trash/{id}/restore', [ProductsController::class, 'restore'
 Route::delete('products/trash/{id}', [ProductsController::class, 'forceDelete'])->name('products.force-delete');
 // What a product picker offers as the admin types (Admin\ProductLookup).
 Route::get('products/lookup', [ProductsController::class, 'lookup'])->name('products.lookup');
+// The groups characteristics are filed under (PLAN §63.10); the order as dragged.
+Route::post('feature-groups/sort', [FeatureGroupsController::class, 'sort'])->name('feature-groups.sort');
+Route::resource('feature-groups', FeatureGroupsController::class)->except(['show'])->parameters(['feature-groups' => 'group']);
+// The product form's characteristics beyond its own set (PLAN §63.9).
+Route::get('products/features/search', [ProductsController::class, 'featureSearch'])->name('products.features.search');
+Route::get('products/features/field', [ProductsController::class, 'featureField'])->name('products.features.field');
 Route::post('products/{product}/duplicate', [ProductsController::class, 'duplicate'])->name('products.duplicate');
 // List-screen actions (HTMX row swaps + the bulk bar). Declared before the
 // resource so none of them is swallowed by the {product} wildcard.

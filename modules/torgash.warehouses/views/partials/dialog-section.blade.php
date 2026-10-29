@@ -22,7 +22,7 @@
         @if ($whChoice)
             <label class="flex items-center gap-3 cursor-pointer">
                 <input type="hidden" name="point_only" value="0">
-                <input type="checkbox" name="point_only" value="1" class="toggle toggle-success" x-model="only">
+                <input type="checkbox" name="point_only" value="1" class="toggle toggle-primary" x-model="only">
                 <span class="font-medium">{{ __('Stock at the chosen shop') }}</span>
             </label>
         @endif
@@ -30,7 +30,7 @@
         <div class="flex flex-col gap-2" role="radiogroup" aria-label="{{ __('Your shop') }}">
             @foreach ($whPoints as $whPoint)
                 <label class="flex items-start gap-3 p-4 rounded-box border-2 cursor-pointer transition-colors border-base-300 has-[:checked]:border-base-content">
-                    <input type="radio" name="point_id" value="{{ $whPoint->id }}" class="radio mt-0.5" @checked($whChosen === $whPoint->id)>
+                    <input type="radio" name="point_id" value="{{ $whPoint->id }}" class="radio radio-primary mt-0.5" @checked($whChosen === $whPoint->id)>
                     <span class="flex flex-col gap-0.5 min-w-0">
                         <span class="font-semibold">{{ $whPoint->t('name') }}</span>
                         @if ($whPoint->address)
@@ -45,7 +45,7 @@
                 </label>
             @endforeach
             <label class="flex items-center gap-3 px-4 py-3 rounded-box border-2 cursor-pointer transition-colors border-base-300 has-[:checked]:border-base-content">
-                <input type="radio" name="point_id" value="0" class="radio" @checked($whChosen === null)>
+                <input type="radio" name="point_id" value="0" class="radio radio-primary" @checked($whChosen === null)>
                 <span class="text-sm opacity-80">{{ __('No shop — show the whole catalogue') }}</span>
             </label>
         </div>

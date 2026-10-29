@@ -135,7 +135,7 @@
         <div class="flex flex-col justify-end">
             <label class="label cursor-pointer justify-start gap-3">
                 <input type="hidden" name="{{ $fieldName }}" value="0">
-                <input type="checkbox" name="{{ $fieldName }}" value="1" class="toggle toggle-sm" @checked(filter_var($fieldCurrent, FILTER_VALIDATE_BOOLEAN))>
+                <input type="checkbox" name="{{ $fieldName }}" value="1" class="toggle toggle-sm toggle-success" @checked(filter_var($fieldCurrent, FILTER_VALIDATE_BOOLEAN))>
                 <span class="label-text whitespace-normal">{{ $fieldLabel }}</span>
             </label>
             @if ($fieldHelp !== '')<p class="text-xs opacity-60">{{ $fieldHelp }}</p>@endif

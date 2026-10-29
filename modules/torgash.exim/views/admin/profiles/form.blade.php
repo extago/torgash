@@ -12,8 +12,8 @@
         @csrf
         @if ($profile->exists) @method('PUT') @endif
 
-        <div class="sticky top-16 z-20 -mx-6 px-6 py-3 bg-base-200/95 backdrop-blur border-b border-base-300 flex items-center gap-3">
-            <a href="{{ route('admin.exim.profiles.index') }}" class="btn btn-ghost btn-sm btn-square" title="{{ __('Back to export profiles') }}">
+        <x-admin.form-bar>
+            <a href="{{ route('admin.exim.profiles.index') }}" class="btn btn-ghost btn-sm btn-square" title="{{ __('Back to export profiles') }}" aria-label="{{ __('Back to export profiles') }}">
                 <x-icon name="arrow-left" size="lg" />
             </a>
             <div class="flex-1 min-w-0">
@@ -21,7 +21,7 @@
                 <div class="font-semibold truncate leading-tight">{{ $profile->exists ? $profile->t('name', $locale) : __('New export profile') }}</div>
             </div>
             <div class="dropdown dropdown-end">
-                <div tabindex="0" role="button" class="btn btn-ghost btn-sm btn-square" title="{{ __('More actions') }}">
+                <div tabindex="0" role="button" class="btn btn-ghost btn-sm btn-square" title="{{ __('More actions') }}" aria-label="{{ __('More actions') }}">
                     <x-icon name="settings" size="lg" />
                 </div>
                 <ul tabindex="0" class="dropdown-content menu menu-sm bg-base-100 rounded-box shadow-md w-60 mt-2 p-2 z-50 border border-base-300">
@@ -34,9 +34,11 @@
                     @endif
                 </ul>
             </div>
-            <a href="{{ route('admin.exim.profiles.index') }}" class="btn btn-ghost btn-sm">{{ __('Cancel') }}</a>
-            <button class="btn btn-primary btn-sm">{{ $profile->exists ? __('Save') : __('Create') }}</button>
-        </div>
+            <x-slot:actions>
+                <a href="{{ route('admin.exim.profiles.index') }}" class="btn btn-ghost btn-sm">{{ __('Cancel') }}</a>
+                <button class="btn btn-primary btn-sm">{{ $profile->exists ? __('Save') : __('Create') }}</button>
+            </x-slot:actions>
+        </x-admin.form-bar>
 
         @if (session('status'))
             <div class="alert alert-success text-sm">{{ session('status') }}</div>
@@ -239,7 +241,7 @@
                                 </select>
                             </fieldset>
                             <label class="label cursor-pointer justify-start gap-3 pb-2">
-                                <input type="checkbox" name="enabled_only" value="1" class="toggle toggle-sm toggle-primary"
+                                <input type="checkbox" name="enabled_only" value="1" class="toggle toggle-sm toggle-success"
                                        @checked(old('enabled_only', $profile->filters['enabled_only'] ?? true))>
                                 <span class="label-text">{{ __('Only what is switched on') }}</span>
                             </label>
@@ -294,7 +296,7 @@
 
                         <div class="flex flex-col gap-2">
                             <label class="label cursor-pointer justify-start gap-3 whitespace-normal">
-                                <input type="checkbox" name="rebuild_on_change" value="1" class="toggle toggle-sm toggle-primary"
+                                <input type="checkbox" name="rebuild_on_change" value="1" class="toggle toggle-sm toggle-success"
                                        @checked(old('rebuild_on_change', $profile->rebuild_on_change))>
                                 <span class="label-text">{{ __('When its data changes') }}</span>
                             </label>

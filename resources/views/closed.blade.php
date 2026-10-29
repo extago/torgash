@@ -3,7 +3,8 @@
      menu and the search would show the very shop that is not open yet. In
      the theme's colours, with its logo and, when the shop says so, its
      contacts. A theme overrides it as
-     `themes/<theme>/views/closed.blade.php`. No script: nothing here needs one. --}}
+     `themes/<theme>/views/closed.blade.php`. No script of its own: the one
+     the theme's style component (x-theme.style) prints writes the colour scheme. --}}
 @php
     $closedText = trim((string) pick_translation($storefront->closed_message ?? []));
     $closedPhone = $storefront->contact('phone');

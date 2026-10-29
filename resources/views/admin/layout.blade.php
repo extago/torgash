@@ -18,9 +18,14 @@
     <link rel="stylesheet" href="{{ asset_url('/assets/css/app.css') }}">
     @stack('head')
     <script nonce="{{ csp_nonce() }}" src="{{ asset_url('/assets/js/vendor/htmx.min.js') }}" defer></script>
+    {{-- Alpine Sort (MIT, SortableJS inside): `x-sort` on a list, and the
+         dragging works under a finger. Before Alpine, which it plugs into. --}}
+    <script nonce="{{ csp_nonce() }}" src="{{ asset_url('/assets/js/vendor/alpine-sort.min.js') }}" defer></script>
     <script nonce="{{ csp_nonce() }}" src="{{ asset_url('/assets/js/vendor/alpine.min.js') }}" defer></script>
     {{-- A table's status menu opening past the table's own scroll box. --}}
     <script nonce="{{ csp_nonce() }}" src="{{ asset_url('/assets/js/admin-dropdowns.js') }}" defer></script>
+    {{-- Wide tables and strips of tabs on a narrow screen. --}}
+    <script nonce="{{ csp_nonce() }}" src="{{ asset_url('/assets/js/admin-scroll.js') }}" defer></script>
     <script nonce="{{ csp_nonce() }}">
         // A page open longer than the session: the token it holds is dead, so
         // every HTMX action would fail silently (419). A fresh page has a fresh one.
@@ -32,14 +37,20 @@
     <script nonce="{{ csp_nonce() }}" src="{{ asset_url('/assets/js/actions.js') }}" defer></script>
 </head>
 <body class="torgash-admin min-h-screen bg-base-200">
-<div class="drawer lg:drawer-open">
+{{-- `data-sidebar`: this person's own choice of a whole sidebar or a strip
+     of icons from `lg` (admin_preferences, PLAN §62) — drawn folded by the
+     server, so nothing jumps. --}}
+<div class="drawer lg:drawer-open" data-sidebar="{{ \App\Core\Admin\Preferences::get(auth()->user(), 'sidebar') === 'strip' ? 'strip' : 'full' }}">
     <input id="admin-drawer" type="checkbox" class="drawer-toggle">
 
     <div class="drawer-content flex flex-col">
         {{-- The bar runs the full width, its contents only as wide as the
              page below (max-w-[1600px], the same side padding as <main>), so
              the search and the bell line up with the cards they belong to. --}}
-        <header class="bg-base-100 border-b border-base-300 sticky top-0 z-30 px-6">
+        {{-- On a phone the header scrolls away with the page (app.css, "The
+             admin on a phone"): the screen is short, and an edit screen's own
+             bar carries the way back. --}}
+        <header class="admin-header bg-base-100 border-b border-base-300 sticky top-0 z-30 px-(--admin-gutter)">
           <div class="navbar px-0 mx-auto w-full max-w-[1600px]">
             <div class="flex-none lg:hidden">
                 <label for="admin-drawer" class="btn btn-square btn-ghost btn-sm">
@@ -64,7 +75,7 @@
                  anywhere that is not a text field puts the cursor here. --}}
             <div class="flex-none relative me-1" x-data="adminSearch()"
                  @keydown.window="shortcut($event)" @click.outside="open = false">
-                <a href="{{ route('admin.search') }}" class="btn btn-ghost btn-circle btn-sm md:hidden" title="{{ __('Search screens and settings') }}">
+                <a href="{{ route('admin.search') }}" class="btn btn-ghost btn-circle btn-sm md:hidden" title="{{ __('Search screens and settings') }}" aria-label="{{ __('Search screens and settings') }}">
                     <x-icon name="search" size="lg" />
                 </a>
                 <form method="GET" action="{{ route('admin.search') }}" class="hidden md:block" @submit="go($event)">
@@ -128,6 +139,13 @@
             <div class="flex-1 basis-0 flex items-center justify-end gap-1">
                 @include('admin.partials.notifications')
 
+                {{-- The content language, the currency of amounts and the
+                     colour scheme stand in the bar on a wide screen; below
+                     it (a phone, a tablet held upright) there is no room for
+                     them, and the same choices are in the profile menu below.
+                     Under a finger they stay there a little longer, buttons
+                     being bigger (app.css, .admin-bar-choices). --}}
+                <div class="admin-bar-choices hidden lg:contents">
                 @php $contentLanguages = \App\Models\Language::where('enabled', true)->orderBy('sort')->get(); @endphp
                 @if ($contentLanguages->count() > 1)
                     <div class="dropdown dropdown-end">
@@ -199,24 +217,12 @@
                     </div>
                 @endif
 
-                <label class="swap swap-rotate btn btn-ghost btn-circle btn-sm">
-                    <input type="checkbox" id="theme-toggle" class="theme-controller" value="torgash-dark">
+                <label class="swap swap-rotate btn btn-ghost btn-circle btn-sm" title="{{ __('Dark theme') }}">
+                    <input type="checkbox" class="theme-controller" value="torgash-dark" data-theme-toggle aria-label="{{ __('Dark theme') }}">
                     <x-icon name="sun" size="lg" class="swap-off" />
                     <x-icon name="moon" size="lg" class="swap-on" />
                 </label>
-                <script nonce="{{ csp_nonce() }}">
-                    (function () {
-                        var toggle = document.getElementById('theme-toggle');
-                        var current = document.documentElement.getAttribute('data-theme')
-                            || (matchMedia('(prefers-color-scheme: dark)').matches ? 'torgash-dark' : 'torgash-light');
-                        toggle.checked = current === 'torgash-dark';
-                        toggle.addEventListener('change', function () {
-                            var theme = toggle.checked ? 'torgash-dark' : 'torgash-light';
-                            document.documentElement.setAttribute('data-theme', theme);
-                            try { localStorage.setItem('torgash-theme', theme); } catch (e) {}
-                        });
-                    })();
-                </script>
+                </div>
 
                 <div class="dropdown dropdown-end">
                     <div tabindex="0" role="button" class="btn btn-ghost btn-sm gap-2 normal-case pl-1.5">
@@ -231,7 +237,43 @@
                         <span class="hidden sm:inline">{{ auth()->user()?->name }}</span>
                         <x-icon name="chevron-down" size="sm" class="opacity-50" />
                     </div>
-                    <ul tabindex="0" class="dropdown-content menu menu-sm bg-base-100 rounded-box shadow-md w-52 mt-3 p-2 z-50 border border-base-300">
+                    <div tabindex="0" class="dropdown-content bg-base-100 rounded-box shadow-md w-52 max-lg:w-64 max-lg:max-h-[calc(100dvh-5rem)] max-lg:overflow-y-auto mt-3 p-2 z-50 border border-base-300">
+                    {{-- A narrow screen's share of the bar: the same three
+                         choices as above, as buttons. Links, and a form per
+                         currency as in the bar — nothing here belongs to
+                         another form. --}}
+                    <div class="admin-menu-choices lg:hidden flex flex-col gap-3 px-2 pt-1 pb-3 mb-1 border-b border-base-300">
+                        @if ($contentLanguages->count() > 1)
+                            <div>
+                                <div class="text-xs opacity-60 mb-1.5">{{ __('Content language') }}</div>
+                                <div class="flex flex-wrap gap-1.5">
+                                    @foreach ($contentLanguages as $lang)
+                                        <a href="{{ route('admin.content-locale.set', ['locale' => $lang->code]) }}"
+                                           @class(['btn btn-sm', 'btn-primary' => admin_content_locale() === $lang->code])>{{ strtoupper($lang->code) }}</a>
+                                    @endforeach
+                                </div>
+                            </div>
+                        @endif
+                        @if (count($shopCurrencies) > 1)
+                            <div>
+                                <div class="text-xs opacity-60 mb-1.5">{{ __('Show amounts in') }}</div>
+                                <div class="flex flex-wrap gap-1.5">
+                                    @foreach (array_merge([''], array_keys($shopCurrencies)) as $code)
+                                        <form method="POST" action="{{ route('admin.currency.set') }}">
+                                            @csrf
+                                            <input type="hidden" name="currency" value="{{ $code }}">
+                                            <button type="submit" @class(['btn btn-sm', 'btn-primary' => admin_currency() === ($code ?: null)])>{{ $code ?: __('Initial') }}</button>
+                                        </form>
+                                    @endforeach
+                                </div>
+                            </div>
+                        @endif
+                        <label class="flex items-center justify-between gap-3 cursor-pointer text-sm">
+                            {{ __('Dark theme') }}
+                            <input type="checkbox" class="toggle toggle-sm theme-controller" value="torgash-dark" data-theme-toggle>
+                        </label>
+                    </div>
+                    <ul class="menu menu-sm w-full p-0">
                         <li class="menu-title text-xs px-3 pt-1">{{ __('Signed in as') }}</li>
                         <li class="disabled px-3 pb-1 text-sm opacity-70">{{ auth()->user()?->email }}</li>
                         <li class="menu-title p-0 my-1" role="separator"><span class="block h-px bg-base-300"></span></li>
@@ -274,7 +316,26 @@
                             </form>
                         </li>
                     </ul>
+                    </div>
                 </div>
+                {{-- Both switches of the colour scheme, the bar's and the
+                     profile menu's, say the same thing and move together. --}}
+                <script nonce="{{ csp_nonce() }}">
+                    (function () {
+                        var toggles = document.querySelectorAll('[data-theme-toggle]');
+                        var current = document.documentElement.getAttribute('data-theme')
+                            || (matchMedia('(prefers-color-scheme: dark)').matches ? 'torgash-dark' : 'torgash-light');
+                        toggles.forEach(function (toggle) {
+                            toggle.checked = current === 'torgash-dark';
+                            toggle.addEventListener('change', function () {
+                                var theme = toggle.checked ? 'torgash-dark' : 'torgash-light';
+                                document.documentElement.setAttribute('data-theme', theme);
+                                toggles.forEach(function (other) { other.checked = toggle.checked; });
+                                try { localStorage.setItem('torgash-theme', theme); } catch (e) {}
+                            });
+                        });
+                    })();
+                </script>
             </div>
           </div>
         </header>
@@ -291,10 +352,30 @@
             $pageContent = $__env->yieldContent('content');
             $pageOwnHeading = $__env->hasSection('own_heading') || str_contains($pageContent, '<h1');
         @endphp
-        <main class="p-6">
+        <main class="p-(--admin-gutter)">
             <div class="mx-auto w-full max-w-[1600px] flex flex-col gap-6">
                 @unless ($pageOwnHeading)
-                    <h1 class="text-2xl font-semibold leading-tight">@yield('title', __('Dashboard'))</h1>
+                  {{-- A screen with no tabs over its card puts its actions level
+                       with the heading (`title_actions`) rather than in a row
+                       of their own that stood empty but for a button. --}}
+                  <div class="flex flex-wrap items-center justify-between gap-3">
+                    <h1 class="text-2xl font-semibold leading-tight flex items-center gap-2">
+                        <span>@yield('title', __('Dashboard'))</span>
+                        {{-- What the screen is for (`title_hint`), a hover away beside
+                             the name: the sentence a list used to open its card with,
+                             so the card's first row is the search and the buttons. --}}
+                        @hasSection('title_hint')
+                            <x-popover hover placement="bottom" align="start" class="btn btn-ghost btn-sm btn-square text-base-content/50 font-normal"
+                                       :label="__('About this screen')" panel-class="admin-hint-popover p-3 text-sm font-normal leading-snug">
+                                @yield('title_hint')
+                                <x-slot:trigger><x-icon name="info" size="md" /></x-slot:trigger>
+                            </x-popover>
+                        @endif
+                    </h1>
+                    @hasSection('title_actions')
+                        <div class="admin-tabs-actions">@yield('title_actions')</div>
+                    @endif
+                  </div>
                 @endunless
                 {!! $pageContent !!}
             </div>
@@ -303,18 +384,23 @@
 
     <div class="drawer-side z-40">
         <label for="admin-drawer" class="drawer-overlay"></label>
-        <aside class="h-full w-64 bg-neutral text-neutral-content flex flex-col">
-            <div class="h-16 flex items-center gap-2.5 px-5 border-b border-white/10 shrink-0">
+        {{-- From `lg` the sidebar may be a strip of icons (the drawer's
+             `data-sidebar`): the words (`admin-sidebar-label`) go, and each
+             section's items open as a panel beside its icon — a popover, so
+             the scrolling sidebar clips nothing. app.css, "The sidebar as a
+             strip of icons"; the script below does the folding. --}}
+        <aside class="admin-sidebar h-full w-64 bg-neutral text-neutral-content flex flex-col">
+            <div class="admin-sidebar-brand h-16 flex items-center gap-2.5 px-5 border-b border-white/10 shrink-0">
                 <div class="h-8 w-8 rounded-lg bg-primary text-primary-content flex items-center justify-center font-bold text-sm shrink-0">T</div>
-                <span class="text-lg font-bold leading-none">Torgash <span class="text-primary">CMS</span></span>
+                <span class="admin-sidebar-label text-lg font-bold leading-none">Torgash <span class="text-primary">CMS</span></span>
             </div>
 
             <nav class="torgash-sidebar-scroll flex-1 min-h-0 overflow-y-auto py-4 px-3">
                 <ul class="menu menu-sm w-full gap-0.5 p-0 mb-4">
                     <li>
-                        <a href="{{ route('admin.dashboard') }}"
+                        <a href="{{ route('admin.dashboard') }}" title="{{ __('Dashboard') }}"
                            class="rounded-lg {{ request()->routeIs('admin.dashboard') ? 'bg-primary text-primary-content hover:bg-primary' : 'hover:bg-white/5' }}">
-                            <x-icon name="house" size="lg" /> {{ __('Dashboard') }}
+                            <x-icon name="house" size="lg" /> <span class="admin-sidebar-label">{{ __('Dashboard') }}</span>
                         </a>
                     </li>
                 </ul>
@@ -328,14 +414,21 @@
                 <div class="flex flex-col gap-1" data-admin-sections>
                     @foreach (app(App\Core\Admin\AdminMenu::class)->sections() as $section)
                         <details class="group/section" data-section="{{ $section['key'] }}" @if ($section['active']) open data-active @endif>
-                            <summary class="flex items-center gap-2 px-3 py-1.5 rounded-lg cursor-pointer select-none list-none
+                            <summary id="admin-section-{{ $section['key'] }}-summary" title="{{ $section['label'] }}"
+                                     style="anchor-name: --admin-section-{{ $section['key'] }}"
+                                     class="flex items-center gap-2 px-3 py-1.5 rounded-lg cursor-pointer select-none list-none
                                             text-xs font-semibold uppercase tracking-wider text-neutral-content/50 hover:bg-white/5 hover:text-neutral-content/80
                                             [&::-webkit-details-marker]:hidden">
                                 <x-icon :name="$section['icon']" size="sm" />
-                                <span class="flex-1">{{ $section['label'] }}</span>
-                                <x-icon name="chevron-right" size="sm" class="transition-transform group-open/section:rotate-90" />
+                                <span class="flex-1 admin-sidebar-label">{{ $section['label'] }}</span>
+                                <x-icon name="chevron-right" size="sm" class="admin-sidebar-label transition-transform group-open/section:rotate-90" />
                             </summary>
-                            <ul class="menu menu-sm w-full gap-0.5 p-0 pt-1 pb-2">
+                            {{-- As a strip, this list is the panel (popover) beside the icon:
+                                 anchored to its summary, which popover-anchor.js reads
+                                 through `data-anchor`. The title is drawn only there. --}}
+                            <ul id="admin-section-{{ $section['key'] }}" class="menu menu-sm w-full gap-0.5 p-0 pt-1 pb-2"
+                                style="position-anchor: --admin-section-{{ $section['key'] }}" data-anchor="#admin-section-{{ $section['key'] }}-summary">
+                                <li class="menu-title admin-sidebar-flyout-title text-xs">{{ $section['label'] }}</li>
                                 @foreach ($section['items'] as $item)
                                     <li>
                                         <a href="{{ $item['url'] }}"
@@ -353,19 +446,92 @@
                         const key = 'torgash.admin.sections';
                         let open = {};
                         try { open = JSON.parse(localStorage.getItem(key) || '{}'); } catch (e) {}
-                        document.querySelectorAll('[data-admin-sections] > details').forEach((el) => {
+                        const drawer = document.querySelector('.drawer');
+                        const wide = matchMedia('(width >= 64rem)');
+                        const isStrip = () => drawer.dataset.sidebar === 'strip' && wide.matches;
+                        const sections = [...document.querySelectorAll('[data-admin-sections] > details')];
+                        sections.forEach((el) => {
                             if (!el.hasAttribute('data-active') && open[el.dataset.section]) el.open = true;
+                            // What the strip opens and closes is not the admin's doing.
                             el.addEventListener('toggle', () => {
+                                if (isStrip()) return;
                                 open[el.dataset.section] = el.open;
                                 try { localStorage.setItem(key, JSON.stringify(open)); } catch (e) {}
                             });
                         });
+
+                        // The strip (PLAN §62): every section stays open so its
+                        // list is rendered, and the list is a popover shown beside
+                        // the icon on a tap; unfolded, the lists are the sections'
+                        // own again, open as remembered.
+                        // The button stands below this script, in the foot: looked up
+                        // when it is needed, never now.
+                        const toggleOf = () => document.querySelector('[data-sidebar-toggle]');
+                        const apply = () => {
+                            const strip = isStrip();
+                            const toggle = toggleOf();
+                            sections.forEach((el) => {
+                                const list = el.querySelector(':scope > ul');
+                                if (strip) {
+                                    el.open = true;
+                                    list.setAttribute('popover', 'auto');
+                                    list.classList.add('torgash-popover', 'admin-sidebar-flyout');
+                                } else {
+                                    if (list.matches(':popover-open')) list.hidePopover();
+                                    list.removeAttribute('popover');
+                                    list.classList.remove('torgash-popover', 'admin-sidebar-flyout');
+                                    el.open = el.hasAttribute('data-active') || !!open[el.dataset.section];
+                                }
+                            });
+                            if (toggle) {
+                                const label = drawer.dataset.sidebar === 'strip' ? toggle.dataset.expand : toggle.dataset.collapse;
+                                toggle.title = label;
+                                toggle.setAttribute('aria-label', label);
+                            }
+                        };
+                        sections.forEach((el) => {
+                            el.querySelector(':scope > summary').addEventListener('click', (event) => {
+                                if (!isStrip()) return;
+                                event.preventDefault();
+                                el.querySelector(':scope > ul').togglePopover();
+                            });
+                        });
+                        document.addEventListener('click', (event) => {
+                            if (!event.target.closest('[data-sidebar-toggle]')) return;
+                            const mode = drawer.dataset.sidebar === 'strip' ? 'full' : 'strip';
+                            drawer.dataset.sidebar = mode;
+                            apply();
+                            fetch(@js(route('admin.preferences.sidebar')), {
+                                method: 'POST',
+                                headers: { 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content, 'Content-Type': 'application/json', 'Accept': 'application/json' },
+                                body: JSON.stringify({ mode }),
+                            }).catch(() => {});
+                        });
+                        wide.addEventListener('change', apply);
+                        apply();
+                        // Once more with the foot parsed, for the button's name.
+                        document.addEventListener('DOMContentLoaded', apply);
                     })();
                 </script>
             </nav>
 
-            <div class="p-4 text-xs text-neutral-content/40 border-t border-white/10">v{{ config('torgash.version') }}</div>
+            <div class="admin-sidebar-foot p-4 text-xs text-neutral-content/40 border-t border-white/10 flex items-center justify-between gap-2">
+                <span class="admin-sidebar-label">v{{ config('torgash.version') }}</span>
+                {{-- Fold the sidebar into a strip of icons, or open it back — from
+                     `lg`, where it stands beside the page. --}}
+                <button type="button" class="btn btn-ghost btn-sm btn-square text-neutral-content/60 hidden lg:inline-flex" data-sidebar-toggle
+                        title="{{ __('Collapse the menu') }}" aria-label="{{ __('Collapse the menu') }}"
+                        data-collapse="{{ __('Collapse the menu') }}" data-expand="{{ __('Expand the menu') }}">
+                    <x-icon name="chevrons-left" class="admin-sidebar-label" />
+                    <x-icon name="chevrons-right" class="admin-sidebar-strip-only" />
+                </button>
+            </div>
         </aside>
+        {{-- The strip's panels: the arrow's side and, in a browser without
+             anchor positioning, their place. Keyed like the component's push. --}}
+        @pushOnce('scripts', 'popover-anchor')
+            <script nonce="{{ csp_nonce() }}" src="{{ asset_url('/assets/js/popover-anchor.js') }}" defer></script>
+        @endPushOnce
     </div>
 </div>
 

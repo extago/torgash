@@ -38,5 +38,8 @@
     "The file did not arrive. It may be bigger than the server accepts.": "Файл не дошёл. Возможно, он больше, чем принимает сервер.",
     "The file is bigger than the server accepts.": "Файл больше, чем принимает сервер.",
     "Title — the product's name if empty": "Название — пусто = название товара",
+    "Move earlier": "Переместить раньше",
+    "Move later": "Переместить позже",
+    "The arrows change the order; titles and order are saved with the rest of the form.": "Порядок меняется стрелками; подписи и порядок сохраняются вместе с формой.",
     "Upload a poster": "Загрузить обложку"
 }

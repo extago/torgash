@@ -5,7 +5,7 @@
 @section('content')
     <div class="max-w-2xl">
         <div class="flex items-center gap-3 mb-4">
-            <a href="{{ route('admin.locations.countries') }}" class="btn btn-ghost btn-sm btn-square" title="{{ __('Back to countries') }}">
+            <a href="{{ route('admin.locations.countries') }}" class="btn btn-ghost btn-sm btn-square" title="{{ __('Back to countries') }}" aria-label="{{ __('Back to countries') }}">
                 <x-icon name="arrow-left" size="lg" />
             </a>
             <h1 class="text-2xl font-semibold">

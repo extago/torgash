@@ -2,6 +2,7 @@
 @use('Torgash\Giftcards\Models\Card')
 
 @section('title', __('Gift cards'))
+@section('title_hint', __('Money customers paid in advance, spent in the same box as a coupon. A card is sold as a product, issued here by hand, or printed in a batch and activated at the till.'))
 
 @section('content')
     @php
@@ -20,22 +21,30 @@
         <div class="alert alert-success">{{ session('status') }}</div>
     @endif
 
+    {{-- The states as one row of tabs over the card, the screen's action at
+         its end (app.css, `admin-tabs`); LINKS carrying every other filter. --}}
+    <div class="admin-tabs-row">
+        <nav class="admin-tabs" aria-label="{{ __('Gift cards') }}">
+            @foreach ($stateTabs as $stateKey => $stateLabel)
+                <a href="{{ request()->fullUrlWithQuery(['state' => $stateKey ?: null, 'page' => null]) }}"
+                   @class(['admin-tab', 'is-active' => $filters['state'] === $stateKey])>
+                    {{ \Illuminate\Support\Str::ucfirst($stateLabel) }} <span class="admin-tab-count">{{ $stateCounts[$stateKey] }}</span>
+                </a>
+            @endforeach
+        </nav>
+        <div class="admin-tabs-actions">
+            <a href="{{ route('admin.giftcards.create') }}" class="btn btn-primary">+ {{ __('Issue cards') }}</a>
+        </div>
+    </div>
+
     <div class="card bg-base-100 border border-base-300" x-data="{ copied: '' }">
         <div class="card-body gap-4">
-            <div class="flex justify-between items-start gap-3 flex-wrap">
-                <div class="flex flex-col gap-1 max-w-3xl">
-                    <p class="text-sm opacity-70">
-                        {{ __('Money customers paid in advance, spent in the same box as a coupon. A card is sold as a product, issued here by hand, or printed in a batch and activated at the till.') }}
-                    </p>
-                    <p class="text-sm">
-                        {{ __('Still owed on working cards') }}: <span class="font-semibold tabular-nums">{{ admin_price($outstanding) }}</span>
-                    </p>
-                </div>
-                <a href="{{ route('admin.giftcards.create') }}" class="btn btn-primary btn-sm">+ {{ __('Issue cards') }}</a>
-            </div>
+            <p class="text-sm">
+                {{ __('Still owed on working cards') }}: <span class="font-semibold tabular-nums">{{ admin_price($outstanding) }}</span>
+            </p>
 
             <form method="GET" class="flex flex-wrap items-center gap-2">
-                <label class="input input-sm w-full sm:w-80 gap-2">
+                <label class="input input-sm grow min-w-48 gap-2">
                     <x-icon name="search" size="sm" class="opacity-50" />
                     <input type="search" name="q" value="{{ $filters['q'] }}" class="grow" placeholder="{{ __('Code, last four, email, order…') }}">
                 </label>
@@ -57,15 +66,6 @@
                     </a>
                 @endif
             </form>
-
-            <div class="join flex-wrap -mt-1">
-                @foreach ($stateTabs as $stateKey => $stateLabel)
-                    <a href="{{ request()->fullUrlWithQuery(['state' => $stateKey ?: null, 'page' => null]) }}"
-                       @class(['btn btn-sm join-item', 'btn-active' => $filters['state'] === $stateKey])>
-                        {{ \Illuminate\Support\Str::ucfirst($stateLabel) }} <span class="opacity-50">{{ $stateCounts[$stateKey] }}</span>
-                    </a>
-                @endforeach
-            </div>
 
             @if ($cards->isEmpty())
                 <div class="text-center py-12 opacity-60">
@@ -113,12 +113,12 @@
                                         @endif
                                     </td>
                                     <td class="text-sm whitespace-nowrap">{{ $card->expires_at?->format('d.m.Y') ?? __('no limit') }}</td>
-                                    <td><span class="badge {{ Card::stateBadge($cardState) }}">{{ Card::stateLabel($cardState) }}</span></td>
+                                    <td><span class="badge badge-sm {{ Card::stateBadge($cardState) }}">{{ Card::stateLabel($cardState) }}</span></td>
                                     <td class="text-end whitespace-nowrap">
-                                        <a href="{{ $card->publicUrl() }}" target="_blank" class="btn btn-ghost btn-sm btn-square" title="{{ __('The card\'s page') }}">
+                                        <a href="{{ $card->publicUrl() }}" target="_blank" class="btn btn-ghost btn-sm btn-square" title="{{ __('The card\'s page') }}" aria-label="{{ __('The card\'s page') }}">
                                             <x-icon name="external-link" />
                                         </a>
-                                        <a href="{{ route('admin.giftcards.show', $card) }}" class="btn btn-ghost btn-sm btn-square" title="{{ __('Edit') }}">
+                                        <a href="{{ route('admin.giftcards.show', $card) }}" class="btn btn-ghost btn-sm btn-square" title="{{ __('Edit') }}" aria-label="{{ __('Edit') }}">
                                             <x-icon name="pencil" />
                                         </a>
                                     </td>

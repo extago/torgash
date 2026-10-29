@@ -1,6 +1,10 @@
 @extends('admin.layout')
 
 @section('title', __('Permission groups'))
+@section('title_hint', __('A permission group is a named set of what its members may do — "Sales manager", "Content editor". An administrator can be in several; the built-in Administrator group may do everything, including what modules installed later add.'))
+@section('title_actions')
+    <a href="{{ route('admin.permission-groups.create') }}" class="btn btn-primary">+ {{ __('New group') }}</a>
+@endsection
 
 @section('content')
     @include('admin.access._nav', ['accessScreen' => 'groups'])
@@ -14,12 +18,6 @@
 
     <div class="card bg-base-100 border border-base-300">
         <div class="card-body gap-4">
-            <div class="flex flex-wrap items-start justify-between gap-3">
-                <p class="text-sm opacity-70 max-w-3xl">
-                    {{ __('A permission group is a named set of what its members may do — "Sales manager", "Content editor". An administrator can be in several; the built-in Administrator group may do everything, including what modules installed later add.') }}
-                </p>
-                <a href="{{ route('admin.permission-groups.create') }}" class="btn btn-primary btn-sm">+ {{ __('New group') }}</a>
-            </div>
 
             <div class="overflow-x-auto">
                 <table class="table">

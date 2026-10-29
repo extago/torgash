@@ -1,6 +1,7 @@
 @extends('admin.layout')
 
 @section('title', __('Verification codes'))
+@section('title_hint', __('Every code the shop sent to prove an address — to sign in, to restore access — by which channel, and how it ended. This is where "the code never came" is answered. The digits themselves are never kept. Rows older than a month are removed.'))
 
 {{-- Every code the shop sent (App\Http\Controllers\Admin\VerificationCodesController). --}}
 @section('content')
@@ -16,12 +17,19 @@
         $tabs = ['' => __('All')] + array_map(fn ($s) => $s[0], $statusLabels);
     @endphp
 
+    {{-- The outcomes as one row of tabs over the card (app.css, `admin-tabs`);
+         LINKS carrying the search. --}}
+    <nav class="admin-tabs" aria-label="{{ __('Verification codes') }}">
+        @foreach ($tabs as $tabKey => $tabLabel)
+            <a href="{{ request()->fullUrlWithQuery(['status' => $tabKey ?: null, 'page' => null]) }}"
+               @class(['admin-tab', 'is-active' => (string) $status === (string) $tabKey])>
+                {{ $tabLabel }} <span class="admin-tab-count">{{ $tabKey === '' ? $counts->sum() : ($counts[$tabKey] ?? 0) }}</span>
+            </a>
+        @endforeach
+    </nav>
+
     <div class="card bg-base-100 border border-base-300">
         <div class="card-body gap-4">
-            <p class="text-sm opacity-70 max-w-3xl">
-                {{ __('Every code the shop sent to prove an address — to sign in, to restore access — by which channel, and how it ended. This is where "the code never came" is answered. The digits themselves are never kept. Rows older than a month are removed.') }}
-            </p>
-
             @if ($today->isNotEmpty())
                 <div class="grid sm:grid-cols-2 xl:grid-cols-4 gap-3">
                     @foreach ($today as $day)
@@ -37,7 +45,7 @@
             @endif
 
             <form method="GET" class="flex flex-wrap items-center gap-2">
-                <label class="input input-sm w-full sm:w-80 gap-2">
+                <label class="input input-sm grow min-w-48 gap-2">
                     <x-icon name="search" size="sm" class="opacity-50" />
                     <input type="search" name="q" value="{{ $search }}" class="grow" placeholder="{{ __('Search by address…') }}">
                 </label>
@@ -46,15 +54,6 @@
                     <a href="{{ route('admin.verification-codes') }}" class="btn btn-ghost btn-sm">{{ __('Reset') }}</a>
                 @endif
             </form>
-
-            <div class="join flex-wrap -mt-1">
-                @foreach ($tabs as $tabKey => $tabLabel)
-                    <a href="{{ request()->fullUrlWithQuery(['status' => $tabKey ?: null, 'page' => null]) }}"
-                       @class(['btn btn-sm join-item', 'btn-active' => (string) $status === (string) $tabKey])>
-                        {{ $tabLabel }} <span class="opacity-50">{{ $tabKey === '' ? $counts->sum() : ($counts[$tabKey] ?? 0) }}</span>
-                    </a>
-                @endforeach
-            </div>
 
             <div class="overflow-x-auto">
                 <table class="table table-sm">

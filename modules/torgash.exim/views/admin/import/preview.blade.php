@@ -22,35 +22,37 @@
         $shown = count($rows);
     @endphp
 
-    <div class="sticky top-16 z-20 -mx-6 px-6 py-3 bg-base-200/95 backdrop-blur border-b border-base-300 flex items-center gap-3">
-        <a href="{{ route('admin.exim.import.map', ['token' => $token]) }}" class="btn btn-ghost btn-sm btn-square" title="{{ __('Back to the columns') }}">
+    <x-admin.form-bar>
+        <a href="{{ route('admin.exim.import.map', ['token' => $token]) }}" class="btn btn-ghost btn-sm btn-square" title="{{ __('Back to the columns') }}" aria-label="{{ __('Back to the columns') }}">
             <x-icon name="arrow-left" size="lg" />
         </a>
         <div class="flex-1 min-w-0">
             <div class="text-xs opacity-50 leading-none">{{ __('Check the import') }}</div>
             <div class="font-semibold truncate leading-tight">{{ __($entityLabel) }} · {{ trans_choice(':count row|:count rows', $total, ['count' => $total]) }}</div>
         </div>
-        <a href="{{ route('admin.exim.import.map', ['token' => $token]) }}" class="btn btn-ghost btn-sm">{{ __('Change the columns') }}</a>
-        <form method="POST" action="{{ route('admin.exim.import.commit') }}">
-            @csrf
-            <input type="hidden" name="token" value="{{ $token }}">
-            <button class="btn btn-primary btn-sm gap-1.5"><x-icon name="upload" size="sm" /> {{ __('Import') }}</button>
-        </form>
-    </div>
+        <x-slot:actions>
+            <a href="{{ route('admin.exim.import.map', ['token' => $token]) }}" class="btn btn-ghost btn-sm">{{ __('Change the columns') }}</a>
+            <form method="POST" action="{{ route('admin.exim.import.commit') }}">
+                @csrf
+                <input type="hidden" name="token" value="{{ $token }}">
+                <button class="btn btn-primary btn-sm gap-1.5"><x-icon name="upload" size="sm" /> {{ __('Import') }}</button>
+            </form>
+        </x-slot:actions>
+    </x-admin.form-bar>
 
     <div class="card bg-base-100 border border-base-300" x-data="{ show: '' }">
         <div class="card-body gap-4">
             <div class="flex flex-wrap gap-2 items-center">
-                <span class="badge badge-success gap-1">{{ trans_choice(':count will be created|:count will be created', $counts['create'], ['count' => $counts['create']]) }}</span>
-                <span class="badge badge-info gap-1">{{ trans_choice(':count will be updated|:count will be updated', $counts['update'], ['count' => $counts['update']]) }}</span>
+                <span class="badge badge-sm badge-success gap-1">{{ trans_choice(':count will be created|:count will be created', $counts['create'], ['count' => $counts['create']]) }}</span>
+                <span class="badge badge-sm badge-info gap-1">{{ trans_choice(':count will be updated|:count will be updated', $counts['update'], ['count' => $counts['update']]) }}</span>
                 @if ($counts['skip'])
-                    <span class="badge badge-ghost gap-1">{{ trans_choice(':count will be skipped (not found)|:count will be skipped (not found)', $counts['skip'], ['count' => $counts['skip']]) }}</span>
+                    <span class="badge badge-sm badge-ghost gap-1">{{ trans_choice(':count will be skipped (not found)|:count will be skipped (not found)', $counts['skip'], ['count' => $counts['skip']]) }}</span>
                 @endif
                 @if ($fallbacks)
-                    <span class="badge badge-warning gap-1"><x-icon name="triangle-alert" size="sm" /> {{ trans_choice(':count found by name only — check them|:count found by name only — check them', $fallbacks, ['count' => $fallbacks]) }}</span>
+                    <span class="badge badge-sm badge-warning gap-1"><x-icon name="triangle-alert" size="sm" /> {{ trans_choice(':count found by name only — check them|:count found by name only — check them', $fallbacks, ['count' => $fallbacks]) }}</span>
                 @endif
                 @if ($preset)
-                    <span class="badge badge-ghost gap-1"><x-icon name="bookmark" size="sm" /> {{ __('Preset ":name" saved', ['name' => $preset->name]) }}</span>
+                    <span class="badge badge-sm badge-ghost gap-1"><x-icon name="bookmark" size="sm" /> {{ __('Preset ":name" saved', ['name' => $preset->name]) }}</span>
                 @endif
             </div>
 

@@ -8,8 +8,8 @@
         <div class="alert alert-success">{{ session('status') }}</div>
     @endif
 
-    <div class="sticky top-16 z-20 -mx-6 px-6 py-3 bg-base-200/95 backdrop-blur border-b border-base-300 flex items-center gap-3">
-        <a href="{{ route('admin.menus.index') }}" class="btn btn-ghost btn-sm btn-square" title="{{ __('Back to menus') }}">
+    <x-admin.form-bar>
+        <a href="{{ route('admin.menus.index') }}" class="btn btn-ghost btn-sm btn-square" title="{{ __('Back to menus') }}" aria-label="{{ __('Back to menus') }}">
             <x-icon name="arrow-left" size="lg" />
         </a>
         <div class="flex-1 min-w-0">
@@ -17,8 +17,10 @@
             <div class="font-semibold truncate leading-tight">{{ $menu->t('name', admin_content_locale()) }}</div>
         </div>
         <a href="{{ route('admin.menus.edit', $menu) }}" class="btn btn-ghost btn-sm gap-1.5"><x-icon name="settings" size="sm" /> {{ __('Menu settings') }}</a>
-        <a href="{{ route('admin.menus.items.create', $menu) }}" class="btn btn-primary btn-sm">+ {{ __('New item') }}</a>
-    </div>
+        <x-slot:actions>
+            <a href="{{ route('admin.menus.items.create', $menu) }}" class="btn btn-primary btn-sm">+ {{ __('New item') }}</a>
+        </x-slot:actions>
+    </x-admin.form-bar>
 
     @if ($menu->code === (string) theme_setting('tabbar_menu', 'tabbar'))
         {{-- Said here, where the sixth entry gets added, not discovered on a phone. --}}

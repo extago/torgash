@@ -25,7 +25,8 @@ class LabelListTest extends TestCase
     {
         $html = $this->get('http://localhost/admin/catalog/labels')->assertOk()->getContent();
 
-        $this->assertSame(1, preg_match_all('/<h[12][^>]*>\s*(Labels|Метки)\s*<\/h[12]>/u', $html));
+        // The heading's text sits in a span, with the ⓘ hint beside it.
+        $this->assertSame(1, preg_match_all('/<h[12][^>]*>\s*(?:<span>)?\s*(Labels|Метки)\s*(?:<\/span>|<\/h[12]>)/u', $html));
     }
 
     public function test_search_reads_every_language_and_the_admin_name(): void

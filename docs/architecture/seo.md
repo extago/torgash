@@ -56,11 +56,32 @@ this file is the reasoning. Read it before changing anything it covers.
   with NO cross-language fallback, unlike `t()`. A controller says
   `page_meta()->describe($record)`, which also REMEMBERS the record — the next
   link in the chain has to be able to ask it whether its own field was empty.
+  Its own words take the placeholders a template takes (`{min_price}` in a
+  filter page's own title, 2026-10-29): `describe()` expands them with
+  `PageMeta::contextOf($record)` — the context `torgash.seo`'s templates use
+  too, so a token means one thing in both — and a text of the record printed
+  on the page passes the same context: `safe_html($text,
+  PageMeta::contextOf($record))` (a filter page's introduction, a category's
+  text), as does the description a controller makes of it.
 - **The home page's words are the STOREFRONT's** — `storefronts.home_title`
   / `home_description` (jsonb per language, Admin → Storefronts, one
   language a save): two storefronts, two home pages, and the home page is no
   catalogue entity with meta columns of its own. Empty title: the
   storefront's name, without the suffix; empty description: none.
+- **The picture a shared link shows (og:image)** (2026-10-29), nearest
+  wins: the record's own from the SEO card (`share_image` column,
+  `<x-seo.fields picture>`) → the page's natural one, set by its controller
+  (a product's photo, a category's tile or its first product, a filter
+  page's first product, an article's cover, a brand's logo) → the
+  storefront's (`storefronts.share_image`, Admin → Storefronts → Home page:
+  the home page's, and every page's that has none) → the core setting
+  `og_image`, an address, the way it was done before. One file under
+  `share-images/` on the public disk (`App\Core\Seo\SharePicture`), kept as
+  uploaded, never an SVG; `<share>_file` uploads, `<share>_image_remove`
+  drops, a form without the field never touches the column. A copied
+  record gets a file of its own (`SharePicture::copy()`), or removing the
+  picture from one would take it from both. A module putting the picture on
+  its record's card adds the column and makes the form multipart.
 - **`torgash.seo` is templates, an audit screen and image alt — nothing else.**
   One table (`m_seo_templates`): `subject` + `scope` (`global` /
   `category:{id}`, nearest wins, up the tree) + `mode` (`fill_empty` /

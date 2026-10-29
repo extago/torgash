@@ -19,7 +19,7 @@
       `light` (the page's own palette, a line above);
     and the finer ones: the columns' widths, the dividers, the bottom line
     spread or centred, menus folding on a phone, a logo of its own for each
-    colour scheme (its zones say `place: footer`, <x-theme.logo>).
+    colour scheme (its zones say `place: footer`, read by x-theme.logo).
 --}}
 @php
     $footerLayout = in_array(theme_setting('footer_layout'), ['compact', 'centred'], true) ? theme_setting('footer_layout') : 'columns';
@@ -37,7 +37,7 @@
         }
 
         // `place`: a {logo} in a footer block is the footer's own (the
-        // theme's Footer settings, <x-theme.logo>).
+        // theme's Footer settings, x-theme.logo).
         $footerHtml = zone('storefront.footer.'.$footerKey, ['storefront' => $storefront, 'place' => 'footer']);
         $footerZones[$footerKey] = trim($footerHtml) !== '' ? $footerHtml : null;
     }

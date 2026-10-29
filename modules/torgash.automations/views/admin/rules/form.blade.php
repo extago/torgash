@@ -46,8 +46,8 @@
         @csrf
         @if ($rule->exists) @method('PUT') @endif
 
-        <div class="sticky top-16 z-20 -mx-6 px-6 py-3 bg-base-200/95 backdrop-blur border-b border-base-300 flex items-center gap-3">
-            <a href="{{ route('admin.automations.index') }}" class="btn btn-ghost btn-sm btn-square" title="{{ __('Back to automations') }}">
+        <x-admin.form-bar>
+            <a href="{{ route('admin.automations.index') }}" class="btn btn-ghost btn-sm btn-square" title="{{ __('Back to automations') }}" aria-label="{{ __('Back to automations') }}">
                 <x-icon name="arrow-left" size="lg" />
             </a>
             <div class="flex-1 min-w-0">
@@ -59,7 +59,7 @@
                     <x-icon name="play" size="sm" /> {{ __('Test on the latest one') }}
                 </button>
                 <div class="dropdown dropdown-end">
-                    <div tabindex="0" role="button" class="btn btn-ghost btn-sm btn-square" title="{{ __('More actions') }}">
+                    <div tabindex="0" role="button" class="btn btn-ghost btn-sm btn-square" title="{{ __('More actions') }}" aria-label="{{ __('More actions') }}">
                         <x-icon name="settings" size="lg" />
                     </div>
                     <ul tabindex="0" class="dropdown-content menu menu-sm bg-base-100 rounded-box shadow-md w-60 mt-2 p-2 z-50 border border-base-300">
@@ -75,9 +75,11 @@
                     </ul>
                 </div>
             @endif
-            <a href="{{ route('admin.automations.index') }}" class="btn btn-ghost btn-sm">{{ __('Cancel') }}</a>
-            <button class="btn btn-primary btn-sm">{{ $rule->exists ? __('Save') : __('Create') }}</button>
-        </div>
+            <x-slot:actions>
+                <a href="{{ route('admin.automations.index') }}" class="btn btn-ghost btn-sm">{{ __('Cancel') }}</a>
+                <button class="btn btn-primary btn-sm">{{ $rule->exists ? __('Save') : __('Create') }}</button>
+            </x-slot:actions>
+        </x-admin.form-bar>
 
         @if (session('status'))
             <div class="alert alert-success text-sm">{{ session('status') }}</div>
@@ -235,7 +237,7 @@
                                     </fieldset>
                                 </template>
 
-                                <button type="button" class="btn btn-ghost btn-square text-error ms-auto" title="{{ __('Remove') }}" @click="rows.splice(index, 1)">
+                                <button type="button" class="btn btn-ghost btn-square text-error ms-auto" title="{{ __('Remove') }}" aria-label="{{ __('Remove') }}" @click="rows.splice(index, 1)">
                                     <x-icon name="trash-2" />
                                 </button>
                             </div>
@@ -310,7 +312,7 @@
                                                :name="`actions[${index}][url]`" x-model="row.url">
                                     </fieldset>
 
-                                    <button type="button" class="btn btn-ghost btn-square text-error ms-auto" title="{{ __('Remove') }}" @click="rows.splice(index, 1)">
+                                    <button type="button" class="btn btn-ghost btn-square text-error ms-auto" title="{{ __('Remove') }}" aria-label="{{ __('Remove') }}" @click="rows.splice(index, 1)">
                                         <x-icon name="trash-2" />
                                     </button>
                                 </div>
@@ -429,7 +431,7 @@
                                         <div class="text-xs font-medium opacity-60 mt-1">{{ __($group) }}</div>
                                         @foreach ($paths as $path => $label)
                                             <button type="button" @click="put(token(@js($path)))"
-                                                    class="flex items-baseline justify-between gap-2 text-left rounded px-1.5 py-1 -mx-1.5 hover:bg-base-200 group">
+                                                    class="flex items-baseline justify-between gap-2 text-left rounded px-1.5 py-1 pointer-coarse:py-2.5 -mx-1.5 hover:bg-base-200 group">
                                                 <span class="text-sm">{{ __($label) }}</span>
                                                 <code class="text-xs font-mono opacity-50 group-hover:opacity-100 shrink-0">{{ $path }}</code>
                                             </button>

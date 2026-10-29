@@ -31,10 +31,10 @@
                     @endif
                 @endforeach
                 @if ($shopReview->recommend)
-                    <span class="badge badge-success badge-soft gap-1"><x-icon name="thumbs-up" size="sm" /> {{ __('Recommends the shop') }}</span>
+                    <span class="badge badge-success gap-1"><x-icon name="thumbs-up" size="sm" /> {{ __('Recommends the shop') }}</span>
                 @endif
                 @if ($shopReview->will_return)
-                    <span class="badge badge-success badge-soft gap-1"><x-icon name="repeat" size="sm" /> {{ __('Will buy again') }}</span>
+                    <span class="badge badge-success gap-1"><x-icon name="repeat" size="sm" /> {{ __('Will buy again') }}</span>
                 @endif
             </div>
         @endif

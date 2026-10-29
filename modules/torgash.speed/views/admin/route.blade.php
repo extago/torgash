@@ -21,7 +21,7 @@
 
     <div class="speed-viz flex flex-col gap-6">
         <div class="flex flex-wrap items-center gap-3">
-            <a href="{{ route('admin.speed.index', ['period' => $period]) }}" class="btn btn-ghost btn-sm btn-square" title="{{ __('Back to speed') }}">
+            <a href="{{ route('admin.speed.index', ['period' => $period]) }}" class="btn btn-ghost btn-sm btn-square" title="{{ __('Back to speed') }}" aria-label="{{ __('Back to speed') }}">
                 <x-icon name="arrow-left" size="lg" />
             </a>
             <div class="flex-1 min-w-0">

@@ -214,10 +214,19 @@ if (! function_exists('safe_html')) {
     /**
      * A text the staff wrote, cleaned for printing as HTML on the storefront —
      * `{{ safe_html($product->t('description')) }}`. See App\Core\Content\SafeHtml.
+     *
+     * With a context its placeholders are expanded too — AFTER cleaning, so
+     * what a token puts in is never taken for the staff's markup, and escaped
+     * unless the token declares markup of its own:
+     * `safe_html($text, PageMeta::contextOf($page))`.
+     *
+     * @param  array<string, mixed>|null  $placeholders
      */
-    function safe_html(?string $html): \Illuminate\Support\HtmlString
+    function safe_html(?string $html, ?array $placeholders = null): \Illuminate\Support\HtmlString
     {
-        return new \Illuminate\Support\HtmlString(app(\App\Core\Content\SafeHtml::class)->clean($html));
+        $clean = app(\App\Core\Content\SafeHtml::class)->clean($html);
+
+        return new \Illuminate\Support\HtmlString($placeholders === null ? $clean : app(Placeholders::class)->expand($clean, $placeholders));
     }
 }
 

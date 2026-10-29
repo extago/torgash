@@ -81,8 +81,8 @@
         @if ($template->exists) @method('PUT') @endif
         <input type="hidden" name="kind" value="{{ $template->kind }}">
 
-        <div class="sticky top-16 z-20 -mx-6 px-6 py-3 bg-base-200/95 backdrop-blur border-b border-base-300 flex items-center gap-3">
-            <a href="{{ route('admin.banners.templates.index') }}" class="btn btn-ghost btn-sm btn-square" title="{{ __('Back to templates') }}">
+        <x-admin.form-bar>
+            <a href="{{ route('admin.banners.templates.index') }}" class="btn btn-ghost btn-sm btn-square" title="{{ __('Back to templates') }}" aria-label="{{ __('Back to templates') }}">
                 <x-icon name="arrow-left" size="lg" />
             </a>
             <div class="flex-1 min-w-0">
@@ -91,7 +91,7 @@
             </div>
             @if ($template->exists)
                 <div class="dropdown dropdown-end">
-                    <div tabindex="0" role="button" class="btn btn-ghost btn-sm btn-square" title="{{ __('More actions') }}">
+                    <div tabindex="0" role="button" class="btn btn-ghost btn-sm btn-square" title="{{ __('More actions') }}" aria-label="{{ __('More actions') }}">
                         <x-icon name="settings" size="lg" />
                     </div>
                     <ul tabindex="0" class="dropdown-content menu menu-sm bg-base-100 rounded-box shadow-md w-64 mt-2 p-2 z-50 border border-base-300">
@@ -105,9 +105,11 @@
                     </ul>
                 </div>
             @endif
-            <a href="{{ route('admin.banners.templates.index') }}" class="btn btn-ghost btn-sm">{{ __('Cancel') }}</a>
-            <button class="btn btn-primary btn-sm">{{ $template->exists ? __('Save') : __('Create') }}</button>
-        </div>
+            <x-slot:actions>
+                <a href="{{ route('admin.banners.templates.index') }}" class="btn btn-ghost btn-sm">{{ __('Cancel') }}</a>
+                <button class="btn btn-primary btn-sm">{{ $template->exists ? __('Save') : __('Create') }}</button>
+            </x-slot:actions>
+        </x-admin.form-bar>
 
         @if (session('status'))
             <div class="alert alert-success text-sm">{{ session('status') }}</div>
@@ -130,7 +132,7 @@
                             </fieldset>
                             @unless ($template->exists)
                                 <fieldset class="fieldset p-0"><legend class="fieldset-legend">{{ __('Key') }} *</legend>
-                                    <input name="key" value="{{ old('key') }}" required maxlength="64" pattern="[a-z][a-z0-9_-]*" class="input input-bordered w-full font-mono" placeholder="promo-card">
+                                    <input name="key" autocapitalize="off" autocorrect="off" spellcheck="false" value="{{ old('key') }}" required maxlength="64" pattern="[a-z][a-z0-9_-]*" class="input input-bordered w-full font-mono" placeholder="promo-card">
                                     <p class="label text-xs opacity-60 whitespace-normal">{{ __('Latin, for CSS: [data-template=promo-card].') }}</p>
                                 </fieldset>
                             @endunless
@@ -152,7 +154,7 @@
                         <div class="flex items-center justify-between gap-3 flex-wrap">
                             <h3 class="font-semibold">HTML</h3>
                             @unless ($isFrame)
-                                <div role="tablist" class="tabs tabs-box tabs-sm">
+                                <div role="tablist" class="tabs tabs-border tabs-sm">
                                     @foreach ($htmlTabs as $tabKey => $tabLabel)
                                         <button type="button" role="tab" class="tab gap-1.5" :class="tab === @js($tabKey) && 'tab-active'" @click="tab = @js($tabKey)">
                                             {{ $tabLabel }}

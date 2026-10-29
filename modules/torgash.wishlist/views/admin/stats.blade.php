@@ -1,27 +1,24 @@
 @extends('admin.layout')
 
 @section('title', __('Wishlists'))
+@section('title_hint', __('What customers put aside for later: which products are wanted, and which of them the shop cannot sell right now. Products and numbers only — whose list it is never appears here.'))
+@can('settings.manage')
+    @section('title_actions')
+        <a href="{{ route('admin.settings.edit', 'torgash.wishlist') }}" class="btn btn-ghost gap-1.5"><x-icon name="settings" size="sm" /> {{ __('Settings') }}</a>
+    @endsection
+@endcan
 
 @section('content')
-    <div class="flex flex-wrap items-center gap-3">
-        <h1 class="text-xl font-bold flex-1">{{ __('Wishlists') }}</h1>
-        {{-- The period bounds "added" — the second figure and the "Saved
-             most" table; everything else is what the lists hold NOW. --}}
-        <div class="join">
-            @foreach (\Torgash\Wishlist\Http\Admin\StatsController::PERIODS as $statsPeriod)
-                <a href="{{ route('admin.wishlist.stats', ['days' => $statsPeriod]) }}" @class(['btn btn-sm join-item', 'btn-active' => $statsPeriod === $days])>
-                    {{ trans_choice(':count day|:count days', $statsPeriod) }}
-                </a>
-            @endforeach
-        </div>
-        @can('settings.manage')
-            <a href="{{ route('admin.settings.edit', 'torgash.wishlist') }}" class="btn btn-sm btn-ghost gap-2"><x-icon name="settings" /> {{ __('Settings') }}</a>
-        @endcan
-    </div>
-
-    <p class="text-sm opacity-70 max-w-3xl -mt-2">
-        {{ __('What customers put aside for later: which products are wanted, and which of them the shop cannot sell right now. Products and numbers only — whose list it is never appears here.') }}
-    </p>
+    {{-- The period as one row of tabs over the figures (app.css, `admin-tabs`).
+         It bounds "added" — the second figure and the "Saved most" table;
+         everything else is what the lists hold NOW. --}}
+    <nav class="admin-tabs" aria-label="{{ __('Period') }}">
+        @foreach (\Torgash\Wishlist\Http\Admin\StatsController::PERIODS as $statsPeriod)
+            <a href="{{ route('admin.wishlist.stats', ['days' => $statsPeriod]) }}" @class(['admin-tab', 'is-active' => $statsPeriod === $days])>
+                {{ trans_choice(':count day|:count days', $statsPeriod) }}
+            </a>
+        @endforeach
+    </nav>
 
     <div class="grid sm:grid-cols-2 xl:grid-cols-4 gap-3">
         <div class="rounded-box border border-base-300 bg-base-100 p-4">

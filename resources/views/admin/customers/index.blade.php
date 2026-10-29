@@ -1,6 +1,7 @@
 @extends('admin.layout')
 
 @section('title', __('Customers'))
+@section('title_hint', __('Everyone who has an account in the shop. The group decides the prices a customer sees; what they have bought is on their card. Staff are not listed here — they are under Administrators.'))
 
 @section('content')
     @php
@@ -22,21 +23,30 @@
         <div class="alert alert-error text-sm">{{ $errors->first() }}</div>
     @endif
 
+    {{-- The groups as one row of tabs over the card, the screen's action at
+         its end (app.css, `admin-tabs`); LINKS carrying every other filter. --}}
+    <div class="admin-tabs-row">
+        <nav class="admin-tabs" aria-label="{{ __('Customers') }}">
+            @foreach ($groupTabs as $groupKey => $groupLabel)
+                <a href="{{ request()->fullUrlWithQuery(['group' => $groupKey === '' ? null : $groupKey, 'page' => null]) }}"
+                   @class(['admin-tab', 'is-active' => $filters['group'] === (string) $groupKey])>
+                    {{ $groupLabel }} <span class="admin-tab-count">{{ $counts[(string) $groupKey] ?? 0 }}</span>
+                </a>
+            @endforeach
+        </nav>
+        <div class="admin-tabs-actions">
+            <a href="{{ route('admin.customers.create') }}" class="btn btn-primary">+ {{ __('New customer') }}</a>
+        </div>
+    </div>
+
     <div class="card bg-base-100 border border-base-300" x-data="{ selected: [] }">
         <div class="card-body gap-4">
-            <div class="flex flex-wrap items-start justify-between gap-3">
-                <p class="text-sm opacity-70 max-w-3xl">
-                    {{ __('Everyone who has an account in the shop. The group decides the prices a customer sees; what they have bought is on their card. Staff are not listed here — they are under Administrators.') }}
-                </p>
-                <a href="{{ route('admin.customers.create') }}" class="btn btn-primary btn-sm">+ {{ __('New customer') }}</a>
-            </div>
-
             <form method="GET" class="flex flex-wrap items-center gap-2">
-                <label class="input input-sm w-full sm:w-80 gap-2">
+                <label class="input input-sm grow min-w-48 gap-2">
                     <x-icon name="search" size="sm" class="opacity-50" />
                     <input type="search" name="q" value="{{ $filters['q'] }}" class="grow" placeholder="{{ __('Name, email or phone…') }}">
                 </label>
-                <select name="sort" class="select select-bordered select-sm w-full sm:w-52" data-submit-on-change>
+                <select name="sort" class="select select-sm w-auto" data-submit-on-change>
                     <option value="newest" @selected($filters['sort'] === 'newest')>{{ __('Newest first') }}</option>
                     <option value="oldest" @selected($filters['sort'] === 'oldest')>{{ __('Oldest first') }}</option>
                     <option value="name" @selected($filters['sort'] === 'name')>{{ __('Name A–Z') }}</option>
@@ -47,22 +57,13 @@
                 @endif
             </form>
 
-            <div class="join flex-wrap -mt-1">
-                @foreach ($groupTabs as $groupKey => $groupLabel)
-                    <a href="{{ request()->fullUrlWithQuery(['group' => $groupKey === '' ? null : $groupKey, 'page' => null]) }}"
-                       @class(['btn btn-sm join-item', 'btn-active' => $filters['group'] === (string) $groupKey])>
-                        {{ $groupLabel }} <span class="opacity-50">{{ $counts[(string) $groupKey] ?? 0 }}</span>
-                    </a>
-                @endforeach
-            </div>
-
-            <div class="min-h-12 flex items-center">
+            <div class="min-h-12 max-md:min-h-0 flex items-center">
                 <p x-show="!selected.length" class="text-xs opacity-50">
                     {{ __('Tick customers to move several into a group at once, or delete them.') }}
                 </p>
                 <form method="POST" action="{{ route('admin.customers.bulk') }}"
                       x-show="selected.length" x-cloak
-                      class="w-full flex flex-wrap items-center gap-2 bg-base-200 rounded-box p-2">
+                      class="admin-bulk-bar w-full flex flex-wrap items-center gap-2 bg-base-200 rounded-box p-2">
                     @csrf
                     <template x-for="id in selected" :key="id">
                         <input type="hidden" name="ids[]" :value="id">
@@ -90,13 +91,18 @@
                 </div>
             @else
                 <div class="overflow-x-auto">
-                    <table class="table">
+                    {{-- On a phone the same table is a list of cards (app.css,
+                         `admin-customer-cards`; `data-cell` names the cells). --}}
+                    <table class="table admin-cards admin-customer-cards">
                         <thead>
                             <tr>
-                                <th class="w-10">
-                                    <input type="checkbox" class="checkbox checkbox-sm" aria-label="{{ __('Select all on this page') }}"
-                                           x-on:change="selected = $event.target.checked ? @js($customers->getCollection()->pluck('id')->map(fn ($id) => (string) $id)->values()) : []"
-                                           :checked="selected.length === {{ $customers->count() }}">
+                                <th class="w-10" data-cell="check">
+                                    <label class="flex items-center gap-3">
+                                        <input type="checkbox" class="checkbox checkbox-sm" aria-label="{{ __('Select all on this page') }}"
+                                               x-on:change="selected = $event.target.checked ? @js($customers->getCollection()->pluck('id')->map(fn ($id) => (string) $id)->values()) : []"
+                                               :checked="selected.length === {{ $customers->count() }}">
+                                        <span class="md:hidden font-normal normal-case">{{ __('Select all on this page') }}</span>
+                                    </label>
                                 </th>
                                 <th>{{ __('Customer') }}</th>
                                 <th>{{ __('Activity') }}</th>
@@ -108,10 +114,10 @@
                         <tbody>
                             @foreach ($customers as $customer)
                                 <tr class="hover:bg-base-200/50" :class="selected.includes('{{ $customer->id }}') && 'bg-primary/5'">
-                                    <td>
+                                    <td data-cell="check">
                                         <input type="checkbox" class="checkbox checkbox-sm" value="{{ $customer->id }}" x-model="selected" aria-label="{{ $customer->name }}">
                                     </td>
-                                    <td class="min-w-0">
+                                    <td class="min-w-0" data-cell="customer">
                                         <div class="flex items-center gap-3">
                                             <div class="avatar avatar-placeholder shrink-0">
                                                 <div class="bg-base-200 text-base-content/70 w-9 rounded-full">
@@ -130,7 +136,7 @@
                                             </div>
                                         </div>
                                     </td>
-                                    <td class="text-sm">
+                                    <td class="text-sm" data-cell="activity">
                                         @forelse ($facts[$customer->id] ?? [] as $fact)
                                             <div class="whitespace-nowrap">
                                                 @if (! empty($fact['url']))
@@ -149,12 +155,12 @@
                                             <span class="opacity-40 text-xs">{{ __('nothing yet') }}</span>
                                         @endforelse
                                     </td>
-                                    <td class="text-sm whitespace-nowrap">
+                                    <td class="text-sm whitespace-nowrap" data-cell="registered">
                                         {{ $customer->created_at->format('d.m.Y') }}
                                         <div class="text-xs opacity-50">{{ $customer->created_at->diffForHumans() }}</div>
                                     </td>
                                     @include('admin.customers._group', ['customer' => $customer, 'groups' => $groups])
-                                    <td class="text-end whitespace-nowrap">
+                                    <td class="text-end whitespace-nowrap" data-cell="actions">
                                         <div class="inline-flex items-center gap-1">
                                             <a href="{{ route('admin.customers.edit', $customer) }}" class="btn btn-ghost btn-sm btn-square"
                                                title="{{ __('Edit') }}" aria-label="{{ __('Edit') }}"><x-icon name="pencil" /></a>

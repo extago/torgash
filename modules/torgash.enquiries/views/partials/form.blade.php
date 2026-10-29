@@ -68,7 +68,7 @@
             {{-- A tick box carries its words beside it, not above. --}}
             <div class="flex flex-col gap-1">
                 <label class="flex items-start gap-2 cursor-pointer text-sm">
-                    <input type="checkbox" name="{{ $key }}" value="yes" class="checkbox mt-0.5" @checked($value === 'yes')>
+                    <input type="checkbox" name="{{ $key }}" value="yes" class="checkbox checkbox-primary mt-0.5" @checked($value === 'yes')>
                     <span>{{ $label }}@if (! empty($field['required'])) <span class="text-error">*</span>@endif</span>
                 </label>
                 @if ($help)
@@ -116,9 +116,9 @@
                         @endphp
                         <label class="flex items-center gap-2 cursor-pointer text-sm">
                             @if ($type === 'radio')
-                                <input type="radio" name="{{ $key }}" value="{{ $optionValue }}" class="radio" @checked($optionOn)>
+                                <input type="radio" name="{{ $key }}" value="{{ $optionValue }}" class="radio radio-primary" @checked($optionOn)>
                             @else
-                                <input type="checkbox" name="{{ $key }}[]" value="{{ $optionValue }}" class="checkbox" @checked($optionOn)>
+                                <input type="checkbox" name="{{ $key }}[]" value="{{ $optionValue }}" class="checkbox checkbox-primary" @checked($optionOn)>
                             @endif
                             <span>{{ Kinds::localized($optionLabel, $optionValue) }}</span>
                         </label>
@@ -159,7 +159,7 @@
         @endphp
         <div class="flex flex-col gap-1">
             <label class="flex items-start gap-2 cursor-pointer text-sm">
-                <input type="checkbox" name="consent" value="1" class="checkbox mt-0.5" @checked($enquiryValues['consent'] ?? old('consent'))>
+                <input type="checkbox" name="consent" value="1" class="checkbox checkbox-primary mt-0.5" @checked($enquiryValues['consent'] ?? old('consent'))>
                 <span>
                     @if ($enquiryForm->consent_url)
                         <a href="{{ $enquiryForm->consent_url }}" target="_blank" rel="noopener" class="link">{{ $consentWords }}</a>

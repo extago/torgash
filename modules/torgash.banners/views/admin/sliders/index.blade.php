@@ -1,6 +1,10 @@
 @extends('admin.layout')
 
 @section('title', __('Sliders'))
+@section('title_hint', __('A slider is an ordered set of banners and how it turns. It reaches the page through a "Banners" block — on the home page, above a category, under a buy panel, anywhere a block can stand.'))
+@section('title_actions')
+    <a href="{{ route('admin.banners.sliders.create') }}" class="btn btn-primary">+ {{ __('New slider') }}</a>
+@endsection
 
 @section('content')
     @include('torgash.banners::admin._nav', ['bannersScreen' => 'sliders'])
@@ -11,12 +15,6 @@
 
     <div class="card bg-base-100 border border-base-300">
         <div class="card-body gap-4">
-            <div class="flex justify-between items-start gap-3 flex-wrap">
-                <p class="text-sm opacity-70 max-w-3xl">
-                    {{ __('A slider is an ordered set of banners and how it turns. It reaches the page through a "Banners" block — on the home page, above a category, under a buy panel, anywhere a block can stand.') }}
-                </p>
-                <a href="{{ route('admin.banners.sliders.create') }}" class="btn btn-primary btn-sm">+ {{ __('New slider') }}</a>
-            </div>
 
             @if ($sliders->isEmpty())
                 <div class="text-center py-12 opacity-60">

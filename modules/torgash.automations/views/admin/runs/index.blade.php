@@ -1,38 +1,43 @@
 @extends('admin.layout')
 
 @section('title', __('Run log'))
+@section('title_hint', __('Every attempt, with what was sent and what came back. This is the only place that answers "did it arrive?".'))
 
 @section('content')
     @if (session('status'))
         <div class="alert alert-success">{{ session('status') }}</div>
     @endif
 
+    {{-- The results as one row of tabs over the card, the way back at its end
+         (app.css, `admin-tabs`); LINKS keeping the rule chosen. --}}
+    <div class="admin-tabs-row">
+        <nav class="admin-tabs" aria-label="{{ __('Run log') }}">
+            @foreach (['' => __('All'), 'sent' => __('sent'), 'failed' => __('failed'), 'skipped' => __('skipped')] as $statusKey => $statusLabel)
+                <a href="{{ route('admin.automations.runs', array_filter(['status' => $statusKey, 'rule' => request('rule')], fn ($v) => $v !== null && $v !== '')) }}"
+                   @class(['admin-tab', 'is-active' => (string) request('status', '') === (string) $statusKey])>
+                    {{ \Illuminate\Support\Str::ucfirst($statusLabel) }}
+                </a>
+            @endforeach
+        </nav>
+        <div class="admin-tabs-actions">
+            <a href="{{ route('admin.automations.index') }}" class="btn btn-ghost gap-1.5">
+                <x-icon name="arrow-left" size="sm" /> {{ __('Back to automations') }}
+            </a>
+        </div>
+    </div>
+
     <div class="card bg-base-100 border border-base-300">
         <div class="card-body gap-4">
-            <div class="flex justify-between items-start gap-3 flex-wrap">
-                <p class="text-sm opacity-70 max-w-3xl">
-                    {{ __('Every attempt, with what was sent and what came back. This is the only place that answers "did it arrive?".') }}
-                </p>
-                <a href="{{ route('admin.automations.index') }}" class="btn btn-ghost btn-sm gap-1.5">
-                    <x-icon name="arrow-left" size="sm" /> {{ __('Back to automations') }}
-                </a>
-            </div>
-
             <form method="GET" class="flex flex-wrap items-center gap-2">
+                @if (request('status'))
+                    <input type="hidden" name="status" value="{{ request('status') }}">
+                @endif
                 <select name="rule" class="select select-sm w-auto" data-submit-on-change aria-label="{{ __('Rule') }}">
                     <option value="">{{ __('Any rule') }}</option>
                     @foreach ($rules as $rule)
                         <option value="{{ $rule->id }}" @selected(request('rule') == $rule->id)>{{ $rule->name }}</option>
                     @endforeach
                 </select>
-                <div class="join">
-                    @foreach (['' => __('All'), 'sent' => __('sent'), 'failed' => __('failed'), 'skipped' => __('skipped')] as $statusKey => $statusLabel)
-                        <button type="submit" name="status" value="{{ $statusKey }}"
-                                @class(['btn btn-sm join-item', 'btn-active' => (string) request('status', '') === (string) $statusKey])>
-                            {{ $statusLabel }}
-                        </button>
-                    @endforeach
-                </div>
                 @if (request('rule') || request('status'))
                     <a href="{{ route('admin.automations.runs') }}" class="btn btn-ghost btn-sm">{{ __('Reset') }}</a>
                 @endif

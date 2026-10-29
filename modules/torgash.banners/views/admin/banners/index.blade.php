@@ -1,6 +1,7 @@
 @extends('admin.layout')
 
 @section('title', __('Banners'))
+@section('title_hint', __('A banner is what is typed into its template\'s fields — words, pictures, a link, a colour. It is shown by the sliders it stands in, between its dates and under its conditions.'))
 
 @section('content')
     @include('torgash.banners::admin._nav', ['bannersScreen' => 'banners'])
@@ -17,17 +18,26 @@
         <div class="alert alert-error text-sm">{{ $errors->first() }}</div>
     @endif
 
+    {{-- The states as one row of tabs over the card, the screen's action at
+         its end (app.css, `admin-tabs`); LINKS carrying the search. --}}
+    <div class="admin-tabs-row">
+        <nav class="admin-tabs" aria-label="{{ __('Banners') }}">
+            @foreach ($stateTabs as $stateKey => $stateLabel)
+                <a href="{{ request()->fullUrlWithQuery(['state' => $stateKey ?: null, 'page' => null]) }}"
+                   @class(['admin-tab', 'is-active' => $filters['state'] === $stateKey])>
+                    {{ $stateLabel }} <span class="admin-tab-count">{{ $counts[$stateKey] }}</span>
+                </a>
+            @endforeach
+        </nav>
+        <div class="admin-tabs-actions">
+            <a href="{{ route('admin.banners.create') }}" class="btn btn-primary">+ {{ __('New banner') }}</a>
+        </div>
+    </div>
+
     <div class="card bg-base-100 border border-base-300" x-data="{ selected: [] }">
         <div class="card-body gap-4">
-            <div class="flex justify-between items-start gap-3 flex-wrap">
-                <p class="text-sm opacity-70 max-w-3xl">
-                    {{ __('A banner is what is typed into its template\'s fields — words, pictures, a link, a colour. It is shown by the sliders it stands in, between its dates and under its conditions.') }}
-                </p>
-                <a href="{{ route('admin.banners.create') }}" class="btn btn-primary btn-sm">+ {{ __('New banner') }}</a>
-            </div>
-
             <form method="GET" class="flex flex-wrap items-center gap-2">
-                <label class="input input-sm w-full sm:w-72 gap-2">
+                <label class="input input-sm grow min-w-48 gap-2">
                     <x-icon name="search" size="sm" class="opacity-50" />
                     <input type="search" name="q" value="{{ $filters['q'] }}" class="grow" placeholder="{{ __('Search by name or words…') }}">
                 </label>
@@ -36,15 +46,6 @@
                     <a href="{{ route('admin.banners.index') }}" class="btn btn-ghost btn-sm">{{ __('Reset') }}</a>
                 @endif
             </form>
-
-            <div class="join flex-wrap -mt-1">
-                @foreach ($stateTabs as $stateKey => $stateLabel)
-                    <a href="{{ request()->fullUrlWithQuery(['state' => $stateKey ?: null]) }}"
-                       @class(['btn btn-sm join-item', 'btn-active' => $filters['state'] === $stateKey])>
-                        {{ $stateLabel }} <span class="opacity-50">{{ $counts[$stateKey] }}</span>
-                    </a>
-                @endforeach
-            </div>
 
             <div class="min-h-12 flex items-center">
                 <p x-show="!selected.length" class="text-xs opacity-50">
@@ -109,7 +110,7 @@
                                         <input type="checkbox" class="checkbox checkbox-sm" value="{{ $banner->id }}" x-model="selected" aria-label="{{ $banner->name }}">
                                     </td>
                                     <td>
-                                        <a href="{{ route('admin.banners.edit', $banner) }}"
+                                        <a href="{{ route('admin.banners.edit', $banner) }}" aria-label="{{ $banner->name }}"
                                            class="block w-20 aspect-video rounded-lg overflow-hidden bg-base-200 border border-base-300"
                                            @if ($rowColour && ! $rowThumb) style="background: {{ $rowColour }}" @endif>
                                             @if ($rowThumb)

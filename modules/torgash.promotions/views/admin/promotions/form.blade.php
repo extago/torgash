@@ -144,8 +144,8 @@
         @csrf
         @if ($promotion->exists) @method('PUT') @endif
 
-        <div class="sticky top-16 z-20 -mx-6 px-6 py-3 bg-base-200/95 backdrop-blur border-b border-base-300 flex items-center gap-3">
-            <a href="{{ route('admin.promotions.index') }}" class="btn btn-ghost btn-sm btn-square" title="{{ __('Back to promotions') }}">
+        <x-admin.form-bar>
+            <a href="{{ route('admin.promotions.index') }}" class="btn btn-ghost btn-sm btn-square" title="{{ __('Back to promotions') }}" aria-label="{{ __('Back to promotions') }}">
                 <x-icon name="arrow-left" size="lg" />
             </a>
             <div class="flex-1 min-w-0">
@@ -162,7 +162,7 @@
             </span>
             @if ($promotion->exists)
                 <div class="dropdown dropdown-end">
-                    <div tabindex="0" role="button" class="btn btn-ghost btn-sm btn-square" title="{{ __('More actions') }}">
+                    <div tabindex="0" role="button" class="btn btn-ghost btn-sm btn-square" title="{{ __('More actions') }}" aria-label="{{ __('More actions') }}">
                         <x-icon name="settings" size="lg" />
                     </div>
                     <ul tabindex="0" class="dropdown-content menu menu-sm bg-base-100 rounded-box shadow-md w-64 mt-2 p-2 z-50 border border-base-300">
@@ -183,9 +183,11 @@
                     </ul>
                 </div>
             @endif
-            <a href="{{ route('admin.promotions.index') }}" class="btn btn-ghost btn-sm">{{ __('Cancel') }}</a>
-            <button class="btn btn-primary btn-sm">{{ $promotion->exists ? __('Save') : __('Create') }}</button>
-        </div>
+            <x-slot:actions>
+                <a href="{{ route('admin.promotions.index') }}" class="btn btn-ghost btn-sm">{{ __('Cancel') }}</a>
+                <button class="btn btn-primary btn-sm">{{ $promotion->exists ? __('Save') : __('Create') }}</button>
+            </x-slot:actions>
+        </x-admin.form-bar>
 
         @if (session('status'))
             <div class="alert alert-success text-sm">{{ session('status') }}</div>
@@ -194,7 +196,7 @@
             <div class="alert alert-error text-sm">{{ $errors->first() }}</div>
         @endif
 
-        <div role="tablist" class="tabs tabs-bordered">
+        <div role="tablist" class="tabs tabs-border">
             <a role="tab" class="tab" :class="tab === 'general' ? 'tab-active font-semibold' : ''"
                @click.prevent="tab = 'general'" href="#">{{ __('General') }}</a>
             <a role="tab" class="tab" :class="tab === 'tiers' ? 'tab-active font-semibold' : ''"
@@ -219,16 +221,16 @@
             <div class="card-body gap-4">
                 <div class="flex flex-wrap gap-4 items-center">
                     <label class="flex items-center gap-2 cursor-pointer">
-                        <input type="checkbox" name="published" value="1" class="toggle toggle-sm toggle-primary" x-model="published">
+                        <input type="checkbox" name="published" value="1" class="toggle toggle-sm toggle-success" x-model="published">
                         <span class="text-sm">{{ __('Give this sale a page') }}</span>
                     </label>
                     <label class="flex items-center gap-2 cursor-pointer">
-                        <input type="checkbox" name="show_countdown" value="1" class="toggle toggle-sm toggle-primary"
+                        <input type="checkbox" name="show_countdown" value="1" class="toggle toggle-sm toggle-success"
                                @checked(old('show_countdown', $promotion->show_countdown ?? true))>
                         <span class="text-sm">{{ __('Show a countdown') }}</span>
                     </label>
                     <label class="flex items-center gap-2 cursor-pointer" title="{{ __('Off: the sale still runs by its schedule, but the customer is not told it repeats ("every day") — only the countdown to the current close is seen.') }}">
-                        <input type="checkbox" name="show_schedule" value="1" class="toggle toggle-sm toggle-primary"
+                        <input type="checkbox" name="show_schedule" value="1" class="toggle toggle-sm toggle-success"
                                @checked(old('show_schedule', $promotion->show_schedule ?? true))>
                         <span class="text-sm">{{ __('Show the schedule') }}</span>
                     </label>
@@ -238,7 +240,7 @@
                 <div class="flex flex-wrap gap-3">
                     <fieldset class="fieldset p-0 grow min-w-64">
                         <legend class="fieldset-legend">{{ __('Address') }}</legend>
-                        <input name="slug" value="{{ old('slug', $promotion->slug) }}"
+                        <input name="slug" autocapitalize="off" autocorrect="off" spellcheck="false" value="{{ old('slug', $promotion->slug) }}"
                                class="input input-bordered w-full" placeholder="{{ __('made from the name') }}">
                         @if ($promotion->exists && $promotion->slug)
                             <div class="text-xs opacity-50 mt-1">
@@ -254,7 +256,7 @@
                         @if ($promotion->exists && $promotion->bannerUrl())
                             <img src="{{ $promotion->bannerUrl() }}" class="h-16 rounded-md mb-2 object-cover" alt="">
                             <label class="flex items-center gap-2 text-xs cursor-pointer mb-1">
-                                <input type="checkbox" name="banner_remove" value="1" class="checkbox checkbox-xs">
+                                <input type="checkbox" name="banner_remove" value="1" class="checkbox checkbox-sm">
                                 {{ __('Remove') }}
                             </label>
                         @endif
@@ -347,7 +349,7 @@
                             @if ($promotion->exists && $promotion->badgeUrl())
                                 <img src="{{ $promotion->badgeUrl() }}" class="h-12 w-12 rounded-md mb-2 object-cover" alt="">
                                 <label class="flex items-center gap-2 text-xs cursor-pointer mb-1">
-                                    <input type="checkbox" name="badge_image_remove" value="1" class="checkbox checkbox-xs">
+                                    <input type="checkbox" name="badge_image_remove" value="1" class="checkbox checkbox-sm">
                                     {{ __('Remove') }}
                                 </label>
                             @endif
@@ -425,7 +427,7 @@
                     </fieldset>
 
                     <label class="flex items-center gap-2 self-end pb-2 cursor-pointer">
-                        <input type="checkbox" name="enabled" value="1" class="toggle toggle-sm toggle-primary" x-model="enabled">
+                        <input type="checkbox" name="enabled" value="1" class="toggle toggle-sm toggle-success" x-model="enabled">
                         <span class="text-sm">{{ __('Enabled') }}</span>
                     </label>
                 </div>
@@ -522,7 +524,7 @@
                             </fieldset>
 
                             <button type="button" class="btn btn-ghost btn-sm btn-square text-error mb-0.5"
-                                    @click="removeWindow(wi)" :title="'{{ __('Remove') }}'">
+                                    @click="removeWindow(wi)" :title="'{{ __('Remove') }}'" :aria-label="'{{ __('Remove') }}'">
                                 <x-icon name="trash-2" size="sm" />
                             </button>
                         </div>
@@ -550,7 +552,7 @@
                             @endif
                         </fieldset>
                         <label class="flex items-center gap-2 pb-2 cursor-pointer">
-                            <input type="checkbox" name="once_per_customer" value="1" class="toggle toggle-sm toggle-primary"
+                            <input type="checkbox" name="once_per_customer" value="1" class="toggle toggle-sm toggle-success"
                                    @checked(old('once_per_customer', $promotion->once_per_customer ?? false))>
                             <span class="text-sm">{{ __('Once per customer') }}</span>
                         </label>
@@ -585,12 +587,12 @@
                             <div class="flex flex-col mt-1">
                                 <button type="button" class="btn btn-ghost btn-xs px-1 min-h-0 h-5"
                                         :disabled="ti === 0" @click="moveTier(ti, -1)"
-                                        :title="'{{ __('Move up') }}'">
+                                        :title="'{{ __('Move up') }}'" :aria-label="'{{ __('Move up') }}'">
                                     <x-icon name="chevron-up" size="sm" />
                                 </button>
                                 <button type="button" class="btn btn-ghost btn-xs px-1 min-h-0 h-5"
                                         :disabled="ti === tiers.length - 1" @click="moveTier(ti, 1)"
-                                        :title="'{{ __('Move down') }}'">
+                                        :title="'{{ __('Move down') }}'" :aria-label="'{{ __('Move down') }}'">
                                     <x-icon name="chevron-down" size="sm" />
                                 </button>
                             </div>

@@ -113,5 +113,6 @@
     ":count product|:count products": ":count товар|:count товара|:count товаров",
     "Availability": "Наличие",
     "Hidden": "Скрыто",
-    "Price": "Цена"
+    "Price": "Цена",
+    "Period": "Период"
 }

@@ -40,7 +40,7 @@
                        value="{{ number_format($order->shipping_cost / 100, 2, '.', '') }}"
                        class="input input-bordered w-full" placeholder="0.00">
             </fieldset>
-            <button class="btn">{{ __('Save') }}</button>
+            <button class="btn btn-primary">{{ __('Save') }}</button>
         </div>
 
         @if ($manual)

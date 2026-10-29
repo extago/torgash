@@ -1,26 +1,30 @@
 @extends('admin.layout')
 
 @section('title', __('Personal data'))
+@section('title_hint', __('A customer asks in their account; a person who wrote or called is entered here by email or phone. Download answers "what do you keep about me"; erase removes what the law does not ask to keep — orders stay, without the IP address and browser.'))
 
 @section('content')
-    <div class="flex flex-col gap-4">
+    <div class="flex flex-col gap-6">
         @include('torgash.privacy::admin._tabs')
 
         @if (session('status'))
             <div class="alert alert-success text-sm">{{ session('status') }}</div>
         @endif
 
+        {{-- The states as one row of tabs over the card, the screen's action
+             at its end (app.css, `admin-tabs`). --}}
+        <div class="admin-tabs-row">
+            <nav class="admin-tabs" aria-label="{{ __('Requests') }}">
+                <a href="{{ route('admin.privacy.requests.index') }}" @class(['admin-tab', 'is-active' => $view === 'open'])>{{ __('Waiting') }}</a>
+                <a href="{{ route('admin.privacy.requests.index', ['view' => 'all']) }}" @class(['admin-tab', 'is-active' => $view === 'all'])>{{ __('All') }}</a>
+            </nav>
+            <div class="admin-tabs-actions">
+                <a href="{{ route('admin.privacy.requests.create') }}" class="btn btn-primary gap-1.5"><x-icon name="plus" size="sm" /> {{ __('New request') }}</a>
+            </div>
+        </div>
+
         <div class="card bg-base-100 border border-base-300">
             <div class="card-body gap-4">
-                <div class="flex flex-wrap items-center justify-between gap-3">
-                    <div role="tablist" class="tabs tabs-border">
-                        <a role="tab" href="{{ route('admin.privacy.requests.index') }}" @class(['tab', 'tab-active' => $view === 'open'])>{{ __('Waiting') }}</a>
-                        <a role="tab" href="{{ route('admin.privacy.requests.index', ['view' => 'all']) }}" @class(['tab', 'tab-active' => $view === 'all'])>{{ __('All') }}</a>
-                    </div>
-                    <a href="{{ route('admin.privacy.requests.create') }}" class="btn btn-primary btn-sm gap-1.5"><x-icon name="plus" size="sm" /> {{ __('New request') }}</a>
-                </div>
-
-                <p class="text-sm opacity-70 max-w-3xl">{{ __('A customer asks in their account; a person who wrote or called is entered here by email or phone. Download answers "what do you keep about me"; erase removes what the law does not ask to keep — orders stay, without the IP address and browser.') }}</p>
 
                 @if ($requests->isEmpty())
                     <div class="text-center py-12 opacity-60">{{ $view === 'open' ? __('No requests waiting.') : __('No requests yet.') }}</div>

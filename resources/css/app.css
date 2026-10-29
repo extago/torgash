@@ -195,6 +195,13 @@
    The markup comes from ProseMirror at runtime, so there is nothing in a
    template for Tailwind to scan — these have to be real CSS rules. */
 .torgash-rich > * + * { margin-top: 0.7em; }
+/* A listing's introduction (a filter page's own text, catalog index): three
+   lines, folded by CSS from the first paint — `torgash-js` is on <html>
+   before it — so nothing jumps when Alpine starts. Alpine only says whether
+   anything is hidden (`is-long`: the fade and the button) and opens it. With
+   no script the whole text is there. */
+.torgash-js .torgash-intro:not(.is-open) > .torgash-intro-body { max-height: 3lh; overflow: hidden; }
+.torgash-intro.is-long:not(.is-open) > .torgash-intro-body { mask-image: linear-gradient(to bottom, #000 calc(100% - 1.2lh), transparent); }
 .torgash-rich h1 { font-size: 1.5rem; font-weight: 700; line-height: 1.25; }
 .torgash-rich h2 { font-size: 1.25rem; font-weight: 700; line-height: 1.3; }
 /* 1.125rem (18px), not 1.1rem — 17.6px was the only off-scale size on the
@@ -1372,6 +1379,442 @@ a:has([data-inert-text]:hover) { -webkit-user-drag: none; }
    admin-dropdowns.js, so the vertical axis has nothing to scroll. */
 .torgash-admin .overflow-x-auto { overflow-y: hidden; }
 
+/* ---- The admin on a phone and under a finger (PLAN §62) -------------------
+   One layout for every screen. What changes is said here, by the screen's
+   width — a phone is narrower than 48rem, or under 30rem tall when it lies
+   on its side — and by the kind of pointer: `pointer: coarse` is a finger.
+   A computer with a mouse sees none of it: the two rules below that hold at
+   any width change only what did not fit.
+
+   The page's side margin is --admin-gutter: the header, <main> and the form
+   bar that runs edge to edge all read it, so they move together. */
+.torgash-admin { --admin-gutter: 1.5rem; }
+@media (width < 64rem) { .torgash-admin { --admin-gutter: 1rem; } }
+@media (width < 40rem) { .torgash-admin { --admin-gutter: 0.75rem; } }
+/* A card's own padding follows it down: 24px of it inside 12px of gutter
+   left a 375px phone 303px to draw a list in. */
+@media (width < 40rem) { .torgash-admin .card-body { --card-p: 1rem; } }
+
+/* An edit screen's bar (components/admin/form-bar): its actions are the
+   bar's own buttons wherever there is room for them... */
+.admin-form-bar-actions { display: contents; }
+@media (width < 48rem), (height < 30rem) {
+    /* ...but on a phone the header scrolls away with the page and the bar
+       takes the top of the screen — the screen is short, and the bar
+       carries the way back — while Cancel and Save stand at the foot of
+       the screen, under the thumb. The bar's blur is off: a filter would
+       make the BAR the frame of that fixed box, not the screen. */
+    .torgash-admin .admin-header { position: static; }
+    .admin-form-bar { top: 0; flex-wrap: wrap; background-color: var(--color-base-200); backdrop-filter: none; }
+    .admin-form-bar-actions {
+        position: fixed; inset-inline: 0; bottom: 0; z-index: 30;
+        display: flex; align-items: center; justify-content: flex-end; gap: 0.5rem;
+        padding: 0.5rem var(--admin-gutter) calc(0.5rem + env(safe-area-inset-bottom));
+        background-color: var(--color-base-100);
+        border-top: 1px solid var(--color-base-300);
+        box-shadow: 0 -6px 12px -10px oklch(0% 0 0 / 0.35);
+    }
+    .admin-form-bar-actions .btn { --size: 2.75rem; --fontsize: 0.9375rem; }
+    .admin-form-bar-actions .btn-primary { flex: 1 1 0; max-width: 22rem; }
+    /* The page keeps room under its last field for them. */
+    .torgash-admin:has(.admin-form-bar-actions) main { padding-bottom: calc(var(--admin-gutter) + 4rem + env(safe-area-inset-bottom)); }
+}
+
+/* The hint beside a page's heading (`title_hint` in the admin layout): a
+   paragraph, not a line — the popover's own width is the screen's. */
+.torgash-admin .admin-hint-popover { max-width: 24rem; }
+
+/* ---- A list's tabs: one row over the card (`admin-tabs`) ---------------
+   The states of a list — All · Enabled · Disabled… with their counts — are
+   one row of rounded buttons over the card below, on the page's own
+   background. The chosen one stands on a bed of the card's colour (white
+   in the light theme) with a hairline ring and a touch of shadow, written
+   bolder; the others are muted words. Each carries its count in a grey
+   pill. The owner's choice of 2026-10-29, against the production admin:
+   segments of grey could not show the chosen one in the dark theme, tabs
+   shaped like a browser's, tabs underlined on a hairline and a bed of the
+   brand colour were turned down in turn. The row never wraps: at any
+   width it scrolls sideways — by a finger, and on a computer by the wheel
+   over it (admin-scroll.js), the chosen tab brought into view, a fade at
+   the edge that hides more. */
+.torgash-admin .admin-tabs {
+    display: flex; align-items: center; gap: 0.375rem; flex-wrap: nowrap;
+    overflow-x: auto; overflow-y: hidden; scrollbar-width: none;
+}
+.torgash-admin .admin-tabs::-webkit-scrollbar { display: none; }
+.torgash-admin .admin-tabs[data-more] { mask-image: linear-gradient(to right, black calc(100% - 2.5rem), transparent); }
+.torgash-admin .admin-tabs[data-scrolled] { mask-image: linear-gradient(to right, transparent, black 2.5rem); }
+.torgash-admin .admin-tabs[data-scrolled][data-more] { mask-image: linear-gradient(to right, transparent, black 2.5rem, black calc(100% - 2.5rem), transparent); }
+/* A list that asks for every tab in sight (the orders' `status_tabs`
+   setting): the row wraps instead, and nothing fades. */
+.torgash-admin .admin-tabs.is-wrapping { flex-wrap: wrap; overflow: visible; mask-image: none; }
+.torgash-admin .admin-tab {
+    flex: none; display: inline-flex; align-items: center; gap: 0.5rem;
+    height: 2.5rem; padding-inline: 0.875rem; white-space: nowrap; cursor: pointer;
+    border: 0; border-radius: var(--radius-field); background: none;
+    font-size: 0.875rem; font-weight: 500; color: color-mix(in oklab, var(--color-base-content) 70%, transparent);
+    transition: color .15s, background-color .15s;
+}
+.torgash-admin .admin-tab:hover { color: var(--color-base-content); background-color: color-mix(in oklab, var(--color-base-content) 6%, transparent); }
+.torgash-admin .admin-tab.is-active, .torgash-admin .admin-tab.is-active:hover {
+    color: var(--color-base-content); font-weight: 600;
+    background-color: var(--color-base-100);
+    box-shadow: 0 0 0 1px var(--color-base-300), 0 1px 3px -1px oklch(0% 0 0 / 0.25);
+}
+.torgash-admin .admin-tab-count {
+    font-size: 0.75rem; font-weight: 500; font-variant-numeric: tabular-nums; line-height: 1.25rem; min-width: 1.25rem;
+    padding-inline: 0.4rem; border-radius: 9999px; text-align: center;
+    background-color: color-mix(in oklab, var(--color-base-content) 8%, transparent);
+    color: color-mix(in oklab, var(--color-base-content) 70%, transparent);
+}
+.torgash-admin .admin-tab.is-active .admin-tab-count:not(.is-error, .is-warning, .is-info) { color: var(--color-base-content); }
+/* The screen's actions ("+ New product", the trash) stand in the tabs'
+   row, at its end, as tall as a tab (`btn`, not `btn-sm`: the one row in
+   the admin whose buttons are full size, so they are level with the
+   tabs). On a narrow screen they wrap under the tabs. */
+.torgash-admin .admin-tabs-row { display: flex; flex-wrap: wrap; align-items: center; gap: 0.5rem 1rem; }
+.torgash-admin .admin-tabs-row > .admin-tabs { flex: 1 1 0; min-width: 0; }
+.torgash-admin .admin-tabs-actions { display: flex; align-items: center; gap: 0.5rem; margin-inline-start: auto; }
+@media (width < 48rem) {
+    /* Side by side, the buttons squeezed the tabs to a sliver: each takes a line. */
+    .torgash-admin .admin-tabs-row > .admin-tabs { flex-basis: 100%; }
+    .torgash-admin .admin-tabs-actions { width: 100%; justify-content: flex-end; flex-wrap: wrap; }
+}
+/* The card the tabs belong to stands closer to them than the page's
+   blocks stand to each other. */
+.torgash-admin :is(.admin-tabs, .admin-tabs-row) + :is(.card, .stats, .grid) { margin-top: -0.75rem; }
+/* A module's strip of screens (the quiet underlined `tabs-border` at the
+   page's level): each tab takes more room inside than daisyUI's 12px — set
+   beside the rounded tabs above a list, the words stood crowded. A form's
+   own tabs keep the 12px: the product's thirteen spread across the page. */
+.torgash-admin .tabs-border:not(form .tabs-border, .card .tabs-border) > .tab { --tab-p: 1.25rem; }
+
+/* An empty list's icon over its sentence: an SVG is a block (preflight),
+   so `text-center` alone left it at the edge. */
+.torgash-admin .text-center > svg { margin-inline: auto; }
+/* A count that is a problem (failed tasks), a warning (never checked) or
+   worth a look (code changed since) keeps its colour whatever the tab. */
+.torgash-admin .admin-tab-count.is-error { background-color: var(--color-error); color: var(--color-error-content); }
+.torgash-admin .admin-tab-count.is-warning { background-color: var(--color-warning); color: var(--color-warning-content); }
+.torgash-admin .admin-tab-count.is-info { background-color: var(--color-info); color: var(--color-info-content); }
+
+/* Tabs on a narrow screen are one row that scrolls sideways (admin-scroll.js
+   brings the active one into view): wrapped, the product card's thirteen
+   stood almost in a column. So does a row of filter buttons: one marked
+   `admin-strip` (the order statuses), and a group joined of buttons alone
+   (`join` with no field in it: "All · On · Off" over a list). */
+@media (width < 64rem) {
+    .torgash-admin :is(.tabs, .admin-strip, .join:not(:has(> :is(input, select, textarea, label, .input, .select)))) {
+        flex-wrap: nowrap; max-width: 100%; overflow-x: auto; overflow-y: hidden; scrollbar-width: none;
+    }
+    .torgash-admin :is(.tabs, .admin-strip, .join)::-webkit-scrollbar { display: none; }
+    .torgash-admin :is(.tabs > .tab, .admin-strip > *, .join > .join-item) { flex: none; white-space: nowrap; }
+}
+
+/* Nothing holds a narrow page wider than the screen. A label's help wraps
+   (daisyUI keeps `.label` on one line — a product's long one pushed even a
+   1024px window sideways; a field's own prefix, `.input > .label`, stays
+   on its line) and a field joined to its button gives way to it
+   (an input will not go below its own width otherwise — the gift card's
+   code and "Pay"); where everything fits, neither changes a thing. Below
+   the wide screen a long path or code breaks where it must; on a phone
+   besides, a grid's item may be narrower than its content (a column nobody
+   sized is as wide as its widest item) and a row with buttons in it wraps
+   them onto the next line. The probe of every screen at 390 and 820px found
+   each of these (tools/admin-probe.js). */
+.torgash-admin main :not(.input, .select) > .label { white-space: normal; }
+.torgash-admin main .join > .input { min-width: 0; flex-shrink: 1; }
+@media (width < 64rem) {
+    .torgash-admin main :is(.font-mono, code, kbd) { overflow-wrap: anywhere; }
+}
+@media (width < 40rem) {
+    .torgash-admin main .grid > * { min-width: 0; }
+    .torgash-admin main .flex:not(.join, .tabs, .admin-strip, .flex-nowrap):has(> .btn) { flex-wrap: wrap; }
+    /* What holds a strip that scrolls may be narrower than the strip. */
+    .torgash-admin main :is(.flex, .grid) > :has(> :is(.join, .tabs, .admin-strip)) { min-width: 0; }
+}
+
+/* A list drawn as cards on a phone: `admin-cards` on the table, `data-cell`
+   on its cells, and a grid per kind of list naming where each cell stands.
+   The same rows and controls as the table — one set of them — so a box
+   ticked or a status switched in place is the table's own. Of the head only
+   the box that ticks the whole page is left. A table with no grid of its
+   own that does not fit is folded the same way by admin-scroll.js
+   (`admin-auto-cards`, below): on a phone nothing scrolls sideways under
+   a fixed half of the screen. */
+@media (width < 48rem) {
+    .torgash-admin .admin-cards,
+    .torgash-admin .admin-cards > :is(thead, tbody) { display: block; min-width: 0; }
+    /* The box around cards does not scroll: the invisible ring a finger's
+       badge takes taps in reaches 6px past the card's edge, and a box that
+       may scroll scrolled those 6px. */
+    .torgash-admin .overflow-x-auto:has(> .admin-cards) { overflow-x: clip; }
+    .torgash-admin .admin-cards > thead:not(:has([data-cell="check"])) { display: none; }
+    .torgash-admin .admin-cards > thead > tr { display: flex; border-bottom: 1px solid var(--color-base-300); }
+    .torgash-admin .admin-cards > thead > tr > :not([data-cell="check"]) { display: none; }
+    .torgash-admin .admin-cards > thead > tr > [data-cell="check"] { flex: 1 1 auto; width: auto; }
+    .torgash-admin .admin-cards > tbody > tr {
+        display: grid; column-gap: 0.75rem; row-gap: 0.375rem; align-items: center;
+        padding-block: 0.875rem; border-bottom: 1px solid var(--color-base-300);
+    }
+    .torgash-admin .admin-cards > tbody > tr:last-child { border-bottom: 0; }
+    .torgash-admin .admin-cards > tbody > tr > td { display: block; padding: 0; min-width: 0; border: 0; }
+    .torgash-admin .admin-cards > tbody > tr > td[colspan] { grid-column: 1 / -1; }
+    .torgash-admin .admin-cards [data-cell] { grid-area: var(--cell); }
+    .torgash-admin .admin-cards [data-cell="check"] { --cell: check; align-self: start; }
+
+    /* An order: number and total, who bought it, how it is paid and where
+       it stands, its manager and the buttons. */
+    .torgash-admin .admin-order-cards > tbody > tr {
+        grid-template-columns: auto minmax(0, 1fr) minmax(max-content, auto);
+        grid-template-areas: "check order total" "check customer customer" "check payment status" "check manager actions";
+    }
+    .torgash-admin .admin-order-cards [data-cell="order"] { --cell: order; }
+    .torgash-admin .admin-order-cards [data-cell="customer"] { --cell: customer; }
+    .torgash-admin .admin-order-cards [data-cell="total"] { --cell: total; align-self: start; }
+    .torgash-admin .admin-order-cards [data-cell="payment"] { --cell: payment; }
+    .torgash-admin .admin-order-cards [data-cell="status"] { --cell: status; justify-self: end; }
+    .torgash-admin .admin-order-cards [data-cell="manager"] { --cell: manager; font-size: 0.75rem; }
+    .torgash-admin .admin-order-cards [data-cell="actions"] { --cell: actions; }
+
+    /* A line of an order: its name and, beside it, the line's total; under
+       them "2 × 1 250" and the SKU. Being edited: the name, the SKU, the
+       quantity-and-price form across, the total and the buttons. A part
+       bought for another line stands indented under it. */
+    .torgash-admin .admin-line-cards > tbody > tr {
+        grid-template-columns: auto auto minmax(0, 1fr) auto;
+        grid-template-areas: "name name name total" "qty unit sku sku";
+    }
+    .torgash-admin .admin-line-cards[data-editing] > tbody > tr {
+        grid-template-columns: minmax(0, 1fr) auto;
+        grid-template-areas: "name name" "sku sku" "edit edit" "total actions";
+    }
+    .torgash-admin .admin-line-cards > tbody > tr.bg-base-200\/40 { padding-inline-start: 1.25rem; }
+    .torgash-admin .admin-line-cards [data-cell="name"] { --cell: name; }
+    .torgash-admin .admin-line-cards :is([data-cell="qty"], [data-cell="unit"]) { font-size: 0.875rem; opacity: 0.75; }
+    .torgash-admin .admin-line-cards [data-cell="qty"] { --cell: qty; }
+    .torgash-admin .admin-line-cards [data-cell="qty"]::after { content: " ×"; }
+    .torgash-admin .admin-line-cards [data-cell="unit"] { --cell: unit; }
+    .torgash-admin .admin-line-cards [data-cell="sku"] { --cell: sku; opacity: 0.6; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .torgash-admin .admin-line-cards [data-cell="total"] { --cell: total; text-align: end; align-self: start; }
+    .torgash-admin .admin-line-cards[data-editing] [data-cell="total"] { text-align: start; align-self: center; }
+    .torgash-admin .admin-line-cards [data-cell="edit"] { --cell: edit; }
+    .torgash-admin .admin-line-cards [data-cell="actions"] { --cell: actions; text-align: end; }
+
+    /* A product: photo, name and SKU; under them the price and the status;
+       then the stock, under the photo, and the buttons — three of them, as
+       wide a thing as the card holds, so they span the card's columns and
+       never set the width of the price's. Being edited (the row's
+       `is-editing`) the price and the stock are fields across the card,
+       each on its own line, and the buttons are the tick and the cross. */
+    .torgash-admin .admin-product-cards > tbody > tr {
+        /* The last column is as wide as the status badge (an `auto` track
+           beside a `1fr` one is sized to its content's minimum, and the
+           badge then stood 5px past the card). */
+        grid-template-columns: auto auto minmax(0, 1fr) minmax(max-content, auto);
+        grid-template-areas: "check photo name name" "check photo price status" "check stock actions actions";
+        row-gap: 0.5rem;
+    }
+    .torgash-admin .admin-product-cards > tbody > tr.is-editing {
+        grid-template-areas: "check photo name name" "check photo price price" "check photo stock stock" "check photo status actions";
+    }
+    .torgash-admin .admin-product-cards [data-cell="photo"] { --cell: photo; align-self: start; }
+    .torgash-admin .admin-product-cards [data-cell="photo"] > div { width: 3.5rem; height: 3.5rem; }
+    .torgash-admin .admin-product-cards [data-cell="name"] { --cell: name; }
+    .torgash-admin .admin-product-cards [data-cell="name"] > a { white-space: normal; }
+    .torgash-admin .admin-product-cards [data-cell="price"] { --cell: price; font-weight: 600; }
+    .torgash-admin .admin-product-cards [data-cell="stock"] { --cell: stock; display: flex; align-items: center; gap: 0.375rem; font-size: 0.875rem; }
+    .torgash-admin .admin-product-cards [data-cell="stock"]::before { content: attr(data-label); font-size: 0.75rem; opacity: 0.55; }
+    .torgash-admin .admin-product-cards [data-cell="stock"] > div { flex: 1 1 auto; }
+    .torgash-admin .admin-product-cards [data-cell="status"] { --cell: status; justify-self: end; }
+    .torgash-admin .admin-product-cards [data-cell="actions"] { --cell: actions; justify-self: end; }
+    /* The fixed-height boxes that keep a desktop row from jumping when it
+       opens: a finger's 40px fields need the room. */
+    .torgash-admin .admin-product-cards [data-cell] > :is(.h-7, .h-8) { height: auto; min-height: 1.75rem; }
+
+    /* A customer: who, what they have done, when they came and their
+       group, the buttons. */
+    .torgash-admin .admin-customer-cards > tbody > tr {
+        grid-template-columns: auto minmax(0, 1fr) minmax(max-content, auto);
+        grid-template-areas: "check customer customer" "check activity activity" "check registered group" "check actions actions";
+    }
+    .torgash-admin .admin-customer-cards [data-cell="customer"] { --cell: customer; }
+    .torgash-admin .admin-customer-cards [data-cell="activity"] { --cell: activity; }
+    .torgash-admin .admin-customer-cards [data-cell="activity"] .whitespace-nowrap { white-space: normal; }
+    .torgash-admin .admin-customer-cards [data-cell="registered"] { --cell: registered; }
+    .torgash-admin .admin-customer-cards [data-cell="group"] { --cell: group; justify-self: end; }
+    .torgash-admin .admin-customer-cards [data-cell="actions"] { --cell: actions; justify-self: end; }
+
+    /* An enquiry: who asked and how long they have waited, what about,
+       where it stands and whose it is, the buttons (ring, resolve, open,
+       delete). */
+    .torgash-admin .admin-enquiry-cards > tbody > tr {
+        grid-template-columns: auto minmax(0, 1fr) minmax(max-content, auto);
+        grid-template-areas: "check customer waiting" "check what what" "check status manager" "check actions actions";
+    }
+    .torgash-admin .admin-enquiry-cards [data-cell="customer"] { --cell: customer; min-width: 0; }
+    .torgash-admin .admin-enquiry-cards [data-cell="waiting"] { --cell: waiting; align-self: start; justify-self: end; }
+    .torgash-admin .admin-enquiry-cards [data-cell="what"] { --cell: what; max-width: none; }
+    .torgash-admin .admin-enquiry-cards [data-cell="status"] { --cell: status; }
+    .torgash-admin .admin-enquiry-cards [data-cell="manager"] { --cell: manager; justify-self: end; }
+    .torgash-admin .admin-enquiry-cards [data-cell="actions"] { --cell: actions; justify-self: end; }
+
+    /* Any other table that did not fit, folded by admin-scroll.js: a card
+       per row with the row's name first (the first column with a heading),
+       under it every other cell with its column's heading at the left, the
+       buttons last; the box that ticks the row stands at the card's top
+       left corner, and the head keeps the box that ticks the page with its
+       name written out. A cell with nothing in it is not drawn. */
+    .torgash-admin .admin-auto-cards > tbody > tr { grid-template-columns: minmax(0, 1fr); row-gap: 0.5rem; position: relative; --auto-label: clamp(4.5rem, 30%, 7rem); }
+    .torgash-admin .admin-auto-cards > tbody > tr:has(> [data-cell="check"]) { padding-inline-start: 2.75rem; }
+    /* Taken out of the grid: with `grid-area: check` kept, the box's
+       containing block was an implicit line and it sat 60px down. */
+    .torgash-admin .admin-auto-cards > tbody > tr > [data-cell="check"] { position: absolute; grid-area: auto; inset-inline-start: 0; top: 0.875rem; }
+    .torgash-admin .admin-auto-cards > tbody > tr > td { white-space: normal; text-align: start; }
+    .torgash-admin .admin-auto-cards [data-cell="blank"] { display: none; }
+    .torgash-admin .admin-auto-cards [data-cell="field"] { position: relative; padding-inline-start: calc(var(--auto-label) + 0.75rem); min-height: 1.25rem; font-size: 0.875rem; }
+    .torgash-admin .admin-auto-cards [data-cell="field"]::before {
+        content: attr(data-label); position: absolute; inset-inline-start: 0; top: 0.1875rem; width: var(--auto-label);
+        font-size: 0.75rem; line-height: 1rem; opacity: 0.55; overflow-wrap: anywhere;
+    }
+    .torgash-admin .admin-auto-cards [data-cell="actions"] { text-align: end; margin-top: 0.25rem; }
+    .torgash-admin .admin-auto-cards [data-cell="actions"] .inline-flex { flex-wrap: wrap; justify-content: flex-end; }
+    .torgash-admin .admin-auto-cards td .whitespace-nowrap { white-space: normal; }
+    .torgash-admin .admin-auto-cards > thead > tr > [data-cell="check"] { display: flex; align-items: center; gap: 0.75rem; }
+    .torgash-admin .admin-auto-cards > thead > tr > [data-cell="check"]::after { content: attr(data-label); font-weight: 400; font-size: 0.875rem; text-transform: none; }
+
+    /* What to do with the ticked rows stands at the foot of the screen. */
+    .torgash-admin .admin-bulk-bar {
+        position: fixed; inset-inline: 0; bottom: 0; z-index: 30; border-radius: 0;
+        padding: 0.5rem var(--admin-gutter) calc(0.5rem + env(safe-area-inset-bottom));
+        background-color: var(--color-base-100); border-top: 1px solid var(--color-base-300);
+        box-shadow: 0 -6px 12px -10px oklch(0% 0 0 / 0.35);
+    }
+    .torgash-admin:has(.admin-bulk-bar:not([style*="display: none"])) main { padding-bottom: calc(14rem + env(safe-area-inset-bottom)); }
+}
+
+/* A table wider than its box on a tablet or a narrow window, marked by
+   admin-scroll.js (a phone folds it into cards instead, above): the first
+   column — and the name beside it when the first is the column of
+   checkboxes and the second has a heading — stays in place while the rest
+   slides under it, with a shadow at its edge once something has slid
+   under; a shadow at the far edge says there is more. Nothing is marked
+   while a table fits, so a wide screen keeps its tables exactly as they
+   were. */
+.torgash-admin [data-scroll-table] > table > * > tr > :first-child:not([colspan]),
+.torgash-admin [data-scroll-table][data-checks] > table > * > tr > :nth-child(2):not([colspan]) {
+    position: sticky; left: 0; z-index: 1; background-color: var(--color-base-100);
+}
+.torgash-admin [data-scroll-table][data-checks] > table > * > tr > :nth-child(2):not([colspan]) { left: var(--checks-width, 3rem); max-width: 45vw; overflow-wrap: anywhere; hyphens: auto; }
+.torgash-admin [data-scroll-table][data-scrolled]:not([data-checks]) > table > * > tr > :first-child:not([colspan]),
+.torgash-admin [data-scroll-table][data-scrolled][data-checks] > table > * > tr > :nth-child(2):not([colspan]) {
+    box-shadow: 8px 0 8px -8px oklch(0% 0 0 / 0.3);
+}
+.torgash-admin [data-scroll-table][data-more] {
+    background: radial-gradient(farthest-side at 100% 50%, oklch(0% 0 0 / 0.16), transparent) right / 0.75rem 100% no-repeat;
+}
+
+/* The gallery editor on a phone: one photo per row — a 6rem picture with
+   its caption fields beside it and the tools under both — instead of two
+   columns of cards each folding its tools into three rows. The upload
+   target is a row too. */
+@media (width < 40rem) {
+    .torgash-admin .admin-gallery { grid-template-columns: minmax(0, 1fr); }
+    .torgash-admin .admin-gallery-item { display: grid; grid-template-columns: 6rem minmax(0, 1fr); grid-template-areas: "pic meta" "tools tools"; }
+    .torgash-admin .admin-gallery-pic { grid-area: pic; }
+    .torgash-admin .admin-gallery-meta { grid-area: meta; }
+    .torgash-admin .admin-gallery-tools { grid-area: tools; flex-wrap: wrap; padding-bottom: 0.5rem; }
+    .torgash-admin .admin-gallery-add { aspect-ratio: auto; min-height: 5rem; }
+}
+
+/* The sidebar as a strip of icons — from `lg`, when this person folded it
+   (`data-sidebar="strip"` on the drawer, from admin_preferences, so the
+   page is drawn folded and nothing jumps; a tablet held sideways has room
+   for the sidebar or for the page, PLAN §62). The words go, the icons
+   stay and grow, the section holding the page is marked, and a section's
+   items open as a panel beside its icon — a popover, the top layer: the
+   sidebar scrolls and would clip anything else — in the page's palette
+   like every panel hanging off a dark bar. Below `lg` the drawer is the
+   drawer, whatever was remembered. */
+@media (width >= 64rem) {
+    .torgash-admin [data-sidebar="strip"] .admin-sidebar { width: 4rem; }
+    .torgash-admin [data-sidebar="strip"] .admin-sidebar-label { display: none; }
+    .torgash-admin [data-sidebar="strip"] .admin-sidebar-strip-only { display: inline-block; }
+    .torgash-admin [data-sidebar="strip"] .admin-sidebar-brand { justify-content: center; padding-inline: 0; }
+    .torgash-admin [data-sidebar="strip"] .admin-sidebar nav { padding-inline: 0.5rem; }
+    .torgash-admin [data-sidebar="strip"] .admin-sidebar :is(.menu:not(.admin-sidebar-flyout) > li > a, summary) { justify-content: center; padding-inline: 0; }
+    .torgash-admin [data-sidebar="strip"] .admin-sidebar summary { padding-block: 0.625rem; }
+    .torgash-admin [data-sidebar="strip"] .admin-sidebar summary > svg { width: 1.25rem; height: 1.25rem; }
+    .torgash-admin [data-sidebar="strip"] [data-admin-sections] > details > ul:not(:popover-open) { display: none; }
+    .torgash-admin [data-sidebar="strip"] [data-admin-sections] > details[data-active] > summary {
+        background-color: color-mix(in oklab, var(--color-neutral-content) 12%, transparent); color: var(--color-neutral-content);
+    }
+    .torgash-admin [data-sidebar="strip"] .admin-sidebar-foot { justify-content: center; padding-inline: 0; }
+}
+.torgash-admin .admin-sidebar-strip-only { display: none; }
+.torgash-admin .admin-sidebar-flyout-title { display: none; }
+/* The panel: the section's name, then its items. Beside the icon, below
+   it when the screen's foot is near. */
+.torgash-admin .admin-sidebar-flyout {
+    position-area: right span-bottom; position-try-fallbacks: right span-top;
+    margin: 0 0 0 0.5rem; width: 16rem; padding: 0.5rem; max-height: calc(100dvh - 2rem); overflow-y: auto;
+    background-color: var(--color-base-100); color: var(--color-base-content);
+    border: 1px solid var(--color-base-300); border-radius: var(--radius-box); box-shadow: 0 10px 30px -10px oklch(0% 0 0 / 0.35);
+}
+.torgash-admin .admin-sidebar-flyout::before { display: none !important; }
+.torgash-admin .admin-sidebar-flyout .admin-sidebar-flyout-title { display: block; }
+
+/* A tablet held sideways has room for the sidebar, but not for the bar's
+   three choices once its buttons grow under a finger (1024px overflowed):
+   they stay in the profile menu up to 72rem, as on a narrower screen. */
+@media (pointer: coarse) and (width < 72rem) {
+    .torgash-admin .admin-bar-choices { display: none; }
+    .torgash-admin .admin-menu-choices { display: flex; }
+    .torgash-admin .dropdown-content:has(> .admin-menu-choices) { width: 16rem; max-height: calc(100dvh - 5rem); overflow-y: auto; }
+}
+
+/* Under a finger a target is at least 40px: the admin's compact controls
+   (daisyUI's own -sm, 32px, and -xs) grow to the default size, with 14px
+   text. Fields and lists take 16px text — under it an iPhone zooms the
+   page into the field, and daisyUI guards only fields, not lists.
+   Checkboxes, radios and toggles are 24px, and a box with no words beside
+   it catches a tap a little around itself (::after; a box's ::before is its
+   tick, a toggle's its knob). Menus get rows a finger can pick, a line of
+   text that opens more (`summary`) a row's height, and a link in a table
+   row — an order's number, a name — takes the tap above and below its
+   line. */
+@media (pointer: coarse) {
+    .torgash-admin :is(.btn-sm, .btn-xs) { --size: 2.5rem; --fontsize: 0.875rem; --btn-p: 0.875rem; }
+    .torgash-admin :is(.input-sm, .input-xs) { --in-size-mul: 10; }
+    .torgash-admin :is(.select-sm, .select-xs) { --sl-size-mul: 10; }
+    .torgash-admin :is(.input, .select, .textarea) { --font-size-min: 1rem; }
+    .torgash-admin :is(.file-input-sm, .file-input-xs) { --size: 2.5rem; }
+    .torgash-admin :is(.checkbox, .radio, .toggle) { --size: 1.5rem; }
+    .torgash-admin :is(.checkbox, .radio, .toggle)::after { content: ""; position: absolute; inset: -0.5rem; }
+    /* A label holding a box is the box's target: a row a finger can hit —
+       and, with no words beside the box, a square of it. */
+    .torgash-admin label:has(> :is(.checkbox, .radio, .toggle)) { min-height: 2.5rem; min-width: 2.5rem; }
+    .torgash-admin .menu-sm :where(li:not(.menu-title) > :not(ul, menu, details, .menu-title)),
+    .torgash-admin .menu-sm :where(li:not(.menu-title) > details > summary:not(.menu-title)) { padding-block: 0.625rem; font-size: 0.875rem; }
+    .torgash-admin :is(.tabs-sm, .tabs-xs) { --tab-height: 2.5rem; }
+    .torgash-admin td a.link { display: inline-block; padding-block: 0.5rem; margin-block: -0.5rem; }
+    /* A button that is a line of text ("more", "show") takes the tap above
+       and below its line the same way. */
+    .torgash-admin main button.link { padding-block: 0.75rem; margin-block: -0.75rem; }
+    .torgash-admin main summary.cursor-pointer:not(.btn, .collapse-title) { padding-block: 0.75rem; }
+    /* A round icon button drawn small on purpose (the × on a chosen
+       category, on an alias) keeps its look and takes the tap around it. */
+    .torgash-admin .btn-circle.min-h-0 { position: relative; }
+    .torgash-admin .btn-circle.min-h-0::after { content: ""; position: absolute; inset: -0.75rem; }
+    /* A badge that is a control (a row's status opening its choices) keeps
+       its look and takes the tap around it. */
+    .torgash-admin .badge:is([role="button"], button) { position: relative; }
+    .torgash-admin .badge:is([role="button"], button)::after { content: ""; position: absolute; inset: -0.625rem -0.375rem; }
+    /* The little × that takes a chosen value out of a chip, likewise. */
+    .torgash-admin .badge > button:not(.btn) { position: relative; }
+    .torgash-admin .badge > button:not(.btn)::after { content: ""; position: absolute; inset: -0.8125rem; }
+}
+
 /* ---- Category tiles (torgash.catalog's "Category tiles" block) ----------
    A picture and a name per category. --tile-pic (the picture's size) and
    --tile-gap come from the block's settings; every other size follows from
@@ -1514,6 +1957,12 @@ a:has([data-inert-text]:hover) { -webkit-user-drag: none; }
 @media (width >= 48rem) { .torgash-subcategories { --subcats-pad: 1rem; } }
 .torgash-subcategories > .torgash-block-category-tiles { padding: var(--subcats-pad); }
 .torgash-subcategories .torgash-tiles-strip { margin-inline: calc(-1 * var(--subcats-pad)); padding-inline: var(--subcats-pad); scroll-padding-inline: var(--subcats-pad); }
+/* On a page the arrows hang half outside the row; inside this card they
+   stood flush against its border, so here they sit wholly inside, the
+   card's own padding away from its edge. */
+.torgash-subcategories .torgash-tiles-arrow { transform: none; }
+.torgash-subcategories .torgash-tiles-arrow.left-0 { left: var(--subcats-pad); }
+.torgash-subcategories .torgash-tiles-arrow.right-0 { right: var(--subcats-pad); }
 .torgash-js .torgash-subcategory-chips:not(.is-all) { max-height: calc(2 * 2.25rem + 0.5rem + 4px); overflow: hidden; padding: 2px; margin: -2px; }
 
 /* ---- Sales on a page (torgash.promotions' "Deal with a countdown" and

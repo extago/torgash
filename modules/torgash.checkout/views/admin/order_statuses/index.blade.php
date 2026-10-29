@@ -1,6 +1,13 @@
 @extends('admin.layout')
 
 @section('title', __('Order statuses'))
+@section('title_hint', __('The shop\'s own workflow for an order: what it is called at each step, its colour in the lists, and what the step does to the stock. Whether the money has arrived is a second axis, the payment state, and is not a status.'))
+@section('title_actions')
+    <a href="{{ route('admin.orders.index') }}" class="btn btn-ghost gap-1.5">
+        <x-icon name="arrow-left" size="sm" /> {{ __('Back to orders') }}
+    </a>
+    <a href="{{ route('admin.orders.statuses.create') }}" class="btn btn-primary">+ {{ __('New status') }}</a>
+@endsection
 
 @section('content')
     @if (session('status'))
@@ -22,18 +29,6 @@
 
     <div class="card bg-base-100 border border-base-300">
         <div class="card-body gap-4">
-            <div class="flex justify-between items-start gap-3 flex-wrap">
-                <p class="text-sm opacity-70 max-w-3xl">
-                    {{ __('The shop\'s own workflow for an order: what it is called at each step, its colour in the lists, and what the step does to the stock. Whether the money has arrived is a second axis, the payment state, and is not a status.') }}
-                </p>
-                <div class="flex items-center gap-2">
-                    <a href="{{ route('admin.orders.index') }}" class="btn btn-ghost btn-sm gap-1.5">
-                        <x-icon name="arrow-left" size="sm" /> {{ __('Back to orders') }}
-                    </a>
-                    <a href="{{ route('admin.orders.statuses.create') }}" class="btn btn-primary btn-sm">+ {{ __('New status') }}</a>
-                </div>
-            </div>
-
             <div class="overflow-x-auto">
                 <table class="table">
                     <thead>

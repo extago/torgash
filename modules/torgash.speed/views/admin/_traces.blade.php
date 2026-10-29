@@ -17,10 +17,10 @@
                             <span class="tabular-nums w-16 text-right font-semibold {{ $t->total_ms >= 1000 ? 'text-error' : '' }}">{{ \Torgash\Speed\Format::ms($t->total_ms) }}</span>
                             <span class="font-mono text-xs flex-1 truncate" title="{{ $t->path }}">{{ $t->path }}</span>
                             @if ($t->requested)
-                                <span class="badge badge-xs badge-ghost" title="{{ __('Opened while tracing') }}"><x-icon name="scan-search" size="sm" /></span>
+                                <span class="badge badge-sm badge-ghost" title="{{ __('Opened while tracing') }}"><x-icon name="scan-search" size="sm" /></span>
                             @endif
                             @if ($t->status >= 500)
-                                <span class="badge badge-xs badge-error">{{ $t->status }}</span>
+                                <span class="badge badge-sm badge-error">{{ $t->status }}</span>
                             @endif
                             <span class="text-xs opacity-50 whitespace-nowrap">{{ \Illuminate\Support\Carbon::parse($t->created_at)->diffForHumans() }}</span>
                         </a>

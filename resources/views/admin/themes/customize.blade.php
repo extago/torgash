@@ -203,7 +203,7 @@
                         <button type="button" class="flex items-center gap-3 rounded-field px-3 h-12 hover:bg-base-200 text-left" x-on:click="open(@js($customizeSectionKey))">
                             <span class="w-8 h-8 rounded-field bg-base-200 grid place-items-center shrink-0"><x-icon :name="$customizeSection['icon']" size="sm" /></span>
                             <span class="flex-1 font-medium">{{ $customizeSection['label'] }}</span>
-                            <span class="badge badge-sm badge-soft badge-primary" x-show="changedIn(@js($customizeSectionKey)) > 0" x-cloak
+                            <span class="badge badge-sm badge-primary" x-show="changedIn(@js($customizeSectionKey)) > 0" x-cloak
                                   x-text="changedIn(@js($customizeSectionKey))" title="{{ __('Changed from the theme\'s defaults') }}"></span>
                             <x-icon name="chevron-right" size="sm" class="opacity-40" />
                         </button>
@@ -224,13 +224,13 @@
                                 <form method="POST" action="{{ route('admin.themes.styles.apply', [$storefront, $customizeStyle['key']]) }}"
                                       x-on:submit="if (! confirm(@js(__('Apply this configuration? The storefront\'s current settings are replaced.')))) { $event.preventDefault(); } else { dirty = false; }">
                                     @csrf
-                                    <button class="btn btn-primary btn-xs">{{ __('Apply') }}</button>
+                                    <button class="btn btn-primary btn-sm">{{ __('Apply') }}</button>
                                 </form>
                                 <form method="POST" action="{{ route('admin.themes.styles.destroy', [$storefront, $customizeStyle['key']]) }}"
                                       x-on:submit="if (! confirm(@js(__('Delete this style?')))) { $event.preventDefault(); } else { dirty = false; }">
                                     @csrf
                                     @method('DELETE')
-                                    <button class="btn btn-ghost btn-xs btn-square" title="{{ __('Delete') }}" aria-label="{{ __('Delete') }}"><x-icon name="trash-2" size="sm" /></button>
+                                    <button class="btn btn-ghost btn-sm btn-square" title="{{ __('Delete') }}" aria-label="{{ __('Delete') }}"><x-icon name="trash-2" size="sm" /></button>
                                 </form>
                             </div>
                         @empty
@@ -332,11 +332,11 @@
                                         <div class="text-xs opacity-50" x-show="view === 'home'" x-cloak>{{ $customizeSectionInfo[$customizeSectionKey]['label'] ?? '' }}</div>
                                         <div class="text-sm font-semibold">{{ $fieldLabel }}</div>
                                     </div>
-                                    <button type="button" class="btn btn-ghost btn-xs btn-square opacity-60 hover:opacity-100" x-show="isChanged(@js($fieldKey))" x-cloak
+                                    <button type="button" class="btn btn-ghost btn-sm btn-square opacity-60 hover:opacity-100" x-show="isChanged(@js($fieldKey))" x-cloak
                                             x-on:click="resetField(@js($fieldKey))" title="{{ __('Back to the theme\'s default') }}" aria-label="{{ __('Back to the theme\'s default') }}"><x-icon name="rotate-ccw" size="sm" /></button>
                                     @if ($fieldType === 'checkbox')
                                         <input type="hidden" name="{{ $fieldName }}" value="0">
-                                        <input type="checkbox" name="{{ $fieldName }}" value="1" class="toggle toggle-sm toggle-primary" aria-label="{{ $fieldLabel }}" @checked(filter_var($fieldValue, FILTER_VALIDATE_BOOLEAN))>
+                                        <input type="checkbox" name="{{ $fieldName }}" value="1" class="toggle toggle-sm toggle-success" aria-label="{{ $fieldLabel }}" @checked(filter_var($fieldValue, FILTER_VALIDATE_BOOLEAN))>
                                     @endif
                                 </div>
 
@@ -364,9 +364,9 @@
                                                 <input type="hidden" name="{{ $fieldName }}" :value="light" value="{{ $fieldValue }}">
                                                 <input type="hidden" name="values[{{ $fieldDarkKey }}]" :value="dark" value="{{ $values[$fieldDarkKey] ?? '' }}">
                                                 <div class="join self-start" role="group" aria-label="{{ __('Palette') }}">
-                                                    <button type="button" class="btn btn-xs join-item gap-1" :class="tab === 'light' ? 'btn-neutral' : 'btn-ghost border-base-300'"
+                                                    <button type="button" class="btn btn-sm join-item gap-1" :class="tab === 'light' ? 'btn-neutral' : 'btn-ghost border-base-300'"
                                                             x-on:click="tab = 'light'" :aria-pressed="tab === 'light'"><x-icon name="sun" size="sm" /> {{ __('Light') }}</button>
-                                                    <button type="button" class="btn btn-xs join-item gap-1" :class="tab === 'dark' ? 'btn-neutral' : 'btn-ghost border-base-300'"
+                                                    <button type="button" class="btn btn-sm join-item gap-1" :class="tab === 'dark' ? 'btn-neutral' : 'btn-ghost border-base-300'"
                                                             x-on:click="tab = 'dark'" :aria-pressed="tab === 'dark'"><x-icon name="moon" size="sm" /> {{ __('Dark') }}</button>
                                                 </div>
                                                 <label class="label cursor-pointer justify-start gap-2 text-sm" x-show="tab === 'dark'" x-cloak>
@@ -397,7 +397,7 @@
                                                             <span class="font-mono font-semibold" x-text="ratio().toFixed(1).replace('.', ',') + ':1'"></span>
                                                             <span x-text="ratio() >= 4.5 ? @js(__('reads well')) : (ratio() >= 3 ? @js(__('large text only')) : @js(__('hard to read')))"></span>
                                                         </span>
-                                                        <button type="button" class="btn btn-ghost btn-xs" x-show="ratio() < 4.5" x-on:click="readable()">{{ __('Pick a readable shade') }}</button>
+                                                        <button type="button" class="btn btn-ghost btn-sm" x-show="ratio() < 4.5" x-on:click="readable()">{{ __('Pick a readable shade') }}</button>
                                                     </div>
                                                 </template>
                                             </div>
@@ -440,7 +440,7 @@
                                             <input type="hidden" name="{{ $fieldName }}" :value="composed()" value="{{ $fieldBgValue }}">
                                             <div class="join self-start" role="group" aria-label="{{ $fieldLabel }}">
                                                 @foreach (['none' => __('Colour only'), 'gradient' => __('Gradient'), 'image' => __('Picture')] as $fieldBgKind => $fieldBgKindLabel)
-                                                    <button type="button" class="btn btn-xs join-item" :class="kind === @js($fieldBgKind) ? 'btn-neutral' : 'btn-ghost border-base-300'"
+                                                    <button type="button" class="btn btn-sm join-item" :class="kind === @js($fieldBgKind) ? 'btn-neutral' : 'btn-ghost border-base-300'"
                                                             :aria-pressed="kind === @js($fieldBgKind)" x-on:click="setKind(@js($fieldBgKind))">{{ $fieldBgKindLabel }}</button>
                                                 @endforeach
                                             </div>
@@ -454,7 +454,7 @@
                                                            class="w-9 h-9 cursor-pointer rounded-field border border-base-300 bg-transparent p-0.5" aria-label="{{ __('To') }}">
                                                     <div class="join ms-auto" role="group" aria-label="{{ __('Direction') }}">
                                                         @foreach (['90' => 'arrow-right', '135' => 'arrow-down-right', '180' => 'arrow-down'] as $fieldBgAngle => $fieldBgIcon)
-                                                            <button type="button" class="btn btn-xs btn-square join-item" :class="angle === @js($fieldBgAngle) ? 'btn-neutral' : 'btn-ghost border-base-300'"
+                                                            <button type="button" class="btn btn-sm btn-square join-item" :class="angle === @js($fieldBgAngle) ? 'btn-neutral' : 'btn-ghost border-base-300'"
                                                                     x-on:click="angle = @js($fieldBgAngle); commit()" aria-label="{{ $fieldBgAngle }}°"><x-icon :name="$fieldBgIcon" size="sm" /></button>
                                                         @endforeach
                                                     </div>

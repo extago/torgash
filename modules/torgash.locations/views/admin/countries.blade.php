@@ -1,6 +1,7 @@
 @extends('admin.layout')
 
 @section('title', __('Countries'))
+@section('title_hint', __('The countries a customer can choose at checkout — only the enabled ones are offered.').' '.__(':enabled of :total available to customers', ['enabled' => $totals['enabled'], 'total' => $totals['countries']]))
 
 @section('content')
     @include('torgash.locations::admin.partials.tabs')
@@ -20,40 +21,41 @@
         </div>
     @endif
 
+    {{-- The states as one row of tabs over the card, the screen's actions at
+         its end (app.css, `admin-tabs`); LINKS carrying the search. --}}
+    <div class="admin-tabs-row">
+        <nav class="admin-tabs" aria-label="{{ __('Countries') }}">
+            @foreach (['' => __('All'), 'enabled' => __('Enabled'), 'disabled' => __('Disabled')] as $statusKey => $statusLabel)
+                <a href="{{ request()->fullUrlWithQuery(['status' => $statusKey ?: null, 'page' => null]) }}"
+                   @class(['admin-tab', 'is-active' => $filters['status'] === $statusKey])>
+                    {{ $statusLabel }} <span class="admin-tab-count">{{ $statusCounts[$statusKey] }}</span>
+                </a>
+            @endforeach
+        </nav>
+        <div class="admin-tabs-actions">
+            @if ($pack)
+                <form method="POST" action="{{ route('admin.locations.countries.import') }}">
+                    @csrf
+                    <button class="btn btn-ghost gap-1.5">
+                        <x-icon name="upload" size="sm" />
+                        {{ $totals['countries'] > 0 ? __('Re-import the list') : __('Import the country list') }}
+                    </button>
+                </form>
+            @endif
+            <a href="{{ route('admin.locations.countries.create') }}" class="btn btn-primary">+ {{ __('Add country') }}</a>
+        </div>
+    </div>
+
     <div class="card bg-base-100 border border-base-300">
         <div class="card-body gap-4">
-            <div class="flex justify-between items-start gap-3 flex-wrap">
-                <p class="text-sm opacity-70 max-w-3xl">
-                    {{ __('The countries a customer can choose at checkout — only the enabled ones are offered.') }}
-                    <span class="opacity-70">{{ __(':enabled of :total available to customers', ['enabled' => $totals['enabled'], 'total' => $totals['countries']]) }}</span>
-                </p>
-                <div class="flex items-center gap-2">
-                    @if ($pack)
-                        <form method="POST" action="{{ route('admin.locations.countries.import') }}">
-                            @csrf
-                            <button class="btn btn-ghost btn-sm gap-1.5">
-                                <x-icon name="upload" size="sm" />
-                                {{ $totals['countries'] > 0 ? __('Re-import the list') : __('Import the country list') }}
-                            </button>
-                        </form>
-                    @endif
-                    <a href="{{ route('admin.locations.countries.create') }}" class="btn btn-primary btn-sm">+ {{ __('Add country') }}</a>
-                </div>
-            </div>
-
             <form method="GET" class="flex flex-wrap items-center gap-2">
-                <label class="input input-sm w-full sm:w-72 gap-2">
+                @if ($filters['status'] !== '')
+                    <input type="hidden" name="status" value="{{ $filters['status'] }}">
+                @endif
+                <label class="input input-sm grow min-w-48 gap-2">
                     <x-icon name="search" size="sm" class="opacity-50" />
                     <input type="search" name="q" value="{{ $filters['q'] }}" class="grow" placeholder="{{ __('Name or code') }}">
                 </label>
-                <div class="join">
-                    @foreach (['' => __('All'), 'enabled' => __('Enabled'), 'disabled' => __('Disabled')] as $statusKey => $statusLabel)
-                        <button type="submit" name="status" value="{{ $statusKey }}"
-                                @class(['btn btn-sm join-item', 'btn-active' => $filters['status'] === $statusKey])>
-                            {{ $statusLabel }} <span class="opacity-50">{{ $statusCounts[$statusKey] }}</span>
-                        </button>
-                    @endforeach
-                </div>
                 @if (array_filter($filters))
                     <a href="{{ route('admin.locations.countries') }}" class="btn btn-ghost btn-sm">{{ __('Reset') }}</a>
                 @endif

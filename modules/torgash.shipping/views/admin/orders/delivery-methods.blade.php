@@ -13,7 +13,7 @@
     <label class="flex items-start justify-between gap-2 border border-base-300 rounded-lg px-3 py-2 cursor-pointer text-sm has-[:checked]:border-primary has-[:checked]:bg-primary/5">
         <span class="flex items-start gap-2">
             <input type="radio" name="shipping_method_id" value="{{ $option->id }}"
-                   class="radio radio-primary radio-xs mt-0.5"
+                   class="radio radio-sm mt-0.5"
                    @checked($quote->selected?->id === $option->id)>
             <span>
                 {{ $option->label }}

@@ -1,5 +1,5 @@
 {{-- A customer's group, switched in place — it is what decides their prices. --}}
-<td id="customer-group-{{ $customer->id }}">
+<td id="customer-group-{{ $customer->id }}" data-cell="group">
     <div class="dropdown dropdown-end">
         <div tabindex="0" role="button" @class(['badge badge-sm gap-1 cursor-pointer whitespace-nowrap', 'badge-info' => $customer->customerGroup, 'badge-ghost' => ! $customer->customerGroup])
              title="{{ __('Change group') }}">

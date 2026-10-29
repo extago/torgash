@@ -78,7 +78,7 @@
                             @endif
                             @unless ($posted)
                                 <td class="text-end">
-                                    <button type="button" class="btn btn-ghost btn-sm btn-square text-error" title="{{ __('Remove') }}"
+                                    <button type="button" class="btn btn-ghost btn-sm btn-square text-error" title="{{ __('Remove') }}" aria-label="{{ __('Remove') }}"
                                             hx-delete="{{ route('admin.inventory.documents.lines.remove', [$document, $line]) }}"
                                             hx-target="#document-lines" hx-swap="outerHTML" hx-params="none">
                                         <x-icon name="x" size="sm" />

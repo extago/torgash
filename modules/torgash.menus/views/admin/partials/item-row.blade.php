@@ -31,7 +31,7 @@
             <div class="flex items-center gap-2 flex-wrap">
                 <a href="{{ route('admin.menus.items.edit', [$menu, $item]) }}" @class(['link link-hover', 'text-primary font-semibold' => $item->highlight])>{{ $item->adminLabel() ?: '—' }}</a>
                 @if ($item->t('badge'))
-                    <span class="badge badge-{{ $item->badge_style ?: 'primary' }} badge-xs">{{ $item->t('badge') }}</span>
+                    <span class="badge badge-{{ $item->badge_style ?: 'primary' }} badge-sm">{{ $item->t('badge') }}</span>
                 @endif
                 @if ($item->show_on !== 'all')
                     <span class="badge badge-ghost badge-sm gap-1"><x-icon :name="$item->show_on === 'mobile' ? 'smartphone' : 'monitor'" size="sm" /></span>

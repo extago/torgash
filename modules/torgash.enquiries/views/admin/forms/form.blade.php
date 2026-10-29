@@ -56,8 +56,8 @@
         @csrf
         @if ($form->exists) @method('PUT') @endif
 
-        <div class="sticky top-16 z-20 -mx-6 px-6 py-3 bg-base-200/95 backdrop-blur border-b border-base-300 flex items-center gap-3">
-            <a href="{{ route('admin.enquiries.forms.index') }}" class="btn btn-ghost btn-sm btn-square" title="{{ __('Forms') }}">
+        <x-admin.form-bar>
+            <a href="{{ route('admin.enquiries.forms.index') }}" class="btn btn-ghost btn-sm btn-square" title="{{ __('Forms') }}" aria-label="{{ __('Forms') }}">
                 <x-icon name="arrow-left" size="lg" />
             </a>
             <div class="flex-1 min-w-0">
@@ -67,9 +67,11 @@
             @if ($form->exists)
                 <button type="submit" form="enquiry-form-delete" class="btn btn-ghost btn-sm text-error">{{ __('Delete') }}</button>
             @endif
-            <button type="submit" name="after_save" value="close" class="btn btn-ghost btn-sm">{{ __('Save and close') }}</button>
-            <button class="btn btn-primary btn-sm">{{ $form->exists ? __('Save') : __('Create') }}</button>
-        </div>
+            <x-slot:actions>
+                <button type="submit" name="after_save" value="close" class="btn btn-ghost btn-sm">{{ __('Save and close') }}</button>
+                <button class="btn btn-primary btn-sm">{{ $form->exists ? __('Save') : __('Create') }}</button>
+            </x-slot:actions>
+        </x-admin.form-bar>
 
         @if (session('status'))
             <div class="alert alert-success text-sm">{{ session('status') }}</div>
@@ -184,7 +186,7 @@
                         </label>
                         <fieldset class="fieldset p-0">
                             <legend class="fieldset-legend">{{ __('Code') }}</legend>
-                            <input name="code" value="{{ old('code', $form->code) }}" class="input input-bordered w-full font-mono" placeholder="{{ __('made from the name') }}">
+                            <input name="code" autocapitalize="off" autocorrect="off" spellcheck="false" value="{{ old('code', $form->code) }}" class="input input-bordered w-full font-mono" placeholder="{{ __('made from the name') }}">
                         </fieldset>
                         @if ($form->exists)
                             <div class="text-sm flex flex-col gap-2">
@@ -213,7 +215,7 @@
                     <div class="card-body gap-3">
                         <h3 class="font-semibold">{{ __('Consent') }}</h3>
                         <label class="label cursor-pointer justify-start gap-3">
-                            <input type="checkbox" name="consent" value="1" class="toggle toggle-sm" x-model="on">
+                            <input type="checkbox" name="consent" value="1" class="toggle toggle-sm toggle-success" x-model="on">
                             <span class="label-text whitespace-normal">{{ __('Ask to agree to the processing of personal data') }}</span>
                         </label>
                         <div x-show="on" class="flex flex-col gap-3">

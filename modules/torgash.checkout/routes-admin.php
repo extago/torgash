@@ -1,6 +1,7 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
+use Torgash\Checkout\Http\Admin\OrderCreateController;
 use Torgash\Checkout\Http\Admin\OrderDiscountsController;
 use Torgash\Checkout\Http\Admin\OrderItemsController;
 use Torgash\Checkout\Http\Admin\OrderMergeController;
@@ -12,6 +13,14 @@ use Torgash\Checkout\Http\Admin\OrderStatusesController;
 Route::resource('statuses', OrderStatusesController::class)->except(['show']);
 
 Route::get('/', [OrdersController::class, 'index'])->name('index');
+// A manager's own order (PLAN §63.8): the page, its three fetched answers,
+// and the placement. Before the {order:order_number} wildcards, so "create"
+// is never read as an order number.
+Route::get('/create', [OrderCreateController::class, 'create'])->name('create');
+Route::get('/create/customers', [OrderCreateController::class, 'customers'])->name('create.customers');
+Route::get('/create/products', [OrderCreateController::class, 'products'])->name('create.products');
+Route::post('/create/delivery', [OrderCreateController::class, 'delivery'])->name('create.delivery');
+Route::post('/', [OrderCreateController::class, 'store'])->name('store');
 // Before the {order:order_number} wildcards, so "bulk" is never read as an order number.
 Route::post('/bulk', [OrdersController::class, 'bulk'])->name('bulk');
 // The trash. By NUMBER, not by route-model binding: a trashed order is outside

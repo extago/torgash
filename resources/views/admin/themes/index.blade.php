@@ -7,22 +7,15 @@
 @extends('admin.layout')
 
 @section('title', __('Themes'))
+@section('title_hint', __('A theme is a folder under themes/. One based on another draws only what it changes and takes the rest from it. Each storefront wears one theme and has its own settings for it.'))
 
 @section('content')
-    <div class="flex flex-wrap items-center gap-3">
-        <h1 class="text-xl font-bold flex-1">{{ __('Themes') }}</h1>
-    </div>
-
     @if (session('status'))
         <div class="alert alert-success">{{ session('status') }}</div>
     @endif
     @if ($errors->any())
         <div class="alert alert-error text-sm">{{ $errors->first() }}</div>
     @endif
-
-    <p class="text-sm opacity-70 max-w-3xl">
-        {{ __('A theme is a folder under themes/. One based on another draws only what it changes and takes the rest from it. Each storefront wears one theme and has its own settings for it.') }}
-    </p>
 
     <div class="grid md:grid-cols-2 xl:grid-cols-3 gap-4">
         @foreach ($cards as $themeCard)

@@ -1,8 +1,8 @@
 {{-- Who deals with it, switched in place. "Take it" is first, because that is
      the move a manager makes most often from the list. --}}
-<td id="enquiry-manager-{{ $enquiry->id }}" class="whitespace-nowrap">
+<td id="enquiry-manager-{{ $enquiry->id }}" class="whitespace-nowrap" data-cell="manager">
     <div class="dropdown dropdown-end">
-        <div tabindex="0" role="button" @class(['btn btn-ghost btn-xs gap-1 font-normal', 'opacity-60' => ! $enquiry->manager])
+        <div tabindex="0" role="button" @class(['btn btn-ghost btn-sm gap-1 font-normal', 'opacity-60' => ! $enquiry->manager])
              title="{{ __('Change manager') }}">
             @if ($enquiry->manager)
                 <x-icon name="user" size="sm" class="opacity-60" /> {{ $enquiry->manager->name }}

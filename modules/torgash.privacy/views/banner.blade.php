@@ -56,7 +56,7 @@
                 @foreach (\App\Core\Privacy\Consent::CATEGORIES as $bannerCategory => $bannerLabel)
                     <label class="flex items-start gap-3 rounded-box border border-base-300 p-3 cursor-pointer">
                         @if ($bannerCategory === \App\Core\Privacy\Consent::NECESSARY)
-                            <input type="checkbox" class="toggle mt-0.5" checked disabled>
+                            <input type="checkbox" class="toggle toggle-primary mt-0.5" checked disabled>
                         @else
                             <input type="checkbox" name="categories[]" value="{{ $bannerCategory }}" class="toggle toggle-primary mt-0.5"
                                    @checked(in_array($bannerCategory, $bannerAllowed, true) && $consent->decided())>

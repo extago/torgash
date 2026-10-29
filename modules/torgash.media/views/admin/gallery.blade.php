@@ -23,11 +23,11 @@
                     field: config.field,
                     items: config.items,
                     allowRemote: config.allowRemote,
+                    maxSide: config.maxSide,
                     busy: false,
                     errors: [],
                     urlOpen: false,
                     urls: '',
-                    dragIndex: null,
                     dropZone: false,
                     confirming: null,
 
@@ -65,12 +65,52 @@
                         }
                     },
 
-                    upload(fileList) {
+                    async upload(fileList) {
                         const files = Array.from(fileList || []);
                         if (!files.length) return;
+                        this.busy = true;
                         const body = new FormData();
-                        files.forEach((f) => body.append('images[]', f));
+                        for (const file of files) body.append('images[]', await this.shrink(file), file.name);
                         return this.send('/upload', { body });
+                    },
+
+                    /* A photo straight from a phone's camera is 3–8 MB, and over
+                       a mobile connection sending it is the slow part. Whatever
+                       is larger than the stored original would be anyway (the
+                       Media setting "Max dimension") is drawn smaller in the
+                       browser first: the server would reduce it to that size on
+                       arrival, so nothing is lost — and nothing is touched when
+                       the shop keeps originals untouched (maxSide 0). JPEG and
+                       PNG from a megabyte up; what the browser cannot decode,
+                       or would not make smaller, goes as it is. The orientation
+                       a camera writes is applied, so the pixels arrive upright. */
+                    async shrink(file) {
+                        if (!this.maxSide || !/^image\/(jpeg|png)$/.test(file.type) || file.size < 1048576) return file;
+                        try {
+                            const bitmap = await createImageBitmap(file, { imageOrientation: 'from-image' });
+                            const scale = this.maxSide / Math.max(bitmap.width, bitmap.height);
+                            if (scale >= 1) { bitmap.close(); return file; }
+                            const canvas = document.createElement('canvas');
+                            canvas.width = Math.round(bitmap.width * scale);
+                            canvas.height = Math.round(bitmap.height * scale);
+                            canvas.getContext('2d').drawImage(bitmap, 0, 0, canvas.width, canvas.height);
+                            bitmap.close();
+                            const blob = await new Promise((resolve) => canvas.toBlob(resolve, file.type, 0.9));
+                            return blob && blob.size < file.size ? new File([blob], file.name, { type: file.type }) : file;
+                        } catch (e) {
+                            return file;
+                        }
+                    },
+
+                    /* By a drag (x-sort — Alpine Sort, which works under a finger,
+                       by the picture) or by the arrows a finger gets (PLAN §62).
+                       Named by the photo's id, not its index: Alpine Sort drops a
+                       key of 0 as "none". */
+                    move(id, to) {
+                        const from = this.items.findIndex((item) => item.id === id);
+                        if (from === -1 || from === to || to < 0 || to >= this.items.length) return;
+                        const moved = this.items.splice(from, 1)[0];
+                        this.items.splice(to, 0, moved);
                     },
 
                     addFromUrl() {
@@ -100,13 +140,6 @@
                             thumb: item.thumb.split('?')[0] + '?v=' + stamp,
                             url: item.url.split('?')[0] + '?v=' + stamp,
                         }));
-                    },
-
-                    drop(target) {
-                        if (this.dragIndex === null || this.dragIndex === target) return;
-                        const moved = this.items.splice(this.dragIndex, 1)[0];
-                        this.items.splice(target, 0, moved);
-                        this.dragIndex = null;
                     },
 
                     /* The first photo is the main one; the order is saved with
@@ -167,11 +200,14 @@
         field: {{ \Illuminate\Support\Js::from($field) }},
         items: {{ \Illuminate\Support\Js::from($initialItems) }},
         allowRemote: {{ \Torgash\Media\ImageSettings::allowRemote() ? 'true' : 'false' }},
+        maxSide: {{ \Torgash\Media\ImageSettings::originalUntouched() ? 0 : (int) \Torgash\Media\ImageSettings::maxDimension() }},
      })" class="flex flex-col gap-3">
 
     <div class="flex items-center gap-2 flex-wrap">
         <div class="text-sm opacity-60" x-show="items.length" x-cloak @if ($singlePicture) hidden @endif>
-            {{ __('The first photo is the main one; drag to change the order.') }}
+            {{-- Under a finger dragging is unreliable (PLAN §62): there the arrows do it. --}}
+            <span class="pointer-coarse:hidden">{{ __('The first photo is the main one; drag to change the order.') }}</span>
+            <span class="hidden pointer-coarse:inline">{{ __('The first photo is the main one; the arrows change the order.') }}</span>
         </div>
         <div class="ml-auto flex items-center gap-2">
             <span x-show="busy" x-cloak class="loading loading-spinner loading-sm"></span>
@@ -212,17 +248,14 @@
         </div>
     </div>
 
-    <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
+    {{-- On a phone one photo per row, the tools under it (app.css, `admin-gallery`). --}}
+    <div class="admin-gallery grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3"
+         @unless ($singlePicture) x-sort="move($item, $position)" x-sort:config="{ delay: 150, delayOnTouchOnly: true }" @endunless>
         <template x-for="(item, i) in items" :key="item.id">
-            <div class="rounded-box border border-base-300 bg-base-100 overflow-hidden flex flex-col"
-                 :class="dragIndex === i ? 'opacity-40' : ''"
-                 draggable="{{ $singlePicture ? 'false' : 'true' }}"
-                 @dragstart="dragIndex = i"
-                 @dragend="dragIndex = null"
-                 @dragover.prevent
-                 @drop.prevent="drop(i)">
+            <div class="admin-gallery-item rounded-box border border-base-300 bg-base-100 overflow-hidden flex flex-col" x-sort:item="item.id">
 
-                <div class="relative bg-base-200 aspect-square cursor-move group">
+                {{-- The picture is what is dragged; the fields and buttons stay theirs. --}}
+                <div class="admin-gallery-pic relative bg-base-200 aspect-square cursor-move group" x-sort:handle>
                     <img :src="item.thumb" :alt="item.alt" class="absolute inset-0 h-full w-full object-contain p-1" draggable="false">
 
                     <span x-show="i === 0 && {{ $singlePicture ? 'false' : 'true' }}" class="badge badge-primary badge-sm absolute top-2 left-2">{{ __('Main') }}</span>
@@ -231,7 +264,7 @@
                          class="absolute inset-0 bg-base-100/90 flex flex-col items-center justify-center gap-2 p-2 text-center">
                         <div class="text-sm">{{ __('Remove this photo?') }}</div>
                         <div class="flex gap-2">
-                            <button type="button" class="btn btn-error btn-sm" @click="destroy(item)">{{ __('Remove') }}</button>
+                            <button type="button" class="btn btn-ghost btn-sm text-error" @click="destroy(item)">{{ __('Remove') }}</button>
                             <button type="button" class="btn btn-ghost btn-sm" @click="confirming = null">{{ __('Cancel') }}</button>
                         </div>
                     </div>
@@ -239,7 +272,7 @@
 
                 {{-- Always visible (a touch screen has no hover), the same order as
                      a list row's: tools, then — set apart — delete. --}}
-                <div class="flex items-center gap-1 px-2 pt-2">
+                <div class="admin-gallery-tools flex items-center gap-1 px-2 pt-2">
                     <button type="button" class="btn btn-ghost btn-sm btn-square" :disabled="busy"
                             title="{{ __('Rotate left') }}" aria-label="{{ __('Rotate left') }}" @click="rotate(item, -90)">
                         <x-icon name="rotate-ccw" />
@@ -255,6 +288,18 @@
                             title="{{ __('Make it the main photo') }}" aria-label="{{ __('Make it the main photo') }}" @click="makeMain(i)">
                         <x-icon name="star" />
                     </button>
+                    {{-- Under a finger, where dragging is unreliable: one place
+                         earlier, one place later. --}}
+                    <button type="button" class="btn btn-ghost btn-sm btn-square hidden pointer-coarse:inline-flex"
+                            x-show="i > 0 && {{ $singlePicture ? 'false' : 'true' }}"
+                            title="{{ __('Move earlier') }}" aria-label="{{ __('Move earlier') }}" @click="move(item.id, i - 1)">
+                        <x-icon name="arrow-up" />
+                    </button>
+                    <button type="button" class="btn btn-ghost btn-sm btn-square hidden pointer-coarse:inline-flex"
+                            x-show="i < items.length - 1 && {{ $singlePicture ? 'false' : 'true' }}"
+                            title="{{ __('Move later') }}" aria-label="{{ __('Move later') }}" @click="move(item.id, i + 1)">
+                        <x-icon name="arrow-down" />
+                    </button>
                     <span class="w-px h-5 shrink-0 bg-base-300 mx-1 ms-auto" aria-hidden="true"></span>
                     <button type="button" class="btn btn-ghost btn-sm btn-square text-error" :disabled="busy"
                             title="{{ __('Remove') }}" aria-label="{{ __('Remove') }}" @click="confirming = item.id">
@@ -262,7 +307,7 @@
                     </button>
                 </div>
 
-                <div class="p-2 flex flex-col gap-2">
+                <div class="admin-gallery-meta p-2 flex flex-col gap-2">
                     <input type="text" x-model="item.alt" :name="field + '[' + item.id + '][alt]'"
                            class="input input-bordered w-full" placeholder="{{ __('Alt text') }}" aria-label="{{ __('Alt text') }}">
                     <input type="text" x-model="item.title" :name="field + '[' + item.id + '][title]'"
@@ -276,7 +321,7 @@
             </div>
         </template>
 
-        <label class="rounded-box border-2 border-dashed border-base-300 hover:border-primary hover:bg-base-200/50
+        <label class="admin-gallery-add rounded-box border-2 border-dashed border-base-300 hover:border-primary hover:bg-base-200/50
                       aspect-square flex flex-col items-center justify-center gap-1 cursor-pointer transition-colors text-center p-2"
                :class="dropZone ? 'border-primary bg-base-200/50' : ''"
                @dragover.prevent="dropZone = true" @dragleave="dropZone = false"

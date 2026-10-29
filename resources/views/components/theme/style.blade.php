@@ -8,9 +8,15 @@
     `:root:has(.theme-controller:checked)`, which outranks a bare :root, and
     the shop's colour has to hold in the dark palette too.
 
-    The default mode rides a <meta> the head's own script reads before the
-    first paint: a visitor's saved choice still wins; "auto" follows the
-    system, as before.
+    The colour scheme is written on <html> as data-theme by the script
+    printed here, before the first paint: the visitor's own choice (the
+    sun/moon switch, kept in the browser), else the shop's (`mode`, carried
+    by the <meta>), else — "auto" — the system's, followed while the page is
+    open. Always written down, never left to the media query alone: a
+    `[data-theme="torgash-dark"]` rule in app.css then holds for a visitor
+    whose system is dark and who never touched the switch (the brand logos'
+    plates did not). Without a script the palette still follows the system
+    through the media query below.
 
     The shop's icon (theme setting `favicon`) is printed here too: the tab,
     the bookmarks, the search results, the closed page as well. A phone's
@@ -38,6 +44,34 @@
         <link rel="apple-touch-icon" href="{{ $themeIcon }}">
     @endif
 @endif
+<script nonce="{{ csp_nonce() }}">
+    (function () {
+        var root = document.documentElement, saved = null;
+        try { saved = localStorage.getItem('torgash-theme'); } catch (e) {}
+        if (saved === 'torgash-dark' || saved === 'torgash-light') {
+            root.setAttribute('data-theme', saved);
+            return;
+        }
+        var mode = document.querySelector('meta[name="torgash-mode"]');
+        if (mode && (mode.content === 'light' || mode.content === 'dark')) {
+            root.setAttribute('data-theme', 'torgash-' + mode.content);
+            return;
+        }
+        var system = matchMedia('(prefers-color-scheme: dark)');
+        var follow = function () {
+            var theme = system.matches ? 'torgash-dark' : 'torgash-light';
+            root.setAttribute('data-theme', theme);
+            document.querySelectorAll('.torgash-mode-switch').forEach(function (box) { box.checked = theme === 'torgash-dark'; });
+        };
+        follow();
+        // Until the visitor chooses: the switch saves a choice, and a
+        // choice is never overridden.
+        system.addEventListener('change', function () {
+            try { if (localStorage.getItem('torgash-theme')) { return; } } catch (e) {}
+            follow();
+        });
+    })();
+</script>
 @if ($themeCss !== [] || $themeDark !== [] || $themeFaces !== [] || $themeRules !== [])
     <style data-theme-settings>
         @foreach ($themeFaces as $themeFace)

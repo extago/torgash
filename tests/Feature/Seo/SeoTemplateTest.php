@@ -120,6 +120,30 @@ class SeoTemplateTest extends TestCase
     }
 
     /**
+     * A parent's page lists what stands in its children, so its prices and its
+     * count are theirs. Reported from the live shop (2026-10-29): "Smartphones"
+     * over its brands showed their phones and an empty {min_price}.
+     */
+    public function test_a_parent_categorys_prices_and_count_are_what_its_page_lists(): void
+    {
+        $gaming = Category::create(['name' => ['en' => 'Gaming'], 'slug' => 'gaming', 'enabled' => true, 'parent_id' => $this->category->id]);
+        $office = Category::create(['name' => ['en' => 'Office'], 'slug' => 'office', 'enabled' => true, 'parent_id' => $this->category->id]);
+        $this->product->categories()->sync([$gaming->id]);
+        Product::create([
+            'sku' => 'SEO-2', 'name' => ['en' => 'Desk Laptop'], 'slug' => 'desk-laptop',
+            'price' => 250_00, 'stock' => 1, 'status' => 'active',
+        ])->categories()->attach($office->id);
+
+        $this->template([
+            'subject' => 'category', 'mode' => Template::MODE_OVERRIDE,
+            'title' => ['en' => '{category} from {min_price} to {max_price}, {total_products} of them'],
+        ]);
+
+        $this->get('http://localhost/catalog/laptops')->assertOk()
+            ->assertSee('Laptops from '.format_price(100_00).' to '.format_price(250_00).', 2 of them');
+    }
+
+    /**
      * The square brackets: print the dash only when there is something after
      * it. Other engines solve this with brackets around the token; ours are free
      * because a token is braces.

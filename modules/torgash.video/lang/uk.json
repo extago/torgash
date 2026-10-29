@@ -60,5 +60,8 @@
     "File": "Файл",
     "Play the video: :title": "Відтворити відео: :title",
     "The video loads from :platform": "Відео завантажиться з :platform",
+    "Move earlier": "Перемістити раніше",
+    "Move later": "Перемістити пізніше",
+    "The arrows change the order; titles and order are saved with the rest of the form.": "Порядок змінюється стрілками; підписи й порядок зберігаються разом із формою.",
     "Upload a file": "Завантажити файл"
 }

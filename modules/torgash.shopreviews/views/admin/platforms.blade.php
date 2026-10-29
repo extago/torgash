@@ -1,23 +1,20 @@
 @extends('admin.layout')
 
 @section('title', __('The shop\'s rating on other sites'))
+@section('title_hint', __('Google, Hotline, a marketplace: the shop\'s mark there, typed by hand and printed on the reviews page with a link where a reader can check it. Keep the numbers current — nothing fetches them.'))
+@section('title_actions')
+    <a href="{{ route('admin.shopreviews.platforms.create') }}" class="btn btn-primary">+ {{ __('Add a site') }}</a>
+@endsection
 
 @section('content')
     @if (session('status'))
         <div class="alert alert-success">{{ session('status') }}</div>
     @endif
 
+    @include('torgash.shopreviews::admin._nav')
+
     <div class="card bg-base-100 border border-base-300">
         <div class="card-body gap-4">
-            <div class="flex justify-between items-start gap-3 flex-wrap">
-                <p class="text-sm opacity-70 max-w-3xl">
-                    {{ __('Google, Hotline, a marketplace: the shop\'s mark there, typed by hand and printed on the reviews page with a link where a reader can check it. Keep the numbers current — nothing fetches them.') }}
-                </p>
-                <div class="flex flex-wrap items-center gap-2">
-                    @include('torgash.shopreviews::admin._nav')
-                    <a href="{{ route('admin.shopreviews.platforms.create') }}" class="btn btn-primary btn-sm">+ {{ __('Add a site') }}</a>
-                </div>
-            </div>
 
             @if ($platforms->isEmpty())
                 <div class="text-center py-12 opacity-60">

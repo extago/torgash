@@ -1,13 +1,11 @@
 @extends('admin.layout')
 
 @section('title', __('Profit'))
+@section('title_hint', __('The sales of a period — orders in a status that takes goods off the shelf: the goods after discounts and the delivery charged, less what the goods cost from their receipts, less the order’s own expenses, plus its extra income. Taxes are not taken off; units that arrived without a price are counted, not costed at zero.'))
 
 @section('content')
     <div class="card bg-base-100 border border-base-300">
         <div class="card-body gap-4">
-            <p class="text-sm opacity-70 max-w-3xl">
-                {{ __('The sales of a period — orders in a status that takes goods off the shelf: the goods after discounts and the delivery charged, less what the goods cost from their receipts, less the order’s own expenses, plus its extra income. Taxes are not taken off; units that arrived without a price are counted, not costed at zero.') }}
-            </p>
 
             <form method="GET" class="flex flex-wrap items-end gap-2">
                 <input type="date" name="from" value="{{ $from }}" class="input input-sm input-bordered" aria-label="{{ __('From') }}">
@@ -41,7 +39,7 @@
             @if ($byLabel->isNotEmpty())
                 <div class="flex flex-wrap gap-2 text-sm">
                     @foreach ($byLabel as $row)
-                        <span class="badge badge-lg gap-1.5 {{ $row->kind === 'income' ? 'badge-success badge-outline' : 'badge-ghost' }}">
+                        <span class="badge badge-lg gap-1.5 {{ $row->kind === 'income' ? 'badge-success' : 'badge-ghost' }}">
                             {{ $row->label }} <span class="tabular-nums">{{ $row->kind === 'income' ? '+' : '−' }}{{ admin_price((int) $row->amount) }}</span> <span class="opacity-50">×{{ $row->n }}</span>
                         </span>
                     @endforeach

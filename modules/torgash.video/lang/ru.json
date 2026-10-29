@@ -60,5 +60,8 @@
     "File": "Файл",
     "Play the video: :title": "Воспроизвести видео: :title",
     "The video loads from :platform": "Видео загрузится с :platform",
+    "Move earlier": "Переместить раньше",
+    "Move later": "Переместить позже",
+    "The arrows change the order; titles and order are saved with the rest of the form.": "Порядок меняется стрелками; подписи и порядок сохраняются вместе с формой.",
     "Upload a file": "Загрузить файл"
 }

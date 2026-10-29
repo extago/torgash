@@ -1,6 +1,7 @@
 @extends('admin.layout')
 
 @section('title', __('Blocking'))
+@section('title_hint', __('An address is blocked when it collects too many refusals — wrong passwords, refused forms, unknown API tokens — or by hand. A block runs out by itself; one that comes back stays longer each time.'))
 
 {{--
     The addresses the shop has stopped talking to — or would have.
@@ -68,30 +69,32 @@
         ];
     @endphp
 
-    <div role="tablist" class="tabs tabs-border">
-        @foreach ($tabs as $tabKey => [$tabLabel, $tabIcon])
-            <a role="tab" href="{{ $tabUrl($tabKey) }}" @class(['tab gap-2', 'tab-active' => $filters['tab'] === $tabKey])>
-                <x-icon :name="$tabIcon" size="sm" /> {{ $tabLabel }}
-                <span @class(['badge badge-sm', 'badge-error' => $tabKey === 'enforced' && $counts['enforced'], 'badge-ghost' => ! ($tabKey === 'enforced' && $counts['enforced'])])>{{ $counts[$tabKey] }}</span>
-            </a>
-        @endforeach
+    {{-- The states as one row of tabs over the card, the screen's action at
+         its end (app.css, `admin-tabs`); a count that is a problem is red. --}}
+    <div class="admin-tabs-row">
+        <nav class="admin-tabs" aria-label="{{ __('Blocking') }}">
+            @foreach ($tabs as $tabKey => [$tabLabel, $tabIcon])
+                @php $alarm = $tabKey === 'enforced' && $counts['enforced']; @endphp
+                <a href="{{ $tabUrl($tabKey) }}" @class(['admin-tab', 'is-active' => $filters['tab'] === $tabKey])>
+                    <x-icon :name="$tabIcon" size="sm" /> {{ $tabLabel }}
+                    <span @class(['admin-tab-count', 'is-error' => $alarm])>{{ $counts[$tabKey] }}</span>
+                </a>
+            @endforeach
+        </nav>
+        <div class="admin-tabs-actions">
+            <button type="button" class="btn btn-primary" data-open-dialog="modal-block-new">+ {{ __('Block an address') }}</button>
+        </div>
     </div>
 
     {{-- One Alpine root: the bulk bar and every row's box share `selected`. --}}
     <div class="card bg-base-100 border border-base-300" x-data="{ selected: [] }">
         <div class="card-body gap-4">
-            <div class="flex justify-between items-start gap-3 flex-wrap">
-                <p class="text-sm opacity-70 max-w-3xl">
-                    {{ __('An address is blocked when it collects too many refusals — wrong passwords, refused forms, unknown API tokens — or by hand. A block runs out by itself; one that comes back stays longer each time.') }}
-                </p>
-                <button type="button" class="btn btn-primary btn-sm" data-open-dialog="modal-block-new">+ {{ __('Block an address') }}</button>
-            </div>
 
             <form method="GET" class="flex flex-wrap items-center gap-2">
                 @if ($filters['tab'] !== 'standing')
                     <input type="hidden" name="tab" value="{{ $filters['tab'] }}">
                 @endif
-                <label class="input input-sm w-full sm:w-72 gap-2">
+                <label class="input input-sm grow min-w-48 gap-2">
                     <x-icon name="search" size="sm" class="opacity-50" />
                     <input type="search" name="q" value="{{ $filters['q'] }}" class="grow" placeholder="{{ __('Address, note or who…') }}">
                 </label>
@@ -237,7 +240,7 @@
                 {{ __('A block by hand is applied even while the module is only watching: watching is a statement about the guard\'s own judgement, not about yours.') }}
             </p>
             <div>
-                <button class="btn btn-error btn-sm gap-1.5"><x-icon name="shield-ban" size="sm" /> {{ __('Block') }}</button>
+                <button class="btn btn-sm btn-error btn-outline gap-1.5"><x-icon name="shield-ban" size="sm" /> {{ __('Block') }}</button>
             </div>
         </form>
     </x-modal>

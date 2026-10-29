@@ -10,17 +10,19 @@
         $choiceByKey = collect($choices)->flatten(1)->keyBy('key');
     @endphp
 
-    <div class="sticky top-16 z-20 -mx-6 px-6 py-3 bg-base-200/95 backdrop-blur border-b border-base-300 flex items-center gap-3">
-        <a href="{{ route('admin.exim.import.index') }}" class="btn btn-ghost btn-sm btn-square" title="{{ __('Back to import') }}">
+    <x-admin.form-bar>
+        <a href="{{ route('admin.exim.import.index') }}" class="btn btn-ghost btn-sm btn-square" title="{{ __('Back to import') }}" aria-label="{{ __('Back to import') }}">
             <x-icon name="arrow-left" size="lg" />
         </a>
         <div class="flex-1 min-w-0">
             <div class="text-xs opacity-50 leading-none">{{ __('Match the columns') }}</div>
             <div class="font-semibold truncate leading-tight">{{ __($entityLabel) }} · {{ $fileName }} · {{ trans_choice(':count row|:count rows', $rowCount, ['count' => $rowCount]) }}</div>
         </div>
-        <a href="{{ route('admin.exim.import.index') }}" class="btn btn-ghost btn-sm">{{ __('Cancel') }}</a>
-        <button form="import-map" class="btn btn-primary btn-sm gap-1.5"><x-icon name="eye" size="sm" /> {{ __('Check before importing') }}</button>
-    </div>
+        <x-slot:actions>
+            <a href="{{ route('admin.exim.import.index') }}" class="btn btn-ghost btn-sm">{{ __('Cancel') }}</a>
+            <button form="import-map" class="btn btn-primary btn-sm gap-1.5"><x-icon name="eye" size="sm" /> {{ __('Check before importing') }}</button>
+        </x-slot:actions>
+    </x-admin.form-bar>
 
     @if ($errors->any())
         <div class="alert alert-error text-sm">{{ $errors->first() }}</div>
@@ -194,7 +196,7 @@
                 <div class="grid gap-4 md:grid-cols-2">
                     <label class="flex items-start gap-3 cursor-pointer">
                         <input type="hidden" name="create_new" value="0">
-                        <input type="checkbox" name="create_new" value="1" class="checkbox mt-0.5" @checked($options['create_new'] ?? true)>
+                        <input type="checkbox" name="create_new" value="1" class="checkbox checkbox-sm mt-0.5" @checked($options['create_new'] ?? true)>
                         <span>
                             <span class="block">{{ __('Create what is not found') }}</span>
                             <span class="block text-xs opacity-60">{{ __('Off — only existing records are updated, and rows that match nothing are skipped (a supplier\'s price list).') }}</span>

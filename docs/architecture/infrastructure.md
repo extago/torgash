@@ -348,7 +348,19 @@ Testing it without FrankenPHP: `Tests\Concerns\RunsInOctaneWorker` boots
 Octane's real `Worker` with its `FakeClient` (the socket is the only fake),
 hands it the test's PDO, and serves a list of requests through ONE
 application. `WorkerModeTest` holds the leaks found so far, each verified to
-fail without its fix.
+fail without its fix — and one check of a whole kind: every hook listener's
+object, and what that object holds, compared with what the container hands
+the NEXT request; another instance of a shared binding is a memo kept past
+its request (it found `torgash.seo`'s three listeners holding the templates'
+memo through their constructor, 2026-10-29). Between two requests the test
+may save models again: the trait points Eloquent's static resolver at the
+worker while it serves and back at the test after.
+
+Tinker under FrankenPHP's `php-cli`: PsySH forks its loop where pcntl is, and
+the child calls `cli_set_process_title()`, which only PHP's own CLI has.
+`CoreServiceProvider::tinkerWithoutFork()` hands PsySH a config without the
+fork (`app/Core/Support/psysh-config.php`) when that function is missing,
+unless the server set its own `PSYSH_CONFIG`.
 
 **PHP is started from PHP through `App\Core\Support\Php::command()`**, never
 the bare `PHP_BINARY` constant: under FrankenPHP that is `frankenphp`, and

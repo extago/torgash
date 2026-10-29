@@ -125,8 +125,8 @@
         {"code": "100g", "value": {"en": "100 Gbit/s", "ru": "100 Гбит/с"}},
         {"code": "2-5g", "value": {"en": "2.5 Gbit/s", "ru": "2,5 Гбит/с"}}
     ]},
-    {"code": "battery", "purpose": "plain", "input_type": "text", "shown_in": ["specs"], "name": {"en": "Battery", "ru": "Аккумулятор"}},
-    {"code": "camera_main", "purpose": "plain", "input_type": "text", "shown_in": ["specs", "buy_box"], "name": {"en": "Main camera", "ru": "Основная камера"}},
-    {"code": "clients", "purpose": "plain", "input_type": "text", "shown_in": ["specs", "buy_box"], "name": {"en": "Clients", "ru": "Клиентов"}},
-    {"code": "cpu_cores", "purpose": "plain", "input_type": "number", "shown_in": ["specs"], "name": {"en": "CPU cores", "ru": "Ядер процессора"}}
+    {"code": "battery", "purpose": "filter", "input_type": "text", "shown_in": ["specs"], "name": {"en": "Battery", "ru": "Аккумулятор"}},
+    {"code": "camera_main", "purpose": "filter", "input_type": "text", "shown_in": ["specs", "buy_box"], "name": {"en": "Main camera", "ru": "Основная камера"}},
+    {"code": "clients", "purpose": "filter", "input_type": "text", "shown_in": ["specs", "buy_box"], "name": {"en": "Clients", "ru": "Клиентов"}},
+    {"code": "cpu_cores", "purpose": "filter", "input_type": "number", "shown_in": ["specs"], "name": {"en": "CPU cores", "ru": "Ядер процессора"}}
 ]

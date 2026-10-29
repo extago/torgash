@@ -54,7 +54,7 @@
         <div class="px-3 pt-2 pb-1 text-xs uppercase tracking-wide opacity-50">{{ __('Brands') }}</div>
         <div class="flex flex-wrap gap-1.5 px-3 pb-2">
             @foreach ($brands as $brand)
-                <a href="{{ route('catalog.brands.show', $brand['slug']) }}" role="option" class="badge badge-outline hover:badge-primary aria-selected:badge-primary"><span>{{ \Torgash\Search\Highlight::html($brand['name'], $marked) }}</span></a>
+                <a href="{{ route('catalog.brands.show', $brand['slug']) }}" role="option" class="badge badge-ghost hover:badge-primary aria-selected:badge-primary"><span>{{ \Torgash\Search\Highlight::html($brand['name'], $marked) }}</span></a>
             @endforeach
         </div>
     @endif

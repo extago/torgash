@@ -67,11 +67,11 @@
                                             <td class="text-xs">{{ $draft->user?->name ?? '—' }}</td>
                                             <td class="text-xs opacity-60 whitespace-nowrap" title="{{ __('Deleted :when if nobody opens it', ['when' => $draft->expiresAt()->isoFormat('LLL')]) }}">{{ $draft->updated_at->diffForHumans() }}</td>
                                             <td class="text-end whitespace-nowrap">
-                                                <a href="{{ route('admin.exim.import.map', ['token' => $draft->token]) }}" class="btn btn-ghost btn-sm btn-square" title="{{ __('Continue') }}"><x-icon name="pencil" size="sm" /></a>
+                                                <a href="{{ route('admin.exim.import.map', ['token' => $draft->token]) }}" class="btn btn-ghost btn-sm btn-square" title="{{ __('Continue') }}" aria-label="{{ __('Continue') }}"><x-icon name="pencil" size="sm" /></a>
                                                 <form method="POST" action="{{ route('admin.exim.import.destroy', $draft) }}" class="inline" data-confirm="{{ __('Delete this unfinished import and its file?') }}">
                                                     @csrf
                                                     @method('DELETE')
-                                                    <button class="btn btn-ghost btn-sm btn-square text-error" title="{{ __('Delete') }}"><x-icon name="trash-2" size="sm" /></button>
+                                                    <button class="btn btn-ghost btn-sm btn-square text-error" title="{{ __('Delete') }}" aria-label="{{ __('Delete') }}"><x-icon name="trash-2" size="sm" /></button>
                                                 </form>
                                             </td>
                                         </tr>
@@ -110,7 +110,7 @@
                                                 <form method="POST" action="{{ route('admin.exim.import.presets.destroy', $preset) }}" data-confirm="{{ __('Delete this import preset?') }}">
                                                     @csrf
                                                     @method('DELETE')
-                                                    <button class="btn btn-ghost btn-sm btn-square text-error" title="{{ __('Delete') }}"><x-icon name="trash-2" size="sm" /></button>
+                                                    <button class="btn btn-ghost btn-sm btn-square text-error" title="{{ __('Delete') }}" aria-label="{{ __('Delete') }}"><x-icon name="trash-2" size="sm" /></button>
                                                 </form>
                                             </td>
                                         </tr>

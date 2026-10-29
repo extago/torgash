@@ -20,9 +20,10 @@
          structured data, all from App\Core\Seo\PageMeta. Print no head tag
          of your own. --}}
     <x-seo.head />
-    {{-- The theme's settings as CSS. With none declared it prints only the
-         colour-scheme meta, but keep it: it is also where a child theme of
-         this one would get its configurator values. --}}
+    {{-- REQUIRED: the theme's settings as CSS, and the script that writes
+         the colour scheme on <html> (the visitor's choice, else the
+         system's) — every dark-scheme rule in app.css hangs on it. It is
+         also where a child theme of this one gets its configurator values. --}}
     <x-theme.style />
     {{-- REQUIRED, every script: the page's content security policy runs only
          a <script> carrying this request's nonce. --}}
@@ -30,14 +31,6 @@
         // REQUIRED: what only a script can open (the filter sheet on a phone)
         // is folded away only under this class.
         document.documentElement.classList.add('torgash-js');
-        (function () {
-            try {
-                var saved = localStorage.getItem('torgash-theme');
-                if (saved === 'torgash-dark' || saved === 'torgash-light') {
-                    document.documentElement.setAttribute('data-theme', saved);
-                }
-            } catch (e) {}
-        })();
     </script>
     <link rel="stylesheet" href="{{ asset_url('/assets/css/app.css') }}">
     <script nonce="{{ csp_nonce() }}" src="{{ asset_url('/assets/js/vendor/htmx.min.js') }}" defer></script>

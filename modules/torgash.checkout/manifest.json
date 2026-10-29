@@ -93,6 +93,17 @@
             "help": "Not asked — for a shop whose deliveries never need one. A delivery zone that matches by postal code then has nothing to match on, so keep it asked if you use such zones."
         },
         {
+            "key": "status_tabs",
+            "type": "select",
+            "default": "row",
+            "options": {
+                "row": "One row that scrolls",
+                "wrap": "All on view, on as many rows as it takes"
+            },
+            "label": "Status tabs over the orders list",
+            "help": "A shop with many statuses may want every one in sight, to see at a glance what the managers are doing; one row keeps the head compact and scrolls sideways."
+        },
+        {
             "key": "existing_account",
             "type": "select",
             "default": "sign_in",

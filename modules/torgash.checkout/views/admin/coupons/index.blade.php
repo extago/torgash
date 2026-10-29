@@ -1,6 +1,7 @@
 @extends('admin.layout')
 
 @section('title', __('Coupons'))
+@section('title_hint', __('A code the customer types in the basket for a percent or an amount off the order. For discounts that apply by themselves — to a category, from a sum, in a window of time — use promotions.'))
 
 @section('content')
     @php
@@ -22,25 +23,32 @@
         <div class="alert alert-error text-sm">{{ $errors->first() }}</div>
     @endif
 
+    {{-- The states as one row of tabs over the card, the screen's actions at
+         its end (app.css, `admin-tabs`); LINKS carrying the search. --}}
+    <div class="admin-tabs-row">
+        <nav class="admin-tabs" aria-label="{{ __('Coupons') }}">
+            @foreach ($stateTabs as $stateKey => $stateLabel)
+                <a href="{{ request()->fullUrlWithQuery(['state' => $stateKey ?: null, 'page' => null]) }}"
+                   @class(['admin-tab', 'is-active' => $filters['state'] === $stateKey])>
+                    {{ \Illuminate\Support\Str::ucfirst($stateLabel) }} <span class="admin-tab-count">{{ $stateCounts[$stateKey] }}</span>
+                </a>
+            @endforeach
+        </nav>
+        <div class="admin-tabs-actions">
+            {{-- A neighbour, not a dependency: promotions is its own module. --}}
+            @if (\Illuminate\Support\Facades\Route::has('admin.promotions.index'))
+                <a href="{{ route('admin.promotions.index') }}" class="btn btn-ghost gap-1.5"><x-icon name="percent" size="sm" /> {{ __('Promotions') }}</a>
+            @endif
+            <a href="{{ route('admin.checkout.coupons.create') }}" class="btn btn-primary">+ {{ __('New coupon') }}</a>
+        </div>
+    </div>
+
     {{-- One Alpine root: the bulk bar and every row's checkbox share
          `selected` — the categories list's own arrangement. --}}
     <div class="card bg-base-100 border border-base-300" x-data="{ selected: [], copied: '' }">
         <div class="card-body gap-4">
-            <div class="flex justify-between items-start gap-3 flex-wrap">
-                <p class="text-sm opacity-70 max-w-3xl">
-                    {{ __('A code the customer types in the basket for a percent or an amount off the order. For discounts that apply by themselves — to a category, from a sum, in a window of time — use promotions.') }}
-                </p>
-                <div class="flex items-center gap-2">
-                    {{-- A neighbour, not a dependency: promotions is its own module. --}}
-                    @if (\Illuminate\Support\Facades\Route::has('admin.promotions.index'))
-                        <a href="{{ route('admin.promotions.index') }}" class="btn btn-ghost btn-sm gap-1.5"><x-icon name="percent" size="sm" /> {{ __('Promotions') }}</a>
-                    @endif
-                    <a href="{{ route('admin.checkout.coupons.create') }}" class="btn btn-primary btn-sm">+ {{ __('New coupon') }}</a>
-                </div>
-            </div>
-
             <form method="GET" class="flex flex-wrap items-center gap-2">
-                <label class="input input-sm w-full sm:w-72 gap-2">
+                <label class="input input-sm grow min-w-48 gap-2">
                     <x-icon name="search" size="sm" class="opacity-50" />
                     <input type="search" name="q" value="{{ $filters['q'] }}" class="grow" placeholder="{{ __('Search by code…') }}">
                 </label>
@@ -49,16 +57,6 @@
                     <a href="{{ route('admin.checkout.coupons.index') }}" class="btn btn-ghost btn-sm">{{ __('Reset') }}</a>
                 @endif
             </form>
-
-            {{-- LINKS carrying the search, not a second control in the form. --}}
-            <div class="join flex-wrap -mt-1">
-                @foreach ($stateTabs as $stateKey => $stateLabel)
-                    <a href="{{ request()->fullUrlWithQuery(['state' => $stateKey ?: null]) }}"
-                       @class(['btn btn-sm join-item', 'btn-active' => $filters['state'] === $stateKey])>
-                        {{ \Illuminate\Support\Str::ucfirst($stateLabel) }} <span class="opacity-50">{{ $stateCounts[$stateKey] }}</span>
-                    </a>
-                @endforeach
-            </div>
 
             <div class="min-h-12 flex items-center">
                 <p x-show="!selected.length" class="text-xs opacity-50">
@@ -120,7 +118,7 @@
                                                @class(['font-mono font-semibold link link-hover', 'opacity-60' => $coupon->state() !== 'active'])>{{ $coupon->code }}</a>
                                             {{-- The code is what gets pasted into a newsletter;
                                                  one click puts it on the clipboard. --}}
-                                            <button type="button" class="btn btn-ghost btn-sm btn-square" title="{{ __('Copy the code') }}"
+                                            <button type="button" class="btn btn-ghost btn-sm btn-square" title="{{ __('Copy the code') }}" aria-label="{{ __('Copy the code') }}"
                                                     @click="navigator.clipboard?.writeText(@js($coupon->code)); copied = @js($coupon->code); setTimeout(() => copied = '', 1500)">
                                                 <x-icon name="copy" size="sm" x-show="copied !== {{ \Illuminate\Support\Js::from($coupon->code) }}" />
                                                 <x-icon name="check" size="sm" class="text-success" x-show="copied === {{ \Illuminate\Support\Js::from($coupon->code) }}" x-cloak />

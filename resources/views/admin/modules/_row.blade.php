@@ -53,7 +53,7 @@
                 @endunless
                 {{-- Made for one country (a carrier, a gateway): `regions` in its manifest. --}}
                 @foreach ($manifest->regions as $moduleRegion)
-                    <span class="badge badge-sm badge-outline font-mono" title="{{ __('For shops in this country') }}">{{ $moduleRegion }}</span>
+                    <span class="badge badge-sm badge-ghost font-mono" title="{{ __('For shops in this country') }}">{{ $moduleRegion }}</span>
                 @endforeach
             </div>
 

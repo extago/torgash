@@ -1,6 +1,18 @@
 @extends('admin.layout')
 
 @section('title', __('Code delivery'))
+@section('title_hint', __('Besides email, a code can travel by any HTTP request: an SMS gateway, a messenger\'s API. Pick a ready filling or write your own; the customer is offered every switched-on channel that can reach their address, in this order. Every code sent is on the Verification codes screen.'))
+{{-- No states to filter by: the action stands level with the heading. --}}
+@section('title_actions')
+    <div class="dropdown dropdown-end">
+        <div tabindex="0" role="button" class="btn btn-primary">+ {{ __('New channel') }}</div>
+        <ul tabindex="0" class="dropdown-content menu bg-base-100 rounded-box border border-base-300 shadow z-10 w-60 p-2">
+            @foreach ($presets as $presetKey => $presetName)
+                <li><a href="{{ route('admin.automations.channels.create', ['preset' => $presetKey]) }}">{{ __($presetName) }}</a></li>
+            @endforeach
+        </ul>
+    </div>
+@endsection
 
 {{-- The HTTP requests that carry a verification code (CodeChannelsController). --}}
 @section('content')
@@ -10,19 +22,6 @@
 
     <div class="card bg-base-100 border border-base-300">
         <div class="card-body gap-4">
-            <div class="flex justify-between items-start gap-3 flex-wrap">
-                <p class="text-sm opacity-70 max-w-3xl">
-                    {{ __('Besides email, a code can travel by any HTTP request: an SMS gateway, a messenger\'s API. Pick a ready filling or write your own; the customer is offered every switched-on channel that can reach their address, in this order. Every code sent is on the Verification codes screen.') }}
-                </p>
-                <div class="dropdown dropdown-end">
-                    <div tabindex="0" role="button" class="btn btn-primary btn-sm">+ {{ __('New channel') }}</div>
-                    <ul tabindex="0" class="dropdown-content menu bg-base-100 rounded-box border border-base-300 shadow z-10 w-60 p-2">
-                        @foreach ($presets as $presetKey => $presetName)
-                            <li><a href="{{ route('admin.automations.channels.create', ['preset' => $presetKey]) }}">{{ __($presetName) }}</a></li>
-                        @endforeach
-                    </ul>
-                </div>
-            </div>
 
             <div class="overflow-x-auto">
                 <table class="table">
@@ -49,12 +48,12 @@
                                 @include('torgash.automations::admin.code-channels._status', ['channel' => $channel])
                                 <td>
                                     <div class="flex items-center justify-end gap-1">
-                                        <a href="{{ route('admin.automations.channels.edit', $channel) }}" class="btn btn-ghost btn-sm btn-square" title="{{ __('Edit') }}"><x-icon name="pencil" size="sm" /></a>
+                                        <a href="{{ route('admin.automations.channels.edit', $channel) }}" class="btn btn-ghost btn-sm btn-square" title="{{ __('Edit') }}" aria-label="{{ __('Edit') }}"><x-icon name="pencil" size="sm" /></a>
                                         <span class="w-px h-5 shrink-0 bg-base-300"></span>
                                         <form method="POST" action="{{ route('admin.automations.channels.destroy', $channel) }}"
                                               data-confirm="{{ __('Delete :name?', ['name' => $channel->name]) }}">
                                             @csrf @method('DELETE')
-                                            <button class="btn btn-ghost btn-sm btn-square text-error" title="{{ __('Delete') }}"><x-icon name="trash-2" size="sm" /></button>
+                                            <button class="btn btn-ghost btn-sm btn-square text-error" title="{{ __('Delete') }}" aria-label="{{ __('Delete') }}"><x-icon name="trash-2" size="sm" /></button>
                                         </form>
                                     </div>
                                 </td>

@@ -28,7 +28,7 @@
             @foreach (ServiceType::all() as $type)
                 <label class="label cursor-pointer justify-start gap-2 p-0">
                     <input type="radio" name="provider_config[service_type]" value="{{ $type }}"
-                           class="radio radio-sm radio-primary" x-model="serviceType"
+                           class="radio radio-sm" x-model="serviceType"
                            @checked($serviceType === $type)>
                     <span class="label-text">{{ ServiceType::label($type) }}</span>
                 </label>
@@ -45,7 +45,7 @@
             @foreach (WarehouseType::all() as $ref => $label)
                 <label class="label cursor-pointer justify-start gap-2 p-0">
                     <input type="checkbox" name="provider_config[warehouse_types][]" value="{{ $ref }}"
-                           class="checkbox checkbox-sm checkbox-primary"
+                           class="checkbox checkbox-sm"
                            @checked(in_array($ref, $warehouseTypes, true))>
                     <span class="label-text">{{ $label }}</span>
                 </label>
@@ -57,7 +57,7 @@
     <label class="label cursor-pointer justify-start gap-2 p-0">
         <input type="hidden" name="provider_config[calculate]" value="0">
         <input type="checkbox" name="provider_config[calculate]" value="1"
-               class="checkbox checkbox-sm checkbox-primary" @checked($calculate)>
+               class="checkbox checkbox-sm" @checked($calculate)>
         <span class="label-text">{{ __('Ask Nova Poshta for the price') }}</span>
     </label>
     <div class="text-xs opacity-50 -mt-2">

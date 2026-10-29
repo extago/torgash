@@ -4,8 +4,8 @@
 @section('own_heading', '1')
 
 @section('content')
-    <div class="sticky top-16 z-20 -mx-6 px-6 py-3 bg-base-200/95 backdrop-blur border-b border-base-300 flex items-center gap-3">
-        <a href="{{ route('admin.customers.index') }}" class="btn btn-ghost btn-sm btn-square" title="{{ __('Back to customers') }}">
+    <x-admin.form-bar>
+        <a href="{{ route('admin.customers.index') }}" class="btn btn-ghost btn-sm btn-square" title="{{ __('Back to customers') }}" aria-label="{{ __('Back to customers') }}">
             <x-icon name="arrow-left" size="lg" />
         </a>
         <div class="avatar avatar-placeholder shrink-0">
@@ -18,7 +18,7 @@
             <div class="font-semibold truncate leading-tight">{{ $customer->name }}</div>
         </div>
         <div class="dropdown dropdown-end">
-            <div tabindex="0" role="button" class="btn btn-ghost btn-sm btn-square" title="{{ __('More actions') }}">
+            <div tabindex="0" role="button" class="btn btn-ghost btn-sm btn-square" title="{{ __('More actions') }}" aria-label="{{ __('More actions') }}">
                 <x-icon name="settings" size="lg" />
             </div>
             <ul tabindex="0" class="dropdown-content menu menu-sm bg-base-100 rounded-box shadow-md w-60 mt-2 p-2 z-50 border border-base-300">
@@ -33,9 +33,11 @@
                 <li><button type="button" class="text-error" data-open-dialog="customer-delete"><x-icon name="trash-2" /> {{ __('Delete the customer') }}</button></li>
             </ul>
         </div>
-        <a href="{{ route('admin.customers.index') }}" class="btn btn-ghost btn-sm">{{ __('Cancel') }}</a>
-        <button type="submit" form="customer-form" class="btn btn-primary btn-sm">{{ __('Save') }}</button>
-    </div>
+        <x-slot:actions>
+            <a href="{{ route('admin.customers.index') }}" class="btn btn-ghost btn-sm">{{ __('Cancel') }}</a>
+            <button type="submit" form="customer-form" class="btn btn-primary btn-sm">{{ __('Save') }}</button>
+        </x-slot:actions>
+    </x-admin.form-bar>
 
     @if (session('status'))
         <div class="alert alert-success text-sm">{{ session('status') }}</div>
@@ -139,7 +141,7 @@
         <x-slot:footer>
             <form method="POST" action="{{ route('admin.customers.destroy', $customer) }}">
                 @csrf @method('DELETE')
-                <button class="btn btn-error btn-sm">{{ __('Delete the customer') }}</button>
+                <button class="btn btn-ghost btn-sm text-error">{{ __('Delete the customer') }}</button>
             </form>
         </x-slot:footer>
     </x-modal>

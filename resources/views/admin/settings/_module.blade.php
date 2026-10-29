@@ -37,8 +37,8 @@
     $withToc = count($cardTitles) >= 4;
 @endphp
 
-<div class="sticky top-16 z-20 -mx-6 px-6 py-3 bg-base-200/95 backdrop-blur border-b border-base-300 flex items-center gap-3">
-    <a href="{{ route('admin.settings') }}#module-{{ $moduleManifest->id }}" class="btn btn-ghost btn-sm btn-square" title="{{ __('All settings') }}">
+<x-admin.form-bar>
+    <a href="{{ route('admin.settings') }}#module-{{ $moduleManifest->id }}" class="btn btn-ghost btn-sm btn-square" title="{{ __('All settings') }}" aria-label="{{ __('All settings') }}">
         <x-icon name="arrow-left" size="lg" />
     </a>
     <x-admin.module-tile :manifest="$moduleManifest" size="sm" :icon="$tileIcon" />
@@ -47,7 +47,7 @@
         <div class="font-semibold truncate leading-tight">{{ $moduleTitle }}</div>
     </div>
     <div class="dropdown dropdown-end">
-        <div tabindex="0" role="button" class="btn btn-ghost btn-sm btn-square" title="{{ __('More actions') }}">
+        <div tabindex="0" role="button" class="btn btn-ghost btn-sm btn-square" title="{{ __('More actions') }}" aria-label="{{ __('More actions') }}">
             <x-icon name="settings" size="lg" />
         </div>
         <ul tabindex="0" class="dropdown-content menu menu-sm bg-base-100 rounded-box shadow-md w-72 mt-2 p-2 z-50 border border-base-300">
@@ -67,8 +67,10 @@
             </li>
         </ul>
     </div>
-    <button type="submit" form="settings-form" class="btn btn-primary btn-sm">{{ __('Save') }}</button>
-</div>
+    <x-slot:actions>
+        <button type="submit" form="settings-form" class="btn btn-primary btn-sm">{{ __('Save') }}</button>
+    </x-slot:actions>
+</x-admin.form-bar>
 
 @if (session('status'))
     <div class="alert alert-success text-sm">{{ session('status') }}</div>

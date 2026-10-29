@@ -1,6 +1,7 @@
 @extends('admin.layout')
 
 @section('title', __('Campaigns'))
+@section('title_hint', __('Letters to the subscribers: news, a sale, new arrivals. Each goes to every subscribed address or to those meeting its conditions, now or at a time, at the pace the mail server allows; opens, clicks and unsubscribes are counted per campaign.'))
 
 @section('content')
     @php
@@ -18,32 +19,31 @@
         <div class="alert alert-success">{{ session('status') }}</div>
     @endif
 
+    {{-- The states as one row of tabs over the card, the screen's actions at
+         its end (app.css, `admin-tabs`); LINKS carrying the search. --}}
+    <div class="admin-tabs-row">
+        <nav class="admin-tabs" aria-label="{{ __('Campaigns') }}">
+            @foreach ($campaignTabs as $tabKey => $tabLabel)
+                <a href="{{ route('admin.newsletter.campaigns.index', array_filter(['tab' => $tabKey, 'q' => request('q')])) }}"
+                   @class(['admin-tab', 'is-active' => $tab === $tabKey])>
+                    {{ $tabLabel }} <span class="admin-tab-count">{{ $counts[$tabKey] ?? 0 }}</span>
+                </a>
+            @endforeach
+        </nav>
+        <div class="admin-tabs-actions">
+            <a href="{{ route('admin.newsletter.index') }}" class="btn btn-ghost gap-1.5"><x-icon name="users" /> {{ __('Subscribers') }}</a>
+            <a href="{{ route('admin.newsletter.campaigns.create') }}" class="btn btn-primary">+ {{ __('New campaign') }}</a>
+        </div>
+    </div>
+
     <div class="card bg-base-100 border border-base-300">
         <div class="card-body gap-4">
-            <div class="flex justify-between items-start gap-3 flex-wrap">
-                <p class="text-sm opacity-70 max-w-3xl">
-                    {{ __('Letters to the subscribers: news, a sale, new arrivals. Each goes to every subscribed address or to those meeting its conditions, now or at a time, at the pace the mail server allows; opens, clicks and unsubscribes are counted per campaign.') }}
-                </p>
-                <div class="flex items-center gap-2">
-                    <a href="{{ route('admin.newsletter.index') }}" class="btn btn-ghost btn-sm gap-1.5"><x-icon name="users" /> {{ __('Subscribers') }}</a>
-                    <a href="{{ route('admin.newsletter.campaigns.create') }}" class="btn btn-primary btn-sm">+ {{ __('New campaign') }}</a>
-                </div>
-            </div>
-
             <form method="GET" class="flex flex-wrap items-center gap-2">
                 <input type="hidden" name="tab" value="{{ $tab }}">
-                <label class="input input-sm w-full sm:w-72 gap-2">
+                <label class="input input-sm grow min-w-48 gap-2">
                     <x-icon name="search" size="sm" class="opacity-50" />
                     <input type="search" name="q" value="{{ request('q') }}" class="grow" placeholder="{{ __('Search by name') }}">
                 </label>
-                <div class="join">
-                    @foreach ($campaignTabs as $tabKey => $tabLabel)
-                        <a href="{{ route('admin.newsletter.campaigns.index', array_filter(['tab' => $tabKey, 'q' => request('q')])) }}"
-                           @class(['btn btn-sm join-item', 'btn-active' => $tab === $tabKey])>
-                            {{ $tabLabel }} <span class="opacity-50">{{ $counts[$tabKey] ?? 0 }}</span>
-                        </a>
-                    @endforeach
-                </div>
             </form>
 
             @if ($campaigns->isEmpty())
@@ -73,7 +73,7 @@
                                         <div class="text-xs opacity-50 truncate max-w-md">{{ $campaignRow->t('subject', admin_content_locale()) ?: '—' }}</div>
                                     </td>
                                     <td>
-                                        <span class="badge {{ $campaignBadge }} whitespace-nowrap">{{ $campaignBadgeText }}</span>
+                                        <span class="badge badge-sm {{ $campaignBadge }} whitespace-nowrap">{{ $campaignBadgeText }}</span>
                                         <div class="text-xs opacity-50 mt-1 whitespace-nowrap tabular-nums">
                                             @if ($campaignRow->status === 'scheduled' && $campaignRow->scheduled_at)
                                                 {{ $campaignRow->scheduled_at->format('d.m.Y H:i') }}
@@ -89,11 +89,11 @@
                                     <td class="text-end tabular-nums">{{ $campaignRow->rate('clicked') !== null ? $campaignRow->rate('clicked').'%' : '—' }}</td>
                                     <td class="text-end whitespace-nowrap">
                                         <div class="inline-flex items-center gap-1">
-                                            <a href="{{ route('admin.newsletter.campaigns.preview', $campaignRow) }}" target="_blank" rel="noopener" class="btn btn-ghost btn-sm btn-square" title="{{ __('Open the letter') }}"><x-icon name="external-link" /></a>
-                                            <a href="{{ route('admin.newsletter.campaigns.edit', $campaignRow) }}" class="btn btn-ghost btn-sm btn-square" title="{{ __('Edit') }}"><x-icon name="pencil" /></a>
+                                            <a href="{{ route('admin.newsletter.campaigns.preview', $campaignRow) }}" target="_blank" rel="noopener" class="btn btn-ghost btn-sm btn-square" title="{{ __('Open the letter') }}" aria-label="{{ __('Open the letter') }}"><x-icon name="external-link" /></a>
+                                            <a href="{{ route('admin.newsletter.campaigns.edit', $campaignRow) }}" class="btn btn-ghost btn-sm btn-square" title="{{ __('Edit') }}" aria-label="{{ __('Edit') }}"><x-icon name="pencil" /></a>
                                             @if ($campaignRow->status !== 'sending')
                                                 <span class="w-px h-5 shrink-0 bg-base-300 mx-1"></span>
-                                                <button form="campaign-delete-{{ $campaignRow->id }}" class="btn btn-ghost btn-sm btn-square text-error" title="{{ __('Delete') }}"><x-icon name="trash-2" /></button>
+                                                <button form="campaign-delete-{{ $campaignRow->id }}" class="btn btn-ghost btn-sm btn-square text-error" title="{{ __('Delete') }}" aria-label="{{ __('Delete') }}"><x-icon name="trash-2" /></button>
                                             @endif
                                         </div>
                                     </td>

@@ -14,7 +14,7 @@
             @csrf
             <input name="points" type="number" min="0" class="input input-bordered input-sm join-item w-full" value="{{ $pointsRow->credited_at ? $pointsRow->earned : $pointsRow->earn }}"
                    aria-label="{{ __('Points this order earns') }}">
-            <button class="btn btn-sm join-item">{{ __('Save') }}</button>
+            <button class="btn btn-sm btn-primary join-item">{{ __('Save') }}</button>
         </form>
     @endcan
 </div>

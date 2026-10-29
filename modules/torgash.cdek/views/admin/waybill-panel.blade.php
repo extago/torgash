@@ -127,7 +127,7 @@
 
                 <label class="label cursor-pointer justify-start gap-2 p-0 text-sm">
                     <input type="hidden" name="cod" value="0">
-                    <input type="checkbox" name="cod" value="1" class="checkbox checkbox-primary"
+                    <input type="checkbox" name="cod" value="1" class="checkbox checkbox-sm"
                            @checked((bool) ($cdekOld['cod'] ?? $draft['cod'])) @disabled(($draft['due'] ?? 0) <= 0)>
                     <span>
                         {{ __('Collect payment on delivery') }}

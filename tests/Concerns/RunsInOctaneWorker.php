@@ -3,6 +3,7 @@
 namespace Tests\Concerns;
 
 use Illuminate\Container\Container;
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Foundation\Application;
 use Illuminate\Support\Facades\Facade;
 use Illuminate\Http\Request;
@@ -66,6 +67,12 @@ trait RunsInOctaneWorker
         $client->responses = [];
         $client->errors = [];
 
+        // Eloquent's connection resolver and event dispatcher are static:
+        // the worker's while it serves, the test's again after it.
+        $worker = $this->octaneWorker->application();
+        Model::setConnectionResolver($worker['db']);
+        Model::setEventDispatcher($worker['events']);
+
         try {
             $this->octaneWorker->run();
         } finally {
@@ -87,6 +94,11 @@ trait RunsInOctaneWorker
         Container::setInstance($this->app);
         Facade::setFacadeApplication($this->app);
         Facade::clearResolvedInstances();
+        // Booting pointed the models at the worker's database manager, whose
+        // application the worker flushes after every request: a model saved
+        // by the test between two requests found no `config` there.
+        Model::setConnectionResolver($this->app['db']);
+        Model::setEventDispatcher($this->app['events']);
     }
 
     protected function workerGet(string $url, array $headers = []): Request

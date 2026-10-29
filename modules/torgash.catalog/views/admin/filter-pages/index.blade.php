@@ -1,6 +1,7 @@
 @extends('admin.layout')
 
 @section('title', __('Filter pages'))
+@section('title_hint', __('A category plus a set of characteristic values — or a town — at an address of its own. The same combination reached through the sidebar points its canonical here, so the shop has one indexable page instead of an unbounded number of query strings.'))
 
 @section('content')
     @php
@@ -18,17 +19,27 @@
         <div class="alert alert-error text-sm">{{ $errors->first() }}</div>
     @endif
 
+    {{-- The states as one row of tabs over the card, the screen's action at
+         its end (app.css, `admin-tabs`); LINKS carrying every other filter. --}}
+    <div class="admin-tabs-row">
+        <nav class="admin-tabs" aria-label="{{ __('Filter pages') }}">
+            @foreach ($tabs as $tabKey => $tabLabel)
+                <a href="{{ request()->fullUrlWithQuery(['tab' => $tabKey ?: null, 'page' => null]) }}"
+                   @class(['admin-tab', 'is-active' => $filters['tab'] === $tabKey])>
+                    {{ $tabLabel }}
+                    <span @class(['admin-tab-count', 'is-warning' => $tabKey === 'empty' && $counts['empty'] > 0])>{{ $counts[$tabKey] }}</span>
+                </a>
+            @endforeach
+        </nav>
+        <div class="admin-tabs-actions">
+            <a href="{{ route('admin.catalog.filter-pages.create') }}" class="btn btn-primary">+ {{ __('New filter page') }}</a>
+        </div>
+    </div>
+
     <div class="card bg-base-100 border border-base-300" x-data="{ selected: [] }">
         <div class="card-body gap-4">
-            <div class="flex justify-between items-start gap-3 flex-wrap">
-                <p class="text-sm opacity-70 max-w-3xl">
-                    {{ __('A category plus a set of characteristic values — or a town — at an address of its own. The same combination reached through the sidebar points its canonical here, so the shop has one indexable page instead of an unbounded number of query strings.') }}
-                </p>
-                <a href="{{ route('admin.catalog.filter-pages.create') }}" class="btn btn-primary btn-sm">+ {{ __('New filter page') }}</a>
-            </div>
-
             <form method="GET" class="flex flex-wrap items-center gap-2">
-                <label class="input input-sm w-full sm:w-72 gap-2">
+                <label class="input input-sm grow min-w-48 gap-2">
                     <x-icon name="search" size="sm" class="opacity-50" />
                     <input type="search" name="q" value="{{ $filters['q'] }}" class="grow" placeholder="{{ __('Search by name or address…') }}">
                 </label>
@@ -51,20 +62,6 @@
                     <a href="{{ route('admin.catalog.filter-pages.index') }}" class="btn btn-ghost btn-sm">{{ __('Reset') }}</a>
                 @endif
             </form>
-
-            <div class="join flex-wrap -mt-1">
-                @foreach ($tabs as $tabKey => $tabLabel)
-                    <a href="{{ request()->fullUrlWithQuery(['tab' => $tabKey ?: null, 'page' => null]) }}"
-                       @class(['btn btn-sm join-item gap-1.5', 'btn-active' => $filters['tab'] === $tabKey])>
-                        {{ $tabLabel }}
-                        @if ($tabKey === 'empty' && $counts['empty'] > 0)
-                            <span class="badge badge-xs badge-warning">{{ $counts['empty'] }}</span>
-                        @else
-                            <span class="opacity-50">{{ $counts[$tabKey] }}</span>
-                        @endif
-                    </a>
-                @endforeach
-            </div>
 
             <div class="min-h-12 flex items-center">
                 <p x-show="!selected.length" class="text-xs opacity-50">

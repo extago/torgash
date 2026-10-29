@@ -1,43 +1,31 @@
 @extends('admin.layout')
 
 @section('title', __('Usage log'))
+@section('title_hint', __('What the sales actually gave away, read from each order’s own snapshot — never recomputed, so an edited promotion cannot rewrite what an old order was given.'))
+
+{{-- No states to tab: the way back stands level with the heading. --}}
+@section('title_actions')
+    <a href="{{ route('admin.promotions.index') }}" class="btn btn-ghost gap-1.5"><x-icon name="arrow-left" size="sm" /> {{ __('Promotions') }}</a>
+@endsection
 
 @section('content')
-    <div class="flex items-center justify-between mb-4">
-        <div>
-            <h1 class="text-2xl font-semibold">{{ __('Usage log') }}</h1>
-            <div class="text-xs opacity-60 mt-1">
-                {{ __('What the sales actually gave away, read from each order’s own snapshot — never recomputed, so an edited promotion cannot rewrite what an old order was given.') }}
-            </div>
-        </div>
-        <a href="{{ route('admin.promotions.index') }}" class="btn btn-ghost btn-sm">{{ __('Promotions') }}</a>
-    </div>
-
-    <div class="card bg-base-100 shadow-sm">
-        <div class="card-body">
-            <form method="GET" class="flex flex-wrap gap-2 items-end">
-                <fieldset class="fieldset p-0">
-                    <legend class="fieldset-legend">{{ __('Promotion') }}</legend>
-                    <select name="promotion" class="select select-bordered select-sm">
-                        {{-- Not __('Any'): the root dictionary already owns that
-                             word in the masculine, and this list is of акции. --}}
-                        <option value="">{{ __('Any promotion') }}</option>
-                        @foreach ($promotions as $promotion)
-                            <option value="{{ $promotion->id }}" @selected(request('promotion') == $promotion->id)>
-                                {{ $promotion->t('name', admin_content_locale()) ?: __('(untitled)') }}
-                            </option>
-                        @endforeach
-                    </select>
-                </fieldset>
-                <fieldset class="fieldset p-0">
-                    <legend class="fieldset-legend">{{ __('From') }}</legend>
-                    <input type="date" name="from" value="{{ request('from') }}" class="input input-bordered input-sm">
-                </fieldset>
-                <fieldset class="fieldset p-0">
-                    <legend class="fieldset-legend">{{ __('To') }}</legend>
-                    <input type="date" name="to" value="{{ request('to') }}" class="input input-bordered input-sm">
-                </fieldset>
-                <button class="btn btn-sm btn-primary">{{ __('Find') }}</button>
+    <div class="card bg-base-100 border border-base-300">
+        <div class="card-body gap-4">
+            {{-- Each control asks the list again on change: no "Find". --}}
+            <form method="GET" class="flex flex-wrap items-center gap-2">
+                <select name="promotion" class="select select-sm w-auto grow min-w-48" data-submit-on-change aria-label="{{ __('Promotion') }}">
+                    {{-- Not __('Any'): the root dictionary already owns that
+                         word in the masculine, and this list is of акции. --}}
+                    <option value="">{{ __('Any promotion') }}</option>
+                    @foreach ($promotions as $promotion)
+                        <option value="{{ $promotion->id }}" @selected(request('promotion') == $promotion->id)>
+                            {{ $promotion->t('name', admin_content_locale()) ?: __('(untitled)') }}
+                        </option>
+                    @endforeach
+                </select>
+                <input type="date" name="from" value="{{ request('from') }}" class="input input-sm w-auto" data-submit-on-change aria-label="{{ __('From') }}">
+                <span class="opacity-50">—</span>
+                <input type="date" name="to" value="{{ request('to') }}" class="input input-sm w-auto" data-submit-on-change aria-label="{{ __('To') }}">
                 @if (request()->hasAny(['promotion', 'from', 'to']))
                     <a href="{{ route('admin.promotions.usage') }}" class="btn btn-ghost btn-sm">{{ __('Reset') }}</a>
                 @endif

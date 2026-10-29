@@ -17,8 +17,8 @@
         @csrf
         @if ($collection->exists) @method('PUT') @endif
 
-        <div class="sticky top-16 z-20 -mx-6 px-6 py-3 bg-base-200/95 backdrop-blur border-b border-base-300 flex items-center gap-3">
-            <a href="{{ route('admin.collections.index') }}" class="btn btn-ghost btn-sm btn-square" title="{{ __('Back to collections') }}">
+        <x-admin.form-bar>
+            <a href="{{ route('admin.collections.index') }}" class="btn btn-ghost btn-sm btn-square" title="{{ __('Back to collections') }}" aria-label="{{ __('Back to collections') }}">
                 <x-icon name="arrow-left" size="lg" />
             </a>
             <div class="flex-1 min-w-0">
@@ -29,14 +29,14 @@
             @if ($collection->exists && (($prevCollection ?? null) || ($nextCollection ?? null)))
                 <div class="join">
                     @if ($prevCollection ?? null)
-                        <a href="{{ route('admin.collections.edit', $prevCollection) }}" class="btn btn-sm join-item" title="{{ __('Previous collection') }}">
+                        <a href="{{ route('admin.collections.edit', $prevCollection) }}" class="btn btn-sm join-item" title="{{ __('Previous collection') }}" aria-label="{{ __('Previous collection') }}">
                             <x-icon name="chevron-left" />
                         </a>
                     @else
                         <span class="btn btn-sm join-item btn-disabled"><x-icon name="chevron-left" /></span>
                     @endif
                     @if ($nextCollection ?? null)
-                        <a href="{{ route('admin.collections.edit', $nextCollection) }}" class="btn btn-sm join-item" title="{{ __('Next collection') }}">
+                        <a href="{{ route('admin.collections.edit', $nextCollection) }}" class="btn btn-sm join-item" title="{{ __('Next collection') }}" aria-label="{{ __('Next collection') }}">
                             <x-icon name="chevron-right" />
                         </a>
                     @else
@@ -50,7 +50,7 @@
                      "form" attribute — a nested <form> would leak its
                      _method=DELETE into this collection's own submit. --}}
                 <div class="dropdown dropdown-end">
-                    <div tabindex="0" role="button" class="btn btn-ghost btn-sm btn-square" title="{{ __('More actions') }}">
+                    <div tabindex="0" role="button" class="btn btn-ghost btn-sm btn-square" title="{{ __('More actions') }}" aria-label="{{ __('More actions') }}">
                         <x-icon name="settings" size="lg" />
                     </div>
                     <ul tabindex="0" class="dropdown-content menu menu-sm bg-base-100 rounded-box shadow-md w-56 mt-2 p-2 z-50 border border-base-300">
@@ -76,9 +76,11 @@
                     </ul>
                 </div>
             @endif
-            <a href="{{ route('admin.collections.index') }}" class="btn btn-ghost btn-sm">{{ __('Cancel') }}</a>
-            <button class="btn btn-primary btn-sm">{{ $collection->exists ? __('Save') : __('Create') }}</button>
-        </div>
+            <x-slot:actions>
+                <a href="{{ route('admin.collections.index') }}" class="btn btn-ghost btn-sm">{{ __('Cancel') }}</a>
+                <button class="btn btn-primary btn-sm">{{ $collection->exists ? __('Save') : __('Create') }}</button>
+            </x-slot:actions>
+        </x-admin.form-bar>
 
         @if (session('status'))
             <div class="alert alert-success text-sm">{{ session('status') }}</div>
@@ -110,7 +112,7 @@
                         <div class="flex items-baseline justify-between gap-3 flex-wrap">
                             <h3 class="font-semibold">{{ __('Which products') }}</h3>
                             @if ($matches !== null)
-                                <span class="badge badge-primary">{{ trans_choice(':count product now|:count products now', $matches) }}</span>
+                                <span class="badge badge-sm badge-primary">{{ trans_choice(':count product now|:count products now', $matches) }}</span>
                             @endif
                         </div>
                         <p class="text-sm opacity-70 max-w-3xl -mt-2">{{ __('Like the catalogue\'s filter: what you fill in must ALL hold; within one line, any of what is picked. A category takes its subcategories. The products picked by hand are added; the ones left out never appear. Nothing filled in and nothing picked — an empty collection.') }}</p>
@@ -178,11 +180,11 @@
                     <div class="card-body gap-3">
                         <h3 class="font-semibold">{{ __('Status') }}</h3>
                         <label class="label cursor-pointer justify-start gap-3">
-                            <input type="checkbox" name="enabled" value="1" class="toggle toggle-sm toggle-primary" @checked(old('enabled', $collection->exists ? $collection->enabled : true))>
+                            <input type="checkbox" name="enabled" value="1" class="toggle toggle-sm toggle-success" @checked(old('enabled', $collection->exists ? $collection->enabled : true))>
                             <span class="label-text">{{ __('Enabled') }}</span>
                         </label>
                         <label class="label cursor-pointer justify-start items-start gap-3">
-                            <input type="checkbox" name="listed" value="1" class="toggle toggle-sm toggle-primary mt-0.5" @checked(old('listed', $collection->exists ? $collection->listed : true))>
+                            <input type="checkbox" name="listed" value="1" class="toggle toggle-sm toggle-success mt-0.5" @checked(old('listed', $collection->exists ? $collection->listed : true))>
                             <span class="whitespace-normal">
                                 <span class="label-text">{{ __('In the list of collections') }}</span>
                                 <span class="block text-xs opacity-60">{{ __('Off — the page still answers, for a banner or a menu to point at.') }}</span>
@@ -210,7 +212,7 @@
                         <fieldset class="fieldset p-0"><legend class="fieldset-legend">{{ __('Address') }}</legend>
                             <label class="input input-bordered w-full">
                                 <span class="opacity-50 text-sm">/collections/</span>
-                                <input name="slug" value="{{ old('slug', $collection->slug) }}" placeholder="{{ __('from the name') }}" aria-label="{{ __('Address') }}" class="grow">
+                                <input name="slug" autocapitalize="off" autocorrect="off" spellcheck="false" value="{{ old('slug', $collection->slug) }}" placeholder="{{ __('from the name') }}" aria-label="{{ __('Address') }}" class="grow">
                             </label>
                         </fieldset>
                         <fieldset class="fieldset p-0"><legend class="fieldset-legend">{{ __('Sort order') }}</legend>

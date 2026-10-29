@@ -41,8 +41,8 @@
         @if ($group->exists) @method('PUT') @endif
         <input type="hidden" name="product_id" value="{{ old('product_id', $group->product_id) }}">
 
-        <div class="sticky top-16 z-20 -mx-6 px-6 py-3 bg-base-200/95 backdrop-blur border-b border-base-300 flex items-center gap-3">
-            <a href="{{ $backUrl }}" class="btn btn-ghost btn-sm btn-square" title="{{ __('Back') }}">
+        <x-admin.form-bar>
+            <a href="{{ $backUrl }}" class="btn btn-ghost btn-sm btn-square" title="{{ __('Back') }}" aria-label="{{ __('Back') }}">
                 <x-icon name="arrow-left" size="lg" />
             </a>
             <div class="flex-1 min-w-0">
@@ -58,7 +58,7 @@
                      "form" attribute: a nested <form> would leak its
                      _method=DELETE into this one's submit. --}}
                 <div class="dropdown dropdown-end">
-                    <div tabindex="0" role="button" class="btn btn-ghost btn-sm btn-square" title="{{ __('More actions') }}">
+                    <div tabindex="0" role="button" class="btn btn-ghost btn-sm btn-square" title="{{ __('More actions') }}" aria-label="{{ __('More actions') }}">
                         <x-icon name="settings" size="lg" />
                     </div>
                     <ul tabindex="0" class="dropdown-content menu menu-sm bg-base-100 rounded-box shadow-md w-60 mt-2 p-2 z-50 border border-base-300">
@@ -84,9 +84,11 @@
                     </ul>
                 </div>
             @endif
-            <a href="{{ $backUrl }}" class="btn btn-ghost btn-sm">{{ __('Cancel') }}</a>
-            <button class="btn btn-primary btn-sm">{{ $group->exists ? __('Save') : __('Create') }}</button>
-        </div>
+            <x-slot:actions>
+                <a href="{{ $backUrl }}" class="btn btn-ghost btn-sm">{{ __('Cancel') }}</a>
+                <button class="btn btn-primary btn-sm">{{ $group->exists ? __('Save') : __('Create') }}</button>
+            </x-slot:actions>
+        </x-admin.form-bar>
 
         @if (session('status'))
             <div class="alert alert-success text-sm">{{ session('status') }}</div>
@@ -141,7 +143,7 @@
                                     <div class="grow"></div>
                                     <label class="label cursor-pointer gap-2 me-2">
                                         <input type="hidden" :name="`choices[${index}][enabled]`" value="0">
-                                        <input type="checkbox" :name="`choices[${index}][enabled]`" value="1" x-model="row.enabled" class="toggle toggle-primary toggle-sm">
+                                        <input type="checkbox" :name="`choices[${index}][enabled]`" value="1" x-model="row.enabled" class="toggle toggle-success toggle-sm">
                                         <span class="label-text text-sm">{{ __('Enabled') }}</span>
                                     </label>
                                     <div class="join">
@@ -295,7 +297,7 @@
                                         @foreach ($option['choices'] as $choiceId => $choiceLabel)
                                             <label class="label cursor-pointer justify-start gap-2 p-0">
                                                 <input type="checkbox" name="depends_on_choices[]" value="{{ $choiceId }}"
-                                                       class="checkbox checkbox-sm checkbox-primary"
+                                                       class="checkbox checkbox-sm"
                                                        @checked(in_array($choiceId, array_map('intval', (array) old('depends_on_choices', $group->depends_on_choices ?? [])), true))>
                                                 <span class="label-text">{{ $choiceLabel }}</span>
                                             </label>
@@ -319,13 +321,13 @@
                         <h3 class="font-semibold">{{ __('Status') }}</h3>
                         <label class="label cursor-pointer justify-start gap-3">
                             <input type="hidden" name="enabled" value="0">
-                            <input type="checkbox" name="enabled" value="1" class="toggle toggle-sm toggle-primary"
+                            <input type="checkbox" name="enabled" value="1" class="toggle toggle-sm toggle-success"
                                    @checked(old('enabled', $group->enabled ?? true))>
                             <span class="label-text">{{ __('Enabled') }}</span>
                         </label>
                         <label class="label cursor-pointer justify-start gap-2">
                             <input type="hidden" name="required" value="0">
-                            <input type="checkbox" name="required" value="1" class="checkbox checkbox-sm checkbox-primary"
+                            <input type="checkbox" name="required" value="1" class="checkbox checkbox-sm"
                                    @checked(old('required', $group->required ?? false))>
                             <span class="label-text">{{ __('Choosing is required') }}</span>
                         </label>
@@ -349,7 +351,7 @@
 
                         <label class="label cursor-pointer justify-start gap-2 items-start">
                             <input type="hidden" name="per_unit" value="0">
-                            <input type="checkbox" name="per_unit" value="1" class="checkbox checkbox-sm checkbox-primary mt-0.5"
+                            <input type="checkbox" name="per_unit" value="1" class="checkbox checkbox-sm mt-0.5"
                                    @checked(old('per_unit', $group->per_unit ?? true))>
                             <span class="label-text whitespace-normal">{{ __('Counted per item') }}</span>
                         </label>

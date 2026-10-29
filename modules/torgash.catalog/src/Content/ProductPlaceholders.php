@@ -5,6 +5,7 @@ namespace Torgash\Catalog\Content;
 use App\Core\Content\Placeholders;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Collection;
+use Torgash\Catalog\Listing\Listing;
 use Torgash\Catalog\Models\Category;
 use Torgash\Catalog\Models\FeatureValue;
 use Torgash\Catalog\Models\FilterPage;
@@ -445,6 +446,12 @@ class ProductPlaceholders
      * The products the PAGE is about — a filter page's narrower set, or the
      * category's, or nothing.
      *
+     * The category's set is the one its page lists, asked of the listing
+     * itself: the category AND everything under it. Asked of the category
+     * alone, a parent whose products stand in its children ("Smartphones"
+     * over "Apple" and "Samsung") had no price and no count to quote while
+     * its page showed them all (reported from the live shop, 2026-10-29).
+     *
      * @param  array<string, mixed>  $context
      */
     protected function setQuery(array $context): ?Builder
@@ -455,8 +462,7 @@ class ProductPlaceholders
             return null;
         }
 
-        $query = Product::listed()
-            ->whereHas('categories', fn ($q) => $q->where('m_catalog_categories.id', $category->id));
+        $query = app(Listing::class)->productsQuery($category);
 
         return ($page = $this->filterPage($context)) ? $page->applyTo($query) : $query;
     }

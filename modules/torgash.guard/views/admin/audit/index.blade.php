@@ -140,13 +140,13 @@
                             <span class="text-sm truncate md:order-none order-last col-span-2 md:col-span-1 opacity-70 md:opacity-100">{{ $entry->who() }}</span>
                             <span class="hidden md:block"><span class="badge badge-sm {{ $entry->badge() }}">{{ $entry->actionLabel() }}</span></span>
                             <span class="min-w-0 truncate">
-                                <span class="md:hidden badge badge-xs {{ $entry->badge() }} mr-1">{{ $entry->actionLabel() }}</span>
+                                <span class="md:hidden badge badge-sm {{ $entry->badge() }} mr-1">{{ $entry->actionLabel() }}</span>
                                 <span class="opacity-60">{{ $entry->entityLabel() }}</span>
                                 @if ($entry->displayTitle())
                                     <span class="font-medium">{{ $entry->displayTitle() }}</span>
                                 @endif
                                 @if (count($run) > 1)
-                                    <span class="badge badge-ghost badge-xs">× {{ count($run) }}</span>
+                                    <span class="badge badge-ghost badge-sm">× {{ count($run) }}</span>
                                 @endif
                                 @if ($entry->entity_id)
                                     <span class="text-xs opacity-40 font-mono">#{{ $entry->entity_id }}</span>
@@ -188,7 +188,7 @@
                                 <form method="POST" action="{{ route('admin.guard.audit.revert', $step) }}"
                                       data-confirm="{{ __('Put these fields back as they were before this change? Fields changed again since then are left alone.') }}">
                                     @csrf
-                                    <button class="btn btn-xs gap-1"><x-icon name="undo-2" size="sm" /> {{ __('Put back as it was') }}</button>
+                                    <button class="btn btn-sm gap-1"><x-icon name="undo-2" size="sm" /> {{ __('Put back as it was') }}</button>
                                 </form>
                             @endif
                             @endforeach

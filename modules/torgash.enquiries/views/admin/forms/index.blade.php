@@ -1,6 +1,15 @@
 @extends('admin.layout')
 
 @section('title', __('Forms'))
+@section('title_hint', __('Forms with your own fields — a job application, a wholesale request, a survey. What they bring lands in Enquiries, with statuses, a manager and letters, like a callback.'))
+
+{{-- No states to tab: the screen's actions stand level with the heading. --}}
+@section('title_actions')
+    @can('enquiries.manage')
+        <a href="{{ route('admin.enquiries.index') }}" class="btn btn-ghost gap-1.5"><x-icon name="inbox" size="sm" /> {{ __('Enquiries') }}</a>
+    @endcan
+    <a href="{{ route('admin.enquiries.forms.create') }}" class="btn btn-primary gap-1.5"><x-icon name="plus" size="sm" /> {{ __('New form') }}</a>
+@endsection
 
 @section('content')
     @if (session('status'))
@@ -12,18 +21,11 @@
 
     <div class="card bg-base-100 border border-base-300">
         <div class="card-body gap-4">
-            <div class="flex flex-wrap items-center justify-between gap-3">
-                <p class="text-sm opacity-70 max-w-2xl">{{ __('Forms with your own fields — a job application, a wholesale request, a survey. What they bring lands in Enquiries, with statuses, a manager and letters, like a callback.') }}</p>
-                <div class="flex gap-2">
-                    @can('enquiries.manage')
-                        <a href="{{ route('admin.enquiries.index') }}" class="btn btn-ghost btn-sm gap-1.5"><x-icon name="inbox" size="sm" /> {{ __('Enquiries') }}</a>
-                    @endcan
-                    <a href="{{ route('admin.enquiries.forms.create') }}" class="btn btn-primary btn-sm gap-1.5"><x-icon name="plus" size="sm" /> {{ __('New form') }}</a>
-                </div>
-            </div>
-
             @if ($forms->isEmpty())
-                <div class="text-center py-12 opacity-60">{{ __('No forms yet.') }}</div>
+                <div class="text-center py-12 opacity-60">
+                    <x-icon name="clipboard-list" size="xl" class="opacity-40" />
+                    <p class="mt-2">{{ __('No forms yet.') }}</p>
+                </div>
             @else
                 <div class="overflow-x-auto">
                     <table class="table">

@@ -1,6 +1,7 @@
 @extends('admin.layout')
 
 @section('title', __('Subscribers'))
+@section('title_hint', __('Who wants the shop\'s news and offers. An address counts once its owner has followed the link in the confirmation letter. Letters to them are Campaigns; the list also goes to a mailing service as a CSV.'))
 
 @section('content')
     @php
@@ -35,22 +36,34 @@
         <div class="alert alert-error text-sm">{{ $errors->first() }}</div>
     @endif
 
-    <div class="card bg-base-100 border border-base-300" x-data="{ importing: {{ $errors->has('file') ? 'true' : 'false' }} }">
+    {{-- One Alpine root over the tabs' row and the card: the Import button up
+         there opens the form down here. `contents`, so both stay the page's
+         own blocks. --}}
+    <div class="contents" x-data="{ importing: {{ $errors->has('file') ? 'true' : 'false' }} }">
+    {{-- The states as one row of tabs over the card, the screen's actions at
+         its end (app.css, `admin-tabs`); LINKS carrying the search and the source. --}}
+    <div class="admin-tabs-row">
+        <nav class="admin-tabs" aria-label="{{ __('Subscribers') }}">
+            @foreach ($subscriberTabs as $tabKey => $tabLabel)
+                <a href="{{ route('admin.newsletter.index', ['tab' => $tabKey] + $subscriberFilter) }}"
+                   @class(['admin-tab', 'is-active' => $tab === $tabKey])>
+                    {{ $tabLabel }} <span class="admin-tab-count">{{ $tabKey === 'all' ? $subscriberTotal : ($counts[$tabKey] ?? 0) }}</span>
+                </a>
+            @endforeach
+        </nav>
+        <div class="admin-tabs-actions">
+            <a href="{{ route('admin.newsletter.campaigns.index') }}" class="btn btn-ghost gap-1.5"><x-icon name="send" /> {{ __('Campaigns') }}</a>
+            <button type="button" class="btn btn-ghost gap-1.5" x-on:click="importing = !importing" :class="importing && 'btn-active'">
+                <x-icon name="upload" /> {{ __('Import') }}
+            </button>
+            <a href="{{ route('admin.newsletter.export', ['tab' => $tab] + $subscriberFilter) }}" class="btn gap-1.5">
+                <x-icon name="download" /> {{ __('Download CSV') }}
+            </a>
+        </div>
+    </div>
+
+    <div class="card bg-base-100 border border-base-300">
         <div class="card-body gap-4">
-            <div class="flex justify-between items-start gap-3 flex-wrap">
-                <p class="text-sm opacity-70 max-w-3xl">
-                    {{ __('Who wants the shop\'s news and offers. An address counts once its owner has followed the link in the confirmation letter. Letters to them are Campaigns; the list also goes to a mailing service as a CSV.') }}
-                </p>
-                <div class="flex items-center gap-2">
-                    <a href="{{ route('admin.newsletter.campaigns.index') }}" class="btn btn-ghost btn-sm gap-1.5"><x-icon name="send" /> {{ __('Campaigns') }}</a>
-                    <button type="button" class="btn btn-ghost btn-sm gap-1.5" x-on:click="importing = !importing" :class="importing && 'btn-active'">
-                        <x-icon name="upload" /> {{ __('Import') }}
-                    </button>
-                    <a href="{{ route('admin.newsletter.export', ['tab' => $tab] + $subscriberFilter) }}" class="btn btn-sm gap-1.5">
-                        <x-icon name="download" /> {{ __('Download CSV') }}
-                    </a>
-                </div>
-            </div>
 
             {{-- The list at a glance: how big, and how it moved this month. --}}
             <div class="grid grid-cols-2 lg:grid-cols-4 gap-3">
@@ -88,20 +101,10 @@
 
             <form method="GET" class="flex flex-wrap items-center gap-2">
                 <input type="hidden" name="tab" value="{{ $tab }}">
-                <label class="input input-sm w-full sm:w-72 gap-2">
+                <label class="input input-sm grow min-w-48 gap-2">
                     <x-icon name="search" size="sm" class="opacity-50" />
                     <input type="search" name="q" value="{{ request('q') }}" class="grow" placeholder="{{ __('Search by email') }}">
                 </label>
-                {{-- Links, not buttons of this form: Enter in the search box would
-                     otherwise submit the first of them and switch the tab. --}}
-                <div class="join">
-                    @foreach ($subscriberTabs as $tabKey => $tabLabel)
-                        <a href="{{ route('admin.newsletter.index', ['tab' => $tabKey] + $subscriberFilter) }}"
-                           @class(['btn btn-sm join-item', 'btn-active' => $tab === $tabKey])>
-                            {{ $tabLabel }} <span class="opacity-50">{{ $tabKey === 'all' ? $subscriberTotal : ($counts[$tabKey] ?? 0) }}</span>
-                        </a>
-                    @endforeach
-                </div>
                 <select name="source" class="select select-sm w-auto" aria-label="{{ __('Where from') }}" x-on:change="$el.form.requestSubmit()">
                     <option value="">{{ __('From anywhere') }}</option>
                     @foreach ($subscriberSources as $sourceKey => [$sourceLabel])
@@ -154,7 +157,7 @@
                                             </div>
                                         </div>
                                     </td>
-                                    <td><span class="badge {{ $statusClass }} whitespace-nowrap">{{ $statusLabel }}</span></td>
+                                    <td><span class="badge badge-sm {{ $statusClass }} whitespace-nowrap">{{ $statusLabel }}</span></td>
                                     <td>
                                         <span class="inline-flex items-center gap-1.5 text-sm whitespace-nowrap" title="{{ $subscriberRow->consent_text }}">
                                             <x-icon :name="$sourceIcon" size="sm" class="opacity-50" /> {{ $sourceLabel }}
@@ -162,7 +165,7 @@
                                     </td>
                                     <td class="text-sm whitespace-nowrap tabular-nums opacity-70">{{ $subscriberSince?->format('d.m.Y H:i') }}</td>
                                     <td class="text-end">
-                                        <button form="subscriber-delete-{{ $subscriberRow->id }}" class="btn btn-ghost btn-sm btn-square text-error" title="{{ __('Remove from the list') }}">
+                                        <button form="subscriber-delete-{{ $subscriberRow->id }}" class="btn btn-ghost btn-sm btn-square text-error" title="{{ __('Remove from the list') }}" aria-label="{{ __('Remove from the list') }}">
                                             <x-icon name="trash-2" />
                                         </button>
                                     </td>
@@ -174,6 +177,7 @@
                 {{ $subscribers->links() }}
             @endif
         </div>
+    </div>
     </div>
 
     @foreach ($subscribers as $subscriberRow)

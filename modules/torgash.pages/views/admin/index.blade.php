@@ -1,6 +1,7 @@
 @extends('admin.layout')
 
 @section('title', __('Pages'))
+@section('title_hint', __('Delivery and payment, About us, the privacy policy — the pages a menu links to. A page can sit inside another one, and its address follows: moving it leaves a 301 behind.'))
 
 @section('content')
     @php $locale = admin_content_locale(); @endphp
@@ -12,30 +13,34 @@
         <div class="alert alert-error text-sm">{{ $errors->first() }}</div>
     @endif
 
+    {{-- The states as one row of tabs over the card, the screen's action at
+         its end (app.css, `admin-tabs`); LINKS carrying the search. --}}
+    <div class="admin-tabs-row">
+        <nav class="admin-tabs" aria-label="{{ __('Pages') }}">
+            @foreach (['' => __('All'), 'published' => __('Published'), 'draft' => __('Drafts')] as $statusKey => $statusLabel)
+                <a href="{{ route('admin.pages.index', array_filter(['status' => $statusKey, 'q' => $filters['q']], fn ($v) => $v !== null && $v !== '')) }}"
+                   @class(['admin-tab', 'is-active' => $filters['status'] === $statusKey])>
+                    {{ $statusLabel }} <span class="admin-tab-count">{{ $statusCounts[$statusKey] }}</span>
+                </a>
+            @endforeach
+        </nav>
+        <div class="admin-tabs-actions">
+            <a href="{{ route('admin.pages.create') }}" class="btn btn-primary">+ {{ __('New page') }}</a>
+        </div>
+    </div>
+
     {{-- One Alpine root: the bulk bar and every row's checkbox share
          `selected` — the categories list's own arrangement. --}}
     <div class="card bg-base-100 border border-base-300" x-data="{ selected: [] }">
         <div class="card-body gap-4">
-            <div class="flex justify-between items-start gap-3 flex-wrap">
-                <p class="text-sm opacity-70 max-w-3xl">
-                    {{ __('Delivery and payment, About us, the privacy policy — the pages a menu links to. A page can sit inside another one, and its address follows: moving it leaves a 301 behind.') }}
-                </p>
-                <a href="{{ route('admin.pages.create') }}" class="btn btn-primary btn-sm">+ {{ __('New page') }}</a>
-            </div>
-
             <form method="GET" class="flex flex-wrap items-center gap-2">
-                <label class="input input-sm w-full sm:w-72 gap-2">
+                @if ($filters['status'])
+                    <input type="hidden" name="status" value="{{ $filters['status'] }}">
+                @endif
+                <label class="input input-sm grow min-w-48 gap-2">
                     <x-icon name="search" size="sm" class="opacity-50" />
                     <input type="search" name="q" value="{{ $filters['q'] }}" class="grow" placeholder="{{ __('Title or address…') }}">
                 </label>
-                <div class="join">
-                    @foreach (['' => __('All'), 'published' => __('Published'), 'draft' => __('Drafts')] as $statusKey => $statusLabel)
-                        <button type="submit" name="status" value="{{ $statusKey }}"
-                                @class(['btn btn-sm join-item', 'btn-active' => $filters['status'] === $statusKey])>
-                            {{ $statusLabel }} <span class="opacity-50">{{ $statusCounts[$statusKey] }}</span>
-                        </button>
-                    @endforeach
-                </div>
                 @if ($filters['q'] !== '' || $filters['status'])
                     <a href="{{ route('admin.pages.index') }}" class="btn btn-ghost btn-sm">{{ __('Reset') }}</a>
                 @endif

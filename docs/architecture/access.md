@@ -95,7 +95,8 @@ nobody listed — which is what removes Alpine's `x-*`/`@…` and HTMX's `hx-*`
 too, both of them code on a page that loads them. Cleaned when PRINTED, not
 when saved, so imports, the API, 1C and every text already stored are covered;
 placeholders are expanded AFTER cleaning, since `{form:…}` and a product card
-are the engine's own markup. Some permissions are code by design and are not
+are the engine's own markup — `safe_html($text, $context)` does both, in
+that order. Some permissions are code by design and are not
 cleaned — Code snippets, HTML blocks in zones, banner templates, the theme's
 CSS, letters: grant them as you would grant access to the server.
 

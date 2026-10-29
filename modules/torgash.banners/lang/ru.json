@@ -239,5 +239,7 @@
     "copy": "копия",
     "selected": "выбрано",
     "until :date": "до :date",
+    "Move earlier": "Переместить раньше",
+    "Move later": "Переместить позже",
     "{1}one condition|[2,*]:count conditions": "{1}одно условие|[2,4]:count условия|[5,*]:count условий"
 }

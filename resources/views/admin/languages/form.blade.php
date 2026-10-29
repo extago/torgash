@@ -16,8 +16,8 @@
         @csrf
         @if ($language->exists) @method('PUT') @endif
 
-        <div class="sticky top-16 z-20 -mx-6 px-6 py-3 bg-base-200/95 backdrop-blur border-b border-base-300 flex items-center gap-3">
-            <a href="{{ route('admin.languages.index') }}" class="btn btn-ghost btn-sm btn-square" title="{{ __('Back to languages') }}">
+        <x-admin.form-bar>
+            <a href="{{ route('admin.languages.index') }}" class="btn btn-ghost btn-sm btn-square" title="{{ __('Back to languages') }}" aria-label="{{ __('Back to languages') }}">
                 <x-icon name="arrow-left" size="lg" />
             </a>
             <div class="flex-1 min-w-0">
@@ -25,7 +25,7 @@
                 <div class="font-semibold truncate leading-tight">{{ $language->exists ? $language->name : __('New language') }}</div>
             </div>
             <div class="dropdown dropdown-end">
-                <div tabindex="0" role="button" class="btn btn-ghost btn-sm btn-square" title="{{ __('More actions') }}">
+                <div tabindex="0" role="button" class="btn btn-ghost btn-sm btn-square" title="{{ __('More actions') }}" aria-label="{{ __('More actions') }}">
                     <x-icon name="settings" size="lg" />
                 </div>
                 <ul tabindex="0" class="dropdown-content menu menu-sm bg-base-100 rounded-box shadow-md w-60 mt-2 p-2 z-50 border border-base-300">
@@ -36,9 +36,11 @@
                     @endif
                 </ul>
             </div>
-            <a href="{{ route('admin.languages.index') }}" class="btn btn-ghost btn-sm">{{ __('Cancel') }}</a>
-            <button class="btn btn-primary btn-sm">{{ $language->exists ? __('Save') : __('Create') }}</button>
-        </div>
+            <x-slot:actions>
+                <a href="{{ route('admin.languages.index') }}" class="btn btn-ghost btn-sm">{{ __('Cancel') }}</a>
+                <button class="btn btn-primary btn-sm">{{ $language->exists ? __('Save') : __('Create') }}</button>
+            </x-slot:actions>
+        </x-admin.form-bar>
 
         @if (session('status'))
             <div class="alert alert-success text-sm">{{ session('status') }}</div>
@@ -54,7 +56,7 @@
                         <h3 class="font-semibold">{{ __('Language') }}</h3>
                         <div class="grid md:grid-cols-3 gap-4">
                             <fieldset class="fieldset p-0"><legend class="fieldset-legend">{{ __('Code') }} *</legend>
-                                <input name="code" value="{{ old('code', $language->code) }}" required maxlength="5" class="input input-bordered w-full font-mono" placeholder="en" @readonly($language->exists)>
+                                <input name="code" autocapitalize="off" autocorrect="off" spellcheck="false" value="{{ old('code', $language->code) }}" required maxlength="5" class="input input-bordered w-full font-mono" placeholder="en" @readonly($language->exists)>
                                 <p class="label text-xs opacity-60 whitespace-normal">
                                     {{ $language->exists
                                         ? __('Cannot be changed: every translated text is stored under it.')
@@ -117,7 +119,7 @@
                         <h3 class="font-semibold">{{ __('Status') }}</h3>
                         @if ($languageLocked)
                             {{-- A disabled toggle reads as "off"; the locked answer is written out. --}}
-                            <span class="badge badge-success gap-1 w-fit"><x-icon name="check" size="sm" /> {{ __('Enabled') }}</span>
+                            <span class="badge badge-sm badge-success gap-1 w-fit"><x-icon name="check" size="sm" /> {{ __('Enabled') }}</span>
                             <p class="text-xs opacity-60">{{ $languageLocked }}</p>
                         @else
                             <label class="label cursor-pointer justify-start gap-3">

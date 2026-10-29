@@ -77,5 +77,8 @@
     "Close": "Закрыть",
     ":images photos added, :skipped already there, :failed could not be fetched": "Фото добавлено: :images, уже были: :skipped, не скачалось: :failed",
     "Import images": "Загрузка фото",
-    "Photos for :count records": "Фото для записей: :count"
+    "Photos for :count records": "Фото для записей: :count",
+    "The first photo is the main one; the arrows change the order.": "Первое фото — главное; порядок меняется стрелками.",
+    "Move earlier": "Переместить раньше",
+    "Move later": "Переместить позже"
 }

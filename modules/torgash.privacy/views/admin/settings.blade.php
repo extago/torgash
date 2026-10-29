@@ -74,11 +74,11 @@
                     </fieldset>
 
                     <label class="label cursor-pointer justify-start gap-3">
-                        <input type="checkbox" name="google_consent_mode" value="1" class="toggle toggle-sm" x-model="v.google_consent_mode">
+                        <input type="checkbox" name="google_consent_mode" value="1" class="toggle toggle-sm toggle-success" x-model="v.google_consent_mode">
                         <span class="label-text whitespace-normal">{{ __('Google Consent Mode v2') }}</span>
                     </label>
                     <label class="label cursor-pointer justify-start gap-3">
-                        <input type="checkbox" name="respect_gpc" value="1" class="toggle toggle-sm" x-model="v.respect_gpc">
+                        <input type="checkbox" name="respect_gpc" value="1" class="toggle toggle-sm toggle-success" x-model="v.respect_gpc">
                         <span class="label-text whitespace-normal">{{ __('Honour the browser\'s Global Privacy Control') }}</span>
                     </label>
 

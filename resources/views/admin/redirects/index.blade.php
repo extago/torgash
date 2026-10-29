@@ -1,6 +1,7 @@
 @extends('admin.layout')
 
 @section('title', __('Redirects'))
+@section('title_hint', __('Old addresses and where they lead now. The shop adds a row by itself whenever a slug changes; these are the ones you add — above all the list of addresses from whatever the shop ran on before.'))
 
 @section('content')
     @php
@@ -21,22 +22,34 @@
         <div class="alert alert-error text-sm">{{ $errors->first() }}</div>
     @endif
 
-    <div class="card bg-base-100 border border-base-300" x-data="{ selected: [], editing: null, adding: @js($addingAgain) }">
+    {{-- One Alpine root over the tabs' row and the card: "New redirect" up
+         there opens the row down here. `contents`, so both stay the page's
+         own blocks. --}}
+    <div class="contents" x-data="{ selected: [], editing: null, adding: @js($addingAgain) }">
+    {{-- The sources as one row of tabs over the card, the screen's actions at
+         its end (app.css, `admin-tabs`); LINKS carrying every other filter. --}}
+    <div class="admin-tabs-row">
+        <nav class="admin-tabs" aria-label="{{ __('Redirects') }}">
+            @foreach ($sourceTabs as $sourceKey => $sourceLabel)
+                <a href="{{ request()->fullUrlWithQuery(['source' => $sourceKey ?: null, 'page' => null]) }}"
+                   @class(['admin-tab', 'is-active' => $filters['source'] === $sourceKey])>
+                    {{ $sourceLabel }} <span class="admin-tab-count">{{ $counts[$sourceKey] }}</span>
+                </a>
+            @endforeach
+        </nav>
+        <div class="admin-tabs-actions">
+            <a href="{{ route('admin.redirects.export') }}" class="btn btn-ghost gap-1.5" title="{{ __('Download every redirect as CSV, in the shape the import reads') }}">
+                <x-icon name="download" size="sm" /> {{ __('Export') }}
+            </a>
+            <button type="button" class="btn btn-ghost gap-1.5" data-open-dialog="modal-redirects-import">
+                <x-icon name="upload" size="sm" /> {{ __('Import a list') }}
+            </button>
+            <button type="button" class="btn btn-primary" x-on:click="adding = true; $nextTick(() => $refs.newFrom.focus())">+ {{ __('New redirect') }}</button>
+        </div>
+    </div>
+
+    <div class="card bg-base-100 border border-base-300">
         <div class="card-body gap-4">
-            <div class="flex justify-between items-start gap-3 flex-wrap">
-                <p class="text-sm opacity-70 max-w-3xl">
-                    {{ __('Old addresses and where they lead now. The shop adds a row by itself whenever a slug changes; these are the ones you add — above all the list of addresses from whatever the shop ran on before.') }}
-                </p>
-                <div class="flex flex-wrap gap-2">
-                    <a href="{{ route('admin.redirects.export') }}" class="btn btn-ghost btn-sm gap-1.5" title="{{ __('Download every redirect as CSV, in the shape the import reads') }}">
-                        <x-icon name="download" size="sm" /> {{ __('Export') }}
-                    </a>
-                    <button type="button" class="btn btn-outline btn-sm gap-1.5" data-open-dialog="modal-redirects-import">
-                        <x-icon name="upload" size="sm" /> {{ __('Import a list') }}
-                    </button>
-                    <button type="button" class="btn btn-primary btn-sm" x-on:click="adding = true; $nextTick(() => $refs.newFrom.focus())">+ {{ __('New redirect') }}</button>
-                </div>
-            </div>
 
             {{-- The new row: two full-size fields, an arrow between them. --}}
             <form method="POST" action="{{ route('admin.redirects.store') }}" x-show="adding" x-cloak
@@ -44,13 +57,13 @@
                 @csrf
                 <fieldset class="fieldset p-0 grow basis-72">
                     <legend class="fieldset-legend">{{ __('Old address') }}</legend>
-                    <input name="from_path" x-ref="newFrom" value="{{ $addingAgain ? old('from_path') : '' }}" required autocomplete="off"
+                    <input name="from_path" autocapitalize="off" autocorrect="off" spellcheck="false" x-ref="newFrom" value="{{ $addingAgain ? old('from_path') : '' }}" required autocomplete="off"
                            class="input input-bordered w-full font-mono text-sm" placeholder="/old-page">
                 </fieldset>
                 <x-icon name="arrow-right" class="opacity-40 mb-3 hidden sm:block" />
                 <fieldset class="fieldset p-0 grow basis-72">
                     <legend class="fieldset-legend">{{ __('Goes to') }}</legend>
-                    <input name="to_path" value="{{ $addingAgain ? old('to_path') : '' }}" required autocomplete="off"
+                    <input name="to_path" autocapitalize="off" autocorrect="off" spellcheck="false" value="{{ $addingAgain ? old('to_path') : '' }}" required autocomplete="off"
                            class="input input-bordered w-full font-mono text-sm" placeholder="/catalog/laptops">
                 </fieldset>
                 <div class="flex gap-2">
@@ -61,7 +74,7 @@
             </form>
 
             <form method="GET" class="flex flex-wrap items-center gap-2">
-                <label class="input input-sm w-full sm:w-80 gap-2">
+                <label class="input input-sm grow min-w-48 gap-2">
                     <x-icon name="search" size="sm" class="opacity-50" />
                     <input type="search" name="q" value="{{ $filters['q'] }}" class="grow" placeholder="{{ __('Search in either address…') }}">
                 </label>
@@ -75,15 +88,6 @@
                     <a href="{{ route('admin.redirects.index') }}" class="btn btn-ghost btn-sm">{{ __('Reset') }}</a>
                 @endif
             </form>
-
-            <div class="join flex-wrap -mt-1">
-                @foreach ($sourceTabs as $sourceKey => $sourceLabel)
-                    <a href="{{ request()->fullUrlWithQuery(['source' => $sourceKey ?: null, 'page' => null]) }}"
-                       @class(['btn btn-sm join-item', 'btn-active' => $filters['source'] === $sourceKey])>
-                        {{ $sourceLabel }} <span class="opacity-50">{{ $counts[$sourceKey] }}</span>
-                    </a>
-                @endforeach
-            </div>
 
             <div class="min-h-12 flex items-center">
                 <p x-show="!selected.length" class="text-xs opacity-50">
@@ -189,13 +193,13 @@
                                             <input type="hidden" name="_redirect_id" value="{{ $row->id }}">
                                             <fieldset class="fieldset p-0 grow basis-72">
                                                 <legend class="fieldset-legend">{{ __('Old address') }}</legend>
-                                                <input name="from_path" value="{{ $editingThis ? old('from_path') : $row->from_path }}" required autocomplete="off"
+                                                <input name="from_path" autocapitalize="off" autocorrect="off" spellcheck="false" value="{{ $editingThis ? old('from_path') : $row->from_path }}" required autocomplete="off"
                                                        class="input input-bordered w-full font-mono text-sm">
                                             </fieldset>
                                             <x-icon name="arrow-right" class="opacity-40 mb-3 hidden sm:block" />
                                             <fieldset class="fieldset p-0 grow basis-72">
                                                 <legend class="fieldset-legend">{{ __('Goes to') }}</legend>
-                                                <input name="to_path" value="{{ $editingThis ? old('to_path') : $row->to_path }}" required autocomplete="off"
+                                                <input name="to_path" autocapitalize="off" autocorrect="off" spellcheck="false" value="{{ $editingThis ? old('to_path') : $row->to_path }}" required autocomplete="off"
                                                        class="input input-bordered w-full font-mono text-sm">
                                             </fieldset>
                                             <div class="flex gap-2">
@@ -213,6 +217,7 @@
                 {{ $rows->links() }}
             @endif
         </div>
+    </div>
     </div>
 
     <x-modal name="redirects-import" :title="__('Import a list')" icon="upload" size="lg">

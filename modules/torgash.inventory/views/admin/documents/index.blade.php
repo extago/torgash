@@ -1,41 +1,41 @@
 @extends('admin.layout')
 
 @section('title', __('Stock documents'))
+@section('title_hint', __('A delivery that arrived, goods broken or used by the shop, goods moved between warehouses, a count of what is really on the shelf. A draft can be changed; a posted document moves the stock once and stays as it is.'))
 
 @section('content')
     @if (session('status'))
         <div class="alert alert-success text-sm">{{ session('status') }}</div>
     @endif
 
+    {{-- The kinds as one row of tabs over the card, a new document of each
+         kind at its end (app.css, `admin-tabs`). --}}
+    <div class="admin-tabs-row">
+        <nav class="admin-tabs" aria-label="{{ __('Stock documents') }}">
+            <a href="{{ route('admin.inventory.documents.index') }}" @class(['admin-tab', 'is-active' => $type === ''])>{{ __('All') }}</a>
+            @foreach (\Torgash\Inventory\Models\Document::TYPES as $key => [$label])
+                <a href="{{ route('admin.inventory.documents.index', ['type' => $key]) }}" @class(['admin-tab', 'is-active' => $type === $key])>
+                    {{ __($label) }} <span class="admin-tab-count">{{ $counts[$key] ?? 0 }}</span>
+                </a>
+            @endforeach
+            @if ($revokedCount)
+                <a href="{{ route('admin.inventory.documents.index', ['type' => 'revoked']) }}" @class(['admin-tab', 'is-active' => $type === 'revoked'])>
+                    {{ __('Revoked') }} <span class="admin-tab-count">{{ $revokedCount }}</span>
+                </a>
+            @endif
+        </nav>
+        <div class="admin-tabs-actions">
+            @foreach (\Torgash\Inventory\Models\Document::TYPES as $key => [$label, $prefix, $icon])
+                <form method="POST" action="{{ route('admin.inventory.documents.create', $key) }}">
+                    @csrf
+                    <button class="btn {{ $key === 'receipt' ? 'btn-primary' : '' }} gap-1.5"><x-icon :name="$icon" size="sm" /> {{ __($label) }}</button>
+                </form>
+            @endforeach
+        </div>
+    </div>
+
     <div class="card bg-base-100 border border-base-300">
         <div class="card-body gap-4">
-            <div class="flex flex-wrap items-center justify-between gap-3">
-                <p class="text-sm opacity-70 max-w-2xl">
-                    {{ __('A delivery that arrived, goods broken or used by the shop, goods moved between warehouses, a count of what is really on the shelf. A draft can be changed; a posted document moves the stock once and stays as it is.') }}
-                </p>
-                <div class="flex flex-wrap gap-2">
-                    @foreach (\Torgash\Inventory\Models\Document::TYPES as $key => [$label, $prefix, $icon])
-                        <form method="POST" action="{{ route('admin.inventory.documents.create', $key) }}">
-                            @csrf
-                            <button class="btn btn-sm {{ $key === 'receipt' ? 'btn-primary' : '' }} gap-1.5"><x-icon :name="$icon" size="sm" /> {{ __($label) }}</button>
-                        </form>
-                    @endforeach
-                </div>
-            </div>
-
-            <div role="tablist" class="tabs tabs-border">
-                <a role="tab" href="{{ route('admin.inventory.documents.index') }}" @class(['tab', 'tab-active' => $type === ''])>{{ __('All') }}</a>
-                @foreach (\Torgash\Inventory\Models\Document::TYPES as $key => [$label])
-                    <a role="tab" href="{{ route('admin.inventory.documents.index', ['type' => $key]) }}" @class(['tab', 'tab-active' => $type === $key])>
-                        {{ __($label) }} <span class="opacity-50 ml-1">{{ $counts[$key] ?? 0 }}</span>
-                    </a>
-                @endforeach
-                @if ($revokedCount)
-                    <a role="tab" href="{{ route('admin.inventory.documents.index', ['type' => 'revoked']) }}" @class(['tab', 'tab-active' => $type === 'revoked'])>
-                        {{ __('Revoked') }} <span class="opacity-50 ml-1">{{ $revokedCount }}</span>
-                    </a>
-                @endif
-            </div>
 
             @if ($documents->isEmpty())
                 <div class="text-center py-12 opacity-60">

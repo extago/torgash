@@ -1,6 +1,7 @@
 @extends('admin.layout')
 
 @section('title', __('Enquiries'))
+@section('title_hint', __('Everything visitors ask in one queue: callbacks, questions about products and orders, returns. "Awaiting a reply" is what the shop owes an answer to — nothing said yet, or the customer spoke last.'))
 
 @php
     use Carbon\CarbonInterface;
@@ -26,17 +27,28 @@
         <div class="alert alert-error text-sm">{{ $errors->first() }}</div>
     @endif
 
+    {{-- The views as one row of tabs over the card (app.css, `admin-tabs`):
+         LINKS carrying every other filter. "Awaiting a reply" owed is red. --}}
+    <nav class="admin-tabs" aria-label="{{ __('Enquiries') }}">
+        @foreach ($tabs as $key => $label)
+            <a href="{{ request()->fullUrlWithQuery(['view' => $key, 'page' => null, 'status' => null, 'status_set' => null]) }}"
+               @class(['admin-tab', 'is-active' => $filters['view'] === $key])>
+                @if ($key === 'awaiting')
+                    <x-icon name="clock" size="sm" class="opacity-60" />
+                @endif
+                {{ $label }}
+                <span @class(['admin-tab-count', 'is-error' => $key === 'awaiting' && $counts[$key] > 0])>{{ $counts[$key] }}</span>
+            </a>
+        @endforeach
+    </nav>
+
     {{-- One Alpine root: the bulk bar and every row's checkbox share
          `selected` — the categories list's own arrangement. --}}
     <div class="card bg-base-100 border border-base-300" x-data="{ selected: [] }">
         <div class="card-body gap-4">
-            <p class="text-sm opacity-70 max-w-3xl">
-                {{ __('Everything visitors ask in one queue: callbacks, questions about products and orders, returns. "Awaiting a reply" is what the shop owes an answer to — nothing said yet, or the customer spoke last.') }}
-            </p>
-
             <form method="GET" class="flex flex-col gap-3">
                 <div class="flex flex-wrap items-center gap-2">
-                    <label class="input input-sm w-full sm:w-80 gap-2">
+                    <label class="input input-sm grow min-w-48 gap-2">
                         <x-icon name="search" size="sm" class="opacity-50" />
                         <input type="search" name="q" value="{{ $filters['q'] }}" class="grow"
                                placeholder="{{ __('Name, phone, email, text or #number…') }}">
@@ -82,29 +94,13 @@
                 <input type="hidden" name="view" value="{{ $filters['view'] }}">
             </form>
 
-            <div class="join flex-wrap -mt-1">
-                @foreach ($tabs as $key => $label)
-                    <a href="{{ request()->fullUrlWithQuery(['view' => $key, 'page' => null, 'status' => null, 'status_set' => null]) }}"
-                       @class(['btn btn-sm join-item', 'btn-active' => $filters['view'] === $key])>
-                        @if ($key === 'awaiting')
-                            <x-icon name="clock" size="sm" class="opacity-60" />
-                        @endif
-                        {{ $label }}
-                        <span @class([
-                            'badge badge-sm badge-error' => $key === 'awaiting' && $counts[$key] > 0,
-                            'opacity-50' => ! ($key === 'awaiting' && $counts[$key] > 0),
-                        ])>{{ $counts[$key] }}</span>
-                    </a>
-                @endforeach
-            </div>
-
-            <div class="min-h-12 flex items-center">
+            <div class="min-h-12 max-md:min-h-0 flex items-center">
                 <p x-show="!selected.length" class="text-xs opacity-50">
                     {{ __('Tick enquiries to change their state, give them to a manager, close or delete several at once.') }}
                 </p>
                 <form method="POST" action="{{ route('admin.enquiries.bulk') }}"
                       x-show="selected.length" x-cloak x-data="{ assign: 'me' }"
-                      class="w-full flex flex-wrap items-center gap-2 bg-base-200 rounded-box p-2">
+                      class="admin-bulk-bar w-full flex flex-wrap items-center gap-2 bg-base-200 rounded-box p-2">
                     @csrf
                     <template x-for="id in selected" :key="id">
                         <input type="hidden" name="ids[]" :value="id">
@@ -147,13 +143,18 @@
                 </div>
             @else
                 <div class="overflow-x-auto">
-                    <table class="table">
+                    {{-- On a phone the same table is a list of cards (app.css,
+                         `admin-enquiry-cards`; `data-cell` names the cells). --}}
+                    <table class="table admin-cards admin-enquiry-cards">
                         <thead>
                             <tr>
-                                <th class="w-10">
-                                    <input type="checkbox" class="checkbox checkbox-sm" aria-label="{{ __('Select all on this page') }}"
-                                           x-on:change="selected = $event.target.checked ? @js(collect($enquiries->items())->pluck('id')->map(fn ($id) => (string) $id)) : []"
-                                           :checked="selected.length === {{ $enquiries->count() }}">
+                                <th class="w-10" data-cell="check">
+                                    <label class="flex items-center gap-3">
+                                        <input type="checkbox" class="checkbox checkbox-sm" aria-label="{{ __('Select all on this page') }}"
+                                               x-on:change="selected = $event.target.checked ? @js(collect($enquiries->items())->pluck('id')->map(fn ($id) => (string) $id)) : []"
+                                               :checked="selected.length === {{ $enquiries->count() }}">
+                                        <span class="md:hidden font-normal normal-case">{{ __('Select all on this page') }}</span>
+                                    </label>
                                 </th>
                                 <th>{{ __('Customer') }}</th>
                                 <th>{{ __('What') }}</th>
@@ -173,11 +174,11 @@
                                     $url = route('admin.enquiries.show', $enquiry);
                                 @endphp
                                 <tr class="hover:bg-base-200/50 align-top" :class="selected.includes('{{ $enquiry->id }}') && 'bg-primary/5'">
-                                    <td>
+                                    <td data-cell="check">
                                         <input type="checkbox" class="checkbox checkbox-sm" value="{{ $enquiry->id }}" x-model="selected"
                                                aria-label="#{{ $enquiry->id }}">
                                     </td>
-                                    <td class="min-w-48">
+                                    <td class="min-w-48" data-cell="customer">
                                         <div class="flex items-start gap-2.5">
                                             <span class="h-8 w-8 shrink-0 rounded-full bg-base-200 flex items-center justify-center" title="{{ $enquiry->kindLabel() }}">
                                                 <x-icon :name="$kind['icon'] ?? 'message-square'" size="sm" class="opacity-70" />
@@ -193,7 +194,7 @@
                                             </div>
                                         </div>
                                     </td>
-                                    <td class="max-w-md">
+                                    <td class="max-w-md" data-cell="what">
                                         @if ($subject)
                                             <div class="text-xs opacity-70 mb-0.5 truncate">
                                                 <x-icon name="link-2" size="sm" class="opacity-50 align-text-bottom" /> {{ $subject['label'] }}
@@ -211,7 +212,7 @@
                                             </div>
                                         @endif
                                     </td>
-                                    <td class="whitespace-nowrap text-sm">
+                                    <td class="whitespace-nowrap text-sm" data-cell="waiting">
                                         @if ($since)
                                             <span @class(['badge badge-sm gap-1', 'badge-error' => $overdue, 'badge-warning' => ! $overdue])
                                                   title="{{ __('Waiting since :time', ['time' => $since->format('d.m.Y H:i')]) }}">
@@ -224,7 +225,7 @@
                                     </td>
                                     @include('torgash.enquiries::admin._status', ['enquiry' => $enquiry])
                                     @include('torgash.enquiries::admin._manager', ['enquiry' => $enquiry, 'managers' => $managers])
-                                    <td class="text-end whitespace-nowrap">
+                                    <td class="text-end whitespace-nowrap" data-cell="actions">
                                         {{-- A callback is usually dealt with without opening it:
                                              ring from the row, then mark it resolved from the row.
                                              Resolving closes the conversation, and "Reopen" on the

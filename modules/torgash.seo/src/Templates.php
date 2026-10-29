@@ -3,6 +3,7 @@
 namespace Torgash\Seo;
 
 use App\Core\Content\Placeholders;
+use App\Core\Seo\PageMeta;
 use App\Core\Seo\PageSubject;
 use Illuminate\Support\Collection;
 use Torgash\Seo\Models\Template;
@@ -162,26 +163,16 @@ class Templates
     }
 
     /**
-     * What the tokens are allowed to ask about. The record goes in under its
-     * own kind, which is exactly what the catalogue's tokens look for, plus
-     * anything the record itself adds.
+     * What the tokens are allowed to ask about — core's answer
+     * ({@see PageMeta::contextOf()}), which the record's own fields are
+     * expanded with too, so a token reads the same in a template and in the
+     * field the template stands in for.
      *
      * @return array<string, mixed>
      */
     public function context(PageSubject $subject): array
     {
-        $context = [$subject->pageMetaKind() => $subject, 'subject' => $subject];
-
-        // ...plus whatever else the record says its own tokens may ask about.
-        // Asked of the record rather than typed here — the same idiom
-        // categoryChain() uses — so a city page can hand over the town it is
-        // about (`place_id`, read by a token `torgash.locations` registers) and
-        // this module names neither module's classes to let that work.
-        if (method_exists($subject, 'pageMetaContext')) {
-            $context += $subject->pageMetaContext();
-        }
-
-        return $context;
+        return PageMeta::contextOf($subject);
     }
 
     /** For tests and for a screen that has just saved a template. */

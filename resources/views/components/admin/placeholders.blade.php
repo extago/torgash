@@ -97,7 +97,7 @@
                                     <span class="text-sm opacity-70 min-w-0">
                                         {{ label_text($token['label'] ?? null, $pickerLocale) }}
                                         @if ($token['raw'])
-                                            <span class="badge badge-ghost badge-xs align-middle">HTML</span>
+                                            <span class="badge badge-ghost badge-sm align-middle">HTML</span>
                                         @endif
                                         @if (! empty($token['example']) && $token['example'] !== $written)
                                             <span class="opacity-50">— {{ $token['example'] }}</span>

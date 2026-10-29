@@ -1,6 +1,7 @@
 @extends('admin.layout')
 
 @section('title', __('Reviews'))
+@section('title_hint', __('What customers wrote about the products. Nothing is shown on the storefront until it is published; the product\'s average counts published reviews only.'))
 
 @section('content')
     @php
@@ -31,33 +32,42 @@
         <div class="alert alert-error text-sm">{{ $errors->first() }}</div>
     @endif
 
+    {{-- The states as one row of tabs over the card, the screen's actions at
+         its end (app.css, `admin-tabs`): LINKS carrying every other filter;
+         reviews waiting are amber. --}}
+    <div class="admin-tabs-row">
+        <nav class="admin-tabs" aria-label="{{ __('Reviews') }}">
+            @foreach ($tabs as $tabKey => $tabLabel)
+                <a href="{{ route('admin.reviews.index', $filterQuery + ['status' => $tabKey]) }}"
+                   @class(['admin-tab', 'is-active' => $filters['status'] === $tabKey])>
+                    {{ $tabLabel }}
+                    <span @class(['admin-tab-count', 'is-warning' => $tabKey === Review::PENDING && ($statusCounts[$tabKey] ?? 0) > 0])>{{ $statusCounts[$tabKey] ?? 0 }}</span>
+                </a>
+            @endforeach
+        </nav>
+        <div class="admin-tabs-actions">
+            <a href="{{ route('admin.reviews.criteria.index') }}" class="btn btn-ghost gap-1.5"><x-icon name="list-checks" size="sm" /> {{ __('Rating criteria') }}</a>
+            {{-- The way to put right what `reviews.aggregate_matches_reviews`
+                 reports: the average is a denormalised row per product. --}}
+            <form method="POST" action="{{ route('admin.reviews.recount') }}">
+                @csrf
+                <button class="btn btn-ghost gap-1.5" title="{{ __('Recomputes every product\'s average and review count from its published reviews.') }}">
+                    <x-icon name="calculator" size="sm" /> {{ __('Recount the averages') }}
+                </button>
+            </form>
+        </div>
+    </div>
+
     <div class="card bg-base-100 border border-base-300"
          x-data="{ selected: [], found: false, pageIds: @js($pageIds), open: {} }"
          x-init="$watch('selected', v => { if (v.length < pageIds.length) found = false })">
         <div class="card-body gap-4">
-            <div class="flex justify-between items-start gap-3 flex-wrap">
-                <p class="text-sm opacity-70 max-w-3xl">
-                    {{ __('What customers wrote about the products. Nothing is shown on the storefront until it is published; the product\'s average counts published reviews only.') }}
-                </p>
-                <div class="flex items-center gap-2">
-                    <a href="{{ route('admin.reviews.criteria.index') }}" class="btn btn-sm gap-1.5"><x-icon name="list-checks" size="sm" /> {{ __('Rating criteria') }}</a>
-                    {{-- The way to put right what `reviews.aggregate_matches_reviews`
-                         reports: the average is a denormalised row per product. --}}
-                    <form method="POST" action="{{ route('admin.reviews.recount') }}">
-                        @csrf
-                        <button class="btn btn-ghost btn-sm gap-1.5" title="{{ __('Recomputes every product\'s average and review count from its published reviews.') }}">
-                            <x-icon name="calculator" size="sm" /> {{ __('Recount the averages') }}
-                        </button>
-                    </form>
-                </div>
-            </div>
-
             <form method="GET" class="flex flex-wrap items-center gap-2">
                 <input type="hidden" name="status" value="{{ $filters['status'] }}">
                 @if ($filters['product'])
                     <input type="hidden" name="product" value="{{ $filters['product'] }}">
                 @endif
-                <label class="input input-sm w-full sm:w-80 gap-2">
+                <label class="input input-sm grow min-w-48 gap-2">
                     <x-icon name="search" size="sm" class="opacity-50" />
                     <input type="search" name="q" value="{{ $filters['q'] }}" class="grow" placeholder="{{ __('Text, author, product or SKU…') }}">
                 </label>
@@ -97,32 +107,18 @@
                     <span class="opacity-60">{{ __('Product') }}:</span>
                     <span class="badge badge-lg gap-1.5">
                         {{ $product->t('name', admin_content_locale()) ?: $product->sku }}
-                        <a href="{{ request()->fullUrlWithQuery(['product' => null, 'page' => null]) }}" class="opacity-60 hover:opacity-100" title="{{ __('All products') }}"><x-icon name="x" size="sm" /></a>
+                        <a href="{{ request()->fullUrlWithQuery(['product' => null, 'page' => null]) }}" class="opacity-60 hover:opacity-100" title="{{ __('All products') }}" aria-label="{{ __('All products') }}"><x-icon name="x" size="sm" /></a>
                     </span>
                 </div>
             @endif
 
-            {{-- LINKS carrying every other filter, not a second control in the form. --}}
-            <div class="join flex-wrap -mt-1">
-                @foreach ($tabs as $tabKey => $tabLabel)
-                    <a href="{{ route('admin.reviews.index', $filterQuery + ['status' => $tabKey]) }}"
-                       @class(['btn btn-sm join-item', 'btn-active' => $filters['status'] === $tabKey])>
-                        {{ $tabLabel }}
-                        <span @class([
-                            'badge badge-sm badge-warning' => $tabKey === Review::PENDING && ($statusCounts[$tabKey] ?? 0) > 0,
-                            'opacity-50' => ! ($tabKey === Review::PENDING && ($statusCounts[$tabKey] ?? 0) > 0),
-                        ])>{{ $statusCounts[$tabKey] ?? 0 }}</span>
-                    </a>
-                @endforeach
-            </div>
-
-            <div class="min-h-12 flex items-center">
+            <div class="min-h-12 max-md:min-h-0 flex items-center">
                 <p x-show="!selected.length" class="text-xs opacity-50">
                     {{ __('Tick reviews to publish, reject or delete several at once — or every one the filters found.') }}
                 </p>
                 <form method="POST" action="{{ route('admin.reviews.bulk') }}"
                       x-show="selected.length" x-cloak
-                      class="w-full flex flex-wrap items-center gap-2 bg-base-200 rounded-box p-2">
+                      class="admin-bulk-bar w-full flex flex-wrap items-center gap-2 bg-base-200 rounded-box p-2">
                     @csrf
                     {{-- The ticked ids, or — "every review found" — the filters
                          themselves, read again by the same query the list used. --}}
@@ -180,7 +176,8 @@
                             $shopReplied = $review->replies->contains('is_staff', true);
                             $reviewProduct = $review->product;
                         @endphp
-                        <div class="flex gap-3 py-3 px-2 hover:bg-base-200/40" :class="selected.includes('{{ $review->id }}') && 'bg-primary/5'">
+                        {{-- On a phone the buttons go under the text, not beside it. --}}
+                        <div class="flex gap-3 py-3 px-2 hover:bg-base-200/40 max-md:flex-wrap" :class="selected.includes('{{ $review->id }}') && 'bg-primary/5'">
                             <input type="checkbox" class="checkbox checkbox-sm mt-1" value="{{ $review->id }}" x-model="selected" aria-label="#{{ $review->id }}">
 
                             <div class="flex-1 min-w-0 flex flex-col gap-1.5">
@@ -199,7 +196,7 @@
                                     @endif
                                     <span class="text-xs opacity-50">{{ $review->created_at?->format('d.m.Y H:i') }}</span>
                                     @if ($shopReplied)
-                                        <span class="badge badge-sm badge-primary badge-outline gap-1"><x-icon name="message-square-reply" size="sm" /> {{ __('Answered by the shop') }}</span>
+                                        <span class="badge badge-sm badge-primary gap-1"><x-icon name="message-square-reply" size="sm" /> {{ __('Answered by the shop') }}</span>
                                     @endif
                                     @if ($review->helpful_yes)
                                         <span class="text-xs opacity-60 inline-flex items-center gap-1" title="{{ __('Found helpful') }}"><x-icon name="thumbs-up" size="sm" /> {{ $review->helpful_yes }}</span>
@@ -214,7 +211,7 @@
                                         </a>
                                         @unless ($filters['product'])
                                             <a href="{{ request()->fullUrlWithQuery(['product' => $reviewProduct->id, 'page' => null]) }}"
-                                               class="btn btn-ghost btn-sm" title="{{ __('Only this product\'s reviews') }}"><x-icon name="filter" size="sm" /></a>
+                                               class="btn btn-ghost btn-sm" title="{{ __('Only this product\'s reviews') }}" aria-label="{{ __('Only this product\'s reviews') }}"><x-icon name="filter" size="sm" /></a>
                                         @endunless
                                     </div>
                                 @endif
@@ -281,7 +278,7 @@
 
                             {{-- One row, level with the author: the status, then the
                                  view on the storefront and — set apart — delete. --}}
-                            <div class="flex items-center gap-1 shrink-0 self-start">
+                            <div class="flex items-center gap-1 shrink-0 self-start max-md:w-full max-md:flex-wrap max-md:justify-end">
                                 @include('torgash.reviews::admin._status', ['review' => $review])
                                 @if ($reviewProduct && $review->status === Review::PUBLISHED)
                                     <a href="{{ route('catalog.product', $reviewProduct->slug) }}#reviews" target="_blank" rel="noopener"

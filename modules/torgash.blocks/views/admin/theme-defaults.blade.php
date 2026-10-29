@@ -89,7 +89,7 @@
                                      difference between "Replace puts this back"
                                      and "Replace deletes your afternoon". --}}
                                 @unless ($block->source === ThemeDefaults::SOURCE)
-                                    <span class="badge badge-outline badge-xs">{{ __('yours') }}</span>
+                                    <span class="badge badge-ghost badge-sm">{{ __('yours') }}</span>
                                 @endunless
                             </div>
                         @empty
@@ -132,7 +132,7 @@
                             <x-icon name="trash-2" size="sm" class="text-error opacity-60" />
                             <span>{{ $block->displayTitle() }}</span>
                             @unless ($block->source === ThemeDefaults::SOURCE)
-                                <span class="badge badge-outline badge-xs">{{ __('yours') }}</span>
+                                <span class="badge badge-ghost badge-sm">{{ __('yours') }}</span>
                             @endunless
                         </li>
                     @endforeach
@@ -150,7 +150,7 @@
             <x-slot:footer>
                 <form method="POST" action="{{ route('admin.blocks.theme_defaults.replace', $name) }}">
                     @csrf
-                    <button class="btn btn-error btn-sm">{{ __('Replace the zone') }}</button>
+                    <button class="btn btn-sm btn-error btn-outline">{{ __('Replace the zone') }}</button>
                 </form>
             </x-slot:footer>
         </x-modal>

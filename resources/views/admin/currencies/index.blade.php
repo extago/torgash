@@ -1,6 +1,25 @@
 @extends('admin.layout')
 
 @section('title', __('Currencies'))
+@section('title_hint', __('The currencies a customer can see prices in. Every amount is stored in the shop\'s own currency, whose rate is 1; each other rate says how much of that currency one unit of the shop\'s buys.'))
+@section('title_actions')
+    {{-- Only when there is somewhere to fetch from: a button that can only
+         ever answer "configure a source first" is a button that should not
+         be drawn. --}}
+    @if ($source)
+        <form method="POST" action="{{ route('admin.currencies.refresh') }}">
+            @csrf
+            <button class="btn btn-ghost gap-1.5">
+                <x-icon name="refresh-cw" size="sm" />
+                {{ __('Fetch the rates now') }}
+            </button>
+        </form>
+    @endif
+    @can('settings.manage')
+        <a href="{{ url('/admin/settings#setting-rates_source') }}" class="btn btn-ghost gap-1.5"><x-icon name="settings" size="sm" /> {{ __('Where rates come from') }}</a>
+    @endcan
+    <a href="{{ route('admin.currencies.create') }}" class="btn btn-primary">+ {{ __('New currency') }}</a>
+@endsection
 
 @section('content')
     @if (session('status'))
@@ -12,27 +31,6 @@
 
     <div class="card bg-base-100 border border-base-300">
         <div class="card-body gap-4">
-            <div class="flex flex-wrap items-start justify-between gap-3">
-                <p class="text-sm opacity-70 max-w-3xl">
-                    {{ __('The currencies a customer can see prices in. Every amount is stored in the shop\'s own currency, whose rate is 1; each other rate says how much of that currency one unit of the shop\'s buys.') }}
-                    @can('settings.manage')<a href="{{ url('/admin/settings#setting-rates_source') }}" class="link">{{ __('Where rates come from') }}</a>@endcan
-                </p>
-                <div class="flex flex-wrap items-center gap-2">
-                    {{-- Only when there is somewhere to fetch from: a button that
-                         can only ever answer "configure a source first" is a
-                         button that should not be drawn. --}}
-                    @if ($source)
-                        <form method="POST" action="{{ route('admin.currencies.refresh') }}">
-                            @csrf
-                            <button class="btn btn-sm gap-1.5">
-                                <x-icon name="refresh-cw" size="sm" />
-                                {{ __('Fetch the rates now') }}
-                            </button>
-                        </form>
-                    @endif
-                    <a href="{{ route('admin.currencies.create') }}" class="btn btn-primary btn-sm">+ {{ __('New currency') }}</a>
-                </div>
-            </div>
 
             <div class="overflow-x-auto">
                 <table class="table">

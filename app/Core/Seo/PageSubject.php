@@ -28,7 +28,7 @@ interface PageSubject
      * ignores them, which is what lets a half-filled record keep whatever the
      * controller worked out.
      *
-     * @return array{title?: ?string, description?: ?string, h1?: ?string, noindex?: bool, canonical?: ?string}
+     * @return array{title?: ?string, description?: ?string, h1?: ?string, noindex?: bool, canonical?: ?string, image?: ?string}
      */
     public function pageMeta(): array;
 

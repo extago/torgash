@@ -3,6 +3,7 @@
 namespace Torgash\Catalog\Http\Admin;
 
 use App\Core\Seo\MetaFields;
+use App\Core\Seo\SharePicture;
 use App\Core\Support\Currencies;
 use App\Http\Controllers\Controller;
 use App\Models\CustomerGroup;
@@ -14,6 +15,7 @@ use Illuminate\Validation\Rule;
 use Illuminate\Validation\Rules\Unique;
 use Throwable;
 use Torgash\Catalog\Features\OwnRows;
+use Torgash\Catalog\Features\ProductFeatureSet;
 use Torgash\Catalog\Models\Feature;
 use Torgash\Catalog\Models\Label;
 use Torgash\Catalog\Models\PriceType;
@@ -40,6 +42,9 @@ class ProductsController extends Controller
     /** The filters that narrow WHICH products the list holds — what "all found" re-applies. */
     public const NARROWING = ['q', 'status', 'category', 'availability', 'stock', 'price_min', 'price_max'];
 
+    /** How many rows a page may show — the admin's choice at the list's toolbar. */
+    public const PER_PAGE = [20, 50, 100, 200];
+
     public function index(Request $request)
     {
         $filters = $this->filtersFrom($request);
@@ -47,7 +52,7 @@ class ProductsController extends Controller
         $locale = admin_content_locale();
 
         return view('torgash.catalog::admin.products.index', [
-            'products' => $this->filtered($filters)->paginate(20)->withQueryString(),
+            'products' => $this->filtered($filters)->paginate($filters['per'])->withQueryString(),
             'trashedCount' => Product::onlyTrashed()->count(),
             'filters' => $filters,
             'statusCounts' => Product::selectRaw('status, count(*) as n')->groupBy('status')->pluck('n', 'status'),
@@ -87,6 +92,7 @@ class ProductsController extends Controller
             'price_max' => $price('price_max'),
             'sort' => in_array($request->input('sort'), self::SORTABLE, true) ? $request->input('sort') : 'created_at',
             'dir' => $request->input('dir') === 'asc' ? 'asc' : 'desc',
+            'per' => in_array((int) $request->input('per'), self::PER_PAGE, true) ? (int) $request->input('per') : self::PER_PAGE[0],
         ];
     }
 
@@ -320,6 +326,34 @@ class ProductsController extends Controller
         return response()->json($lookup->search((string) $request->query('q', ''), array_filter([(int) $request->query('except')])));
     }
 
+    /**
+     * Characteristics found by name for the form's "add a characteristic"
+     * box (PLAN §63.9), the ones already on the form left out.
+     */
+    public function featureSearch(Request $request, ProductFeatureSet $set)
+    {
+        $needle = trim((string) $request->query('feature_q', (string) $request->query('q', '')));
+
+        return view('torgash.catalog::admin.products._feature_search', [
+            'features' => $set->search($needle, (array) $request->query('on_form', [])),
+            'needle' => $needle,
+            'productId' => (int) $request->query('product') ?: null,
+        ]);
+    }
+
+    /** One characteristic as a field of the form, to join it for this edit. */
+    public function featureField(Request $request)
+    {
+        $feature = Feature::with(['group', 'values'])->findOrFail((int) $request->query('feature'));
+        $product = $request->filled('product') ? Product::find((int) $request->query('product')) : null;
+
+        return view('torgash.catalog::admin.products._feature_field', [
+            'featureField' => $feature,
+            'featureAssigned' => $product?->featureAssignments()->where('feature_id', $feature->id)->first(),
+            'featureLocale' => admin_content_locale(),
+        ]);
+    }
+
     public function edit(Product $product)
     {
         return view('torgash.catalog::admin.products.form', $this->formData($product));
@@ -378,6 +412,7 @@ class ProductsController extends Controller
         $copy->slug = $this->uniqueSlug($product->slug);
         $copy->name = $this->suffixTranslations($product->name, ' ('.__('copy').')');
         $copy->status = Product::STATUS_DISABLED;
+        $copy->share_image = SharePicture::copy($product->share_image);
         $copy->save();
 
         $copy->categories()->sync($product->categories->pluck('id'));
@@ -451,7 +486,12 @@ class ProductsController extends Controller
         return [
             'product' => $product,
             'categories' => app(CategoryTree::class)->ordered(),
-            'globalFeatures' => Feature::with(['group', 'values'])->orderBy('group_id')->orderBy('sort')->get(),
+            // The product's own set (Features\ProductFeatureSet): what its
+            // categories declare, what it already has, never every one.
+            'globalFeatures' => app(ProductFeatureSet::class)->for(
+                $product,
+                old('categories', $product->exists ? $product->categories()->pluck('m_catalog_categories.id')->all() : []),
+            ),
             'assignedFeatures' => $product->exists ? $product->featureAssignments->keyBy('feature_id') : collect(),
             // Own rows the page prints a second time beside the shop's
             // characteristic of the same name (Features\OwnRows).
@@ -584,11 +624,17 @@ class ProductsController extends Controller
      */
     protected function syncGlobalFeatures(Request $request, Product $product): void
     {
-        $submitted = $request->input('global_features', []);
+        $submitted = (array) $request->input('global_features', []);
         $words = content_locale_is_base() ? null : (array) $request->input('global_features_words', []);
         $locale = admin_content_locale();
 
-        foreach (Feature::all() as $feature) {
+        // Only what the form SENT (PLAN §63.9): the form shows the product's
+        // own set, not the shop's thousand, so a characteristic it never
+        // drew is not a characteristic the admin emptied.
+        $sentIds = array_map('intval', array_keys($words !== null ? $words + $submitted : $submitted));
+        $features = $sentIds === [] ? collect() : Feature::whereIn('id', $sentIds)->get();
+
+        foreach ($features as $feature) {
             if ($words !== null && $feature->isTypedText()) {
                 $assignment = $product->featureAssignments()->where('feature_id', $feature->id)->first();
 

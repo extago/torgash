@@ -92,11 +92,11 @@
                             @if (session(\App\Core\Support\SafeMode::SESSION) === true)
                                 <input type="hidden" name="on" value="0">
                                 <input type="hidden" name="back" value="{{ url()->current() }}">
-                                <span class="badge badge-warning">{{ __('On for you') }}</span>
+                                <span class="badge badge-sm badge-warning">{{ __('On for you') }}</span>
                                 <button class="btn btn-sm">{{ __('Turn off') }}</button>
                             @else
                                 <input type="hidden" name="on" value="1">
-                                <button class="btn btn-sm gap-2"><x-icon name="external-link" size="sm" /> {{ __('Open the storefront in safe mode') }}</button>
+                                <button class="btn btn-sm gap-2 max-sm:shrink max-sm:h-auto max-sm:min-h-10 max-sm:py-2 max-sm:whitespace-normal"><x-icon name="external-link" size="sm" /> {{ __('Open the storefront in safe mode') }}</button>
                             @endif
                         </form>
                     @endif
@@ -163,13 +163,13 @@
                                               data-confirm="{{ __('Install Torgash :version? A backup is made first; the shop is in maintenance for a minute or two.', ['version' => $package['version']]) }}">
                                             @csrf
                                             <input type="hidden" name="name" value="{{ $package['name'] }}">
-                                            <button class="btn btn-primary btn-xs" @disabled($updates['running'])>{{ __('Install :version', ['version' => $package['version']]) }}</button>
+                                            <button class="btn btn-primary btn-sm" @disabled($updates['running'])>{{ __('Install :version', ['version' => $package['version']]) }}</button>
                                         </form>
                                     @endif
                                     <form method="POST" action="{{ route('admin.system.updates.delete_file') }}" @class(['ms-auto' => $package['error'] || ! $package['newer']])>
                                         @csrf @method('DELETE')
                                         <input type="hidden" name="name" value="{{ $package['name'] }}">
-                                        <button class="btn btn-ghost btn-xs btn-square" title="{{ __('Delete') }}" aria-label="{{ __('Delete') }}"><x-icon name="trash-2" size="sm" /></button>
+                                        <button class="btn btn-ghost btn-sm btn-square" title="{{ __('Delete') }}" aria-label="{{ __('Delete') }}"><x-icon name="trash-2" size="sm" /></button>
                                     </form>
                                 </div>
                             @endforeach
@@ -188,7 +188,7 @@
                             @csrf
                             <div class="flex gap-2">
                                 <input type="url" name="address" value="{{ old('address', $updates['address']) }}" placeholder="{{ $updates['default'] }}" class="input input-sm grow font-mono @error('address') input-error @enderror" aria-label="{{ __('Update server') }}">
-                                <button class="btn btn-sm">{{ __('Save') }}</button>
+                                <button class="btn btn-sm btn-primary">{{ __('Save') }}</button>
                             </div>
                             @error('address') <p class="text-xs text-error">{{ $message }}</p> @enderror
                             <p class="text-xs opacity-60">{{ __('Blank: the built-in address. Another server can only offer what is signed by the key in this code, so a wrong address stops updates, it cannot install anything.') }}</p>
@@ -212,7 +212,7 @@
                             <span @class(['badge badge-sm', 'badge-ghost' => $has, 'badge-error' => ! $has])>{{ $ext }}</span>
                         @endforeach
                         @foreach ($extensions['optional'] as $ext => $has)
-                            <span @class(['badge badge-sm badge-outline', 'opacity-40 line-through' => ! $has])>{{ $ext }}</span>
+                            <span @class(['badge badge-sm badge-ghost', 'opacity-40 line-through' => ! $has])>{{ $ext }}</span>
                         @endforeach
                     </div>
                     <p class="text-xs opacity-60">{{ __('As the web server runs PHP; the console may have other limits.') }}</p>
@@ -267,18 +267,20 @@
                                 <span class="{{ $ok($database['cyrillic_ok']) }}">— {{ $database['cyrillic_ok'] ? __('Cyrillic search works') : __('Cyrillic is not folded') }}</span>
                             </dd>
                         </dl>
-                        <table class="table table-sm">
-                            <thead><tr><th>{{ __('Largest tables') }}</th><th class="text-end">{{ __('Rows') }}</th><th class="text-end">{{ __('Size') }}</th></tr></thead>
-                            <tbody>
-                                @foreach ($database['tables'] as $table)
-                                    <tr>
-                                        <td class="font-mono text-xs">{{ $table['name'] }}</td>
-                                        <td class="text-end tabular-nums">{{ number_format($table['rows'], 0, ',', ' ') }}</td>
-                                        <td class="text-end tabular-nums">{{ $mb($table['bytes']) }}</td>
-                                    </tr>
-                                @endforeach
-                            </tbody>
-                        </table>
+                        <div class="overflow-x-auto">
+                            <table class="table table-sm">
+                                <thead><tr><th>{{ __('Largest tables') }}</th><th class="text-end">{{ __('Rows') }}</th><th class="text-end">{{ __('Size') }}</th></tr></thead>
+                                <tbody>
+                                    @foreach ($database['tables'] as $table)
+                                        <tr>
+                                            <td class="font-mono text-xs">{{ $table['name'] }}</td>
+                                            <td class="text-end tabular-nums">{{ number_format($table['rows'], 0, ',', ' ') }}</td>
+                                            <td class="text-end tabular-nums">{{ $mb($table['bytes']) }}</td>
+                                        </tr>
+                                    @endforeach
+                                </tbody>
+                            </table>
+                        </div>
                     @endif
                 </div>
             </section>

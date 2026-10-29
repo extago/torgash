@@ -23,7 +23,7 @@
 
                 <label class="label cursor-pointer justify-start gap-2 p-0">
                     <input type="hidden" name="sale_enabled" value="0">
-                    <input type="checkbox" name="sale_enabled" value="1" class="checkbox checkbox-sm checkbox-primary" @checked($enabled)>
+                    <input type="checkbox" name="sale_enabled" value="1" class="checkbox checkbox-sm" @checked($enabled)>
                     <span class="label-text">{{ __('Hand orders over when 1C asks for them') }}</span>
                 </label>
 

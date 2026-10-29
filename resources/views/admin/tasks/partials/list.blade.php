@@ -22,14 +22,18 @@
         $task->status === 'cancelled' => ['badge-ghost', __('cancelled')],
         default => ['badge-ghost', __($task->status)],
     };
+    // Who started it and which module's work: carried by every tab and by
+    // the poll, so the list stays the one that was asked for.
+    $filterQuery = array_filter($filters, fn ($value) => $value !== '');
+    $filtered = $filterQuery !== [];
 @endphp
 {{-- hx-get only together with its trigger: without one HTMX fires a div's
      request on CLICK, so every click inside the list reloaded it and an
      error just opened closed again. The poll also waits while a detail is
      open, so reading one is not interrupted. --}}
-<div id="tasks-list" class="flex flex-col gap-4"
+<div id="tasks-list" class="flex flex-col gap-6"
      @if ($polling)
-         hx-get="{{ route('admin.tasks.rows', ['tab' => $tab]) }}"
+         hx-get="{{ route('admin.tasks.rows', $filterQuery + ['tab' => $tab]) }}"
          hx-swap="outerHTML"
          hx-trigger="every 3s [!document.querySelector('#tasks-list details[open]')]"
      @endif>
@@ -44,14 +48,17 @@
         </div>
     @endif
 
-    <div role="tablist" class="tabs tabs-border">
+    {{-- One row of tabs over the cards (app.css, `admin-tabs`); above both,
+         since it switches between them. A count that is a problem is red. --}}
+    <nav class="admin-tabs" aria-label="{{ __('Background tasks') }}">
         @foreach ($tabs as $tabKey => [$tabLabel, $tabIcon, $tabCount])
-            <a role="tab" href="{{ route('admin.tasks', $tabKey === 'all' ? [] : ['tab' => $tabKey]) }}" @class(['tab gap-2', 'tab-active' => $tab === $tabKey])>
+            @php $alarm = in_array($tabKey, ['failed', 'jobs'], true) && $tabCount; @endphp
+            <a href="{{ route('admin.tasks', $filterQuery + ($tabKey === 'all' ? [] : ['tab' => $tabKey])) }}" @class(['admin-tab', 'is-active' => $tab === $tabKey])>
                 <x-icon :name="$tabIcon" size="sm" /> {{ $tabLabel }}
-                <span @class(['badge badge-sm', 'badge-error' => in_array($tabKey, ['failed', 'jobs'], true) && $tabCount, 'badge-ghost' => ! (in_array($tabKey, ['failed', 'jobs'], true) && $tabCount)])>{{ $tabCount }}</span>
+                <span @class(['admin-tab-count', 'is-error' => $alarm])>{{ $tabCount }}</span>
             </a>
         @endforeach
-    </div>
+    </nav>
 
     @if ($tab !== 'jobs')
         <div class="card bg-base-100 border border-base-300">
@@ -67,8 +74,33 @@
                     </form>
                 </div>
 
+                {{-- Whose work, and which module's. The people offered are
+                     those who have started something; "automatically" is the
+                     scheduler and the console. --}}
+                <form method="GET" class="flex flex-wrap items-center gap-2">
+                    @if ($tab !== 'all')
+                        <input type="hidden" name="tab" value="{{ $tab }}">
+                    @endif
+                    <select name="user" class="select select-sm w-auto" data-submit-on-change aria-label="{{ __('Started by') }}">
+                        <option value="">{{ __('Started by anyone') }}</option>
+                        <option value="auto" @selected($filters['user'] === 'auto')>{{ __('Started automatically') }}</option>
+                        @foreach ($starters as $starter)
+                            <option value="{{ $starter->id }}" @selected($filters['user'] === (string) $starter->id)>{{ $starter->name }}</option>
+                        @endforeach
+                    </select>
+                    <select name="module" class="select select-sm w-auto" data-submit-on-change aria-label="{{ __('Module') }}">
+                        <option value="">{{ __('Any module') }}</option>
+                        @foreach ($modules as $moduleId)
+                            <option value="{{ $moduleId }}" @selected($filters['module'] === $moduleId)>{{ $moduleId }}</option>
+                        @endforeach
+                    </select>
+                    @if ($filtered)
+                        <a href="{{ route('admin.tasks', $tab === 'all' ? [] : ['tab' => $tab]) }}" class="btn btn-ghost btn-sm">{{ __('Reset') }}</a>
+                    @endif
+                </form>
+
                 @if ($tasks->isEmpty())
-                    <p class="opacity-60 text-sm py-6 text-center">{{ __('Nothing here.') }}</p>
+                    <p class="opacity-60 text-sm py-6 text-center">{{ $filtered ? __('No tasks match these filters.') : __('Nothing here.') }}</p>
                 @else
                     <div class="overflow-x-auto">
                         <table class="table">

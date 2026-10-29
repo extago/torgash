@@ -9,8 +9,8 @@
         @csrf
         @if ($method->exists) @method('PUT') @endif
 
-        <div class="sticky top-16 z-20 -mx-6 px-6 py-3 bg-base-200/95 backdrop-blur border-b border-base-300 flex items-center gap-3">
-            <a href="{{ route('admin.checkout.payment-methods.index') }}" class="btn btn-ghost btn-sm btn-square" title="{{ __('Back to payment methods') }}">
+        <x-admin.form-bar>
+            <a href="{{ route('admin.checkout.payment-methods.index') }}" class="btn btn-ghost btn-sm btn-square" title="{{ __('Back to payment methods') }}" aria-label="{{ __('Back to payment methods') }}">
                 <x-icon name="arrow-left" size="lg" />
             </a>
             <div class="flex-1 min-w-0">
@@ -19,7 +19,7 @@
             </div>
             @if ($method->exists)
                 <div class="dropdown dropdown-end">
-                    <div tabindex="0" role="button" class="btn btn-ghost btn-sm btn-square" title="{{ __('More actions') }}">
+                    <div tabindex="0" role="button" class="btn btn-ghost btn-sm btn-square" title="{{ __('More actions') }}" aria-label="{{ __('More actions') }}">
                         <x-icon name="settings" size="lg" />
                     </div>
                     <ul tabindex="0" class="dropdown-content menu menu-sm bg-base-100 rounded-box shadow-md w-60 mt-2 p-2 z-50 border border-base-300">
@@ -31,9 +31,11 @@
                     </ul>
                 </div>
             @endif
-            <a href="{{ route('admin.checkout.payment-methods.index') }}" class="btn btn-ghost btn-sm">{{ __('Cancel') }}</a>
-            <button class="btn btn-primary btn-sm">{{ $method->exists ? __('Save') : __('Create') }}</button>
-        </div>
+            <x-slot:actions>
+                <a href="{{ route('admin.checkout.payment-methods.index') }}" class="btn btn-ghost btn-sm">{{ __('Cancel') }}</a>
+                <button class="btn btn-primary btn-sm">{{ $method->exists ? __('Save') : __('Create') }}</button>
+            </x-slot:actions>
+        </x-admin.form-bar>
 
         @if (session('status'))
             <div class="alert alert-success text-sm">{{ session('status') }}</div>
@@ -67,7 +69,7 @@
                         <h3 class="font-semibold">{{ __('Currencies') }}</h3>
 
                         <label class="label cursor-pointer justify-start gap-3">
-                            <input type="checkbox" name="limit_currencies" value="1" class="toggle toggle-sm toggle-primary" x-model="limited">
+                            <input type="checkbox" name="limit_currencies" value="1" class="toggle toggle-sm toggle-success" x-model="limited">
                             <span class="label-text whitespace-normal">{{ __('Only accepts certain currencies') }}</span>
                         </label>
                         <p class="text-xs opacity-60 -mt-2">

@@ -3,6 +3,9 @@
 namespace Torgash\Catalog\Http;
 
 use App\Core\Content\Markdown;
+use App\Core\Content\Placeholders;
+use App\Core\Seo\PageMeta;
+use App\Core\Seo\PageSubject;
 use App\Core\Seo\RedirectManager;
 use App\Http\Controllers\Controller;
 use Illuminate\Database\Eloquent\Builder;
@@ -327,7 +330,7 @@ class StorefrontController extends Controller
         $products = within_pages($this->listing->sorted($this->listing->applyFilters($page->applyTo($this->listing->productsQuery($found)), $request), $request)
             ->withCardData()->paginate(app(ListingView::class)->perPage($request))->withQueryString());
 
-        $this->describeFilterPage($page, $products->total());
+        $this->describeFilterPage($page, $products->total(), $products->first()?->primaryImageUrl(800));
 
         // The sidebar shows this page's own values ticked, and its form still
         // posts to the plain category — so unticking one is a working way off
@@ -478,7 +481,7 @@ class StorefrontController extends Controller
         // most shops never write one, and an empty description hands the
         // snippet to whatever the crawler picks off the page (audit
         // 2026-10-15). Its own field or a `torgash.seo` template still wins.
-        $text = Str::limit(Markdown::fromHtml((string) $category->t('description')), 160);
+        $text = $this->prose($category, (string) $category->t('description'));
 
         page_meta()
             ->set([
@@ -524,7 +527,16 @@ class StorefrontController extends Controller
      * rather than to the category's, which is the difference between a page
      * worth publishing and a duplicate of the one above it.
      */
-    protected function describeFilterPage(FilterPage $page, int $total): void
+    /**
+     * A record's own text read back as prose for its meta description, its
+     * placeholders ({min_price}) expanded as they are on the page.
+     */
+    protected function prose(PageSubject $subject, string $html): string
+    {
+        return Str::limit(Markdown::fromHtml(app(Placeholders::class)->expand($html, PageMeta::contextOf($subject))), 160);
+    }
+
+    protected function describeFilterPage(FilterPage $page, int $total, ?string $firstPhoto = null): void
     {
         $category = $page->category;
         $title = $page->title();
@@ -533,7 +545,10 @@ class StorefrontController extends Controller
             ->set([
                 'title' => $title,
                 'h1' => $title,
-                'description' => Str::limit(Markdown::fromHtml((string) $page->t('description')), 160),
+                'description' => $this->prose($page, (string) $page->t('description')),
+                // A shared link shows the first product on the page, as a
+                // category's does when it has no tile.
+                'image' => $firstPhoto,
             ])
             ->describe($page);
 

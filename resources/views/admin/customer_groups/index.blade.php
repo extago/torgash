@@ -1,6 +1,10 @@
 @extends('admin.layout')
 
 @section('title', __('Customers'))
+@section('title_hint', __('A group is a way to give some customers other prices: a discount off every price, or — in the catalogue — a price type of its own. Rules elsewhere (promotions, delivery, display rules) can also ask which group a customer is in.'))
+@section('title_actions')
+    <a href="{{ route('admin.customer-groups.create') }}" class="btn btn-primary">+ {{ __('New group') }}</a>
+@endsection
 
 @section('content')
     @php $contentLocale = admin_content_locale(); @endphp
@@ -13,12 +17,6 @@
 
     <div class="card bg-base-100 border border-base-300">
         <div class="card-body gap-4">
-            <div class="flex justify-between items-start gap-3 flex-wrap">
-                <p class="text-sm opacity-70 max-w-3xl">
-                    {{ __('A group is a way to give some customers other prices: a discount off every price, or — in the catalogue — a price type of its own. Rules elsewhere (promotions, delivery, display rules) can also ask which group a customer is in.') }}
-                </p>
-                <a href="{{ route('admin.customer-groups.create') }}" class="btn btn-primary btn-sm">+ {{ __('New group') }}</a>
-            </div>
 
             @if ($groups->isEmpty())
                 <div class="text-center py-12 opacity-60">

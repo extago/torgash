@@ -209,6 +209,7 @@ class Page extends Model implements HasMedia, PageSubject
             'h1' => $this->pageMetaText('h1'),
             'noindex' => (bool) $this->noindex,
             'canonical' => $this->canonical_url ?: null,
+            'image' => \App\Core\Seo\SharePicture::url($this->share_image),
         ];
     }
 

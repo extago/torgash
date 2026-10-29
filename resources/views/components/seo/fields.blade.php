@@ -8,12 +8,15 @@
     different screens for one idea.
 
     `titleField` exists for the one module whose column is named differently;
-    see App\Core\Seo\MetaFields.
+    see App\Core\Seo\MetaFields. `picture` adds the picture for shared links,
+    for a record with a `share_image` column (App\Core\Seo\SharePicture) —
+    the form around it must then be multipart.
 --}}
 @props([
     'record' => null,
     'titleField' => 'meta_title',
     'urlPreview' => null,
+    'picture' => false,
 ])
 <div class="card bg-base-100 border border-base-300">
     <div class="card-body gap-4">
@@ -52,8 +55,13 @@
             </p>
         </fieldset>
 
+        @if ($picture)
+            <x-admin.share-picture :path="$record?->share_image"
+                :help="__('Shown when a link to this page is sent in a messenger or posted to a social network. Empty: the page\'s own picture (a product\'s photo, a category\'s tile), else the storefront\'s. About 1200×630, JPG or PNG up to 5 MB.')" />
+        @endif
+
         <label class="label cursor-pointer justify-start gap-2">
-            <input type="checkbox" name="noindex" value="1" class="toggle toggle-warning"
+            <input type="checkbox" name="noindex" value="1" class="toggle toggle-sm toggle-warning"
                    @checked(old('noindex', $record?->noindex ?? false))>
             <span class="label-text">{{ __('Keep out of search engines') }}</span>
         </label>

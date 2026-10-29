@@ -1,6 +1,7 @@
 @extends('admin.layout')
 
 @section('title', __('Search'))
+@section('title_hint', __('The index the storefront searches and a trial box: type what a customer would and see the answer in the same order — and why.'))
 
 @section('content')
     @if (session('status'))
@@ -28,16 +29,16 @@
 
             @if ($result)
                 <div class="flex flex-wrap items-center gap-2 text-sm">
-                    <span class="badge badge-neutral">{{ trans_choice(':count product found|:count products found', $result->total()) }}</span>
+                    <span class="badge badge-sm badge-neutral">{{ trans_choice(':count product found|:count products found', $result->total()) }}</span>
                     @if ($result->how === 'layout')
-                        <span class="badge badge-info badge-outline">{{ __('read on the other keyboard layout as «:q»', ['q' => $result->readAs]) }}</span>
+                        <span class="inline-flex items-center gap-1.5 opacity-80"><x-icon name="keyboard" size="sm" class="text-info shrink-0" /> {{ __('read on the other keyboard layout as «:q»', ['q' => $result->readAs]) }}</span>
                     @elseif ($result->how === 'typo')
-                        <span class="badge badge-warning badge-outline">{{ __('nothing matched as typed; corrected by the dictionary of the catalogue to «:q»', ['q' => $result->readAs]) }}</span>
+                        <span class="inline-flex items-center gap-1.5 opacity-80"><x-icon name="spell-check" size="sm" class="text-warning shrink-0" /> {{ __('nothing matched as typed; corrected by the dictionary of the catalogue to «:q»', ['q' => $result->readAs]) }}</span>
                     @elseif ($result->how === 'fallback')
-                        <span class="badge badge-warning badge-outline">{{ __('nothing matched exactly; these are the answers of a fallback source') }}</span>
+                        <span class="inline-flex items-center gap-1.5 opacity-80"><x-icon name="life-buoy" size="sm" class="text-warning shrink-0" /> {{ __('nothing matched exactly; these are the answers of a fallback source') }}</span>
                     @endif
                     @if ($result->didYouMean)
-                        <span class="badge badge-ghost">{{ __('the window and the page will offer «:q» instead', ['q' => $result->didYouMean]) }}</span>
+                        <span class="inline-flex items-center gap-1.5 opacity-80"><x-icon name="lightbulb" size="sm" class="shrink-0" /> {{ __('the window and the page will offer «:q» instead', ['q' => $result->didYouMean]) }}</span>
                     @endif
                 </div>
                 @if ($fired !== [])

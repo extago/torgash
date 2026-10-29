@@ -5,13 +5,13 @@
 @section('own_heading', '1')
 
 @section('content')
-    <form method="POST" class="flex flex-col gap-4"
+    <form method="POST" enctype="multipart/form-data" class="flex flex-col gap-4"
           action="{{ $rubric->exists ? route('admin.blog.rubrics.update', $rubric) : route('admin.blog.rubrics.store') }}">
         @csrf
         @if ($rubric->exists) @method('PUT') @endif
 
-        <div class="sticky top-16 z-20 -mx-6 px-6 py-3 bg-base-200/95 backdrop-blur border-b border-base-300 flex items-center gap-3">
-            <a href="{{ route('admin.blog.rubrics.index') }}" class="btn btn-ghost btn-sm btn-square" title="{{ __('Blog rubrics') }}">
+        <x-admin.form-bar>
+            <a href="{{ route('admin.blog.rubrics.index') }}" class="btn btn-ghost btn-sm btn-square" title="{{ __('Blog rubrics') }}" aria-label="{{ __('Blog rubrics') }}">
                 <x-icon name="arrow-left" size="lg" />
             </a>
             <div class="flex-1 min-w-0">
@@ -21,9 +21,11 @@
             @if ($rubric->exists)
                 <button type="submit" form="rubric-delete" class="btn btn-ghost btn-sm text-error">{{ __('Delete') }}</button>
             @endif
-            <button type="submit" name="after_save" value="close" class="btn btn-ghost btn-sm">{{ __('Save and close') }}</button>
-            <button class="btn btn-primary btn-sm">{{ $rubric->exists ? __('Save') : __('Create') }}</button>
-        </div>
+            <x-slot:actions>
+                <button type="submit" name="after_save" value="close" class="btn btn-ghost btn-sm">{{ __('Save and close') }}</button>
+                <button class="btn btn-primary btn-sm">{{ $rubric->exists ? __('Save') : __('Create') }}</button>
+            </x-slot:actions>
+        </x-admin.form-bar>
 
         @if (session('status'))
             <div class="alert alert-success text-sm">{{ session('status') }}</div>
@@ -42,7 +44,7 @@
                     </div>
                 </section>
 
-                <x-seo.fields :record="$rubric" :url-preview="$rubric->exists ? $rubric->url() : null" />
+                <x-seo.fields :record="$rubric" picture :url-preview="$rubric->exists ? $rubric->url() : null" />
             </div>
 
             <div class="flex flex-col gap-4">
@@ -58,7 +60,7 @@
                         </fieldset>
                         <fieldset class="fieldset p-0">
                             <legend class="fieldset-legend">{{ __('Icon') }}</legend>
-                            <input name="icon" x-model="icon" class="input input-bordered w-full font-mono" placeholder="smartphone">
+                            <input name="icon" autocapitalize="off" autocorrect="off" spellcheck="false" x-model="icon" class="input input-bordered w-full font-mono" placeholder="smartphone">
                             <p class="label text-xs opacity-60 whitespace-normal">{!! __('A name from :link, like smartphone or gamepad-2.', ['link' => '<a href="https://lucide.dev/icons" target="_blank" rel="noopener" class="link">lucide.dev</a>']) !!}</p>
                         </fieldset>
                         <label class="label cursor-pointer justify-start gap-3">
@@ -67,7 +69,7 @@
                         </label>
                         <fieldset class="fieldset p-0">
                             <legend class="fieldset-legend">{{ __('Address') }}</legend>
-                            <input name="slug" value="{{ old('slug', $rubric->slug) }}" class="input input-bordered w-full" placeholder="{{ __('made from the name') }}">
+                            <input name="slug" autocapitalize="off" autocorrect="off" spellcheck="false" value="{{ old('slug', $rubric->slug) }}" class="input input-bordered w-full" placeholder="{{ __('made from the name') }}">
                         </fieldset>
                         <fieldset class="fieldset p-0">
                             <legend class="fieldset-legend">{{ __('Sort order') }}</legend>

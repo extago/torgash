@@ -1,6 +1,7 @@
 @extends('admin.layout')
 
 @section('title', __('Personal data'))
+@section('title_hint', __('Every "I agree" given on the site — in the cookie banner and in the forms — with the words it was given under. This is what shows a consent was really given.'))
 
 @section('content')
     <div class="flex flex-col gap-4">
@@ -9,17 +10,17 @@
         <div class="card bg-base-100 border border-base-300">
             <div class="card-body gap-4">
                 <form method="GET" class="flex flex-wrap items-center gap-2">
-                    <input name="q" value="{{ $q }}" class="input input-bordered input-sm w-64" placeholder="{{ __('Email, phone or IP') }}">
-                    <select name="kind" class="select select-bordered select-sm" data-submit-on-change>
+                    <label class="input input-sm grow min-w-48 gap-2">
+                        <x-icon name="search" size="sm" class="opacity-50" />
+                        <input type="search" name="q" value="{{ $q }}" class="grow" placeholder="{{ __('Email, phone or IP') }}">
+                    </label>
+                    <select name="kind" class="select select-sm w-auto" data-submit-on-change aria-label="{{ __('What') }}">
                         <option value="">{{ __('Everything') }}</option>
                         @foreach ($kinds as $kindOption)
                             <option value="{{ $kindOption }}" @selected($kind === $kindOption)>{{ $kindOption === 'cookies' ? __('Cookies') : $kindOption }}</option>
                         @endforeach
                     </select>
-                    <button class="btn btn-sm">{{ __('Find') }}</button>
                 </form>
-
-                <p class="text-sm opacity-70 max-w-3xl">{{ __('Every "I agree" given on the site — in the cookie banner and in the forms — with the words it was given under. This is what shows a consent was really given.') }}</p>
 
                 @if ($records->isEmpty())
                     <div class="text-center py-12 opacity-60">{{ __('Nothing recorded yet.') }}</div>

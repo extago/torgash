@@ -16,8 +16,8 @@
         @csrf
         @if ($priceType->exists) @method('PUT') @endif
 
-        <div class="sticky top-16 z-20 -mx-6 px-6 py-3 bg-base-200/95 backdrop-blur border-b border-base-300 flex items-center gap-3">
-            <a href="{{ route('admin.catalog.price-types.index') }}" class="btn btn-ghost btn-sm btn-square" title="{{ __('Back to price types') }}">
+        <x-admin.form-bar>
+            <a href="{{ route('admin.catalog.price-types.index') }}" class="btn btn-ghost btn-sm btn-square" title="{{ __('Back to price types') }}" aria-label="{{ __('Back to price types') }}">
                 <x-icon name="arrow-left" size="lg" />
             </a>
             <div class="flex-1 min-w-0">
@@ -28,14 +28,14 @@
             @if ($priceType->exists && (($prevType ?? null) || ($nextType ?? null)))
                 <div class="join">
                     @if ($prevType ?? null)
-                        <a href="{{ route('admin.catalog.price-types.edit', $prevType) }}" class="btn btn-sm join-item" title="{{ __('Previous price type') }}">
+                        <a href="{{ route('admin.catalog.price-types.edit', $prevType) }}" class="btn btn-sm join-item" title="{{ __('Previous price type') }}" aria-label="{{ __('Previous price type') }}">
                             <x-icon name="chevron-left" />
                         </a>
                     @else
                         <span class="btn btn-sm join-item btn-disabled"><x-icon name="chevron-left" /></span>
                     @endif
                     @if ($nextType ?? null)
-                        <a href="{{ route('admin.catalog.price-types.edit', $nextType) }}" class="btn btn-sm join-item" title="{{ __('Next price type') }}">
+                        <a href="{{ route('admin.catalog.price-types.edit', $nextType) }}" class="btn btn-sm join-item" title="{{ __('Next price type') }}" aria-label="{{ __('Next price type') }}">
                             <x-icon name="chevron-right" />
                         </a>
                     @else
@@ -49,7 +49,7 @@
                      standalone forms below: a nested <form> would leak its
                      _method=DELETE into this one's submit. --}}
                 <div class="dropdown dropdown-end">
-                    <div tabindex="0" role="button" class="btn btn-ghost btn-sm btn-square" title="{{ __('More actions') }}">
+                    <div tabindex="0" role="button" class="btn btn-ghost btn-sm btn-square" title="{{ __('More actions') }}" aria-label="{{ __('More actions') }}">
                         <x-icon name="settings" size="lg" />
                     </div>
                     <ul tabindex="0" class="dropdown-content menu menu-sm bg-base-100 rounded-box shadow-md w-60 mt-2 p-2 z-50 border border-base-300">
@@ -75,9 +75,11 @@
                     </ul>
                 </div>
             @endif
-            <a href="{{ route('admin.catalog.price-types.index') }}" class="btn btn-ghost btn-sm">{{ __('Cancel') }}</a>
-            <button class="btn btn-primary btn-sm">{{ $priceType->exists ? __('Save') : __('Create') }}</button>
-        </div>
+            <x-slot:actions>
+                <a href="{{ route('admin.catalog.price-types.index') }}" class="btn btn-ghost btn-sm">{{ __('Cancel') }}</a>
+                <button class="btn btn-primary btn-sm">{{ $priceType->exists ? __('Save') : __('Create') }}</button>
+            </x-slot:actions>
+        </x-admin.form-bar>
 
         @if (session('status'))
             <div class="alert alert-success text-sm">{{ session('status') }}</div>
@@ -94,7 +96,7 @@
                         <h3 class="font-semibold">{{ __('Basics') }}</h3>
                         <x-admin.translatable-field name="name" label="{{ __('Name') }}" :value="$priceType->name ?? []" required placeholder="{{ __('e.g. Wholesale') }}" />
                         <fieldset class="fieldset p-0"><legend class="fieldset-legend">{{ __('Code') }}</legend>
-                            <input name="code" value="{{ old('code', $priceType->code) }}" class="input input-bordered w-full font-mono"
+                            <input name="code" autocapitalize="off" autocorrect="off" spellcheck="false" value="{{ old('code', $priceType->code) }}" class="input input-bordered w-full font-mono"
                                    placeholder="{{ __('from the name, e.g. WHOLESALE') }}" @disabled($priceType->is_base)>
                             <p class="label text-xs opacity-60 whitespace-normal">{{ __('What an export, a feed and 1C call this price. Kept when the name changes.') }}</p>
                         </fieldset>
@@ -171,7 +173,7 @@
                                                             {{ $rule->t('name', $locale) ?: __('Rule :n', ['n' => $loop->iteration]) }}
                                                         </a>
                                                         @unless ($rule->enabled)
-                                                            <span class="badge badge-ghost badge-xs ml-1">{{ __('Disabled') }}</span>
+                                                            <span class="badge badge-ghost badge-sm ml-1">{{ __('Disabled') }}</span>
                                                         @endunless
                                                     </td>
                                                     <td class="text-sm">{{ $said['when'] }}</td>
@@ -208,7 +210,7 @@
                     <div class="card-body gap-3">
                         <h3 class="font-semibold">{{ __('Status') }}</h3>
                         <label class="label cursor-pointer justify-start gap-3">
-                            <input type="checkbox" name="enabled" value="1" class="toggle toggle-sm toggle-primary" @checked(old('enabled', $priceType->enabled ?? true))>
+                            <input type="checkbox" name="enabled" value="1" class="toggle toggle-sm toggle-success" @checked(old('enabled', $priceType->enabled ?? true))>
                             <span class="label-text">{{ __('Enabled') }}</span>
                         </label>
                         <fieldset class="fieldset p-0"><legend class="fieldset-legend">{{ __('Sort order') }}</legend>
@@ -245,7 +247,7 @@
                         <div class="card-body gap-3">
                             <h3 class="font-semibold">{{ __('On the storefront') }}</h3>
                             <label class="label cursor-pointer justify-start gap-3 items-start">
-                                <input type="checkbox" name="show_on_storefront" value="1" x-model="advertised" class="toggle toggle-primary toggle-sm mt-0.5">
+                                <input type="checkbox" name="show_on_storefront" value="1" x-model="advertised" class="toggle toggle-success toggle-sm mt-0.5">
                                 <span class="label-text whitespace-normal">{{ __('Show it beside the regular price on the product page') }}</span>
                             </label>
                             <p class="text-xs opacity-60">{{ __('A "club price": every visitor sees it, whoever may buy at it, and only where it is really lower.') }}</p>

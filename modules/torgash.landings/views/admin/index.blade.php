@@ -1,6 +1,7 @@
 @extends('admin.layout')
 
 @section('title', __('Product landings'))
+@section('title_hint', __('HTML and CSS pages with their own pictures on the product page: above the description, below it, instead of it, or as a tab. The description itself stays the product\'s — for feeds, exports and search engines.'))
 
 @section('content')
     @php
@@ -21,40 +22,42 @@
         <div class="alert alert-error text-sm">{{ $errors->first() }}</div>
     @endif
 
+    {{-- The states as one row of tabs over the card, the screen's actions at
+         its end (app.css, `admin-tabs`); LINKS carrying the search. --}}
+    <div class="admin-tabs-row">
+        <nav class="admin-tabs" aria-label="{{ __('Product landings') }}">
+            @foreach (['' => __('All')] + \Torgash\Landings\Models\Landing::stateLabels() as $stateKey => $stateLabel)
+                <a href="{{ route('admin.landings.index', array_filter(['state' => $stateKey, 'q' => $filters['q']], fn ($v) => $v !== null && $v !== '')) }}"
+                   @class(['admin-tab', 'is-active' => $filters['state'] === $stateKey])>
+                    {{ $stateLabel }} <span class="admin-tab-count">{{ $stateCounts[$stateKey] }}</span>
+                </a>
+            @endforeach
+        </nav>
+        <div class="admin-tabs-actions">
+            {{-- Choosing the file sends it: the archive becomes a landing, switched off until looked at. --}}
+            <form method="POST" action="{{ route('admin.landings.import.new') }}" enctype="multipart/form-data" x-data>
+                @csrf
+                <label class="btn gap-1.5" title="{{ __('index.html, style.css and an assets folder — the landing is made switched off') }}">
+                    <x-icon name="file-archive" size="sm" /> {{ __('New from a ZIP') }}
+                    <input type="file" name="archive" accept=".zip,application/zip" class="hidden" x-on:change="$el.form.submit()">
+                </label>
+            </form>
+            <a href="{{ route('admin.landings.create') }}" class="btn btn-primary">+ {{ __('New landing') }}</a>
+        </div>
+    </div>
+
     {{-- One Alpine root: the bulk bar and every row's checkbox share
          `selected` — the product list's own arrangement. --}}
     <div class="card bg-base-100 border border-base-300" x-data="{ selected: [] }">
         <div class="card-body gap-4">
-            <div class="flex justify-between items-start gap-3 flex-wrap">
-                <p class="text-sm opacity-70 max-w-3xl">
-                    {{ __('HTML and CSS pages with their own pictures on the product page: above the description, below it, instead of it, or as a tab. The description itself stays the product\'s — for feeds, exports and search engines.') }}
-                </p>
-                <div class="flex flex-wrap gap-2">
-                    {{-- Choosing the file sends it: the archive becomes a landing, switched off until looked at. --}}
-                    <form method="POST" action="{{ route('admin.landings.import.new') }}" enctype="multipart/form-data" x-data>
-                        @csrf
-                        <label class="btn btn-sm gap-1.5" title="{{ __('index.html, style.css and an assets folder — the landing is made switched off') }}">
-                            <x-icon name="file-archive" size="sm" /> {{ __('New from a ZIP') }}
-                            <input type="file" name="archive" accept=".zip,application/zip" class="hidden" x-on:change="$el.form.submit()">
-                        </label>
-                    </form>
-                    <a href="{{ route('admin.landings.create') }}" class="btn btn-primary btn-sm">+ {{ __('New landing') }}</a>
-                </div>
-            </div>
-
             <form method="GET" class="flex flex-wrap items-center gap-2">
-                <label class="input input-sm w-full sm:w-72 gap-2">
+                @if ($filters['state'] !== '')
+                    <input type="hidden" name="state" value="{{ $filters['state'] }}">
+                @endif
+                <label class="input input-sm grow min-w-48 gap-2">
                     <x-icon name="search" size="sm" class="opacity-50" />
                     <input type="search" name="q" value="{{ $filters['q'] }}" class="grow" placeholder="{{ __('Search by name') }}">
                 </label>
-                <div class="join flex-wrap">
-                    @foreach (['' => __('All')] + \Torgash\Landings\Models\Landing::stateLabels() as $stateKey => $stateLabel)
-                        <button type="submit" name="state" value="{{ $stateKey }}"
-                                @class(['btn btn-sm join-item', 'btn-active' => $filters['state'] === $stateKey])>
-                            {{ $stateLabel }} <span class="opacity-50">{{ $stateCounts[$stateKey] }}</span>
-                        </button>
-                    @endforeach
-                </div>
                 @if ($isFiltered)
                     <a href="{{ route('admin.landings.index') }}" class="btn btn-ghost btn-sm">{{ __('Reset') }}</a>
                 @endif

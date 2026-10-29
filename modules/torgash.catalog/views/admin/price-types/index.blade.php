@@ -1,6 +1,7 @@
 @extends('admin.layout')
 
 @section('title', __('Price types'))
+@section('title_hint', __('Named prices worked out from the base one: wholesale, dealer, club. The base type is the price the storefront already charges. Another type is shown to the customer groups it names, can be advertised beside the regular price, and can be the price an export or a feed is pinned to.'))
 
 @section('content')
     @if (session('status'))
@@ -9,28 +10,32 @@
 
     @php $locale = admin_content_locale(); @endphp
 
+    {{-- The states as one row of tabs over the card, the screen's action at
+         its end (app.css, `admin-tabs`); LINKS carrying the search. --}}
+    <div class="admin-tabs-row">
+        <nav class="admin-tabs" aria-label="{{ __('Price types') }}">
+            @foreach (['' => __('All'), 'enabled' => __('Enabled'), 'disabled' => __('Disabled')] as $statusKey => $statusLabel)
+                <a href="{{ route('admin.catalog.price-types.index', array_filter(['status' => $statusKey, 'q' => $filters['q']], fn ($v) => $v !== null && $v !== '')) }}"
+                   @class(['admin-tab', 'is-active' => (string) $filters['status'] === (string) $statusKey])>
+                    {{ $statusLabel }} <span class="admin-tab-count">{{ $statusCounts[$statusKey] }}</span>
+                </a>
+            @endforeach
+        </nav>
+        <div class="admin-tabs-actions">
+            <a href="{{ route('admin.catalog.price-types.create') }}" class="btn btn-primary">+ {{ __('New price type') }}</a>
+        </div>
+    </div>
+
     <div class="card bg-base-100 border border-base-300">
         <div class="card-body gap-4">
-            <div class="flex justify-between items-start gap-3 flex-wrap">
-                <p class="text-sm opacity-70 max-w-3xl">
-                    {{ __('Named prices worked out from the base one: wholesale, dealer, club. The base type is the price the storefront already charges. Another type is shown to the customer groups it names, can be advertised beside the regular price, and can be the price an export or a feed is pinned to.') }}
-                </p>
-                <a href="{{ route('admin.catalog.price-types.create') }}" class="btn btn-primary btn-sm">+ {{ __('New price type') }}</a>
-            </div>
-
             <form method="GET" class="flex flex-wrap items-center gap-2">
-                <label class="input input-sm w-full sm:w-72 gap-2">
+                @if ($filters['status'])
+                    <input type="hidden" name="status" value="{{ $filters['status'] }}">
+                @endif
+                <label class="input input-sm grow min-w-48 gap-2">
                     <x-icon name="search" size="sm" class="opacity-50" />
                     <input type="search" name="q" value="{{ $filters['q'] }}" class="grow" placeholder="{{ __('Search by name or code…') }}">
                 </label>
-                <div class="join">
-                    @foreach (['' => __('All'), 'enabled' => __('Enabled'), 'disabled' => __('Disabled')] as $statusKey => $statusLabel)
-                        <button type="submit" name="status" value="{{ $statusKey }}"
-                                @class(['btn btn-sm join-item', 'btn-active' => (string) $filters['status'] === (string) $statusKey])>
-                            {{ $statusLabel }} <span class="opacity-50">{{ $statusCounts[$statusKey] }}</span>
-                        </button>
-                    @endforeach
-                </div>
                 @if ($filters['q'] !== '' || $filters['status'])
                     <a href="{{ route('admin.catalog.price-types.index') }}" class="btn btn-ghost btn-sm">{{ __('Reset') }}</a>
                 @endif

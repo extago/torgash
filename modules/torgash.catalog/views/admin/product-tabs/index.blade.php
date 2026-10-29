@@ -1,6 +1,11 @@
 @extends('admin.layout')
 
 @section('title', __('Product tabs'))
+@section('title_hint', __('Everything under the gallery on a product page, in the order it stands there: the page\'s own sections, your tabs and what modules add.'))
+{{-- No states to filter by: the action stands level with the heading. --}}
+@section('title_actions')
+    <a href="{{ route('admin.catalog.product-tabs.create') }}" class="btn btn-primary">+ {{ __('New tab') }}</a>
+@endsection
 
 @section('content')
     @if (session('status'))
@@ -11,24 +16,18 @@
 
     <div class="card bg-base-100 border border-base-300">
         <div class="card-body gap-4">
-            <div class="flex justify-between items-start gap-3 flex-wrap">
-                <div class="text-sm opacity-70 max-w-3xl flex flex-col gap-1">
-                    <p>{{ __('Everything under the gallery on a product page, in the order it stands there: the page\'s own sections, your tabs and what modules add.') }}</p>
-                    <p class="text-xs flex items-center gap-1.5">
-                        <x-icon :name="$asSections ? 'rows-3' : 'panel-top'" size="sm" class="opacity-60 shrink-0" />
-                        {{ $asSections
-                            ? __('The page is laid out as sections now: each is shown under its heading.')
-                            : __('The page is laid out as tabs now: only the titles are shown; headings apply when you switch to sections in the catalogue settings.') }}
-                    </p>
-                </div>
-                <a href="{{ route('admin.catalog.product-tabs.create') }}" class="btn btn-primary btn-sm">+ {{ __('New tab') }}</a>
-            </div>
+            <p class="text-xs opacity-70 flex items-center gap-1.5">
+                <x-icon :name="$asSections ? 'rows-3' : 'panel-top'" size="sm" class="opacity-60 shrink-0" />
+                {{ $asSections
+                    ? __('The page is laid out as sections now: each is shown under its heading.')
+                    : __('The page is laid out as tabs now: only the titles are shown; headings apply when you switch to sections in the catalogue settings.') }}
+            </p>
 
             <form method="GET" class="flex flex-wrap items-center gap-2">
                 @if ($product)
                     <input type="hidden" name="product" value="{{ $product->id }}">
                 @endif
-                <label class="input input-sm w-full sm:w-72 gap-2">
+                <label class="input input-sm grow min-w-48 gap-2">
                     <x-icon name="search" size="sm" class="opacity-50" />
                     <input type="search" name="q" value="{{ $filters['q'] }}" class="grow" placeholder="{{ __('Search by title…') }}">
                 </label>
@@ -83,7 +82,7 @@
                                         <td>
                                             @if ($row['kind'] === 'module')
                                                 <span class="inline-flex items-center gap-1">
-                                                    <span class="badge badge-sm badge-outline badge-info whitespace-nowrap">{{ __('Module: :name', ['name' => $known['module']]) }}</span>
+                                                    <span class="badge badge-sm badge-ghost whitespace-nowrap">{{ __('Module: :name', ['name' => $known['module']]) }}</span>
                                                     @if ($known['url'])
                                                         <a href="{{ $known['url'] }}" class="opacity-50 hover:opacity-100" title="{{ __('Open the module') }}" aria-label="{{ __('Open the module') }}">
                                                             <x-icon name="arrow-up-right" size="sm" />
@@ -93,7 +92,7 @@
                                             @elseif ($isBuiltIn)
                                                 <span class="badge badge-sm badge-ghost whitespace-nowrap">{{ __('The page\'s own') }}</span>
                                             @else
-                                                <span class="badge badge-sm badge-outline badge-primary whitespace-nowrap">{{ __('Your tab') }}</span>
+                                                <span class="badge badge-sm badge-ghost whitespace-nowrap">{{ __('Your tab') }}</span>
                                             @endif
                                         </td>
                                         <td class="text-sm opacity-70">

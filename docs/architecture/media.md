@@ -246,3 +246,22 @@ text carries a bare `<img src>` and the words under it jumped when it loaded.
 A picture is the library's when its address ends in `/<media id>/<that
 media's file name>` (the default path layout on either disk); one query per
 text, a tag that already has a width is left alone.
+
+## A photo from a phone is made smaller before it is sent (PLAN §62, 2026-10-29)
+
+A camera's photo is 3–8 MB, and over a mobile connection sending it is the
+slow part of adding it. The gallery editor (`torgash.media::admin.gallery`,
+`shrink()`) draws a JPEG or PNG of a megabyte and more down to the Media
+setting "Max dimension" in the browser — `createImageBitmap` with the
+camera's orientation applied, a canvas, `toBlob` at 0.9 — and sends that
+under the file's own name. Nothing is lost that the server would have kept:
+`ImageSettings::maxDimension()` is what the stored original is reduced to
+on arrival anyway, and the server then has nothing left to downscale, so
+the picture is encoded once, not twice. When the shop stores originals
+untouched (`original_untouched`) the browser sends the bytes as they are
+(`maxSide` 0); so it does with anything it cannot decode, or that would not
+come out smaller (a PNG sometimes), or a type it does not re-encode
+(GIF, SVG, HEIC — Safari turns an iPhone's HEIC into JPEG before the page
+sees it). The plain file field a NEW product shows before its first save
+sends the original: the server's downscale covers it. The order of photos
+is changed with arrows under a finger (`move()`), beside dragging.

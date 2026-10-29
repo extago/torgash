@@ -273,7 +273,7 @@
                         '<span class="opacity-70">' + icon(m.icon) + '</span>' +
                         '<span class="grow text-sm truncate">' + esc(m.title) + '</span>' +
                         (isHidden ? '' :
-                            '<select data-move class="select select-xs w-auto max-w-32" aria-label="' + esc(words.move) + '">' + options + '</select>' +
+                            '<select data-move class="select select-sm w-auto max-w-32" aria-label="' + esc(words.move) + '">' + options + '</select>' +
                             '<button type="button" data-shift="-1" class="btn btn-ghost btn-sm btn-square" title="' + esc(words.up) + '"' + (index === 0 ? ' disabled' : '') + '>' + icon('arrow-up') + '</button>' +
                             '<button type="button" data-shift="1" class="btn btn-ghost btn-sm btn-square" title="' + esc(words.down) + '"' + (index === this.zones[zone].length - 1 ? ' disabled' : '') + '>' + icon('arrow-down') + '</button>') +
                         '<button type="button" data-toggle class="btn btn-ghost btn-sm btn-square" title="' + esc(isHidden ? words.show : words.hide) + '">' + icon(isHidden ? 'eye' : 'eye-off') + '</button>' +

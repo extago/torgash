@@ -21,7 +21,7 @@ use Torgash\Catalog\Support\CategoryTree;
 class FeaturesController extends Controller
 {
     /** The purposes a list can be narrowed to, in the order the tabs show them. */
-    public const PURPOSES = ['filter', 'variation', 'brand'];
+    public const PURPOSES = Feature::PURPOSES;
 
     /**
      * The list, searchable and paged, narrowed by purpose. A GET form, so
@@ -29,10 +29,15 @@ class FeaturesController extends Controller
      * The search reads the name in EVERY language (the jsonb as text) and
      * the code, because either is what somebody remembers.
      */
+    /** How many rows a page may show. */
+    public const PER_PAGE = [50, 100, 200];
+
     public function index(Request $request)
     {
         $q = trim((string) $request->query('q', ''));
         $purpose = in_array($request->query('purpose'), self::PURPOSES, true) ? $request->query('purpose') : null;
+        // How many rows a page shows — the admin's choice at the toolbar.
+        $per = in_array($request->integer('per'), self::PER_PAGE, true) ? $request->integer('per') : self::PER_PAGE[0];
 
         $search = fn ($query) => $query->when($q !== '', fn ($w) => $w->where(fn ($or) => $or
             ->whereRaw('name::text ilike ?', ['%'.$q.'%'])
@@ -43,13 +48,13 @@ class FeaturesController extends Controller
             ->with(['group'])
             ->withCount(['values', 'assignments'])
             ->orderBy('group_id')->orderBy('sort')->orderBy('id')
-            ->paginate(50)
+            ->paginate($per)
             ->withQueryString();
 
         return view('torgash.catalog::admin.features.index', [
             'features' => $features,
             'places' => app(Places::class)->all(),
-            'filters' => ['q' => $q, 'purpose' => $purpose],
+            'filters' => ['q' => $q, 'purpose' => $purpose, 'per' => $per],
             // Counts for the purpose tabs, within the search in force.
             'purposeCounts' => $search(Feature::query())->selectRaw('purpose, count(*) as n')->groupBy('purpose')->pluck('n', 'purpose'),
         ]);

@@ -15,8 +15,8 @@
         $defaultCurrency = old('default_currency', $storefront->default_currency);
     @endphp
 
-    <div class="sticky top-16 z-20 -mx-6 px-6 py-3 bg-base-200/95 backdrop-blur border-b border-base-300 flex items-center gap-3">
-        <a href="{{ route('admin.storefronts.index') }}" class="btn btn-ghost btn-sm btn-square" title="{{ __('Back to storefronts') }}">
+    <x-admin.form-bar>
+        <a href="{{ route('admin.storefronts.index') }}" class="btn btn-ghost btn-sm btn-square" title="{{ __('Back to storefronts') }}" aria-label="{{ __('Back to storefronts') }}">
             <x-icon name="arrow-left" size="lg" />
         </a>
         <div class="flex-1 min-w-0">
@@ -24,12 +24,12 @@
             <div class="font-semibold truncate leading-tight">{{ $storefront->exists ? $storefront->name : __('New storefront') }}</div>
         </div>
         @if ($storefrontUrl)
-            <a href="{{ $storefrontUrl }}" target="_blank" rel="noopener" class="btn btn-ghost btn-sm btn-square" title="{{ __('Open the storefront') }}">
+            <a href="{{ $storefrontUrl }}" target="_blank" rel="noopener" class="btn btn-ghost btn-sm btn-square" title="{{ __('Open the storefront') }}" aria-label="{{ __('Open the storefront') }}">
                 <x-icon name="external-link" size="lg" />
             </a>
         @endif
         <div class="dropdown dropdown-end">
-            <div tabindex="0" role="button" class="btn btn-ghost btn-sm btn-square" title="{{ __('More actions') }}">
+            <div tabindex="0" role="button" class="btn btn-ghost btn-sm btn-square" title="{{ __('More actions') }}" aria-label="{{ __('More actions') }}">
                 <x-icon name="settings" size="lg" />
             </div>
             <ul tabindex="0" class="dropdown-content menu menu-sm bg-base-100 rounded-box shadow-md w-64 mt-2 p-2 z-50 border border-base-300">
@@ -45,9 +45,11 @@
                 @endif
             </ul>
         </div>
-        <a href="{{ route('admin.storefronts.index') }}" class="btn btn-ghost btn-sm">{{ __('Cancel') }}</a>
-        <button type="submit" form="storefront-form" class="btn btn-primary btn-sm">{{ $storefront->exists ? __('Save') : __('Create') }}</button>
-    </div>
+        <x-slot:actions>
+            <a href="{{ route('admin.storefronts.index') }}" class="btn btn-ghost btn-sm">{{ __('Cancel') }}</a>
+            <button type="submit" form="storefront-form" class="btn btn-primary btn-sm">{{ $storefront->exists ? __('Save') : __('Create') }}</button>
+        </x-slot:actions>
+    </x-admin.form-bar>
 
     @if (session('status'))
         <div class="alert alert-success text-sm">{{ session('status') }}</div>
@@ -56,7 +58,7 @@
         <div class="alert alert-error text-sm">{{ $errors->first() }}</div>
     @endif
 
-    <form method="POST" id="storefront-form"
+    <form method="POST" enctype="multipart/form-data" id="storefront-form"
           action="{{ $storefront->exists ? route('admin.storefronts.update', $storefront) : route('admin.storefronts.store') }}"
           class="grid gap-4 xl:grid-cols-[minmax(0,1fr)_24rem] items-start">
         @csrf
@@ -71,7 +73,7 @@
                             <input name="name" value="{{ old('name', $storefront->name) }}" required class="input input-bordered w-full" placeholder="{{ __('My Store') }}">
                         </fieldset>
                         <fieldset class="fieldset p-0"><legend class="fieldset-legend">{{ __('Code') }} *</legend>
-                            <input name="code" value="{{ old('code', $storefront->code) }}" required class="input input-bordered w-full font-mono" placeholder="main">
+                            <input name="code" autocapitalize="off" autocorrect="off" spellcheck="false" value="{{ old('code', $storefront->code) }}" required class="input input-bordered w-full font-mono" placeholder="main">
                             <p class="label whitespace-normal">{{ __('For exchanges and the API (X-Storefront).') }}</p>
                         </fieldset>
                     </div>
@@ -94,6 +96,8 @@
                     <x-admin.translatable-field name="home_title" :label="__('Title')" :value="$storefront->home_title ?? []" :placeholder="$storefront->name" />
                     <x-admin.translatable-field name="home_description" :label="__('Description')" :value="$storefront->home_description ?? []" textarea :rows="3"
                                                 :placeholder="__('Two sentences about the shop: what it sells and why here — up to about 160 characters.')" />
+                    <x-admin.share-picture :path="$storefront->share_image"
+                        :help="__('Shown when a link to the home page — or to a page with no picture of its own — is sent in a messenger or posted to a social network. About 1200×630, JPG or PNG up to 5 MB.')" />
                 </div>
             </section>
 
@@ -301,17 +305,17 @@
                          locked answers are written out rather than drawn greyed. --}}
                     @if ($isDefault)
                         <div class="flex flex-wrap gap-2">
-                            <span class="badge badge-success gap-1"><x-icon name="check" size="sm" /> {{ __('Open to visitors') }}</span>
-                            <span class="badge badge-primary gap-1"><x-icon name="star" size="sm" /> {{ __('Default storefront') }}</span>
+                            <span class="badge badge-sm badge-success gap-1"><x-icon name="check" size="sm" /> {{ __('Open to visitors') }}</span>
+                            <span class="badge badge-sm badge-primary gap-1"><x-icon name="star" size="sm" /> {{ __('Default storefront') }}</span>
                         </div>
                     @else
                         <label class="label justify-start gap-2 p-0 cursor-pointer">
-                            <input type="checkbox" name="enabled" value="1" class="toggle toggle-primary toggle-sm"
+                            <input type="checkbox" name="enabled" value="1" class="toggle toggle-success toggle-sm"
                                    @checked(old('enabled', $storefront->enabled ?? true))>
                             <span class="label-text whitespace-normal">{{ __('Open to visitors') }}</span>
                         </label>
                         <label class="label justify-start gap-2 p-0 cursor-pointer">
-                            <input type="checkbox" name="is_default" value="1" class="toggle toggle-primary toggle-sm"
+                            <input type="checkbox" name="is_default" value="1" class="toggle toggle-success toggle-sm"
                                    @checked(old('is_default', $storefront->is_default ?? false))>
                             <span class="label-text whitespace-normal">{{ __('Default storefront') }}</span>
                         </label>
@@ -333,7 +337,7 @@
                 <div class="card-body gap-3">
                     <h3 class="font-semibold">{{ __('Closed for visitors') }}</h3>
                     <label class="label justify-start gap-2 p-0 cursor-pointer">
-                        <input type="checkbox" name="closed" value="1" class="toggle toggle-primary toggle-sm" x-model="closed">
+                        <input type="checkbox" name="closed" value="1" class="toggle toggle-success toggle-sm" x-model="closed">
                         <span class="label-text whitespace-normal">{{ __('Show visitors a notice instead of the shop') }}</span>
                     </label>
                     <p class="text-xs opacity-60">{{ __('For a shop being built or repaired. Staff signed in to the admin see the storefront as usual; everyone else gets the notice with the shop\'s phone and email. Search engines are told to come back later, so a live shop keeps its place in the index.') }}</p>

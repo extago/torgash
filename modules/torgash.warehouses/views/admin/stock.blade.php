@@ -6,8 +6,8 @@
 @section('content')
     @php $locale = admin_content_locale(); @endphp
 
-    <div class="sticky top-16 z-20 -mx-6 px-6 py-3 bg-base-200/95 backdrop-blur border-b border-base-300 flex items-center gap-3">
-        <a href="{{ route('admin.warehouses.index') }}" class="btn btn-ghost btn-sm btn-square" title="{{ __('Back to warehouses') }}">
+    <x-admin.form-bar>
+        <a href="{{ route('admin.warehouses.index') }}" class="btn btn-ghost btn-sm btn-square" title="{{ __('Back to warehouses') }}" aria-label="{{ __('Back to warehouses') }}">
             <x-icon name="arrow-left" size="lg" />
         </a>
         <div class="flex-1 min-w-0">
@@ -15,14 +15,27 @@
             <div class="font-semibold truncate leading-tight">{{ $warehouse->t('name', $locale) }}</div>
         </div>
         <a href="{{ route('admin.warehouses.edit', $warehouse) }}" class="btn btn-ghost btn-sm">{{ __('Warehouse settings') }}</a>
-        @if ($products->isNotEmpty())
-            <button form="stock-form" class="btn btn-primary btn-sm">{{ __('Save quantities') }}</button>
-        @endif
-    </div>
+        <x-slot:actions>
+            @if ($products->isNotEmpty())
+                <button form="stock-form" class="btn btn-primary btn-sm">{{ __('Save quantities') }}</button>
+            @endif
+        </x-slot:actions>
+    </x-admin.form-bar>
 
     @if (session('status'))
         <div class="alert alert-success text-sm">{{ session('status') }}</div>
     @endif
+
+    {{-- This shelf or every product, as one row of tabs over the card
+         (app.css, `admin-tabs`); LINKS carrying the search. --}}
+    <nav class="admin-tabs" aria-label="{{ __('Stock') }}">
+        <a href="{{ request()->fullUrlWithQuery(['here' => 1, 'page' => null]) }}" @class(['admin-tab', 'is-active' => $filters['here']])>
+            {{ __('At this warehouse') }} <span class="admin-tab-count">{{ $hereCount }}</span>
+        </a>
+        <a href="{{ request()->fullUrlWithQuery(['here' => 0, 'page' => null]) }}" @class(['admin-tab', 'is-active' => ! $filters['here']])>
+            {{ __('All products') }}
+        </a>
+    </nav>
 
     <div class="card bg-base-100 border border-base-300">
         <div class="card-body gap-4">
@@ -31,18 +44,11 @@
             </p>
 
             <form method="GET" class="flex flex-wrap items-center gap-2">
-                <label class="input input-sm w-full sm:w-72 gap-2">
+                <input type="hidden" name="here" value="{{ $filters['here'] ? 1 : 0 }}">
+                <label class="input input-sm grow min-w-48 gap-2">
                     <x-icon name="search" size="sm" class="opacity-50" />
                     <input type="search" name="q" value="{{ $filters['q'] }}" class="grow" placeholder="{{ __('Search by SKU or name…') }}">
                 </label>
-                <div class="join">
-                    <button type="submit" name="here" value="1" @class(['btn btn-sm join-item', 'btn-active' => $filters['here']])>
-                        {{ __('At this warehouse') }} <span class="opacity-50">{{ $hereCount }}</span>
-                    </button>
-                    <button type="submit" name="here" value="0" @class(['btn btn-sm join-item', 'btn-active' => ! $filters['here']])>
-                        {{ __('All products') }}
-                    </button>
-                </div>
                 @if ($filters['q'] !== '')
                     <a href="{{ route('admin.warehouses.stock', [$warehouse, 'here' => $filters['here'] ? 1 : null]) }}" class="btn btn-ghost btn-sm">{{ __('Reset') }}</a>
                 @endif

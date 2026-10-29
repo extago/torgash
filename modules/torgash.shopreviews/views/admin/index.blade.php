@@ -1,6 +1,7 @@
 @extends('admin.layout')
 
 @section('title', __('Shop reviews'))
+@section('title_hint', __('What customers say about the shop itself. Only published reviews are on the page and count towards the shop\'s rating.'))
 
 @section('content')
     @php
@@ -28,39 +29,48 @@
         <div class="alert alert-error text-sm">{{ $errors->first() }}</div>
     @endif
 
+    @include('torgash.shopreviews::admin._nav')
+
+    {{-- The states as one row of tabs over the card, the screen's actions at
+         its end (app.css, `admin-tabs`): LINKS carrying every other filter;
+         reviews waiting are amber. --}}
+    <div class="admin-tabs-row">
+        <nav class="admin-tabs" aria-label="{{ __('Shop reviews') }}">
+            @foreach ($tabs as $tabKey => $tabLabel)
+                <a href="{{ route('admin.shopreviews.index', $filterQuery + ['status' => $tabKey]) }}"
+                   @class(['admin-tab', 'is-active' => $filters['status'] === $tabKey])>
+                    {{ $tabLabel }}
+                    <span @class(['admin-tab-count', 'is-warning' => $tabKey === ShopReview::PENDING && ($statusCounts[$tabKey] ?? 0) > 0])>{{ $statusCounts[$tabKey] ?? 0 }}</span>
+                </a>
+            @endforeach
+        </nav>
+        <div class="admin-tabs-actions">
+            <a href="{{ route('shopreviews.index') }}" target="_blank" rel="noopener" class="btn btn-ghost btn-square"
+               title="{{ __('Open on the storefront') }}" aria-label="{{ __('Open on the storefront') }}"><x-icon name="external-link" /></a>
+            <a href="{{ route('admin.shopreviews.create') }}" class="btn btn-primary">+ {{ __('Add a review') }}</a>
+        </div>
+    </div>
+
     <div class="card bg-base-100 border border-base-300"
          x-data="{ selected: [], found: false, pageIds: @js($pageIds), open: {} }"
          x-init="$watch('selected', v => { if (v.length < pageIds.length) found = false })">
         <div class="card-body gap-4">
-            <div class="flex justify-between items-start gap-3 flex-wrap">
-                <div class="flex flex-col gap-2 max-w-3xl">
-                    <p class="text-sm opacity-70">
-                        {{ __('What customers say about the shop itself. Only published reviews are on the page and count towards the shop\'s rating.') }}
-                    </p>
-                    @if ($summary['count'] > 0)
-                        <div class="flex flex-wrap items-center gap-x-4 gap-y-1 text-sm">
-                            <span class="inline-flex items-center gap-1.5">
-                                @include('torgash.shopreviews::storefront._stars', ['srRating' => $summary['rating'], 'srSize' => 'sm'])
-                                <b>{{ number_format($summary['rating'], 1) }}</b>
-                                <span class="opacity-60">{{ trans_choice('{1}:count review|[2,*]:count reviews', $summary['count'], ['count' => $summary['count']]) }}</span>
-                            </span>
-                            @if ($summary['recommend'] !== null)
-                                <span class="opacity-70">{{ __(':share% recommend the shop', ['share' => $summary['recommend']]) }}</span>
-                            @endif
-                        </div>
+            @if ($summary['count'] > 0)
+                <div class="flex flex-wrap items-center gap-x-4 gap-y-1 text-sm">
+                    <span class="inline-flex items-center gap-1.5">
+                        @include('torgash.shopreviews::storefront._stars', ['srRating' => $summary['rating'], 'srSize' => 'sm'])
+                        <b>{{ number_format($summary['rating'], 1) }}</b>
+                        <span class="opacity-60">{{ trans_choice('{1}:count review|[2,*]:count reviews', $summary['count'], ['count' => $summary['count']]) }}</span>
+                    </span>
+                    @if ($summary['recommend'] !== null)
+                        <span class="opacity-70">{{ __(':share% recommend the shop', ['share' => $summary['recommend']]) }}</span>
                     @endif
                 </div>
-                <div class="flex flex-wrap items-center gap-2">
-                    @include('torgash.shopreviews::admin._nav')
-                    <a href="{{ route('shopreviews.index') }}" target="_blank" rel="noopener" class="btn btn-ghost btn-sm btn-square"
-                       title="{{ __('Open on the storefront') }}" aria-label="{{ __('Open on the storefront') }}"><x-icon name="external-link" /></a>
-                    <a href="{{ route('admin.shopreviews.create') }}" class="btn btn-primary btn-sm">+ {{ __('Add a review') }}</a>
-                </div>
-            </div>
+            @endif
 
             <form method="GET" class="flex flex-wrap items-center gap-2">
                 <input type="hidden" name="status" value="{{ $filters['status'] }}">
-                <label class="input input-sm w-full sm:w-80 gap-2">
+                <label class="input input-sm grow min-w-48 gap-2">
                     <x-icon name="search" size="sm" class="opacity-50" />
                     <input type="search" name="q" value="{{ $filters['q'] }}" class="grow" placeholder="{{ __('Text, author, email or town…') }}">
                 </label>
@@ -83,19 +93,6 @@
                     <a href="{{ route('admin.shopreviews.index', ['status' => $filters['status']]) }}" class="btn btn-ghost btn-sm">{{ __('Reset') }}</a>
                 @endif
             </form>
-
-            <div class="join flex-wrap -mt-1">
-                @foreach ($tabs as $tabKey => $tabLabel)
-                    <a href="{{ route('admin.shopreviews.index', $filterQuery + ['status' => $tabKey]) }}"
-                       @class(['btn btn-sm join-item', 'btn-active' => $filters['status'] === $tabKey])>
-                        {{ $tabLabel }}
-                        <span @class([
-                            'badge badge-sm badge-warning' => $tabKey === ShopReview::PENDING && ($statusCounts[$tabKey] ?? 0) > 0,
-                            'opacity-50' => ! ($tabKey === ShopReview::PENDING && ($statusCounts[$tabKey] ?? 0) > 0),
-                        ])>{{ $statusCounts[$tabKey] ?? 0 }}</span>
-                    </a>
-                @endforeach
-            </div>
 
             <div class="min-h-12 flex items-center">
                 <p x-show="!selected.length" class="text-xs opacity-50">

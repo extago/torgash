@@ -120,7 +120,7 @@
                                     <li x-show="!loading && results.length === 0" class="px-3 py-2 text-sm opacity-50">{{ __('No matches') }}</li>
                                 </ul>
                             </div>
-                            <button type="button" class="btn btn-ghost btn-sm btn-square text-error" x-on:click="remove(index)" title="{{ __('Remove the point') }}"><x-icon name="x" /></button>
+                            <button type="button" class="btn btn-ghost btn-sm btn-square text-error" x-on:click="remove(index)" title="{{ __('Remove the point') }}" aria-label="{{ __('Remove the point') }}"><x-icon name="x" /></button>
                         </div>
                     </template>
                 </div>
