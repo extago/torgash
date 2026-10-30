@@ -1,8 +1,8 @@
 # Newsletter
 
-Collects the addresses of people who want the shop's news and offers.
-Sending campaigns from the shop comes later; for now the list goes to a
-mailing service as a CSV.
+Collects the addresses of people who want the shop's news and offers, and
+sends them campaigns from the shop itself — see the next tab. The list can
+also go to an outside mailing service as a CSV.
 
 ## Where people subscribe
 
@@ -33,7 +33,7 @@ is followed ("Confirm every address by a letter", on by default). Not asked
 again: a signed-in customer whose address is already confirmed. The link
 opens a page with a button — a mail service's scanner opens every link in a
 letter by itself and must not confirm anybody. The letter's words are on
-Admin → Letters, "Newsletter: confirm the subscription".
+System → Letters, "Newsletter: confirm the subscription".
 
 The form is guarded like the shop's other forms: a trap for bots, a limit
 per address and per visitor, a CAPTCHA if the guard module asks for one.

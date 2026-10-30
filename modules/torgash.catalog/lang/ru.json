@@ -1230,5 +1230,7 @@
     "Delete this group? Its characteristics stay, without a group.": "Удалить группу? Её характеристики останутся, без группы.",
     "The heading over these characteristics on the product page and in the product form. Switch the content language at the top to write it in another.": "Заголовок над этими характеристиками на странице товара и в форме товара. Переключите язык контента вверху, чтобы написать его на другом.",
     "Characteristics in this group": "Характеристики в этой группе",
-    "None yet — a characteristic picks its group on its own form.": "Пока ни одной — характеристика выбирает группу в своей форме."
+    "None yet — a characteristic picks its group on its own form.": "Пока ни одной — характеристика выбирает группу в своей форме.",
+    "See the catalogue: the lists of products and categories and a product's card, without changing anything": "Смотреть каталог: списки товаров и категорий и карточку товара, ничего не меняя",
+    "Read only": "Только чтение"
 }

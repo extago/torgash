@@ -4,6 +4,7 @@ namespace Torgash\Automations;
 
 use Torgash\Automations\Models\RuleCondition;
 use Torgash\Catalog\Models\Product;
+use Torgash\Catalog\Support\CategoryTree;
 use Torgash\Checkout\Models\Order;
 use Torgash\Checkout\Orders\PaymentState;
 
@@ -51,7 +52,9 @@ class Conditions
         ],
         // Read as "the order …". Membership is resolved from each line's
         // product at run time; a line whose product was deleted counts as
-        // being in no category (it fails "has every item from").
+        // being in no category (it fails "has every item from"). A category
+        // IS its subtree, as everywhere in the engine (CategoryTree): a rule
+        // on "Electronics" sees an item from "Electronics › Phones".
         'product_category' => [
             'cat_has_any' => 'has an item from',
             'cat_all_from' => 'has every item from',
@@ -110,9 +113,9 @@ class Conditions
             'payment_not_in' => ! in_array((string) $order->payment_state, $list, true),
             'total_min' => $order->total >= $condition->amount(),
             'total_max' => $order->total <= $condition->amount(),
-            'cat_has_any' => (bool) array_intersect(self::orderCategoryIds($order), $condition->ids()),
-            'cat_has_none' => ! array_intersect(self::orderCategoryIds($order), $condition->ids()),
-            'cat_all_from' => self::everyLineInCategories(self::orderCategoryLines($order), $condition->ids()),
+            'cat_has_any' => (bool) array_intersect(self::orderCategoryIds($order), self::categoryIds($condition)),
+            'cat_has_none' => ! array_intersect(self::orderCategoryIds($order), self::categoryIds($condition)),
+            'cat_all_from' => self::everyLineInCategories(self::orderCategoryLines($order), self::categoryIds($condition)),
             'text_is' => mb_strtolower((string) self::field($condition->kind, $order)) === $text,
             'text_is_not' => mb_strtolower((string) self::field($condition->kind, $order)) !== $text,
             'text_contains' => $text !== '' && str_contains(mb_strtolower((string) self::field($condition->kind, $order)), $text),
@@ -127,6 +130,18 @@ class Conditions
             // fires on everything is worse than a rule that never fires.
             default => false,
         };
+    }
+
+    /**
+     * The categories a condition names, plus everything under them — the
+     * promotions module's rule, and the catalogue's own: a category is its
+     * subtree. Resolved from the tree's memo, no query per rule.
+     *
+     * @return list<int>
+     */
+    protected static function categoryIds(RuleCondition $condition): array
+    {
+        return app(CategoryTree::class)->descendants($condition->ids());
     }
 
     /** The order's own value behind a text-shaped kind. */

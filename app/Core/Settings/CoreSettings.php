@@ -212,6 +212,22 @@ class CoreSettings
                 'keywords' => ['en' => 'time zone clock hours calendar', 'ru' => 'часовой пояс время часы календарь'],
             ],
             [
+                'key' => '_g_admin',
+                'type' => 'group',
+                'label' => 'Admin panel',
+            ],
+            [
+                // The icon in the browser's tab of every admin page and of
+                // the sign-in page — the engine's own mark until the shop
+                // uploads its own, so an admin tab is never a blank page
+                // icon among the others.
+                'key' => 'admin_icon',
+                'type' => 'image',
+                'default' => '',
+                'label' => 'Admin panel icon',
+                'help' => 'In the browser\'s tab of every admin page, beside its name — the way to tell this shop\'s panel from the others open. A square picture: an SVG, or a PNG of 64 px or more. Empty — the engine\'s own mark.',
+            ],
+            [
                 'key' => '_g_content',
                 'type' => 'group',
                 'label' => 'Content',
@@ -347,10 +363,10 @@ class CoreSettings
             ],
             [
                 'key' => 'og_image',
-                'type' => 'text',
+                'type' => 'image',
                 'default' => '',
                 'label' => 'Default preview picture',
-                'help' => 'Needed only when neither a page nor its storefront has a picture of its own — a storefront\'s is uploaded in Storefronts → Home page. The address of an image, about 1200×630.',
+                'help' => 'Needed only when neither a page nor its storefront has a picture of its own — a storefront\'s is uploaded in Storefronts → Home page. A picture about 1200×630.',
             ],
             [
                 'key' => 'redirect_on_rename',

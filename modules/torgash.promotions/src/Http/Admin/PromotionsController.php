@@ -14,6 +14,7 @@ use Torgash\Catalog\Models\Product;
 use Torgash\Catalog\Support\CategoryTree;
 use Torgash\Checkout\Models\PaymentMethod;
 use Torgash\Media\ImageProcessor;
+use Torgash\Promotions\Conditions;
 use Torgash\Promotions\Models\Promotion;
 use Torgash\Promotions\Models\PromotionTier;
 use Torgash\Promotions\Schedule;
@@ -54,6 +55,8 @@ class PromotionsController extends Controller
             'promotions' => $promotions,
             'filters' => $filters,
             'stateCounts' => $stateCounts,
+            // What every tier's conditions name, looked up once for the page.
+            'conditionNames' => Conditions::names($tiers),
             // Only the give_group/free_product tiers actually reference these —
             // named lookups so the list reads "Gift: WIDGET-1" rather than an id.
             'groupNames' => CustomerGroup::whereIn('id', $tiers->pluck('give_group_id')->filter())

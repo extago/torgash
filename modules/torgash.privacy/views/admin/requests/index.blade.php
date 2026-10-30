@@ -15,8 +15,14 @@
              at its end (app.css, `admin-tabs`). --}}
         <div class="admin-tabs-row">
             <nav class="admin-tabs" aria-label="{{ __('Requests') }}">
-                <a href="{{ route('admin.privacy.requests.index') }}" @class(['admin-tab', 'is-active' => $view === 'open'])>{{ __('Waiting') }}</a>
-                <a href="{{ route('admin.privacy.requests.index', ['view' => 'all']) }}" @class(['admin-tab', 'is-active' => $view === 'all'])>{{ __('All') }}</a>
+                <a href="{{ request()->fullUrlWithQuery(['view' => null, 'page' => null]) }}" @class(['admin-tab', 'is-active' => $view === 'open'])>
+                    {{ __('Waiting') }}
+                    <span @class(['admin-tab-count', 'is-warning' => $counts['open'] > 0])>{{ $counts['open'] }}</span>
+                </a>
+                <a href="{{ request()->fullUrlWithQuery(['view' => 'all', 'page' => null]) }}" @class(['admin-tab', 'is-active' => $view === 'all'])>
+                    {{ __('All') }}
+                    <span class="admin-tab-count">{{ $counts['all'] }}</span>
+                </a>
             </nav>
             <div class="admin-tabs-actions">
                 <a href="{{ route('admin.privacy.requests.create') }}" class="btn btn-primary gap-1.5"><x-icon name="plus" size="sm" /> {{ __('New request') }}</a>
@@ -25,9 +31,27 @@
 
         <div class="card bg-base-100 border border-base-300">
             <div class="card-body gap-4">
+                {{-- The tabs are links carrying the search; the form carries
+                     the tab back in a hidden input, so the state has one control. --}}
+                <form method="GET" class="flex flex-wrap items-center gap-2">
+                    <input type="hidden" name="view" value="{{ $view }}">
+                    <label class="input input-sm grow min-w-48 gap-2">
+                        <x-icon name="search" size="sm" class="opacity-50" />
+                        <input type="search" name="q" value="{{ $q }}" class="grow" placeholder="{{ __('Name, email, phone or #number…') }}">
+                    </label>
+                    @if ($q !== '')
+                        <a href="{{ route('admin.privacy.requests.index', $view === 'all' ? ['view' => 'all'] : []) }}" class="btn btn-ghost btn-sm">{{ __('Reset') }}</a>
+                    @endif
+                </form>
 
                 @if ($requests->isEmpty())
-                    <div class="text-center py-12 opacity-60">{{ $view === 'open' ? __('No requests waiting.') : __('No requests yet.') }}</div>
+                    <div class="text-center py-12 opacity-60">
+                        @if ($q !== '')
+                            {{ __('Nothing found.') }}
+                        @else
+                            {{ $view === 'open' ? __('No requests waiting.') : __('No requests yet.') }}
+                        @endif
+                    </div>
                 @else
                     <div class="overflow-x-auto">
                         <table class="table">

@@ -25,7 +25,7 @@ Route::delete('products/trash', [ProductsController::class, 'emptyTrash'])->name
 Route::post('products/trash/{id}/restore', [ProductsController::class, 'restore'])->name('products.restore');
 Route::delete('products/trash/{id}', [ProductsController::class, 'forceDelete'])->name('products.force-delete');
 // What a product picker offers as the admin types (Admin\ProductLookup).
-Route::get('products/lookup', [ProductsController::class, 'lookup'])->name('products.lookup');
+// products/lookup, the products list and a product's form are in routes-admin-view.php (catalog.view).
 // The groups characteristics are filed under (PLAN §63.10); the order as dragged.
 Route::post('feature-groups/sort', [FeatureGroupsController::class, 'sort'])->name('feature-groups.sort');
 Route::resource('feature-groups', FeatureGroupsController::class)->except(['show'])->parameters(['feature-groups' => 'group']);
@@ -38,7 +38,7 @@ Route::post('products/{product}/duplicate', [ProductsController::class, 'duplica
 Route::post('products/bulk', [ProductsController::class, 'bulk'])->name('products.bulk');
 Route::patch('products/{product}/quick', [ProductsController::class, 'quickUpdate'])->name('products.quick');
 Route::patch('products/{product}/status', [ProductsController::class, 'setStatus'])->name('products.status');
-Route::resource('products', ProductsController::class)->except(['show']);
+Route::resource('products', ProductsController::class)->except(['show', 'index', 'edit']);
 
 Route::get('categories/trash', [CategoriesController::class, 'trash'])->name('categories.trash');
 Route::delete('categories/trash', [CategoriesController::class, 'emptyTrash'])->name('categories.trash.empty');
@@ -46,7 +46,7 @@ Route::post('categories/trash/{id}/restore', [CategoriesController::class, 'rest
 Route::delete('categories/trash/{id}', [CategoriesController::class, 'forceDelete'])->name('categories.force-delete');
 Route::patch('categories/{category}/status', [CategoriesController::class, 'setStatus'])->name('categories.status');
 Route::post('categories/bulk', [CategoriesController::class, 'bulk'])->name('categories.bulk');
-Route::resource('categories', CategoriesController::class)->except(['show']);
+Route::resource('categories', CategoriesController::class)->except(['show', 'index']);
 
 // Tabs the shop writes onto its product pages (PLAN §30.10). One screen for
 // both kinds — a tab for every product and a tab for one — because they are one

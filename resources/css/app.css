@@ -1736,6 +1736,28 @@ a:has([data-inert-text]:hover) { -webkit-user-drag: none; }
    sidebar scrolls and would clip anything else — in the page's palette
    like every panel hanging off a dark bar. Below `lg` the drawer is the
    drawer, whatever was remembered. */
+/* The sidebar's two views: every section, or the starred screens alone
+   (`data-sidebar-view="favourites"` on the drawer, from admin_preferences,
+   so the page is drawn in the view chosen). Both lists are in the page —
+   the star beside a heading moves an item between them without a reload. */
+.torgash-admin [data-sidebar-view="favourites"] [data-admin-sections],
+.torgash-admin [data-sidebar-view="favourites"] [data-sections-toggle] { display: none; }
+.torgash-admin [data-sidebar-view="all"] [data-admin-favourites] { display: none; }
+/* The star beside a heading: grey, hollow until pressed, then filled — a
+   mark, not an accent: it must not draw the eye the way a yellow star
+   would (the owner's call). Opacity rather than a colour, so it reads on
+   both themes. */
+.torgash-admin .admin-favourite-star { color: var(--color-base-content); opacity: 0.35; }
+.torgash-admin .admin-favourite-star:hover { opacity: 0.7; background-color: color-mix(in oklch, var(--color-base-content) 8%, transparent); }
+.torgash-admin .admin-favourite-star[data-on="1"] { opacity: 0.6; }
+.torgash-admin .admin-favourite-star[data-on="1"] svg { fill: currentColor; }
+/* The sidebar's own buttons (the view switch, "every section", the fold
+   at the foot): on the dark bar a ghost button's hover must lighten, not
+   darken — on the light theme it darkened to black. */
+.torgash-admin :is(.admin-sidebar-tools, .admin-sidebar-foot) .btn { box-shadow: none; }
+.torgash-admin :is(.admin-sidebar-tools, .admin-sidebar-foot) .btn:hover,
+.torgash-admin :is(.admin-sidebar-tools, .admin-sidebar-foot) .btn:focus-visible { background-color: rgb(255 255 255 / 0.12); color: var(--color-neutral-content); border-color: rgb(255 255 255 / 0.15); box-shadow: none; }
+
 @media (width >= 64rem) {
     .torgash-admin [data-sidebar="strip"] .admin-sidebar { width: 4rem; }
     .torgash-admin [data-sidebar="strip"] .admin-sidebar-label { display: none; }

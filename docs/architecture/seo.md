@@ -36,7 +36,13 @@ this file is the reasoning. Read it before changing anything it covers.
   ONE script holding a `@graph` (`structured_data()`): core seeds
   `Organization`/`WebSite`, a module adds its node (catalog's `ProductSchema`,
   which therefore carries no `@context` of its own) — three scripts are three
-  graphs nothing connects. **Pages that are not for an index are ONE registry**,
+  graphs nothing connects. The storefront's opening hours are free text and
+  stay so on the page; where the whole line reads as days and times
+  (`App\Core\Seo\OpeningHours`: "Пн–Пт 9:00–18:00", "Ежедневно 10–20",
+  "Mon-Fri 9-18", "24/7"), the shop's node becomes `["Organization",
+  "LocalBusiness"]` — schema.org gives hours to a place — and carries
+  `openingHoursSpecification`; a line with anything else in it yields no
+  schedule rather than a wrong one, and the node stays an `Organization`. **Pages that are not for an index are ONE registry**,
   `core.seo.private_routes`, naming ROUTE NAMES (`cart.*`, `checkout.*`), from
   which core prints both `<meta name="robots">` and the `Disallow:` lines, in
   every locale shape; `core.robots.disallow` is left for what no route

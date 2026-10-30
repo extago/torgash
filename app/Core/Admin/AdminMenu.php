@@ -40,6 +40,14 @@ class AdminMenu
     /** Group names a manifest may still carry from before sections existed. */
     public const ALIASES = ['store' => 'sales', 'appearance' => 'content', 'shop' => 'catalog'];
 
+    /**
+     * This person's starred screens (`admin_preferences`, a list of item
+     * paths) and which view the sidebar shows, 'favourites' or all (null).
+     */
+    public const FAVOURITES = 'favourites';
+
+    public const VIEW = 'sidebar_view';
+
     public function __construct(protected ModuleManager $modules) {}
 
     /**
@@ -59,7 +67,7 @@ class AdminMenu
             ['label' => 'Administrators', 'url' => route('admin.administrators.index'), 'icon' => 'user-cog', 'group' => 'security', 'position' => 80, 'can' => 'staff.manage'],
             ['label' => 'Permission groups', 'url' => route('admin.permission-groups.index'), 'icon' => 'shield-check', 'group' => 'security', 'position' => 81, 'can' => 'staff.manage'],
             ['label' => 'Settings', 'url' => route('admin.settings'), 'icon' => 'sliders-horizontal', 'group' => 'system', 'position' => 1, 'can' => 'settings.manage'],
-            ['label' => 'Modules', 'url' => route('admin.modules'), 'icon' => 'layout-grid', 'group' => 'system', 'position' => 2],
+            ['label' => 'Modules', 'url' => route('admin.modules'), 'icon' => 'layout-grid', 'group' => 'system', 'position' => 2, 'can' => 'modules.manage'],
             ['label' => 'Storefronts', 'url' => route('admin.storefronts.index'), 'icon' => 'store', 'group' => 'system', 'position' => 10, 'can' => 'storefronts.manage'],
             ['label' => 'Themes', 'url' => route('admin.themes.index'), 'icon' => 'swatch-book', 'group' => 'content', 'position' => 1, 'can' => 'themes.manage'],
             ['label' => 'Languages', 'url' => route('admin.languages.index'), 'icon' => 'globe', 'group' => 'system', 'position' => 11, 'can' => 'languages.manage'],
@@ -109,6 +117,7 @@ class AdminMenu
         }
 
         $activeUrl = $this->activeUrl(array_merge(...array_values($bySection ?: [[]])));
+        $starred = (array) Preferences::get($user, self::FAVOURITES, []);
         $declared['other'] = ['label' => 'Other', 'icon' => 'blocks', 'position' => 1000];
 
         uasort($declared, fn ($a, $b) => ($a['position'] ?? 500) <=> ($b['position'] ?? 500));
@@ -125,6 +134,10 @@ class AdminMenu
 
             foreach ($list as &$item) {
                 $item['active'] = rtrim($item['url'], '/') === $activeUrl;
+                // What a favourite is remembered by: the address's path, the
+                // same whatever host the admin came in on.
+                $item['path'] = self::pathOf($item['url']);
+                $item['favourite'] = in_array($item['path'], $starred, true);
             }
             unset($item);
 
@@ -138,6 +151,65 @@ class AdminMenu
         }
 
         return $sections;
+    }
+
+    /**
+     * The screens this person starred, in the sidebar's own order — the
+     * sidebar's "Favourites" view, a flat list. A star on a screen that
+     * is gone (a module switched off) is simply not drawn.
+     *
+     * @param  list<array{key: string, label: string, icon: string, items: list<array<string, mixed>>, active: bool}>  $sections
+     * @return list<array<string, mixed>>
+     */
+    public function favourites(array $sections): array
+    {
+        $out = [];
+        foreach ($sections as $section) {
+            foreach ($section['items'] as $item) {
+                if ($item['favourite']) {
+                    $out[] = $item;
+                }
+            }
+        }
+
+        return $out;
+    }
+
+    /**
+     * The item the current page belongs to — the one the heading's star
+     * speaks for — or null on a page no item claims (the dashboard).
+     *
+     * @param  list<array{key: string, label: string, icon: string, items: list<array<string, mixed>>, active: bool}>  $sections
+     * @return array<string, mixed>|null
+     */
+    public function active(array $sections): ?array
+    {
+        foreach ($sections as $section) {
+            foreach ($section['items'] as $item) {
+                if ($item['active']) {
+                    return $item;
+                }
+            }
+        }
+
+        return null;
+    }
+
+    /** Is this path a screen of the sidebar as this person sees it? */
+    public function knows(string $path): bool
+    {
+        foreach ($this->sections() as $section) {
+            if (in_array($path, array_column($section['items'], 'path'), true)) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    public static function pathOf(string $url): string
+    {
+        return '/'.trim((string) parse_url($url, PHP_URL_PATH), '/');
     }
 
     /**

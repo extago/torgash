@@ -195,6 +195,14 @@ class CoreServiceProvider extends ServiceProvider
             fn ($user) => $user->hasRole('admin') ? true : null,
         );
 
+        // `<x>.manage` includes `<x>.view`: a module that opens its lists to
+        // a reader (catalog.view — an order manager looking a product up)
+        // need not hand the same screens to its editors a second time, and
+        // a group made before the view permission existed loses nothing.
+        Gate::before(
+            fn ($user, string $ability) => str_ends_with($ability, '.view') && $user->can(substr($ability, 0, -5).'.manage') ? true : null,
+        );
+
         // A shop that chose its time zone before it became the application's
         // clock gets it now (and in .env, once) — ShopClock::reconcile().
         \App\Core\Support\ShopClock::reconcile();

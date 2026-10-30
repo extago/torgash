@@ -21,7 +21,7 @@
     {{-- A failed quick-save comes back with the row re-opened for editing, so
          the corrected value is one keystroke away rather than retyped. --}}
     x-data="{ editing: {{ ($rowError ?? null) ? 'true' : 'false' }} }"
-    x-on:click="if (!$event.target.closest('a,button,input,select,label,.dropdown')) editing = !editing"
+    x-on:click="if ({{ auth()->user()?->can('catalog.manage') ? 'true' : 'false' }} && !$event.target.closest('a,button,input,select,label,.dropdown')) editing = !editing"
     :class="{ 'bg-base-200/60 is-editing': editing, 'bg-primary/5': ! editing && selected.includes('{{ $product->id }}') }"
     class="hover:bg-base-200/40 cursor-default">
 
@@ -35,9 +35,11 @@
         (`admin-product-cards` in app.css) — the same cells, the same
         controls; `is-editing` on the row lets the card spread the fields.
     --}}
+    @can('catalog.manage')
     <td x-on:click.stop data-cell="check">
         <input type="checkbox" class="checkbox checkbox-sm" x-model="selected" value="{{ $product->id }}" aria-label="{{ $product->sku }}">
     </td>
+    @endcan
 
     <td data-cell="photo">
         {{-- The photo sits in the same fixed box as the placeholder: a bare
@@ -108,6 +110,9 @@
     </td>
 
     <td data-cell="status">
+        @cannot('catalog.manage')
+            <span class="badge {{ $statusClass }} badge-sm">{{ $product->statusLabel() }}</span>
+        @else
         <div class="dropdown dropdown-end">
             <div tabindex="0" role="button" class="badge {{ $statusClass }} badge-sm gap-1 cursor-pointer">
                 {{ $product->statusLabel() }}
@@ -127,6 +132,7 @@
                 @endforeach
             </ul>
         </div>
+        @endcannot
     </td>
 
     <td class="text-right whitespace-nowrap" data-cell="actions">
@@ -147,6 +153,7 @@
                class="btn btn-ghost btn-sm btn-square" title="{{ __('Edit') }}" aria-label="{{ __('Edit') }}">
                 <x-icon name="pencil" />
             </a>
+            @can('catalog.manage')
             <span class="w-px h-5 shrink-0 bg-base-300 mx-1.5" aria-hidden="true"></span>
             {{-- Beside the row, never nested in it: a <form> inside the table
                  row markup is the nesting trap called out in CLAUDE.md. --}}
@@ -154,6 +161,7 @@
                     title="{{ __('Move to trash') }}" aria-label="{{ __('Move to trash') }}">
                 <x-icon name="trash-2" />
             </button>
+            @endcan
         </div>
         {{-- Two squares, the size of the three icons they replace: "Save"
              and "Cancel" in words were wider than the column and lay over

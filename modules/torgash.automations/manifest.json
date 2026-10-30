@@ -3,7 +3,7 @@
     "name": "Automations",
     "version": "1.0.0",
     "icon": "zap",
-    "description": "Rules that react to what happens in the shop: when something changes about an order, wait if you like, check the conditions, then act — today by sending a webhook you compose yourself. One rule engine replaces the class of integration modules that only ever POST JSON somewhere: analytics, a chat notification, Make/Zapier, a CRM lead.",
+    "description": "Rules that react to what happens in the shop: an order is placed or changes, an enquiry arrives or waits too long — wait if you like, check the conditions, then act: a Telegram message, a webhook you compose yourself, a new status or manager. One rule engine replaces the class of integration modules that only ever POST JSON somewhere: analytics, a chat notification, Make/Zapier, a CRM lead. It also sends verification codes through an SMS gateway or any other HTTP service.",
     "provider": "Torgash\\Automations\\AutomationsServiceProvider",
     "autoload": {
         "Torgash\\Automations\\": "src/"

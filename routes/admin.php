@@ -63,12 +63,16 @@ Route::middleware(['auth', 'can:admin.access'])->group(function () {
     Route::post('dashboard/layout', [DashboardController::class, 'layout'])->name('dashboard.layout');
     // The sidebar folded into a strip of icons — this person's, remembered (PLAN §62).
     Route::post('preferences/sidebar', [\App\Http\Controllers\Admin\PreferencesController::class, 'sidebar'])->name('preferences.sidebar');
+    // A screen starred from its heading, and the sidebar showing the starred alone.
+    Route::post('preferences/favourite', [\App\Http\Controllers\Admin\PreferencesController::class, 'favourite'])->name('preferences.favourite');
+    Route::post('preferences/view', [\App\Http\Controllers\Admin\PreferencesController::class, 'view'])->name('preferences.view');
     // "Where is that set?" — screens and settings by the words for them.
     Route::get('search', [SearchController::class, 'index'])->name('search');
     // The bell's own refresh (App\Core\Admin\AdminNotifications).
     Route::get('notifications', [DashboardController::class, 'notifications'])->name('notifications');
 
-    Route::get('modules', [ModulesController::class, 'index'])->name('modules');
+    // A module's documentation and mark are every manager's (a module's
+    // settings page links to them); the list of modules is the system's.
     Route::get('modules/{id}/docs', [ModulesController::class, 'docs'])->name('modules.docs');
     Route::get('modules/{id}/logo', [ModulesController::class, 'logo'])->name('modules.logo');
     Route::get('modules/{id}/docs/media/{path}', [ModulesController::class, 'docsMedia'])
@@ -76,6 +80,7 @@ Route::middleware(['auth', 'can:admin.access'])->group(function () {
     // Changing what the shop is made of is a permission of its own; putting new
     // code on the server (upload) is the super group's alone — see the controller.
     Route::middleware('can:modules.manage')->group(function () {
+        Route::get('modules', [ModulesController::class, 'index'])->name('modules');
         Route::post('modules/upload', [ModulesController::class, 'upload'])->name('modules.upload');
         Route::post('modules/{id}/install', [ModulesController::class, 'install'])->name('modules.install');
         Route::post('modules/{id}/uninstall', [ModulesController::class, 'uninstall'])->name('modules.uninstall');

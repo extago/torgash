@@ -3,7 +3,7 @@
     "name": "Newsletter",
     "version": "1.0.0",
     "icon": "mail-plus",
-    "description": "Collects subscribers for the shop's news and offers: a subscription block the shop lays out in its own HTML, a tick in the basket and at checkout, a switch in the customer's account. Every address confirmed by a letter (double opt-in), every letter with its way out; the list exported for a mailing service, and subscribers in the shop's personal-data registry.",
+    "description": "Subscribers and campaigns for the shop's news and offers: a subscription block the shop lays out in its own HTML, a form under the basket, a tick at checkout, a switch in the customer's account, every address confirmed by a letter (double opt-in). Campaigns with product cards go to every subscriber or to a segment, in each reader's language, at the pace the mail server allows, with opens and clicks counted; every letter has its way out. The list also exports for an outside mailing service, and subscribers are in the shop's personal-data registry.",
     "provider": "Torgash\\Newsletter\\NewsletterServiceProvider",
     "autoload": {
         "Torgash\\Newsletter\\": "src/"

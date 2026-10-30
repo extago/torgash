@@ -21,17 +21,37 @@ class RequestsController extends Controller
     public function index(Request $request)
     {
         $view = $request->query('view') === 'all' ? 'all' : 'open';
+        $q = trim((string) $request->query('q', ''));
 
-        $requests = PrivacyRequest::query()
+        // The search but not the tab, so each tab's count answers "how many
+        // of THESE" — a surname typed reads across both (every list's rule).
+        $base = fn () => PrivacyRequest::query()->when($q !== '', function ($query) use ($q) {
+            $query->where(function ($where) use ($q) {
+                $like = '%'.addcslashes($q, '%_\\').'%';
+                $where->where('name', 'ilike', $like)
+                    ->orWhere('email', 'ilike', $like)
+                    ->orWhere('phone', 'ilike', $like);
+                if (ctype_digit(ltrim($q, '#'))) {
+                    $where->orWhere('id', (int) ltrim($q, '#'));
+                }
+            });
+        });
+
+        $counts = [
+            'open' => $base()->open()->count(),
+            'all' => $base()->count(),
+        ];
+
+        $requests = $base()
             ->with('user:id,name')
-            ->when($view === 'open', fn ($q) => $q->open())
+            ->when($view === 'open', fn ($query) => $query->open())
             ->orderByRaw("status = 'new' desc")
             ->orderBy('due_at')
             ->latest('id')
             ->paginate(30)
             ->withQueryString();
 
-        return view('torgash.privacy::admin.requests.index', compact('requests', 'view'));
+        return view('torgash.privacy::admin.requests.index', compact('requests', 'view', 'q', 'counts'));
     }
 
     public function create()

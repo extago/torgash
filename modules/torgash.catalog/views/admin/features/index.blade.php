@@ -154,12 +154,17 @@
                                     <td class="text-end tabular-nums opacity-70">{{ $feature->isChoiceType() ? $feature->values_count : '—' }}</td>
                                     <td class="text-end tabular-nums opacity-70">{{ $feature->assignments_count }}</td>
                                     <td class="text-end whitespace-nowrap">
-                                        <a href="{{ route('admin.catalog.features.edit', $feature) }}" class="btn btn-ghost btn-sm">{{ __('Edit') }}</a>
-                                        <form method="POST" action="{{ route('admin.catalog.features.destroy', $feature) }}" class="inline"
-                                              data-confirm="{{ __('Delete this characteristic? Its values on products are removed too.') }}">
-                                            @csrf @method('DELETE')
-                                            <button class="btn btn-ghost btn-sm text-error">{{ __('Delete') }}</button>
-                                        </form>
+                                        {{-- The row's actions as every other list draws them: edit | trash, icons. --}}
+                                        <div class="inline-flex items-center gap-1">
+                                            <a href="{{ route('admin.catalog.features.edit', $feature) }}" class="btn btn-ghost btn-sm btn-square"
+                                               title="{{ __('Edit') }}" aria-label="{{ __('Edit') }}"><x-icon name="pencil" /></a>
+                                            <span class="w-px h-5 shrink-0 bg-base-300 mx-1.5" aria-hidden="true"></span>
+                                            <form method="POST" action="{{ route('admin.catalog.features.destroy', $feature) }}" class="inline"
+                                                  data-confirm="{{ __('Delete this characteristic? Its values on products are removed too.') }}">
+                                                @csrf @method('DELETE')
+                                                <button class="btn btn-ghost btn-sm btn-square text-error" title="{{ __('Delete') }}" aria-label="{{ __('Delete') }}"><x-icon name="trash-2" /></button>
+                                            </form>
+                                        </div>
                                     </td>
                                 </tr>
                             @endforeach

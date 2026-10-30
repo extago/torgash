@@ -153,7 +153,7 @@
                                             <div class="flex items-center gap-1.5">
                                                 <x-icon :name="$tierIcon($tier->discount_type)" size="sm" class="opacity-50 shrink-0" />
                                                 <span>
-                                                    {{ Conditions::describe($tier->rules(), $promotion->zone) }}
+                                                    {{ Conditions::describe($tier->rules(), $promotion->zone, $conditionNames) }}
                                                     —
                                                     <span class="font-medium">
                                                         @if ($tier->discount_type === PromotionTier::FREE_SHIPPING)

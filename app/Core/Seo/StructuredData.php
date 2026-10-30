@@ -181,9 +181,15 @@ class StructuredData
             $organisation['sameAs'] = $profiles;
         }
 
-        // Opening hours stay out: schema.org gives them to a place (a
-        // LocalBusiness), not to an Organization, and ours are free text that
-        // no machine-readable `openingHours` can be made of.
+        // Opening hours, where the typed line reads as days and times
+        // (OpeningHours — "Пн–Пт 9:00–18:00", "Ежедневно 10:00–20:00"):
+        // schema.org gives them to a place, so the node is then a
+        // LocalBusiness as well as an Organization. A line that does not read
+        // stays the page's own text and the node stays as it was.
+        if ($hours = OpeningHours::parse($storefront->contact('hours'))) {
+            $organisation[$at.'type'] = ['Organization', 'LocalBusiness'];
+            $organisation['openingHoursSpecification'] = $hours;
+        }
 
         $site = [
             $at.'type' => 'WebSite',

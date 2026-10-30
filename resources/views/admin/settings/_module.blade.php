@@ -53,7 +53,9 @@
         <ul tabindex="0" class="dropdown-content menu menu-sm bg-base-100 rounded-box shadow-md w-72 mt-2 p-2 z-50 border border-base-300">
             <li><a href="{{ route('admin.settings') }}#module-{{ $moduleManifest->id }}"><x-icon name="sliders-horizontal" /> {{ __('All settings') }}</a></li>
             @unless ($isCore)
-                <li><a href="{{ route('admin.modules') }}#module-{{ str_replace('.', '-', $moduleManifest->id) }}"><x-icon name="layout-grid" /> {{ __('The module on the Modules screen') }}</a></li>
+                @can('modules.manage')
+                    <li><a href="{{ route('admin.modules') }}#module-{{ str_replace('.', '-', $moduleManifest->id) }}"><x-icon name="layout-grid" /> {{ __('The module on the Modules screen') }}</a></li>
+                @endcan
             @endunless
             @if ($moduleDocs)
                 <li><a href="{{ route('admin.modules.docs', $moduleManifest->id) }}"><x-icon name="book-open" /> {{ __('Documentation') }}</a></li>

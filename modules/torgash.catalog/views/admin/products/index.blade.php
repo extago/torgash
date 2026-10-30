@@ -53,6 +53,9 @@
             @endforeach
         </nav>
         {{-- The screen's actions, level with the tabs and as tall. --}}
+        {{-- A reader (catalog.view alone) sees the list and the cards; every
+             control that changes a product is the editor's (access.md). --}}
+        @can('catalog.manage')
         <div class="admin-tabs-actions">
             @if ($trashedCount)
                 <a href="{{ route('admin.catalog.products.trash') }}" class="btn btn-ghost gap-1.5">
@@ -62,6 +65,7 @@
             @endif
             <a href="{{ route('admin.catalog.products.create') }}" class="btn btn-primary">+ {{ __('New product') }}</a>
         </div>
+        @endcan
     </div>
 
     {{-- One Alpine root over the whole screen: the bulk bar and every row
@@ -158,9 +162,10 @@
             <div class="min-h-12 max-md:min-h-0 flex items-center">
                 <p x-show="!selected.length" class="text-xs opacity-50">
                     {{ __('Found: :n.', ['n' => $foundCount]) }}
-                    {{ __('Tip: click anywhere on a row to edit its SKU, price and stock inline.') }}
+                    @can('catalog.manage'){{ __('Tip: click anywhere on a row to edit its SKU, price and stock inline.') }}@endcan
                 </p>
 
+                @can('catalog.manage')
                 <form method="POST" action="{{ route('admin.catalog.products.bulk') }}" id="products-bulk"
                       x-show="selected.length" x-cloak
                       class="admin-bulk-bar w-full flex flex-wrap items-center gap-2 bg-base-200 rounded-box p-2">
@@ -216,6 +221,7 @@
 
                     @include('torgash.catalog::admin.products._bulk-edit', ['foundCount' => $foundCount])
                 </form>
+                @endcan
             </div>
 
             @if ($products->isEmpty())
@@ -247,6 +253,7 @@
                         </colgroup>
                         <thead>
                             <tr>
+                                @can('catalog.manage')
                                 <th data-cell="check">
                                     {{-- Select-all covers this page; "Select all N found"
                                          in the bar above is what widens it past the page. --}}
@@ -257,6 +264,7 @@
                                         <span class="md:hidden font-normal normal-case">{{ __('Select all on this page') }}</span>
                                     </label>
                                 </th>
+                                @endcan
                                 <th></th>
                                 <th><a class="link link-hover" href="{{ $sortLink('sku') }}">{{ __('Name') }} / SKU</a></th>
                                 <th><a class="link link-hover" href="{{ $sortLink('price') }}">{{ __('Price') }}</a></th>
@@ -285,6 +293,7 @@
 
     {{-- Trash forms live outside the table: a <form> nested inside a row would
          have its tag dropped by the parser while its inputs stayed behind. --}}
+    @can('catalog.manage')
     @foreach ($products as $product)
         <form id="trash-product-{{ $product->id }}" method="POST"
               action="{{ route('admin.catalog.products.destroy', $product) }}" class="hidden"
@@ -292,4 +301,5 @@
             @csrf @method('DELETE')
         </form>
     @endforeach
+    @endcan
 @endsection

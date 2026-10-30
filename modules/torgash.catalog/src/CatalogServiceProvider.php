@@ -115,6 +115,14 @@ class CatalogServiceProvider extends ServiceProvider
         Route::middleware('web')->get('/sitemap-{page}.xml', [SitemapController::class, 'index'])
             ->where('page', '[0-9]+')->name('catalog.sitemap.page');
 
+        // The reader's routes first: `products/trash` and the rest of the
+        // editing routes stand under catalog.manage, which includes
+        // catalog.view (Gate::before in core).
+        Route::middleware(['web', 'auth', 'can:catalog.view'])
+            ->prefix('admin/catalog')
+            ->name('admin.catalog.')
+            ->group(dirname(__DIR__).'/routes-admin-view.php');
+
         Route::middleware(['web', 'auth', 'can:catalog.manage'])
             ->prefix('admin/catalog')
             ->name('admin.catalog.')

@@ -43,6 +43,45 @@ this file is the reasoning. Read it before changing anything it covers.
   and customers alike — for a column with no foreign key (reviews' `user_id`
   is set to NULL there; `author_name` already holds the name).
 
+### What a manager's group opens (2026-10-30)
+
+- **A module's admin screens are wrapped in its FIRST declared permission**
+  (`can:<x>.manage` around its admin routes, in the provider), and **a
+  menu item that names no `can` is gated by that permission**
+  (`ModuleManager::adminMenu()`), so the sidebar and the admin search never
+  offer a screen that answers 403. A module with no permission of its own
+  says `can` on the item (kits and option groups borrow `catalog.manage`);
+  `StaffScenariosTest::test_every_module_menu_item_is_gated` fails on one
+  that does not. Core's Modules list is `modules.manage` (the system's);
+  a module's documentation stays every manager's, since a settings page
+  links to it.
+- **A permission's ROW is made at install and at upgrade** — and, for a
+  manifest that gained one without passing through either (a checkout run
+  from git), by `ModuleManager::syncPermissions()` on every
+  `CodeChanged::refresh()`: a permission with no row cannot be granted,
+  and the dev shop's `orders.manage` was missing for weeks before anyone
+  tried to build an order manager's group.
+- **`<x>.manage` includes `<x>.view`** (Gate::before in CoreServiceProvider):
+  a module that opens its lists to a READER declares `<x>.view` and puts
+  the reading routes under it in a file of their own (the catalogue:
+  `routes-admin-view.php` — the products and categories lists, a product's
+  card, the lookup pickers ask), the rest staying under `.manage`; its
+  views hide every control that changes a row behind `@can('<x>.manage')`
+  (the catalogue's lists lose the bulk bar, the checkboxes, the status
+  menu, "+ New" and the trash; the product's form loses the gear and Save
+  and says "Read only"), and the menu items of those lists say
+  `can: <x>.view`. A group made before the view permission existed loses
+  nothing: its editors read by the rule above. The order manager, the
+  marketer and the warehouse of `StaffScenariosTest` hold `catalog.view`
+  and nothing more of the catalogue. The permissions stay per module
+  otherwise: there is no `orders.view`, and coupons are the order
+  manager's (`orders.manage`), not the marketer's.
+- `StaffScenariosTest` keeps five groups a shop actually makes — a content
+  manager (everything but the system, the staff, the automations and the
+  code snippets), an order manager, an SEO specialist, a marketer, a
+  warehouse — against the screens each may and may not open and the
+  sidebar each sees.
+
 ### The account menu (`core.account.nav`)
 
 A module adds a page to the customer's account with one item —

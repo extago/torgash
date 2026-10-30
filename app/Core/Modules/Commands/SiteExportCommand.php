@@ -45,6 +45,12 @@ class SiteExportCommand extends Command
         }
 
         $out = $site.'/'.self::DIR;
+        // The section's place in the site's menu is the site's own decision,
+        // typed into the index it keeps: read it before the directory goes.
+        $weights = [];
+        foreach (self::LOCALES as $locale) {
+            $weights[$locale] = $this->weightOf($out.'/_index.'.$locale.'.md');
+        }
         File::deleteDirectory($out);
         File::ensureDirectoryExists($out);
 
@@ -64,7 +70,7 @@ class SiteExportCommand extends Command
             $headings = $menu->sectionHeadings();
             $positions = array_flip(array_keys($headings));
 
-            $this->index($out, $locale);
+            $this->index($out, $locale, $weights[$locale]);
 
             foreach ($manifests as $manifest) {
                 $section = $menu->sectionOf($manifest);
@@ -91,11 +97,13 @@ class SiteExportCommand extends Command
         return self::SUCCESS;
     }
 
-    protected function index(string $out, string $locale): void
+    protected function index(string $out, string $locale, ?int $weight): void
     {
         $front = [
             'title' => $locale === 'ru' ? 'Модули' : 'Modules',
-            'weight' => 15,
+            // The reference comes last in the section's menu unless the site
+            // has put it elsewhere — its own index wins over this default.
+            'weight' => $weight ?? 90,
             'layout' => 'modules',
             'cascade' => ['layout' => 'module'],
         ];
@@ -221,6 +229,18 @@ class SiteExportCommand extends Command
     }
 
     /** YAML front matter written as JSON — every JSON document is valid YAML, and no quoting can go wrong. */
+    /** The `weight` an exported index was last written (or edited) with. */
+    protected function weightOf(string $file): ?int
+    {
+        if (! is_file($file) || ! preg_match('/^---\s*(\{.*?\})\s*---/s', (string) file_get_contents($file), $m)) {
+            return null;
+        }
+
+        $front = json_decode($m[1], true);
+
+        return is_array($front) && isset($front['weight']) && is_numeric($front['weight']) ? (int) $front['weight'] : null;
+    }
+
     protected function frontMatter(array $front): string
     {
         return "---\n".json_encode($front, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES)."\n---\n\n";

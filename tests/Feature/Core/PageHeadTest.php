@@ -207,8 +207,11 @@ class PageHeadTest extends TestCase
 
         $body = $this->get('http://localhost/product/head-widget')->assertOk()->getContent();
         preg_match('#<script type="application/ld\+json">(.*?)</script>#s', $body, $match);
-        $shop = collect(json_decode($match[1] ?? '', true)['@graph'] ?? [])->firstWhere('@type', 'Organization');
+        // With readable opening hours the node is a LocalBusiness too (OpeningHours).
+        $shop = collect(json_decode($match[1] ?? '', true)['@graph'] ?? [])->first(fn ($node) => in_array('Organization', (array) ($node['@type'] ?? []), true));
 
+        $this->assertSame(['Organization', 'LocalBusiness'], $shop['@type']);
+        $this->assertSame([['@type' => 'OpeningHoursSpecification', 'dayOfWeek' => ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'], 'opens' => '09:00', 'closes' => '18:00']], $shop['openingHoursSpecification']);
         $this->assertSame('+380441234567', $shop['telephone']);
         $this->assertSame([['@type' => 'ContactPoint', 'telephone' => '+380447654321', 'contactType' => 'Service']], $shop['contactPoint'], 'the main number once');
         $this->assertSame(['@type' => 'PostalAddress', 'streetAddress' => 'Kyiv, 1 Main street', 'addressCountry' => 'UA'], $shop['address']);

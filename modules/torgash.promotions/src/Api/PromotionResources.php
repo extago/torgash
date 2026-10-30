@@ -165,6 +165,8 @@ class PromotionResources
     /** @return array<string, mixed> */
     protected function promotion(Promotion $promotion): array
     {
+        $conditionNames = Conditions::names($promotion->tiers);
+
         return [
             'id' => $promotion->id,
             'name' => $promotion->name,
@@ -196,7 +198,7 @@ class PromotionResources
                 // this to explain a discount to a human should not have to
                 // reimplement the vocabulary to do it.
                 'discount' => $this->describeDiscount($tier),
-                'conditions' => Conditions::describe($tier->rules(), $promotion->zone),
+                'conditions' => Conditions::describe($tier->rules(), $promotion->zone, $conditionNames),
             ])->all(),
             'created_at' => $promotion->created_at?->toIso8601String(),
             'updated_at' => $promotion->updated_at?->toIso8601String(),

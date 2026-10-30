@@ -2,10 +2,14 @@
 
 namespace Torgash\Promotions;
 
+use App\Models\CustomerGroup;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Builder;
+use Torgash\Catalog\Models\Feature;
+use Torgash\Catalog\Models\FeatureValue;
 use Torgash\Catalog\Models\Product;
 use Torgash\Catalog\Support\CategoryTree;
+use Torgash\Checkout\Models\PaymentMethod;
 
 /**
  * Does this product (catalog zone) or this cart (cart zone) match a tier's
@@ -296,12 +300,52 @@ class Conditions
     }
 
     /**
+     * Every name describe() prints, looked up ONCE for a whole list of tiers:
+     * kind => id => label. The list screen calls this for the page, so a
+     * promotion reads "Category — is in Laptops, Phones" instead of a count.
+     *
+     * @param  iterable<\Torgash\Promotions\Models\PromotionTier>  $tiers
+     * @return array<string, array<int|string, string>>
+     */
+    public static function names(iterable $tiers): array
+    {
+        $ids = ['category' => [], 'product' => [], 'usergroup' => [], 'payment' => [], 'feature' => [], 'feature_value' => []];
+        foreach ($tiers as $tier) {
+            foreach ($tier->rules() as $rule) {
+                $kind = (string) ($rule['kind'] ?? '');
+                if ($kind === 'feature') {
+                    $ids['feature'][] = (int) ($rule['feature_id'] ?? 0);
+                    $ids['feature_value'][] = (int) ($rule['value'] ?? 0);
+                } elseif (isset($ids[$kind])) {
+                    array_push($ids[$kind], ...self::ids($rule));
+                }
+            }
+        }
+        $ids = array_map(fn (array $list) => array_values(array_unique(array_filter($list))), $ids);
+        $locale = admin_content_locale();
+
+        return [
+            'category' => $ids['category'] === [] ? [] : app(CategoryTree::class)->names($ids['category']),
+            'product' => $ids['product'] === [] ? [] : Product::whereIn('id', $ids['product'])->pluck('sku', 'id')->all(),
+            'usergroup' => $ids['usergroup'] === [] ? [] : CustomerGroup::whereIn('id', $ids['usergroup'])->get()
+                ->mapWithKeys(fn (CustomerGroup $g) => [$g->id => (string) $g->t('name', $locale)])->all(),
+            'payment' => $ids['payment'] === [] ? [] : PaymentMethod::whereIn('id', $ids['payment'])->get()
+                ->mapWithKeys(fn (PaymentMethod $m) => [$m->id => (string) $m->t('name', $locale)])->all(),
+            'feature' => $ids['feature'] === [] ? [] : Feature::whereIn('id', $ids['feature'])->get()
+                ->mapWithKeys(fn (Feature $f) => [$f->id => (string) $f->t('name', $locale)])->all(),
+            'feature_value' => $ids['feature_value'] === [] ? [] : FeatureValue::whereIn('id', $ids['feature_value'])->get()
+                ->mapWithKeys(fn (FeatureValue $v) => [$v->id => (string) $v->t('value', $locale)])->all(),
+        ];
+    }
+
+    /**
      * A tier's conditions in plain words, for the promotions list screen.
      *
-     * @param  array<int, string>  $categoryNames
-     * @param  array<int, string>  $productNames
+     * @param  array<string, array<int|string, string>>  $names  kind => id =>
+     *     label, from names(); an id not in it is shown as a count, so a
+     *     caller with no names (the API) still gets a readable sentence.
      */
-    public static function describe(array $rules, string $zone, array $categoryNames = [], array $productNames = []): string
+    public static function describe(array $rules, string $zone, array $names = []): string
     {
         $labels = $zone === 'catalog' ? self::CATALOG_LABELS : self::CART_LABELS;
         $kinds = $zone === 'catalog' ? self::CATALOG_KINDS : self::CART_KINDS;
@@ -314,15 +358,19 @@ class Conditions
             $opLabel = __($kinds[$kind][$operator] ?? $operator);
 
             $value = match (true) {
-                in_array($kind, ['category', 'product', 'payment'], true) => self::nameList(
-                    self::ids($rule),
-                    $kind === 'category' ? $categoryNames : $productNames,
-                ),
+                in_array($kind, ['category', 'product', 'usergroup', 'payment'], true) => self::nameList(self::ids($rule), $names[$kind] ?? []),
+                $kind === 'feature' => $names['feature_value'][(int) ($rule['value'] ?? 0)] ?? __(':count selected', ['count' => 1]),
                 $kind === 'price' => admin_price((int) ($rule['value'] ?? 0)),
                 $kind === 'subtotal' => admin_price((int) ($rule['value'] ?? 0)),
                 $kind === 'quantity' => (string) ($rule['value'] ?? ''),
                 default => '',
             };
+
+            // A feature row names itself ("Colour — is Red"): its heading is
+            // the characteristic, not the word "Feature".
+            if ($kind === 'feature' && isset($names['feature'][(int) ($rule['feature_id'] ?? 0)])) {
+                $kindLabel = $names['feature'][(int) $rule['feature_id']];
+            }
 
             $lines[] = trim("{$kindLabel} — {$opLabel} {$value}");
         }

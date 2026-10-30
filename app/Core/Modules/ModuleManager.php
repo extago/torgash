@@ -486,17 +486,54 @@ class ModuleManager
     {
         $items = [];
         foreach ($this->enabled() as $manifest) {
+            // A module's screens are wrapped in its FIRST declared permission
+            // (its `<x>.manage`); an item that names no `can` of its own is
+            // gated by that one, so the sidebar never offers a screen that
+            // would answer 403. A module with no permission must say `can`
+            // itself (kits and option groups borrow the catalogue's).
+            $gate = $manifest->permissionNames()[0] ?? null;
+
             foreach ($manifest->adminMenu as $item) {
                 $items[] = $item + [
                     'module' => $manifest->id,
                     'position' => $item['position'] ?? 100,
                     'group' => $item['group'] ?? 'store',
+                    ...($gate !== null ? ['can' => $gate] : []),
                 ];
             }
         }
         usort($items, fn ($a, $b) => $a['position'] <=> $b['position']);
 
         return $items;
+    }
+
+    /**
+     * Every permission an INSTALLED module declares, as a row — the rows
+     * install() and upgrade() make, for a module whose manifest gained a
+     * permission without passing through either (a shop run from git, a
+     * developer's checkout): a permission with no row cannot be granted to
+     * anyone, and the screens behind it answer 403 to every manager.
+     *
+     * @return list<string> the permissions created
+     */
+    public function syncPermissions(): array
+    {
+        $known = Permission::query()->pluck('name')->flip()->all();
+        $created = [];
+
+        foreach ($this->all() as $manifest) {
+            if (! $this->isInstalled($manifest->id)) {
+                continue;
+            }
+            foreach ($manifest->permissionNames() as $permission) {
+                if (! isset($known[$permission])) {
+                    Permission::findOrCreate($permission);
+                    $created[] = $permission;
+                }
+            }
+        }
+
+        return $created;
     }
 
     /**

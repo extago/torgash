@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <title>@yield('title', __('Admin')) · Torgash</title>
+    <link rel="icon" href="{{ admin_icon_url() }}">
     <script nonce="{{ csp_nonce() }}">
         (function () {
             try {
@@ -40,7 +41,17 @@
 {{-- `data-sidebar`: this person's own choice of a whole sidebar or a strip
      of icons from `lg` (admin_preferences, PLAN §62) — drawn folded by the
      server, so nothing jumps. --}}
-<div class="drawer lg:drawer-open" data-sidebar="{{ \App\Core\Admin\Preferences::get(auth()->user(), 'sidebar') === 'strip' ? 'strip' : 'full' }}">
+@php
+    // The sidebar as data, once for the page: the heading's star and the
+    // sidebar's two views both read it.
+    $adminMenu = app(App\Core\Admin\AdminMenu::class);
+    $adminSections = $adminMenu->sections();
+    $adminActive = $adminMenu->active($adminSections);
+    $adminFavourites = $adminMenu->favourites($adminSections);
+    $adminView = \App\Core\Admin\Preferences::get(auth()->user(), App\Core\Admin\AdminMenu::VIEW) === 'favourites' ? 'favourites' : 'all';
+@endphp
+<div class="drawer lg:drawer-open" data-sidebar="{{ \App\Core\Admin\Preferences::get(auth()->user(), 'sidebar') === 'strip' ? 'strip' : 'full' }}"
+     data-sidebar-view="{{ $adminView }}">
     <input id="admin-drawer" type="checkbox" class="drawer-toggle">
 
     <div class="drawer-content flex flex-col">
@@ -371,6 +382,19 @@
                                 <x-slot:trigger><x-icon name="info" size="md" /></x-slot:trigger>
                             </x-popover>
                         @endif
+                        {{-- The star: this screen in the sidebar's "Favourites"
+                             view, or not. Speaks for the sidebar item the page
+                             belongs to, so an edit form stars its list. --}}
+                        @if ($adminActive)
+                            <button type="button" class="btn btn-ghost btn-sm btn-square font-normal admin-favourite-star -ml-1"
+                                    data-favourite-toggle data-path="{{ $adminActive['path'] }}" data-on="{{ $adminActive['favourite'] ? '1' : '0' }}"
+                                    data-add="{{ __('Add to favourites') }}" data-remove="{{ __('Remove from favourites') }}"
+                                    title="{{ $adminActive['favourite'] ? __('Remove from favourites') : __('Add to favourites') }}"
+                                    aria-label="{{ $adminActive['favourite'] ? __('Remove from favourites') : __('Add to favourites') }}"
+                                    aria-pressed="{{ $adminActive['favourite'] ? 'true' : 'false' }}">
+                                <x-icon name="star" size="md" />
+                            </button>
+                        @endif
                     </h1>
                     @hasSection('title_actions')
                         <div class="admin-tabs-actions">@yield('title_actions')</div>
@@ -411,8 +435,42 @@
                      remember what the admin last did with them (localStorage,
                      read before paint by the script below — never the only
                      state: without it every section simply starts closed). --}}
+                {{-- Two views of the same sidebar: every section, or the
+                     screens this person starred (the star beside a heading),
+                     a flat list. The switch is theirs and remembered; beside
+                     it, every section opened or closed at once. --}}
+                <div class="admin-sidebar-tools flex items-center gap-1 px-1 mb-2 admin-sidebar-label">
+                    <div class="join flex-1" role="group" aria-label="{{ __('Sidebar view') }}">
+                        <button type="button" class="join-item btn btn-sm btn-ghost flex-1 font-normal border-white/15 {{ $adminView === 'all' ? 'bg-white/15 text-neutral-content' : 'text-neutral-content/60' }}"
+                                data-sidebar-view-button="all" aria-pressed="{{ $adminView === 'all' ? 'true' : 'false' }}">{{ __('All') }}</button>
+                        <button type="button" class="join-item btn btn-sm btn-ghost flex-1 font-normal border-white/15 {{ $adminView === 'favourites' ? 'bg-white/15 text-neutral-content' : 'text-neutral-content/60' }}"
+                                data-sidebar-view-button="favourites" aria-pressed="{{ $adminView === 'favourites' ? 'true' : 'false' }}">
+                            <x-icon name="star" size="sm" /> {{ __('Favourites') }}
+                        </button>
+                    </div>
+                    <button type="button" class="btn btn-sm btn-ghost btn-square text-neutral-content/60" data-sections-toggle
+                            data-expand="{{ __('Expand all sections') }}" data-collapse="{{ __('Collapse all sections') }}"
+                            title="{{ __('Expand all sections') }}" aria-label="{{ __('Expand all sections') }}">
+                        <x-icon name="chevrons-up-down" size="sm" />
+                    </button>
+                </div>
+
+                <ul class="menu menu-sm w-full gap-0.5 p-0 mb-4" data-admin-favourites>
+                    @foreach ($adminFavourites as $item)
+                        <li data-item-path="{{ $item['path'] }}">
+                            <a href="{{ $item['url'] }}" title="{{ $item['title'] }}"
+                               class="rounded-lg {{ $item['active'] ? 'bg-primary text-primary-content hover:bg-primary' : 'hover:bg-white/5' }}">
+                                <x-icon :name="$item['icon'] ?? 'tag'" size="lg" /> <span class="admin-sidebar-label">{{ $item['title'] }}</span>
+                            </a>
+                        </li>
+                    @endforeach
+                    <li class="admin-sidebar-label px-3 py-2 text-xs text-neutral-content/50 {{ $adminFavourites === [] ? '' : 'hidden' }}" data-favourites-empty>
+                        {{ __('Nothing starred yet. Press the star beside a screen\'s name.') }}
+                    </li>
+                </ul>
+
                 <div class="flex flex-col gap-1" data-admin-sections>
-                    @foreach (app(App\Core\Admin\AdminMenu::class)->sections() as $section)
+                    @foreach ($adminSections as $section)
                         <details class="group/section" data-section="{{ $section['key'] }}" @if ($section['active']) open data-active @endif>
                             <summary id="admin-section-{{ $section['key'] }}-summary" title="{{ $section['label'] }}"
                                      style="anchor-name: --admin-section-{{ $section['key'] }}"
@@ -430,7 +488,7 @@
                                 style="position-anchor: --admin-section-{{ $section['key'] }}" data-anchor="#admin-section-{{ $section['key'] }}-summary">
                                 <li class="menu-title admin-sidebar-flyout-title text-xs">{{ $section['label'] }}</li>
                                 @foreach ($section['items'] as $item)
-                                    <li>
+                                    <li data-item-path="{{ $item['path'] }}">
                                         <a href="{{ $item['url'] }}"
                                            class="rounded-lg {{ $item['active'] ? 'bg-primary text-primary-content hover:bg-primary' : 'hover:bg-white/5' }}">
                                             <x-icon :name="$item['icon'] ?? 'tag'" size="lg" /> {{ $item['title'] }}
@@ -511,6 +569,72 @@
                         apply();
                         // Once more with the foot parsed, for the button's name.
                         document.addEventListener('DOMContentLoaded', apply);
+
+                        // Every section at once: opened when any is closed,
+                        // closed otherwise — and remembered like a click on each.
+                        const remember = () => { try { localStorage.setItem(key, JSON.stringify(open)); } catch (e) {} };
+                        const sectionsToggle = () => document.querySelector('[data-sections-toggle]');
+                        const nameSectionsToggle = () => {
+                            const button = sectionsToggle();
+                            if (!button) return;
+                            const anyClosed = sections.some((el) => !el.open);
+                            const label = anyClosed ? button.dataset.expand : button.dataset.collapse;
+                            button.title = label;
+                            button.setAttribute('aria-label', label);
+                        };
+                        document.addEventListener('click', (event) => {
+                            if (!event.target.closest('[data-sections-toggle]') || isStrip()) return;
+                            const openAll = sections.some((el) => !el.open);
+                            sections.forEach((el) => { el.open = openAll; open[el.dataset.section] = openAll; });
+                            remember();
+                            nameSectionsToggle();
+                        });
+                        sections.forEach((el) => el.addEventListener('toggle', nameSectionsToggle));
+                        nameSectionsToggle();
+
+                        const post = (url, body) => fetch(url, {
+                            method: 'POST',
+                            headers: { 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content, 'Content-Type': 'application/json', 'Accept': 'application/json' },
+                            body: JSON.stringify(body),
+                        }).catch(() => {});
+
+                        // All, or the starred alone: the drawer's attribute
+                        // switches the lists (app.css), the server remembers.
+                        document.addEventListener('click', (event) => {
+                            const button = event.target.closest('[data-sidebar-view-button]');
+                            if (!button) return;
+                            const view = button.dataset.sidebarViewButton;
+                            drawer.dataset.sidebarView = view;
+                            document.querySelectorAll('[data-sidebar-view-button]').forEach((b) => {
+                                const on = b.dataset.sidebarViewButton === view;
+                                b.setAttribute('aria-pressed', on ? 'true' : 'false');
+                                b.classList.toggle('bg-white/15', on);
+                                b.classList.toggle('text-neutral-content', on);
+                                b.classList.toggle('text-neutral-content/60', !on);
+                            });
+                            post(@js(route('admin.preferences.view')), { view });
+                        });
+
+                        // The star beside the heading: the item moves into or
+                        // out of the favourites list as drawn in the sections.
+                        document.addEventListener('click', (event) => {
+                            const star = event.target.closest('[data-favourite-toggle]');
+                            if (!star) return;
+                            const on = star.dataset.on !== '1';
+                            star.dataset.on = on ? '1' : '0';
+                            star.setAttribute('aria-pressed', on ? 'true' : 'false');
+                            star.title = on ? star.dataset.remove : star.dataset.add;
+                            star.setAttribute('aria-label', star.title);
+                            const list = document.querySelector('[data-admin-favourites]');
+                            const path = star.dataset.path;
+                            list.querySelectorAll(`[data-item-path="${CSS.escape(path)}"]`).forEach((li) => li.remove());
+                            if (on) {
+                                const source = document.querySelector(`[data-admin-sections] [data-item-path="${CSS.escape(path)}"]`);
+                                if (source) list.insertBefore(source.cloneNode(true), list.querySelector('[data-favourites-empty]'));
+                            }
+                            list.querySelector('[data-favourites-empty]').classList.toggle('hidden', !!list.querySelector('[data-item-path]'));
+                            post(@js(route('admin.preferences.favourite')), { path, on });
+                        });
                     })();
                 </script>
             </nav>

@@ -38,7 +38,7 @@
 {{-- One module alone ($only) has its name and Save in the sticky bar above,
      so here the cards are titled by their groups and carry no button. --}}
 <form method="POST" action="{{ route('admin.settings.update', $settingsSection['module']->id) }}" class="flex flex-col gap-4"
-      @isset($only) id="settings-form" @endisset>
+      enctype="multipart/form-data" @isset($only) id="settings-form" @endisset>
     @csrf
 
     @foreach ($blocks as $blockIndex => $block)
@@ -141,6 +141,27 @@
                         @endforeach
                     </div>
                     @if ($help)<div class="text-xs opacity-50">{{ $help }}</div>@endif
+                </fieldset>
+            @elseif ($type === 'image')
+                {{-- A picture kept on the public disk, its address the value:
+                     the picture as it is now, a file to replace it, a tick to
+                     take it away. Nothing chosen keeps what there is. --}}
+                <fieldset class="fieldset p-0"><legend class="fieldset-legend">{{ $label }}</legend>
+                    <div class="flex flex-wrap items-center gap-3">
+                        @if ($field['value'])
+                            <img src="{{ $field['value'] }}" alt="" class="h-12 w-12 object-contain rounded-box border border-base-300 bg-base-200 p-1">
+                        @endif
+                        <input name="{{ $field['key'] }}" type="file" accept="image/png,image/jpeg,image/webp,image/gif,image/svg+xml"
+                               class="file-input file-input-bordered file-input-sm max-w-sm">
+                        @if ($field['value'])
+                            <label class="label cursor-pointer gap-2 text-sm">
+                                <input type="checkbox" name="{{ $field['key'] }}__remove" value="1" class="checkbox checkbox-sm">
+                                {{ __('Remove the picture') }}
+                            </label>
+                        @endif
+                    </div>
+                    @if ($help)<div class="text-xs opacity-50">{{ $help }}</div>@endif
+                    @error($field['key'])<div class="text-xs text-error">{{ $message }}</div>@enderror
                 </fieldset>
             @elseif ($type === 'textarea')
                 {{-- Monospace on purpose: this type is for markup/snippets

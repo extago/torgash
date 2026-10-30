@@ -9,6 +9,7 @@ use Torgash\Automations\Models\RuleCondition;
 use Torgash\Automations\RuleTemplate;
 use Torgash\Catalog\Models\Category;
 use Torgash\Catalog\Models\Product;
+use Torgash\Catalog\Support\CategoryTree;
 use Torgash\Checkout\Models\Order;
 
 /**
@@ -46,6 +47,25 @@ class ProductCategoryConditionTest extends TestCase
         $this->assertTrue($this->pass('cat_has_any', [$this->laptops->id], [$this->laptop, $this->phone]));
         $this->assertFalse($this->pass('cat_has_any', [$this->laptops->id], [$this->phone]));
         $this->assertFalse($this->pass('cat_has_any', [$this->laptops->id], [$this->loose]));
+    }
+
+    /**
+     * A category IS its subtree, as everywhere in the engine: a rule on the
+     * parent sees an item from a child category, and "has no item from" the
+     * parent is false for it. Measured before the fix: a product in
+     * "Laptops › Gaming" did not match a rule on "Laptops".
+     */
+    public function test_a_category_includes_its_subcategories(): void
+    {
+        $gaming = Category::create(['name' => ['en' => 'Gaming'], 'slug' => 'pc-gaming', 'parent_id' => $this->laptops->id]);
+        $gamingLaptop = $this->product('PC-G', $gaming);
+        app(CategoryTree::class)->flush();
+
+        $this->assertTrue($this->pass('cat_has_any', [$this->laptops->id], [$gamingLaptop]));
+        $this->assertFalse($this->pass('cat_has_none', [$this->laptops->id], [$gamingLaptop]));
+        $this->assertTrue($this->pass('cat_all_from', [$this->laptops->id], [$this->laptop, $gamingLaptop]));
+        // The other way round stays false: the child does not include the parent.
+        $this->assertFalse($this->pass('cat_has_any', [$gaming->id], [$this->laptop]));
     }
 
     public function test_has_none_is_the_negation(): void

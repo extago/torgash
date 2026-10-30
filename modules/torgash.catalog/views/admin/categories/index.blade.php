@@ -21,6 +21,7 @@
                 </a>
             @endforeach
         </nav>
+        @can('catalog.manage')
         <div class="admin-tabs-actions">
             @if ($trashedCount)
                 <a href="{{ route('admin.catalog.categories.trash') }}" class="btn btn-ghost gap-1.5">
@@ -29,6 +30,7 @@
             @endif
             <a href="{{ route('admin.catalog.categories.create') }}" class="btn btn-primary">+ {{ __('New category') }}</a>
         </div>
+        @endcan
     </div>
 
     {{-- One Alpine root: the bulk bar and every row's checkbox share
@@ -48,6 +50,7 @@
                 @endif
             </form>
 
+            @can('catalog.manage')
             <div class="min-h-12 flex items-center">
                 <p x-show="!selected.length" class="text-xs opacity-50">
                     {{ __('Tick categories to change the status of several at once, or move them to the trash.') }}
@@ -72,6 +75,7 @@
                     <button type="button" class="btn btn-ghost btn-sm ml-auto" x-on:click="selected = []">{{ __('Clear selection') }}</button>
                 </form>
             </div>
+            @endcan
 
             @if ($categories->isEmpty())
                 <div class="text-center py-12 opacity-60">
@@ -83,11 +87,13 @@
                     <table class="table">
                         <thead>
                             <tr>
+                                @can('catalog.manage')
                                 <th class="w-10">
                                     <input type="checkbox" class="checkbox checkbox-sm" aria-label="{{ __('Select all on this page') }}"
                                            x-on:change="selected = $event.target.checked ? @js($categories->pluck('id')->map(fn ($id) => (string) $id)) : []"
                                            :checked="selected.length === {{ $categories->count() }}">
                                 </th>
+                                @endcan
                                 <th>{{ __('Name') }}</th>
                                 <th class="text-end">{{ __('Products') }}</th>
                                 <th class="text-end">{{ __('Sort order') }}</th>
@@ -102,10 +108,12 @@
                                     $categoryIcon = $category->iconImageUrl() ? null : $category->lucideIcon();
                                 @endphp
                                 <tr class="hover:bg-base-200/50" :class="selected.includes('{{ $category->id }}') && 'bg-primary/5'">
+                                    @can('catalog.manage')
                                     <td>
                                         <input type="checkbox" class="checkbox checkbox-sm" value="{{ $category->id }}" x-model="selected"
                                                aria-label="{{ $category->t('name', $locale) }}">
                                     </td>
+                                    @endcan
                                     <td>
                                         {{-- The tree drawn by indent and a rail; searching shows
                                              the path instead, since a match's parent may not match. --}}
@@ -157,6 +165,7 @@
                                                class="btn btn-ghost btn-sm btn-square" title="{{ __('Edit') }}" aria-label="{{ __('Edit') }}">
                                                 <x-icon name="pencil" />
                                             </a>
+                                            @can('catalog.manage')
                                             <span class="w-px h-5 shrink-0 bg-base-300 mx-1.5" aria-hidden="true"></span>
                                             <form method="POST" action="{{ route('admin.catalog.categories.destroy', $category) }}" class="inline"
                                                   data-confirm="{{ __('Move this category to the trash?') }}">
@@ -165,6 +174,7 @@
                                                     <x-icon name="trash-2" />
                                                 </button>
                                             </form>
+                                            @endcan
                                         </div>
                                     </td>
                                 </tr>

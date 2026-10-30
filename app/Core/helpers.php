@@ -618,3 +618,14 @@ if (! function_exists('admin_content_locale')) {
         return content_base_locale();
     }
 }
+
+if (! function_exists('admin_icon_url')) {
+    /**
+     * The icon in the browser's tab of an admin page: the one the shop
+     * uploaded (core setting `admin_icon`), or the engine's own mark.
+     */
+    function admin_icon_url(): string
+    {
+        return (string) setting('core', 'admin_icon', '') ?: asset_url('/assets/admin/favicon.svg');
+    }
+}

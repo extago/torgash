@@ -7,7 +7,7 @@ arrivals.
 
 A subject, a preheader (the grey line an inbox shows beside the subject), a
 heading and the text, in the shop's letter frame (colour, logo, footer —
-Admin → Letters), in each reader's language: one language is written per
+System → Letters), in each reader's language: one language is written per
 save, like every text of the shop; a reader whose language the campaign has
 no words in gets the base language.
 

@@ -25,6 +25,7 @@
             "url": "/admin/options/groups",
             "icon": "list-checks",
             "group": "catalog",
+            "can": "catalog.manage",
             "position": 18
         }
     ],

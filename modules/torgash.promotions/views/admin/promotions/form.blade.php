@@ -724,8 +724,11 @@
                         </template>
 
                         <div class="pl-2 border-l-2 border-base-200 flex flex-col gap-2">
+                            {{-- Aligned at the TOP: a three-row category list beside
+                                 single-line selects would otherwise push those to its
+                                 foot and leave the space over them empty. --}}
                             <template x-for="(row, ri) in tier.rules" :key="ri">
-                                <div class="flex flex-wrap gap-2 items-end">
+                                <div class="flex flex-wrap gap-2 items-start">
                                     <fieldset class="fieldset p-0 w-40">
                                         <legend class="fieldset-legend">{{ __('When') }}</legend>
                                         <select class="select select-bordered w-full" form="promotion-form"
@@ -813,7 +816,7 @@
                                                :name="`tiers[${ti}][rules][${ri}][value]`" x-model="row.value">
                                     </fieldset>
 
-                                    <button type="button" class="btn btn-ghost btn-sm text-error" @click="tier.rules.splice(ri, 1)">{{ __('Remove') }}</button>
+                                    <button type="button" class="btn btn-ghost btn-sm text-error mt-7" @click="tier.rules.splice(ri, 1)">{{ __('Remove') }}</button>
                                 </div>
                             </template>
 

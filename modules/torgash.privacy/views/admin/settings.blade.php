@@ -6,6 +6,13 @@
     every value can be changed after the preset filled it.
 --}}
 @section('title', __('Personal data'))
+@section('title_hint', __('Whose law the shop answers to, which fills in the rest: whether counters wait for consent and how the banner looks, how long each kind of personal data is kept, and what on the site waits for consent. Not legal advice — the policy\'s text and the regulator are still the shop\'s own.'))
+
+{{-- The one action level with the heading, as a screen with no states puts
+     it (admin.md) — not at the foot of two columns of cards. --}}
+@section('title_actions')
+    <button type="submit" form="privacy-settings-form" class="btn btn-primary">{{ __('Save') }}</button>
+@endsection
 
 @section('content')
     @php
@@ -19,7 +26,7 @@
         $categoryWords = collect(\App\Core\Privacy\Consent::CATEGORIES)->map(fn ($label) => __($label));
     @endphp
 
-    <form method="POST" action="{{ route('admin.privacy.settings.update') }}" class="flex flex-col gap-4"
+    <form id="privacy-settings-form" method="POST" action="{{ route('admin.privacy.settings.update') }}" class="flex flex-col gap-4"
           x-data="{
               v: {{ \Illuminate\Support\Js::from(old() ?: $values) }},
               presets: {{ \Illuminate\Support\Js::from($presets) }},
@@ -157,10 +164,6 @@
                     </div>
                 </section>
             </div>
-        </div>
-
-        <div class="flex justify-end">
-            <button class="btn btn-primary btn-sm">{{ __('Save') }}</button>
         </div>
     </form>
 @endsection

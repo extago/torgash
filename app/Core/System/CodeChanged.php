@@ -52,6 +52,16 @@ class CodeChanged
             $done[] = 'opcache';
         }
 
+        // A permission a manifest gained since the module was installed:
+        // without its row nobody can be given it (access.md).
+        try {
+            if (app(\App\Core\Modules\ModuleManager::class)->syncPermissions() !== []) {
+                $done[] = 'permissions';
+            }
+        } catch (Throwable) {
+            // No database yet (the installer's first run): nothing to sync.
+        }
+
         try {
             Artisan::call('queue:restart');
             $done[] = 'queue:restart';

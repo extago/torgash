@@ -147,7 +147,7 @@
                 </div>
             @endif
 
-            @if ($product->exists)
+            @if ($product->exists && auth()->user()?->can('catalog.manage'))
                 {{-- The menu's destructive actions submit the standalone forms below
                      via the HTML "form" attribute — a nested <form> here would leak
                      its _method into this product's own submit. --}}
@@ -182,7 +182,12 @@
             @endif
             <x-slot:actions>
                 <a href="{{ route('admin.catalog.products.index') }}" class="btn btn-ghost btn-sm">{{ __('Cancel') }}</a>
-                <button class="btn btn-primary btn-sm">{{ $product->exists ? __('Save') : __('Create') }}</button>
+                @can('catalog.manage')
+                    <button class="btn btn-primary btn-sm">{{ $product->exists ? __('Save') : __('Create') }}</button>
+                @else
+                    {{-- A reader (catalog.view): the card as it is, nothing to press. --}}
+                    <span class="badge badge-ghost badge-sm">{{ __('Read only') }}</span>
+                @endcan
 
             </x-slot:actions>
         </x-admin.form-bar>

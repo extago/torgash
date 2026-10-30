@@ -408,6 +408,10 @@
         {
             "name": "catalog.manage",
             "label": "Manage the catalogue: categories, products, prices"
+        },
+        {
+            "name": "catalog.view",
+            "label": "See the catalogue: the lists of products and categories and a product's card, without changing anything"
         }
     ],
     "admin_menu": [
@@ -416,14 +420,16 @@
             "url": "/admin/catalog/products",
             "group": "catalog",
             "icon": "shopping-bag",
-            "position": 10
+            "position": 10,
+            "can": "catalog.view"
         },
         {
             "label": "Categories",
             "url": "/admin/catalog/categories",
             "group": "catalog",
             "icon": "tag",
-            "position": 11
+            "position": 11,
+            "can": "catalog.view"
         },
         {
             "label": "Features",

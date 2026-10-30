@@ -34,7 +34,7 @@ class SetManagerAction implements Action, HasFields
     {
         return [
             'manager_id' => [
-                'label' => 'Send to',
+                'label' => 'Manager',
                 'type' => 'select',
                 'options' => ['' => __('Not assigned')] + User::query()->staff()->orderBy('name')->pluck('name', 'id')->all(),
             ],

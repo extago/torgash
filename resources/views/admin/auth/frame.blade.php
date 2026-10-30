@@ -6,6 +6,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>@yield('title') · Torgash</title>
+    <link rel="icon" href="{{ admin_icon_url() }}">
     <link rel="stylesheet" href="{{ asset_url('/assets/css/app.css') }}">
 </head>
 <body class="min-h-screen bg-base-200 flex items-center justify-center p-4">

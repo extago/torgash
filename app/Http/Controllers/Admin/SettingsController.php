@@ -7,11 +7,18 @@ use App\Core\Modules\ModuleManager;
 use App\Core\Modules\ModuleManifest;
 use App\Core\Settings\CoreSettings;
 use App\Core\Settings\SettingsManager;
+use App\Core\Support\SafeSvg;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
+use Illuminate\Validation\ValidationException;
 
 class SettingsController extends Controller
 {
+    /** Where an `image` setting's file is kept on the public disk. */
+    public const IMAGE_DIR = 'settings';
+
     public function index(ModuleManager $modules, SettingsManager $settings)
     {
         $menu = app(AdminMenu::class);
@@ -140,6 +147,7 @@ class SettingsController extends Controller
                     array_map('strval', array_keys($def['options'] ?? [])),
                     array_map('strval', (array) $request->input($key, [])),
                 )),
+                'image' => $this->image($request, $key, (string) $settings->get($module, $key, '')),
                 default => $request->input($key),
             };
 
@@ -147,6 +155,53 @@ class SettingsController extends Controller
         }
 
         return back()->with('status', __('Settings saved.'));
+    }
+
+    /**
+     * An `image` setting's new value: the address of the file just uploaded
+     * (kept on the public disk under settings/, an SVG cleaned first — the
+     * same rules as a theme's pictures), '' when the admin ticked "remove",
+     * otherwise what was there. A file this screen put there earlier is
+     * deleted when replaced or removed; an address typed by hand (the old
+     * shape of the preview picture) is only forgotten.
+     */
+    protected function image(Request $request, string $key, string $current): string
+    {
+        $disk = Storage::disk('public');
+        $ours = fn (string $url) => $url !== '' && str_starts_with($url, $disk->url(self::IMAGE_DIR.'/'));
+
+        if (! $request->hasFile($key)) {
+            if (! $request->boolean($key.'__remove')) {
+                return $current;
+            }
+            if ($ours($current)) {
+                $disk->delete(self::IMAGE_DIR.'/'.basename($current));
+            }
+
+            return '';
+        }
+
+        $request->validate([$key => ['file', 'max:2048']]);
+        $file = $request->file($key);
+        $name = self::IMAGE_DIR.'/'.str_replace('.', '-', $key).'-'.Str::random(12);
+
+        if (strtolower($file->getClientOriginalExtension()) === 'svg' || $file->getMimeType() === 'image/svg+xml') {
+            $svg = SafeSvg::clean((string) file_get_contents($file->getRealPath()));
+            if ($svg === null) {
+                throw ValidationException::withMessages([$key => __('This SVG could not be read as a drawing.')]);
+            }
+            $path = $name.'.svg';
+            $disk->put($path, $svg);
+        } else {
+            $request->validate([$key => ['image', 'mimes:png,jpg,jpeg,webp,gif']]);
+            $path = $file->storeAs(dirname($name), basename($name).'.'.strtolower($file->extension()), 'public');
+        }
+
+        if ($ours($current)) {
+            $disk->delete(self::IMAGE_DIR.'/'.basename($current));
+        }
+
+        return $disk->url($path);
     }
 
     protected function configurable(string $module, ModuleManager $modules): ModuleManifest

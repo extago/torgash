@@ -35,7 +35,7 @@ class SetStatusAction implements Action, HasFields
     {
         return [
             'status' => [
-                'label' => 'Send to',
+                'label' => 'New status',
                 'type' => 'select',
                 'options' => OrderStatus::choosable()->get()->mapWithKeys(fn ($s) => [$s->code => $s->t('name')])->all(),
             ],

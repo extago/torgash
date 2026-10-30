@@ -29,9 +29,11 @@
     </style>
 
     <div class="flex items-center gap-3 mb-4">
+        @can('modules.manage')
         <a href="{{ route('admin.modules') }}" class="btn btn-ghost btn-sm btn-square" title="{{ __('Modules') }}" aria-label="{{ __('Modules') }}">
             <x-icon name="arrow-left" />
         </a>
+        @endcan
         <div>
             <h1 class="text-xl font-semibold leading-tight">{{ label_text($manifest->name) }}</h1>
             <div class="text-xs font-mono opacity-50">{{ $manifest->id }} · {{ __('Documentation') }}</div>

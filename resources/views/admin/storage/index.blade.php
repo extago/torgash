@@ -99,7 +99,7 @@
                 <h3 class="font-semibold">{{ __('How to move to a bucket') }}</h3>
                 <p class="opacity-70">{{ __('The storage is chosen in the .env file, not here: access keys do not belong in the database, and switching before the files are copied would take every picture off the site.') }}</p>
                 <ol class="list-decimal pl-5 flex flex-col gap-2 opacity-90">
-                    <li>{{ __('Create a bucket (AWS S3, Cloudflare R2, Backblaze B2, MinIO…) and an access key for it.') }}</li>
+                    <li>{{ __('Create a bucket (AWS S3, Cloudflare R2, Backblaze B2, MinIO, RustFS…) and an access key for it.') }}</li>
                     <li>
                         {{ __('Add to .env:') }}
                         <pre class="mt-1 p-2 rounded-box bg-base-200 text-xs overflow-x-auto">AWS_ACCESS_KEY_ID=…

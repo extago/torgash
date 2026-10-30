@@ -240,7 +240,7 @@
 
                 <fieldset class="fieldset p-0 w-28">
                     <legend class="fieldset-legend">{{ __('or country') }}</legend>
-                    <input name="country" maxlength="2" class="input input-bordered w-full uppercase" placeholder="UA">
+                    <input name="country" maxlength="2" class="input input-bordered w-full uppercase" placeholder="{{ strtoupper(trim((string) setting('core', 'default_country'))) ?: 'UA' }}">
                 </fieldset>
 
                 <fieldset class="fieldset p-0 w-40">

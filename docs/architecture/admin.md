@@ -265,6 +265,24 @@ and under a finger".
   sections stay open underneath so the browser renders what the popover
   shows, and their memory in localStorage ignores what the strip does.
   Below `lg` the drawer is the drawer whatever was remembered.
+- **The sidebar has two views, and a star beside every heading (2026-10-30,
+  the owner's idea):** "All" is every section; "Favourites" is the screens
+  this person starred, a flat list in the sidebar's own order. The star
+  stands beside the heading's ⓘ hint and speaks for the sidebar ITEM the
+  page belongs to (`AdminMenu::active()` — a product's edit page stars
+  "Products"), so the dashboard, which no item claims, has none. Both are
+  this person's (`admin_preferences.favourites`, a list of item PATHS —
+  `AdminMenu::pathOf()`, the same whatever host they came in on — and
+  `admin_preferences.sidebar_view`), written by `POST admin/preferences/
+  favourite` (only a path the sidebar shows this person, 422 otherwise)
+  and `…/view`; the layout prints `data-sidebar-view` on the drawer so the
+  page is drawn in the view chosen, and app.css switches the two lists —
+  both are in the page, so the star moves an item between them without a
+  reload (the `<li data-item-path>` is cloned from the sections). A star on
+  a screen that is gone (a module switched off) is simply not drawn. Next to
+  the switch, one button opens or closes every section at once (opens when
+  any is closed), remembered in the same localStorage map as a click on
+  each; the strip ignores it, as it ignores the sections' memory.
 - **Measure, don't guess**: `tools/admin-probe.js`, pasted into the console
   of any admin page, opens every screen in hidden frames at the given widths
   and reports pages wider than the screen (and the element that makes them

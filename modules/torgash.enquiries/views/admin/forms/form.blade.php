@@ -65,10 +65,21 @@
                 <div class="font-semibold truncate leading-tight">{{ $form->t('name', $formLocale) ?: __('New form') }}</div>
             </div>
             @if ($form->exists)
-                <button type="submit" form="enquiry-form-delete" class="btn btn-ghost btn-sm text-error">{{ __('Delete') }}</button>
+                {{-- The record's tools behind the gear, as on every other edit
+                     screen: the bar's own buttons are Cancel and Save alone. --}}
+                <div class="dropdown dropdown-end">
+                    <div tabindex="0" role="button" class="btn btn-ghost btn-sm btn-square" title="{{ __('More actions') }}" aria-label="{{ __('More actions') }}">
+                        <x-icon name="settings" size="lg" />
+                    </div>
+                    <ul tabindex="0" class="dropdown-content menu menu-sm bg-base-100 rounded-box shadow-md w-60 mt-2 p-2 z-50 border border-base-300">
+                        <li><button type="submit" name="after_save" value="close"><x-icon name="check" /> {{ __('Save and close') }}</button></li>
+                        <li class="menu-title p-0 my-1"><span class="border-t border-base-300 block"></span></li>
+                        <li><button type="submit" form="enquiry-form-delete" class="text-error"><x-icon name="trash-2" /> {{ __('Delete') }}</button></li>
+                    </ul>
+                </div>
             @endif
             <x-slot:actions>
-                <button type="submit" name="after_save" value="close" class="btn btn-ghost btn-sm">{{ __('Save and close') }}</button>
+                <a href="{{ route('admin.enquiries.forms.index') }}" class="btn btn-ghost btn-sm">{{ __('Cancel') }}</a>
                 <button class="btn btn-primary btn-sm">{{ $form->exists ? __('Save') : __('Create') }}</button>
             </x-slot:actions>
         </x-admin.form-bar>

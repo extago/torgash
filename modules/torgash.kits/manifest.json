@@ -25,6 +25,7 @@
             "url": "/admin/kits",
             "icon": "package-plus",
             "group": "catalog",
+            "can": "catalog.manage",
             "position": 19
         }
     ],
