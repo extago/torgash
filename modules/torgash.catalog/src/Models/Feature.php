@@ -28,6 +28,21 @@ class Feature extends Model
     public const PURPOSES = ['filter', self::PURPOSE_VARIATION, 'brand'];
 
     /**
+     * What a variation characteristic does to the CATALOGUE (Support\VariationCards):
+     * `card` — each value a card of its own (Colour: the black and the white
+     * shoe side by side); `choice` — chosen on the card, never a card (Size:
+     * twelve sizes are one shoe). Labels for the form.
+     */
+    public const ROLE_CARD = 'card';
+
+    public const ROLE_CHOICE = 'choice';
+
+    public const ROLES = [
+        self::ROLE_CARD => 'A card of its own in the catalogue',
+        self::ROLE_CHOICE => 'Chosen on the card',
+    ];
+
+    /**
      * How the values are drawn (see the migration that added the columns):
      * on the product page's variation picker, and in the filter panel. Only
      * drawing — the control underneath is the same in every style.
@@ -49,7 +64,7 @@ class Feature extends Model
      * report the legacy answer for a row that is not legacy at all. Mirrored
      * here for the same reason `availability_status` is on Product.
      */
-    protected $attributes = ['shown_in' => '["filters","specs","buy_box"]', 'product_style' => 'labels', 'filter_style' => 'list', 'hide_single_in_stock' => false];
+    protected $attributes = ['shown_in' => '["filters","specs","buy_box"]', 'product_style' => 'labels', 'filter_style' => 'list', 'hide_single_in_stock' => false, 'variation_role' => self::ROLE_CARD];
 
     /** The picker's style as it can be drawn: swatches need a colour characteristic, images a variation axis. */
     public function productStyle(): string

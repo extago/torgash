@@ -292,6 +292,13 @@
                     </div>
                 </div>
             </section>
+
+            {{-- What modules keep per storefront (the popular towns of
+                 torgash.locations): their own sections, checked by
+                 `core.storefront.rules` and written on `core.storefront.saved`.
+                 A filter, not hook_render: these are form fields, and a
+                 section dropped by an isolated failure would save as "empty". --}}
+            {!! hook_filter('core.storefront.form.sections', '', ['storefront' => $storefront]) !!}
         </div>
 
         <div class="flex flex-col gap-4">

@@ -127,6 +127,9 @@ class CheckoutResources
                 'code' => 'string', 'label' => 'string', 'amount' => 'integer', 'included' => 'boolean',
             ]],
             'notes' => 'string|null',
+            'fields' => ['type' => 'array', 'description' => 'The shop’s own checkout questions as answered: `code`, the question as it read (`label`) and the answer (`value`), in the shop’s base language, in the order asked.', 'of' => [
+                'code' => 'string', 'label' => 'string', 'value' => 'string',
+            ]],
             'locale' => ['type' => 'string|null', 'description' => 'The language the customer bought in — what a reprint and an email are written in.'],
             'ip_address' => ['type' => 'string|null', 'description' => 'The address the order was placed from. Null for an order nobody placed from a browser — a manager’s exchange, an import.'],
             'created_at' => ['type' => 'string|null', 'format' => 'date-time'],
@@ -185,6 +188,7 @@ class CheckoutResources
             // §15.1.7, answered by whichever modules added lines to it.
             'adjustments' => hook_filter('checkout.order.extra_totals', [], ['order' => $order]),
             'notes' => $order->notes,
+            'fields' => $order->fields ?? [],
             'locale' => $order->locale,
             'ip_address' => $order->ip_address,
             'created_at' => $order->created_at?->toIso8601String(),

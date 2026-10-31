@@ -91,6 +91,8 @@ class Order extends Model
             'coupon_terms' => 'array',
             'manual_discount' => 'array',
             'other_discounts' => 'array',
+            // The shop's own questions answered (Orders\CheckoutFields).
+            'fields' => 'array',
             'discount_amount' => 'int',
             'subtotal' => 'int',
             'shipping_cost' => 'int',

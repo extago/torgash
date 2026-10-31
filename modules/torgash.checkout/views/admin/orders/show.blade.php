@@ -273,6 +273,13 @@
                             <span class="opacity-70 truncate">{{ $fact['value'] }}</span>
                         </div>
                     @endforeach
+                    {{-- The shop's own questions answered (Orders\CheckoutFields). --}}
+                    @foreach ($order->fields ?? [] as $orderAnswer)
+                        <div class="text-sm flex gap-1.5 min-w-0">
+                            <span class="opacity-60 shrink-0">{{ $orderAnswer['label'] }}:</span>
+                            <span class="whitespace-pre-line break-words min-w-0">{{ $orderAnswer['value'] }}</span>
+                        </div>
+                    @endforeach
                     @if ($order->notes)
                         <div class="text-sm rounded-box bg-base-200 p-3 mt-1">
                             <div class="text-xs opacity-60 mb-1">{{ __('Customer’s note') }}</div>

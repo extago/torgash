@@ -261,5 +261,8 @@
     "and :count more": "и ещё :count",
     "selected": "выбрано",
     "The customer gives a delivery address": "Покупатель указывает адрес доставки",
-    "Off for collection from the shop: checkout then asks only for a name and a phone. A method priced by a carrier ignores it — the carrier says it per variant.": "Выключите для самовывоза: тогда при оформлении спрашиваются только имя и телефон. Способ, который считает перевозчик, эту галку не читает — перевозчик решает это сам для каждого варианта."
+    "Off for collection from the shop: checkout then asks only for a name and a phone. A method priced by a carrier ignores it — the carrier says it per variant.": "Выключите для самовывоза: тогда при оформлении спрашиваются только имя и телефон. Способ, который считает перевозчик, эту галку не читает — перевозчик решает это сам для каждого варианта.",
+    "Show on the product page": "Показывать на странице товара",
+    "In the \"Delivery\" block under the buy button. Off for a method like \"Decide with the manager\": the customer still chooses it at checkout.": "В блоке «Доставка» под кнопкой покупки. Выключите для способа вроде «Решить с менеджером»: при оформлении заказа покупатель всё равно может его выбрать.",
+    "Clear": "Очистить"
 }

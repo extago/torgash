@@ -24,7 +24,19 @@ use Torgash\Media\Gallery;
 
 class Product extends Model implements HasMedia, PageSubject
 {
-    use HasPageMeta, HasTranslations, InteractsWithMedia, KeepsAddress, SoftDeletes;
+    use HasPageMeta, InteractsWithMedia, KeepsAddress, SoftDeletes;
+    use HasTranslations {
+        t as ownT;
+    }
+
+    /**
+     * What a variation with nothing of its own shows from the product it takes
+     * its content from ({@see contentFrom()}): read when shown, never copied.
+     */
+    public const INHERITED_TEXT = ['description', 'short_description'];
+
+    /** @var Product|false|null  memo of contentFrom(): null — not asked yet, false — none */
+    protected Product|false|null $contentFromMemo = null;
 
     public function addressPath(string $slug): string
     {
@@ -183,7 +195,9 @@ class Product extends Model implements HasMedia, PageSubject
             return $minWidth > 0 ? Gallery::thumbUrl($media, $minWidth) : $media->getUrl();
         }
 
-        return $this->externalImageUrls()[0] ?? null;
+        // A size with no photos shows its colour's (contentFrom()).
+        return $this->externalImageUrls()[0]
+            ?? ($this->hasOwnPhotos() ? null : $this->contentFrom()?->primaryImageUrl($minWidth));
     }
 
     /**
@@ -385,10 +399,108 @@ class Product extends Model implements HasMedia, PageSubject
         return app(AvailabilityStatuses::class)->orderLimit($this);
     }
 
-    /** @return Collection<int, Media> */
+    /**
+     * The photos the shop shows for this product: its own, or — a variation
+     * with none — those of the product it takes its content from.
+     *
+     * @return Collection<int, Media>
+     */
     public function galleryImages(): Collection
     {
-        return $this->getMedia('gallery');
+        $own = $this->getMedia('gallery');
+
+        if ($own->isNotEmpty() || $this->externalImageUrls() !== []) {
+            return $own;
+        }
+
+        return $this->contentFrom()?->getMedia('gallery') ?? $own;
+    }
+
+    protected function hasOwnPhotos(): bool
+    {
+        return $this->getMedia('gallery')->isNotEmpty() || $this->externalImageUrls() !== [];
+    }
+
+    /** "Takes its content from" as the admin set it — {@see contentFrom()} for the answer. */
+    public function contentSource(): \Illuminate\Database\Eloquent\Relations\BelongsTo
+    {
+        return $this->belongsTo(self::class, 'content_source_id');
+    }
+
+    /**
+     * The product whose photos, description and characteristics this one
+     * shows where it has none of its own — a size of a shoe, a variation that
+     * is the same thing in another size (PLAN, the clothing scenario).
+     *
+     * The admin's choice first (`content_source_id`). Without one, a member
+     * of the group that has NO photos looks for one of its own CARD (the same
+     * colour — Support\VariationCards) that has photos and takes from nobody.
+     * Never a chain: the source's own empty fields stay empty, so two
+     * products can never send a page round in a circle.
+     */
+    public function contentFrom(): ?self
+    {
+        if ($this->contentFromMemo !== null) {
+            return $this->contentFromMemo ?: null;
+        }
+
+        $source = null;
+        if ($this->content_source_id && (int) $this->content_source_id !== (int) $this->id) {
+            $source = $this->relationLoaded('contentSource')
+                ? $this->getRelation('contentSource')
+                : $this->contentSource()->first();
+        } elseif ($this->variation_group && $this->exists && $this->getMedia('gallery')->isEmpty()) {
+            $key = \Torgash\Catalog\Support\VariationCards::keySql();
+            $source = self::query()
+                ->where('variation_group', $this->variation_group)
+                ->whereKeyNot($this->id)
+                ->whereNull('content_source_id')
+                ->whereHas('media', fn ($q) => $q->where('collection_name', 'gallery'))
+                ->whereRaw("{$key} = (select ".\Torgash\Catalog\Support\VariationCards::keySql('me').' from m_catalog_products me where me.id = ?)', [$this->id])
+                ->orderBy('id')
+                ->first();
+        }
+
+        $this->contentFromMemo = $source ?: false;
+
+        return $source;
+    }
+
+    /** A text in a language; a variation with an empty description reads its source's (contentFrom()). */
+    public function t(string $field, ?string $locale = null): ?string
+    {
+        $own = $this->ownT($field, $locale);
+
+        if (($own === null || trim(strip_tags($own)) === '') && in_array($field, self::INHERITED_TEXT, true)
+            && ($source = $this->contentFrom())) {
+            return $source->ownT($field, $locale) ?? $own;
+        }
+
+        return $own;
+    }
+
+    /**
+     * The shop's characteristics as the page shows them: this product's own
+     * answers, and — for a variation taking its content from another — the
+     * source's answers on whatever it has none of. Never a variation axis:
+     * Colour and Size are what tell the two apart.
+     *
+     * @return \Illuminate\Support\Collection<int, ProductFeature>
+     */
+    public function shownAssignments(): \Illuminate\Support\Collection
+    {
+        $own = $this->featureAssignments;
+        $source = $this->contentFrom();
+
+        if (! $source) {
+            return $own;
+        }
+
+        $source->loadMissing('featureAssignments.feature.group', 'featureAssignments.featureValue');
+        $have = $own->pluck('feature_id')->flip();
+
+        return $own->concat($source->featureAssignments->filter(fn (ProductFeature $pf) => ! isset($have[$pf->feature_id])
+            && $pf->feature && $pf->feature->purpose !== Feature::PURPOSE_VARIATION))->values();
     }
 
     protected function casts(): array
@@ -604,7 +716,9 @@ class Product extends Model implements HasMedia, PageSubject
      */
     public function scopeWithCardData(Builder $query): Builder
     {
-        return $query->with(['media', 'priceTiers', 'priceTypeOverrides']);
+        // The source's photos too: a card may show a size that has none of
+        // its own (contentFrom()), and a grid must not ask per card.
+        return $query->with(['media', 'priceTiers', 'priceTypeOverrides', 'contentSource.media']);
     }
 
     /**
@@ -653,6 +767,12 @@ class Product extends Model implements HasMedia, PageSubject
      */
     public function featureRows(?array $only = null, bool $keepEmptySections = false, bool $translated = true, ?string $locale = null): array
     {
+        // A variation with no attributes of its own reads its source's — on
+        // the page; the editor ($translated off) edits this product's own.
+        if ($translated && ! $keepEmptySections && empty($this->features) && ($source = $this->contentFrom())) {
+            return $source->featureRows($only, false, true, $locale);
+        }
+
         $rows = $this->baseFeatureRows($only, $keepEmptySections);
 
         $words = $translated ? (array) (($this->features_translations ?? [])[$locale ?? app()->getLocale()] ?? []) : [];

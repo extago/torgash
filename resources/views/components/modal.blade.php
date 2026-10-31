@@ -64,6 +64,8 @@
     $width = match ($size) {
         'sm' => 'max-w-md',
         'lg' => 'max-w-3xl',
+        // A wide table (all variants of a product): as wide as the screen allows.
+        'xl' => 'max-w-6xl',
         default => 'max-w-xl',
     };
 
@@ -100,7 +102,10 @@
             </div>
         @endif
 
-        <div class="px-5 py-4 overflow-y-auto min-h-0">
+        {{-- Both ways: content wider than the window scrolls HERE, so the
+             sideways bar sits at the window's bottom edge, in sight — inside
+             the content it was at the end of a long table, off the screen. --}}
+        <div class="px-5 py-4 overflow-auto min-h-0">
             @if ($framed)
                 <div class="rounded-box border border-base-300 bg-base-200/40 p-4">{{ $slot }}</div>
             @else

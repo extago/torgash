@@ -14,11 +14,12 @@
 <x-modal :name="'variants-'.$variantsOf->id"
          :title="__('All variants of this product')"
          icon="list"
-         size="lg"
+         size="xl"
          :trigger="__('All variants of this product').' ('.$variantsMembers->count().')'"
          trigger-icon="list"
          trigger-class="btn btn-ghost btn-sm btn-touch w-full gap-2 font-normal border border-base-300">
-    <div class="overflow-x-auto -mx-1"
+    {{-- No scroller of its own: the window's body scrolls both ways (x-modal). --}}
+    <div class="-mx-1"
          x-data="{
              key: null,
              dir: 1,
@@ -32,7 +33,7 @@
              },
          }">
         <table class="table table-sm">
-            <thead>
+            <thead class="sticky -top-4 z-10 bg-base-100">
                 <tr>
                     <th class="w-14"><span class="sr-only">{{ __('Photo') }}</span></th>
                     @foreach ([['sku', __('SKU')], ...array_map(fn ($axis) => ['axis'.$axis['feature']->id, $axis['feature']->t('name')], $variantsAxes), ['stock', __('Availability')], ['price', __('Price')]] as [$variantsKey, $variantsHeading])

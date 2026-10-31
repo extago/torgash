@@ -1235,5 +1235,13 @@
     "Read only": "Только чтение",
     "Choosing a variation": "Выбор вариации",
     "Hide the choice when one value is left in stock": "Скрывать выбор, когда в наличии осталось одно значение",
-    "For example \"New / As new\": once the new ones are sold out, the product page no longer offers this row. The other values' pages stay where they are.": "Например, «Новый / Как новый»: когда новые закончились, на странице товара этого ряда больше нет. Страницы остальных значений остаются на месте."
+    "For example \"New / As new\": once the new ones are sold out, the product page no longer offers this row. The other values' pages stay where they are.": "Например, «Новый / Как новый»: когда новые закончились, на странице товара этого ряда больше нет. Страницы остальных значений остаются на месте.",
+    "A card of its own in the catalogue": "Отдельная карточка в каталоге",
+    "Chosen on the card": "Выбирается на карточке",
+    "How it stands in the catalogue": "В каталоге",
+    "\"A card of its own\": every value is a separate product card — black and white sneakers side by side. \"Chosen on the card\": the values make no cards, the customer picks one on the product page — twelve sizes stay one card. Each variation is still its own product with its own code, price and stock.": "«Отдельная карточка»: каждое значение — своя карточка товара, чёрные и белые кроссовки стоят рядом. «Выбирается на карточке»: значения не дают карточек, покупатель выбирает на странице товара — двенадцать размеров остаются одной карточкой. Каждый вариант по-прежнему отдельный товар со своим артикулом, ценой и остатком.",
+    "Takes its content from": "Берёт данные у",
+    "Automatically: a product of the same card with photos": "Автоматически: товар той же карточки с фото",
+    "Photos, description, short description and characteristics this product has none of are shown from that one. Nothing is copied: whatever you fill in here is this product's own and wins; the code, external id, price, stock and weight are always its own.": "Фото, описание, краткое описание и характеристики, которых у этого товара нет, показываются от выбранного. Ничего не копируется: всё, что заполнено здесь, — своё и важнее; артикул, внешний ID, цена, остаток и вес всегда свои.",
+    "Takes its content from (SKU)": "Берёт данные у (артикул)"
 }

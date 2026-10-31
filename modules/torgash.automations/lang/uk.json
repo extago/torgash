@@ -268,5 +268,7 @@
     "Attempt :attempt of :total, next in :minutes min: :why": "Спроба :attempt з :total, наступна через :minutes хв: :why",
     "Telegram could not be reached: :error": "До Telegram не вдалося достукатися: :error",
     "The receiver could not be reached: :error": "До отримувача не вдалося достукатися: :error",
-    "retry": "повтор"
+    "retry": "повтор",
+    "A checkout field of your own, by its code: order.fields.recipient": "Ваше поле оформлення за його кодом: order.fields.recipient",
+    "Every checkout field of your own, a line each: \"Who takes it: Anna\"": "Усі ваші поля оформлення, по рядку на кожне: «Кому передати: Анна»"
 }

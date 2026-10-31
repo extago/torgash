@@ -46,6 +46,7 @@ class OrderLines
                 'qty' => (int) $item->qty,
                 'base_price' => (int) $item->base_price,
                 'config' => (array) $item->config,
+                'variation' => (array) ($item->variation ?? []),
             ], $item->parts));
         }
 
@@ -134,6 +135,12 @@ class OrderLines
 
         if ($folded !== []) {
             $parent['options'] = $folded;
+        }
+
+        // Which variation it was ("Colour: Purple"), frozen like the name: a
+        // renamed value never rewrites an invoice. Only where there is one.
+        if (! empty($line['variation'])) {
+            $parent['variation'] = array_values((array) $line['variation']);
         }
 
         // What was ANSWERED, kept beside what the answers came to.

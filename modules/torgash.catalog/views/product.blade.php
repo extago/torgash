@@ -95,7 +95,7 @@
         // per characteristic (Features\Places): the same row can belong in the
         // specifications, in the short list under the buy button, in both, or
         // in neither while still being what a published address filters by.
-        $shownSpecs = $product->featureAssignments->filter(fn ($pf) => $pf->feature && $pf->display() !== null);
+        $shownSpecs = $product->shownAssignments()->filter(fn ($pf) => $pf->feature && $pf->display() !== null);
         $globalSpecs = $shownSpecs->filter(fn ($pf) => $pf->feature->shows('specs'));
         $buyBoxSpecs = $shownSpecs->filter(fn ($pf) => $pf->feature->shows('buy_box'))
             ->take(max(0, (int) setting('torgash.catalog', 'buy_box_specs_max', 4)));

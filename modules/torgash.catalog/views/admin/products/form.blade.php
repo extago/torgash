@@ -1082,6 +1082,21 @@
                         <span>{{ __('No characteristic is marked as a variation axis yet, so no group can be switched on the storefront.') }}</span>
                     </div>
                 @endunless
+
+                {{-- Product::contentFrom(): what an empty field of THIS product
+                     shows. Only the group's own members; read, never copied. --}}
+                @if ($variationMembers->count() > 1)
+                    <fieldset class="fieldset p-0 md:max-w-md"><legend class="fieldset-legend">{{ __('Takes its content from') }}</legend>
+                        <select name="content_source_id" class="select w-full">
+                            <option value="">{{ __('Automatically: a product of the same card with photos') }}</option>
+                            @foreach ($variationMembers as $sourceMember)
+                                @continue($sourceMember->id === $product->id)
+                                <option value="{{ $sourceMember->id }}" @selected((int) old('content_source_id', $product->content_source_id) === $sourceMember->id)>{{ $sourceMember->sku }} — {{ $sourceMember->t('name') }}</option>
+                            @endforeach
+                        </select>
+                        <p class="label whitespace-normal">{{ __("Photos, description, short description and characteristics this product has none of are shown from that one. Nothing is copied: whatever you fill in here is this product's own and wins; the code, external id, price, stock and weight are always its own.") }}</p>
+                    </fieldset>
+                @endif
             </div></section>
 
             @if ($variationMembers->count() > 1)

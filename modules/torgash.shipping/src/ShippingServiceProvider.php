@@ -108,6 +108,13 @@ class ShippingServiceProvider extends ServiceProvider
         // The method's name on an admin screen, in the reader's language when
         // the order's snapshot is only another language of it (see
         // Order::sameWordsFor()).
+        // The methods by id and name, for a checkout question asked only of
+        // some deliveries ("Who takes the parcel" — the courier's).
+        hook_listen('checkout.shipping_methods.choices', fn (array $choices) => $choices + Models\ShippingMethod::query()
+            ->orderBy('position')->orderBy('id')->get()
+            ->mapWithKeys(fn (Models\ShippingMethod $method) => [(string) $method->id => (string) $method->t('name', admin_content_locale())])
+            ->all());
+
         hook_listen('checkout.order.shipping_method_name', function (?string $value, array $context) {
             $id = (int) (((array) ($context['order']->shipping_details ?? []))['shipping_method_id'] ?? 0);
 

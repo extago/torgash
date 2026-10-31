@@ -623,6 +623,9 @@ class CheckoutServiceProvider extends ServiceProvider
             ['key' => 'country', 'label' => 'Country', 'get' => fn (Order $o) => $o->country, 'set' => fn (Order $o, $v) => $o->country = $v],
             ['key' => 'postal_code', 'label' => 'Postal code', 'get' => fn (Order $o) => $o->postal_code, 'set' => fn (Order $o, $v) => $o->postal_code = $v],
             ['key' => 'notes', 'label' => 'Notes', 'get' => fn (Order $o) => $o->notes, 'set' => fn (Order $o, $v) => $o->notes = $v],
+            // The shop's own checkout questions answered: read, never written
+            // back — an answer belongs to the moment the order was placed.
+            ['key' => 'fields', 'label' => 'Checkout fields', 'get' => fn (Order $o) => \Torgash\Checkout\Orders\CheckoutFields::text($o, '; '), 'set' => null],
             ['key' => 'currency_code', 'label' => 'Currency', 'get' => fn (Order $o) => $o->currency_code, 'set' => fn (Order $o, $v) => $o->currency_code = $v],
             ['key' => 'coupon_code', 'label' => 'Coupon code', 'get' => fn (Order $o) => $o->coupon_code, 'set' => fn (Order $o, $v) => $o->coupon_code = $v],
             // Raw minor units, same convention as Product's own base_price

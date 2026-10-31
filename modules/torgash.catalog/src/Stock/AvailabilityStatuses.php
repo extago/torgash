@@ -284,6 +284,44 @@ class AvailabilityStatuses
     }
 
     /**
+     * The same line applyOrderable() draws, as an SQL expression worth 1 or 0
+     * — for ranking inside a query rather than narrowing it (the member a
+     * catalogue card shows, Support\VariationCards).
+     *
+     * @return array{0: string, 1: list<string>} the expression and its bindings
+     */
+    public function orderableCase(string $table): array
+    {
+        $always = [];
+        $stockGated = [];
+
+        foreach ($this->all() as $key => $def) {
+            if (! $def['orderable']) {
+                continue;
+            }
+
+            if ($def['tracks_stock'] && ! $def['allow_negative']) {
+                $stockGated[] = $key;
+            } else {
+                $always[] = $key;
+            }
+        }
+
+        $branches = [];
+        $bindings = [];
+        if ($always !== []) {
+            $branches[] = "{$table}.availability_status in (".implode(',', array_fill(0, count($always), '?')).')';
+            $bindings = [...$bindings, ...$always];
+        }
+        if ($stockGated !== []) {
+            $branches[] = "({$table}.availability_status in (".implode(',', array_fill(0, count($stockGated), '?')).") and {$table}.stock > 0)";
+            $bindings = [...$bindings, ...$stockGated];
+        }
+
+        return [$branches === [] ? '0' : 'case when '.implode(' or ', $branches).' then 1 else 0 end', $bindings];
+    }
+
+    /**
      * Orders a listing by the WEIGHT of each product's status — higher first,
      * equal weights mixed, and the sort the visitor chose decides the order
      * within each weight ({@see \Torgash\Catalog\Sorting\Sorts::applyKey()}).

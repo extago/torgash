@@ -306,6 +306,7 @@ class ShippingMethodsController extends Controller
             // Only a method with no carrier says it itself; a carrier answers
             // per variant (ProviderOffer::needsAddress).
             'needs_address' => $provider ? true : $request->boolean('needs_address', true),
+            'on_product_page' => $request->boolean('on_product_page', true),
             'enabled' => $request->boolean('enabled'),
         ];
     }

@@ -116,3 +116,12 @@ puts `previous_ref` on each row; the importer moves the key onto the existing
 row before the upsert, so the row keeps its id and every shipping zone pointing
 at it. Region renumbering runs in two phases (park on `~<id>`, then assign),
 because a unique code cannot be handed over one row at a time.
+
+- **Popular towns are a STOREFRONT's** (2026-11-01, `PopularPlaces`): ids
+  typed with commas on the storefront's own form, kept as that storefront's
+  settings (`popular_places`, `popular_in_dialog`, `popular_at_checkout`,
+  deliberately NOT in the manifest — the module's screen is shop-wide), and
+  offered as buttons: in the "your town" window they call its `pick()`,
+  under the checkout's town field (`shipping.town_field.after`, only where
+  `townFieldWhere` is `checkout`) they send `choose-place` like any other
+  way of naming a town. A town switched off since is skipped, never an error.

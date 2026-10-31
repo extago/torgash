@@ -54,6 +54,10 @@
                                 @endif
                             @endif
                             {{ $order->itemLabel($item) }}
+                            {{-- Which variation was bought (OrderLines' snapshot). --}}
+                            @foreach ($item['variation'] ?? [] as $answer)
+                                <div class="text-xs"><span class="opacity-50">{{ $answer['label'] }}:</span> {{ $answer['value'] }}</div>
+                            @endforeach
                             {{-- What is inside this line's own price: a
                                  warranty, an engraving — whatever had no
                                  product to be a line of. --}}

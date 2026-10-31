@@ -161,6 +161,8 @@ class SuggestController extends Controller
             return collect();
         }
 
+        // The sizes of one shoe are one answer (Support\VariationCards).
+        $ids = app(\Torgash\Catalog\Support\VariationCards::class)->collapseIds($ids);
         $position = array_flip($ids);
         $products = Product::listed()->withCardData()->whereIn('m_catalog_products.id', $ids)->get()
             ->sortBy(fn (Product $p) => $position[$p->id] ?? PHP_INT_MAX)->values();

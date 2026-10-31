@@ -14,6 +14,7 @@ use Torgash\Catalog\Models\Feature;
 use Torgash\Catalog\Models\FeatureValue;
 use Torgash\Catalog\Models\Product;
 use Torgash\Catalog\Sorting\Sorts;
+use Torgash\Catalog\Support\VariationCards;
 use Torgash\Catalog\Support\CategoryTree;
 use Torgash\Catalog\Support\ListingView;
 
@@ -237,7 +238,10 @@ class Listing
                 ->whereIn('feature_value_id', $valueIds));
         }
 
-        return $query;
+        // One card per colour, the sizes inside it (Support\VariationCards):
+        // AFTER the filters, so "size 42" decides which member a card shows,
+        // and every listing, its count and its pages agree.
+        return app(VariationCards::class)->collapse($query);
     }
 
     /**

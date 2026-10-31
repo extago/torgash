@@ -71,6 +71,9 @@ class Context
                 'postal_code' => (string) $order->postal_code,
                 'country' => (string) $order->country,
                 'notes' => (string) $order->notes,
+                // The shop's own checkout questions: by code, and as lines.
+                'fields' => \Torgash\Checkout\Orders\CheckoutFields::byCode($order),
+                'fields_text' => \Torgash\Checkout\Orders\CheckoutFields::text($order),
                 'manager' => (string) ($order->manager?->name ?? ''),
                 'payment_method' => (string) $order->payment_method_name,
                 'shipping_method' => (string) $order->shipping_method_name,
@@ -187,6 +190,8 @@ class Context
                 'order.placed_at' => 'When it was placed',
                 'order.manager' => 'Manager',
                 'order.notes' => 'Customer\'s comment',
+                'order.fields.CODE' => 'A checkout field of your own, by its code: order.fields.recipient',
+                'order.fields_text' => 'Every checkout field of your own, a line each: "Who takes it: Anna"',
             ],
             'Customer' => [
                 'order.customer_name' => 'Customer name',
@@ -263,7 +268,7 @@ class Context
             'order.customer_name', 'order.email', 'order.phone',
             'order.address_line', 'order.city', 'order.postal_code', 'order.country',
             'order.notes', 'order.manager', 'order.payment_method', 'order.shipping_method',
-            'order.coupon', 'order.placed_at',
+            'order.coupon', 'order.placed_at', 'order.fields_text',
             'item.sku', 'item.name', 'item.qty', 'item.unit_price', 'item.unit_price_decimal',
             'item.line_total', 'item.line_total_decimal', 'item.line_total_formatted', 'item.product_id',
             'item.url', 'item.admin_url', 'item.image_url', 'item.variation', 'item.features_text',

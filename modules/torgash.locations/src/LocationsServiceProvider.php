@@ -82,6 +82,15 @@ class LocationsServiceProvider extends ServiceProvider implements ModuleLifecycl
 
         hook_listen('core.footer', fn (string $html) => $html.view('torgash.locations::dialog-shell')->render());
 
+        // Popular towns, kept per storefront on the storefront's own form
+        // (PopularPlaces) and offered as buttons in the window and at checkout.
+        hook_listen('core.storefront.form.sections', fn (string $html, array $context) => $html.app(PopularPlaces::class)->section($context));
+        hook_listen('core.storefront.rules', fn (array $rules) => $rules + app(PopularPlaces::class)->rules());
+        hook_listen('core.storefront.saved', fn (array $context) => app(PopularPlaces::class)->save($context['request'], (int) $context['storefront']->id));
+        hook_listen('shipping.town_field.after', fn (string $html, array $context) => ($context['where'] ?? null) === 'checkout'
+            ? $html.view('torgash.locations::partials.popular-places', ['popularOffered' => app(PopularPlaces::class)->offered('checkout'), 'popularWhere' => 'checkout'])->render()
+            : $html);
+
         // "Is your town …?" (setting `town_prompt`): once a visit, only to a
         // visitor who has not chosen a town — its town guessed from their
         // address, so drawn for every visitor (town-prompt-part).

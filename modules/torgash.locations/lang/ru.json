@@ -236,5 +236,12 @@
     "Add the towns you deliver to by hand under Places — an import never touches a place you added or edited.": "Добавьте города, куда доставляете, вручную в разделе «Пункты» — импорт никогда не трогает пункты, которые вы добавили или изменили.",
     "Licences: OpenStreetMap data is ODbL 1.0 and GeoNames is CC BY 4.0 — both free to use in a shop, both ask for a credit (“© OpenStreetMap contributors”, “GeoNames”). Every pack records its source in its manifest.json, shown in the table below. The list of countries is a separate file, countries.csv (from GeoNames), loaded on the Countries tab.": "Лицензии: данные OpenStreetMap — ODbL 1.0, GeoNames — CC BY 4.0. Обе позволяют бесплатно использовать данные в магазине и просят указать источник («© OpenStreetMap contributors», «GeoNames»). Каждый пакет записывает свой источник в manifest.json — он показан в таблице ниже. Список стран — отдельный файл countries.csv (из GeoNames), он загружается на вкладке «Страны».",
     "Source": "Откуда",
-    "No manifest.json — the source is not recorded.": "Нет manifest.json — источник не записан."
+    "No manifest.json — the source is not recorded.": "Нет manifest.json — источник не записан.",
+    "Popular towns": "Популярные города",
+    "Town ids, separated by commas": "ID городов через запятую",
+    "Offered as buttons — one click chooses the town. The id is in the list of towns.": "Показываются кнопками — город выбирается одним нажатием. ID есть в списке городов.",
+    "Towns": "Города",
+    "In the \"your town\" window": "В окне выбора города",
+    "At checkout, under the town": "При оформлении заказа, под полем города",
+    "No town has the id :ids.": "Нет города с ID :ids."
 }

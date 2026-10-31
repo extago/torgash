@@ -83,6 +83,19 @@
                         }
                     },
 
+                    /** The box's cross: no town, and the cursor back in the box to type one. */
+                    clear(input) {
+                        this.placeId = '';
+                        this.label = '';
+                        this.name = '';
+                        this.term = '';
+                        this.results = [];
+                        this.more = false;
+                        this.open = false;
+                        this.announce();
+                        input?.focus();
+                    },
+
                     /**
                      * A town belongs to exactly one country, so changing the
                      * country invalidates the pick rather than narrowing it.

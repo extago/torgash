@@ -45,6 +45,7 @@ class LocationController extends Controller
             // a Kyiv shop opened the window on Russia.
             'country' => $place?->country ?? (string) $request->query('country', $this->startingCountry($countries)),
             'sections' => (string) hook_filter('locations.dialog.sections', '', ['place_id' => $place?->id]),
+            'popularOffered' => app(\Torgash\Locations\PopularPlaces::class)->offered('dialog'),
         ]);
     }
 

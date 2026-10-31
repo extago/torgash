@@ -1,6 +1,7 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
+use Torgash\Checkout\Http\Admin\CheckoutFieldsController;
 use Torgash\Checkout\Http\Admin\CouponsController;
 
 // Shipping methods, rates and zones moved to the torgash.shipping module
@@ -16,3 +17,7 @@ use Torgash\Checkout\Http\Admin\CouponsController;
 Route::post('coupons/bulk', [CouponsController::class, 'bulk'])->name('coupons.bulk');
 Route::patch('coupons/{coupon}/status', [CouponsController::class, 'setStatus'])->name('coupons.status');
 Route::resource('coupons', CouponsController::class)->except(['show']);
+
+// The shop's own questions at checkout; "sort" before the resource's {field}.
+Route::post('fields/sort', [CheckoutFieldsController::class, 'sort'])->name('fields.sort');
+Route::resource('fields', CheckoutFieldsController::class)->except(['show']);

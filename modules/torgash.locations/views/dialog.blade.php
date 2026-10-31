@@ -106,6 +106,7 @@
             @if ($place && $locContext !== '')
                 <div class="text-xs opacity-60" x-show="q === @js($locChosen)">{{ $locContext }}</div>
             @endif
+            @include('torgash.locations::partials.popular-places', ['popularWhere' => 'dialog'])
             <ul x-show="open && items.length" x-cloak x-on:click.outside="open = false"
                 class="bg-base-100 border border-base-300 rounded-box shadow-lg max-h-64 overflow-y-auto p-1">
                 <template x-for="item in items" :key="item.id">

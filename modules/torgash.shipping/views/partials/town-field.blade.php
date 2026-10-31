@@ -56,15 +56,28 @@
         @endif
 
         <div class="relative">
-            <input type="text" class="{{ $inputClass }}" autocomplete="off" @required($required) aria-label="{{ __('Town') }}"
-                   value="{{ $town }}" :value="label"
-                   @input="search($event.target.value)" @focus="open = true"
-                   placeholder="{{ __('Start typing your town') }}">
+            {{-- The frame is the wrapper's (daisyUI `input` round a bare
+                 input, as in the "your town" window), so the cross sits IN
+                 the box rather than on top of it. --}}
+            <div class="{{ $inputClass }} flex items-center gap-2">
+                <input type="text" class="grow min-w-0" x-ref="townInput" autocomplete="off" @required($required) aria-label="{{ __('Town') }}"
+                       value="{{ $town }}" :value="label"
+                       @input="search($event.target.value)" @focus="open = true"
+                       placeholder="{{ __('Start typing your town') }}">
+                <button type="button" x-show="label" x-cloak x-on:click="clear($refs.townInput)"
+                        class="shrink-0 -me-1 p-1 cursor-pointer opacity-50 hover:opacity-100" aria-label="{{ __('Clear') }}">
+                    <x-icon name="x" />
+                </button>
+            </div>
             <input type="hidden" name="city" value="{{ $town }}" :value="name">
             <input type="hidden" name="place_id" value="{{ $placeId }}" :value="placeId">
 
             @include('torgash.locations::partials.place-suggestions')
         </div>
+
+        {{-- Buttons a module offers under the field (torgash.locations'
+             popular towns) — they name a town through `choose-place`. --}}
+        {!! hook_render('shipping.town_field.after', ['where' => $townFieldWhere ?? null]) !!}
     </div>
 @else
     <input type="text" name="city" value="{{ $town }}" class="{{ $inputClass }}" @required($required)>

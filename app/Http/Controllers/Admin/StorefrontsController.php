@@ -151,6 +151,9 @@ class StorefrontsController extends Controller
     {
         $this->savePhoneMask($request, $storefront);
 
+        // A module writes its own section's fields, by the storefront's id.
+        hook_action('core.storefront.saved', ['storefront' => $storefront, 'request' => $request]);
+
         return ($request->input('after_save') === 'close'
             ? redirect()->route('admin.storefronts.index')
             : redirect()->route('admin.storefronts.edit', $storefront))
@@ -228,6 +231,8 @@ class StorefrontsController extends Controller
                 }
             }],
             ...SharePicture::rules(),
+            // A module's own fields on this form (core.storefront.form.sections).
+            ...(array) hook_filter('core.storefront.rules', [], ['storefront' => $storefront]),
         ], [
             'code.regex' => __('Latin letters, digits, dashes and underscores only.'),
         ]);

@@ -258,6 +258,13 @@
             "position": 22
         },
         {
+            "label": "Checkout fields",
+            "url": "/admin/checkout/fields",
+            "group": "sales",
+            "icon": "text-cursor-input",
+            "position": 24
+        },
+        {
             "label": "Coupons",
             "url": "/admin/checkout/coupons",
             "group": "marketing",

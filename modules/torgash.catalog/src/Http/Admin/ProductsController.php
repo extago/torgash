@@ -737,6 +737,7 @@ class ProductsController extends Controller
             'image_url' => 'nullable|string',
             'slug' => 'nullable|string',
             'variation_group' => 'nullable|string|max:190',
+            'content_source_id' => 'nullable|integer|exists:m_catalog_products,id',
             'status' => ['required', Rule::in(Product::STATUSES)],
             'images.*' => 'image',
             // What the listings sort by. Editable on purpose — popularity
@@ -801,6 +802,11 @@ class ProductsController extends Controller
                 ? (implode(', ', Product::parseImageUrls((string) ($validated['image_url'] ?? ''))) ?: null)
                 : $product?->image_url,
             'variation_group' => ($validated['variation_group'] ?? '') ?: null,
+            // Product::contentFrom(); absent from the form (a product with no
+            // group yet) — kept as it was. Never itself.
+            'content_source_id' => $request->has('content_source_id')
+                ? (((int) $validated['content_source_id'] ?: null) === $product?->id ? null : ((int) ($validated['content_source_id'] ?? 0) ?: null))
+                : $product?->content_source_id,
             'status' => $validated['status'],
             // Who may see it (PLAN §46); absent from the form, kept as it was.
             'customer_groups' => (function () use ($request, $product) {

@@ -273,6 +273,29 @@ class CartManager implements Basket
             )]);
     }
 
+    /**
+     * The line as another variation of its product — the cart page's
+     * "Colour" select. The quantity goes with it; the new product is added
+     * FIRST, so a shelf that cannot take it refuses before the old line is
+     * gone, and lands in a line of its own (or one it already has).
+     *
+     * @return string the line's new key
+     */
+    public function swap(int|string $key, int $productId): string
+    {
+        $line = $this->line($key);
+        if ($line === null || (int) $line['product_id'] === $productId) {
+            return (string) $key;
+        }
+
+        $newKey = $this->add($productId, (int) $line['qty']);
+        if ($newKey !== (string) $key) {
+            $this->remove($key);
+        }
+
+        return $newKey;
+    }
+
     public function remove(int|string $key): void
     {
         $key = (string) $key;
@@ -473,6 +496,9 @@ class CartManager implements Basket
         // thumbnail too, and without the media relation that was one extra
         // query per line (plus priceTypeOverrides for effectivePrice below).
         $products = Product::whereIn('id', array_column($cart, 'product_id'))->withCardData()->get()->keyBy('id');
+        // Which variation each line is ("Colour: Purple") — the basket, the
+        // checkout and, through OrderLines, the order's own snapshot print it.
+        $variations = app(\Torgash\Catalog\Support\Variations::class)->answersFor($products);
 
         // What the basket holds of each product across its lines (two builds of
         // one server are one shelf) — measured against what may be bought.
@@ -482,7 +508,7 @@ class CartManager implements Basket
         }
 
         return collect($cart)
-            ->map(function (array $line) use ($products, $held) {
+            ->map(function (array $line) use ($products, $held, $variations) {
                 $product = $products->get($line['product_id']);
 
                 if (! $product) {
@@ -508,6 +534,7 @@ class CartManager implements Basket
                     'qty' => $line['qty'],
                     'config' => $line['config'],
                     'parts' => $parts,
+                    'variation' => $variations[$product->id] ?? [],
                     'base_price' => $basePrice,
                     'unit_price' => $money['unit_price'],
                     'extra_total' => $money['extra_total'],

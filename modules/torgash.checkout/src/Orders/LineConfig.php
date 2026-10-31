@@ -145,6 +145,8 @@ class LineConfig
             'qty' => $qty,
             'base_price' => $base,
             'config' => $config,
+            // Which variation it is stays what was bought, like the name.
+            'variation' => $line['variation'] ?? [],
         ], $parts);
 
         // The breakdown belongs to the line, not to its build: these are the

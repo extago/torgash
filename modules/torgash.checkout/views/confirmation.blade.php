@@ -92,6 +92,10 @@
                                                 @else
                                                     <span class="{{ $itemIndex > 0 ? 'text-sm' : '' }}">{{ $itemName }}</span>
                                                 @endif
+                                                {{-- Which variation was bought (OrderLines' snapshot). --}}
+                                                @foreach ($item['variation'] ?? [] as $answer)
+                                                    <div class="text-xs mt-0.5"><span class="opacity-60">{{ $answer['label'] }}:</span> {{ $answer['value'] }}</div>
+                                                @endforeach
                                                 @if (! empty($item['options']))
                                                     <div class="text-xs opacity-60 mt-0.5">
                                                         @foreach ($item['options'] as $option)
@@ -214,6 +218,13 @@
                                     @if ($order->customer_name)<div>{{ $order->customer_name }}</div>@endif
                                     @if ($order->phone)<div class="opacity-70">{{ \App\Core\Support\Phones::display($order->phone) }}</div>@endif
                                     @if ($order->email)<div class="opacity-70 break-all">{{ $order->email }}</div>@endif
+                                </div>
+                            @endif
+                            @if ($order->fields)
+                                <div class="flex flex-col gap-0.5">
+                                    @foreach ($order->fields as $confirmedAnswer)
+                                        <div><span class="opacity-60">{{ $confirmedAnswer['label'] }}:</span> <span class="whitespace-pre-line">{{ $confirmedAnswer['value'] }}</span></div>
+                                    @endforeach
                                 </div>
                             @endif
                             @if ($order->payment_method_name)

@@ -261,5 +261,8 @@
     "and :count more": "і ще :count",
     "selected": "вибрано",
     "The customer gives a delivery address": "Покупець указує адресу доставки",
-    "Off for collection from the shop: checkout then asks only for a name and a phone. A method priced by a carrier ignores it — the carrier says it per variant.": "Вимкніть для самовивозу: тоді під час оформлення питаються лише ім'я й телефон. Спосіб, який рахує перевізник, цю галочку не читає — перевізник вирішує це сам для кожного варіанта."
+    "Off for collection from the shop: checkout then asks only for a name and a phone. A method priced by a carrier ignores it — the carrier says it per variant.": "Вимкніть для самовивозу: тоді під час оформлення питаються лише ім'я й телефон. Спосіб, який рахує перевізник, цю галочку не читає — перевізник вирішує це сам для кожного варіанта.",
+    "Show on the product page": "Показувати на сторінці товару",
+    "In the \"Delivery\" block under the buy button. Off for a method like \"Decide with the manager\": the customer still chooses it at checkout.": "У блоці «Доставка» під кнопкою покупки. Вимкніть для способу на кшталт «Вирішити з менеджером»: під час оформлення замовлення покупець усе одно може його вибрати.",
+    "Clear": "Очистити"
 }

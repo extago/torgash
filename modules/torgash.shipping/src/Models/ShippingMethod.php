@@ -51,7 +51,7 @@ class ShippingMethod extends Model implements HasMedia
 
     protected function casts(): array
     {
-        return ['name' => 'array', 'enabled' => 'bool', 'needs_address' => 'bool', 'provider_config' => 'array'];
+        return ['name' => 'array', 'enabled' => 'bool', 'needs_address' => 'bool', 'on_product_page' => 'bool', 'provider_config' => 'array'];
     }
 
     /**

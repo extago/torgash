@@ -213,6 +213,7 @@ class FeaturesController extends Controller
             'is_color' => 'nullable|boolean',
             'in_short_description' => 'nullable|boolean',
             'hide_single_in_stock' => 'nullable|boolean',
+            'variation_role' => ['nullable', 'string', \Illuminate\Validation\Rule::in(array_keys(Feature::ROLES))],
             'product_style' => ['nullable', Rule::in(Feature::PRODUCT_STYLES)],
             'filter_style' => ['nullable', Rule::in(Feature::FILTER_STYLES)],
         ]);
@@ -256,6 +257,8 @@ class FeaturesController extends Controller
             // A variation row left out once one value alone is for sale —
             // see Variations::shown().
             'hide_single_in_stock' => $validated['purpose'] === Feature::PURPOSE_VARIATION && $request->boolean('hide_single_in_stock'),
+            // A card of its own, or chosen on the card — Support\VariationCards.
+            'variation_role' => $validated['variation_role'] ?? Feature::ROLE_CARD,
         ];
     }
 

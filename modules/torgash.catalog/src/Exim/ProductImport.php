@@ -141,6 +141,20 @@ class ProductImport
                 'get' => fn (Product $p) => $p->variation_group,
                 'set' => fn (Product $p, $v) => $p->variation_group = (trim((string) $v) ?: null),
             ],
+            // Product::contentFrom(), by the source's SKU. A source further
+            // down the same file is not there yet: put it above its sizes, or
+            // import twice.
+            [
+                'key' => 'content_source', 'group' => 'features',
+                'label' => 'Takes its content from (SKU)',
+                'aliases' => ['Takes its content from', 'Берёт данные у', 'Parent SKU'],
+                'get' => fn (Product $p) => $p->content_source_id ? (string) Product::withTrashed()->whereKey($p->content_source_id)->value('sku') : '',
+                'set' => function (Product $p, $v) {
+                    $sku = trim((string) $v);
+                    $id = $sku === '' ? null : Product::where('sku', $sku)->value('id');
+                    $p->content_source_id = $id && (int) $id !== (int) $p->id ? (int) $id : null;
+                },
+            ],
             [
                 'key' => 'images', 'group' => 'media', 'on_request' => true,
                 'label' => 'Photos (links)',

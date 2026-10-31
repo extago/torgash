@@ -113,9 +113,15 @@ class CheckoutController extends Controller
         // required — even when nothing is offered (no zone covers the address),
         // so that address genuinely cannot be ordered to. Only a shop with no
         // shipping module at all skips the field; PlaceOrder decides which.
-        $validated = $request->validate(
-            $placer->rules($quote, $request->input('shipping_method_id'), $cart->needsDelivery()),
-        );
+        // The shop's own questions, asked of THIS order (its buyer, its
+        // delivery) and kept as a list on it — never in the notes.
+        $customFields = app(\Torgash\Checkout\Orders\CheckoutFields::class);
+        $buyer = $request->input('buyer_type');
+        $validated = $request->validate([
+            ...$placer->rules($quote, $request->input('shipping_method_id'), $cart->needsDelivery()),
+            ...$customFields->rules($buyer, $request->input('shipping_method_id'), $cart->needsDelivery()),
+        ]);
+        $validated['fields'] = $customFields->answers((array) ($validated['fields'] ?? []), $buyer, $request->input('shipping_method_id'), $cart->needsDelivery());
 
         // The shop may hold an order until its contact is confirmed by a code
         // (PLAN §44) — the widget under the contact fields; asked here again,

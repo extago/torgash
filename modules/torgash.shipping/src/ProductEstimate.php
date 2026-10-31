@@ -48,12 +48,14 @@ class ProductEstimate
         return [
             'location' => $location,
             'town' => $this->townIn($location),
+            // Checkout offers every method; the product page only those the
+            // shop wants a shopper to compare there (`on_product_page`).
             'options' => $this->options->inZone(
                 $zone,
                 Package::forCart($basket),
                 $location,
                 CartFacts::forCart($basket, $basket->total()),
-            ),
+            )->filter(fn ($option) => $option->method->on_product_page ?? true)->values(),
         ];
     }
 

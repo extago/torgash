@@ -161,6 +161,30 @@ class CartController extends Controller
         return $this->answer($request, $cart);
     }
 
+    /**
+     * Another variation for a line, chosen on the cart page. Only a sibling
+     * in the same group that may be bought, and only for a line nothing was
+     * configured on — a build's answers belong to ITS product, and changing
+     * one is "Change this build" on the product page.
+     */
+    public function swapVariation(Request $request, CartManager $cart, string $line)
+    {
+        $current = $cart->line($line);
+        $target = Product::query()->visible()->find((int) $request->input('product_id'));
+        $from = $current ? Product::find($current['product_id']) : null;
+
+        if ($current && $from && $target && $current['config'] === []
+            && $from->variation_group && $target->variation_group === $from->variation_group && $target->isOrderable()) {
+            try {
+                $cart->swap($line, $target->id);
+            } catch (ValidationException) {
+                // Not enough of the new one on the shelf: the line stays as it was.
+            }
+        }
+
+        return $this->answer($request, $cart);
+    }
+
     public function removeItem(Request $request, CartManager $cart, string $line)
     {
         $cart->remove($line);

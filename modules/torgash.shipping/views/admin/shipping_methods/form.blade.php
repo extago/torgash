@@ -113,6 +113,16 @@
                         </label>
                         <div class="text-xs opacity-60 -mt-2">{{ __('Off for collection from the shop: checkout then asks only for a name and a phone. A method priced by a carrier ignores it — the carrier says it per variant.') }}</div>
 
+                        {{-- The product page's "Delivery" block (ProductEstimate);
+                             checkout offers the method either way. --}}
+                        <label class="label cursor-pointer justify-start gap-2 p-0">
+                            <input type="hidden" name="on_product_page" value="0">
+                            <input type="checkbox" name="on_product_page" value="1" class="checkbox checkbox-sm"
+                                   @checked(old('on_product_page', $method->on_product_page ?? true))>
+                            <span class="label-text">{{ __('Show on the product page') }}</span>
+                        </label>
+                        <div class="text-xs opacity-60 -mt-2">{{ __('In the "Delivery" block under the buy button. Off for a method like "Decide with the manager": the customer still chooses it at checkout.') }}</div>
+
                         {{-- A method being created has no zones tab yet (rates
                              need an id), so the pricing choice lives here until
                              it does, rather than defaulting silently. --}}

@@ -72,6 +72,12 @@
                             @endif
                         </span>
                         <input name="customer_name" value="{{ old('customer_name', $prefill['customer_name'] ?? '') }}" required autocomplete="name" class="input input-bordered w-full">
+                        @if ($takesCompanies)
+                            <span class="text-xs opacity-60" x-show="buyer !== 'company'">{{ __("The recipient's full name — the courier or the branch will ask for it.") }}</span>
+                            <span class="text-xs opacity-60" x-show="buyer === 'company'" x-cloak>{{ __('Who we call about the order and who takes it.') }}</span>
+                        @else
+                            <span class="text-xs opacity-60">{{ __("The recipient's full name — the courier or the branch will ask for it.") }}</span>
+                        @endif
                     </label>
                     {{-- Which contact is required is the shop's (`order_contact`). --}}
                     @php
@@ -101,6 +107,9 @@
                     <x-contact-verify form="checkout" class="md:col-span-2"
                                       :values="['phone' => old('phone', $prefill['phone'] ?? ''), 'email' => old('email', $prefill['email'] ?? '')]" />
                 </div>
+
+                {{-- The shop's own questions (Admin → Checkout fields). --}}
+                @include('torgash.checkout::partials.custom-fields', ['customPlace' => 'recipient'])
             </section>
 
             {{-- What is being ordered, where the customer reads down the page
@@ -119,15 +128,19 @@
                 <ul class="flex flex-col divide-y divide-base-300">
                     @foreach ($cart->items() as $checkoutItem)
                         <li class="py-3 flex items-center gap-4">
-                            <span class="w-14 h-14 rounded-lg bg-base-200 overflow-hidden flex items-center justify-center shrink-0">
+                            <a href="{{ route('catalog.product', $checkoutItem->product->slug) }}" tabindex="-1" aria-hidden="true" class="w-14 h-14 rounded-lg bg-base-200 overflow-hidden flex items-center justify-center shrink-0">
                                 @if ($checkoutImage = $checkoutItem->product->primaryImageUrl(120))
                                     <img src="{{ $checkoutImage }}" alt="" class="w-full h-full object-contain" loading="lazy" decoding="async">
                                 @else
                                     <x-no-image class="w-full h-full" size="sm" />
                                 @endif
-                            </span>
+                            </a>
                             <span class="grow min-w-0">
-                                <span class="block leading-snug line-clamp-2">{{ $checkoutItem->product->t('name') }}</span>
+                                <a href="{{ route('catalog.product', $checkoutItem->product->slug) }}" class="block leading-snug line-clamp-2 link link-hover">{{ $checkoutItem->product->t('name') }}</a>
+                                {{-- Which variation it is — the customer checks it before paying. --}}
+                                @foreach ($checkoutItem->variation ?? [] as $checkoutAnswer)
+                                    <span class="block text-xs"><span class="opacity-60">{{ $checkoutAnswer['label'] }}:</span> {{ $checkoutAnswer['value'] }}</span>
+                                @endforeach
                                 {{-- What is inside this line and already in its price
                                      (PLAN §33.3): the customer is about to pay for it. --}}
                                 @foreach ($checkoutItem->parts as $part)
@@ -178,6 +191,7 @@
                             'placeId' => $placeId,
                             'country' => $country,
                             'required' => true,
+                            'townFieldWhere' => 'checkout',
                         ])
                         @unless ($hasShipping)
                             <input name="city" value="{{ old('city', $town) }}" required class="input input-bordered w-full">
@@ -213,6 +227,8 @@
                         <span class="label-text">{{ __('Save this address to my account') }}</span>
                     </label>
                 @endauth
+
+                @include('torgash.checkout::partials.custom-fields', ['customPlace' => 'delivery'])
                 @endif
             </section>
 
@@ -245,7 +261,8 @@
             </section>
 
             {{-- Not a step: most orders have nothing to add. --}}
-            <section class="bg-base-100 border border-base-300 rounded-box p-5 sm:p-6">
+            <section class="bg-base-100 border border-base-300 rounded-box p-5 sm:p-6 flex flex-col gap-4">
+                @include('torgash.checkout::partials.custom-fields', ['customPlace' => 'notes'])
                 <label class="fieldset p-0"><span class="fieldset-legend text-base font-semibold">{{ __('Order notes') }}</span>
                     <textarea name="notes" rows="2" class="textarea textarea-bordered w-full">{{ old('notes') }}</textarea>
                 </label>

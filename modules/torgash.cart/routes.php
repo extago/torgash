@@ -17,4 +17,5 @@ Route::get('/cart/quick/{product:slug}', [CartController::class, 'quick'])->name
 // product id, so every link written before this still addresses what it meant.
 Route::patch('/cart/items/{line}', [CartController::class, 'updateItem'])->name('cart.update');
 Route::delete('/cart/items/{line}', [CartController::class, 'removeItem'])->name('cart.remove');
+Route::post('/cart/items/{line}/variation', [CartController::class, 'swapVariation'])->name('cart.variation');
 Route::delete('/cart', [CartController::class, 'clear'])->name('cart.clear');

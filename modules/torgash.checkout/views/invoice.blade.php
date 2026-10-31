@@ -111,6 +111,10 @@
                                         <td @class(['ps-5' => $itemIndex > 0])>
                                             @if ($itemIndex > 0)<span class="opacity-40">↳</span>@endif
                                             {{ $item['name'] }}
+                                            {{-- Which variation was bought (OrderLines' snapshot). --}}
+                                            @foreach ($item['variation'] ?? [] as $answer)
+                                                <div class="text-xs"><span class="opacity-60">{{ $answer['label'] }}:</span> {{ $answer['value'] }}</div>
+                                            @endforeach
                                             {{-- Inside this line's own price: a warranty,
                                                  an engraving, a service charged with it. --}}
                                             @foreach ($item['options'] ?? [] as $option)
@@ -154,6 +158,13 @@
                     </div>
                 </div>
 
+                @if ($order->fields)
+                    <div class="text-sm border-t border-base-300 pt-3 flex flex-col gap-0.5">
+                        @foreach ($order->fields as $invoiceAnswer)
+                            <div><span class="opacity-50">{{ $invoiceAnswer['label'] }}:</span> <span class="whitespace-pre-line">{{ $invoiceAnswer['value'] }}</span></div>
+                        @endforeach
+                    </div>
+                @endif
                 @if ($order->notes)
                     <div class="text-sm opacity-70 border-t border-base-300 pt-3">
                         <span class="opacity-50">{{ __('Notes') }}:</span> &ldquo;{{ $order->notes }}&rdquo;

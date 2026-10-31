@@ -58,7 +58,7 @@
                 $cardMedia = $product->getFirstMedia('gallery');
                 // Loaded already (withCardData), so the rest of the gallery is
                 // free to ask for; how many a card flips through is the shop's.
-                $cardPhotos = $product->getMedia('gallery')->take(max(0, (int) setting('torgash.catalog', 'card_photos_max')))->values();
+                $cardPhotos = $product->galleryImages()->take(max(0, (int) setting('torgash.catalog', 'card_photos_max')))->values();
                 $cardAlt = $cardMedia
                     ? (\Torgash\Media\Gallery::altFor($cardMedia, $product) ?: $product->t('name'))
                     : $product->t('name');

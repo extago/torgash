@@ -275,6 +275,15 @@
                      (Support\Variations::shown()). --}}
                 <section x-show="purpose === 'variation'" class="card bg-base-100 border border-base-300"><div class="card-body gap-3">
                     <h3 class="font-semibold">{{ __('Choosing a variation') }}</h3>
+                    {{-- Support\VariationCards: Colour makes cards, Size is chosen on one. --}}
+                    <fieldset class="fieldset p-0"><legend class="fieldset-legend">{{ __('How it stands in the catalogue') }}</legend>
+                        <select name="variation_role" class="select w-full">
+                            @foreach (\Torgash\Catalog\Models\Feature::ROLES as $roleKey => $roleLabel)
+                                <option value="{{ $roleKey }}" @selected(old('variation_role', $feature->variation_role ?? 'card') === $roleKey)>{{ __($roleLabel) }}</option>
+                            @endforeach
+                        </select>
+                        <p class="label whitespace-normal">{{ __('"A card of its own": every value is a separate product card — black and white sneakers side by side. "Chosen on the card": the values make no cards, the customer picks one on the product page — twelve sizes stay one card. Each variation is still its own product with its own code, price and stock.') }}</p>
+                    </fieldset>
                     <label class="flex gap-2.5 items-start cursor-pointer">
                         <input type="checkbox" name="hide_single_in_stock" value="1" class="checkbox checkbox-sm mt-0.5"
                                @checked(old('hide_single_in_stock', $feature->hide_single_in_stock ?? false))>

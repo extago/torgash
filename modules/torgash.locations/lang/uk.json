@@ -236,5 +236,12 @@
     "Add the towns you deliver to by hand under Places — an import never touches a place you added or edited.": "Додайте міста, куди доставляєте, вручну в розділі «Пункти» — імпорт ніколи не чіпає пункти, які ви додали або змінили.",
     "Licences: OpenStreetMap data is ODbL 1.0 and GeoNames is CC BY 4.0 — both free to use in a shop, both ask for a credit (“© OpenStreetMap contributors”, “GeoNames”). Every pack records its source in its manifest.json, shown in the table below. The list of countries is a separate file, countries.csv (from GeoNames), loaded on the Countries tab.": "Ліцензії: дані OpenStreetMap — ODbL 1.0, GeoNames — CC BY 4.0. Обидві дозволяють безкоштовно використовувати дані в магазині й просять зазначити джерело («© OpenStreetMap contributors», «GeoNames»). Кожен пакет записує своє джерело в manifest.json — його показано в таблиці нижче. Список країн — окремий файл countries.csv (з GeoNames), він завантажується на вкладці «Країни».",
     "Source": "Звідки",
-    "No manifest.json — the source is not recorded.": "Немає manifest.json — джерело не записано."
+    "No manifest.json — the source is not recorded.": "Немає manifest.json — джерело не записано.",
+    "Popular towns": "Популярні міста",
+    "Town ids, separated by commas": "ID міст через кому",
+    "Offered as buttons — one click chooses the town. The id is in the list of towns.": "Показуються кнопками — місто обирається одним натисканням. ID є в списку міст.",
+    "Towns": "Міста",
+    "In the \"your town\" window": "У вікні вибору міста",
+    "At checkout, under the town": "Під час оформлення замовлення, під полем міста",
+    "No town has the id :ids.": "Немає міста з ID :ids."
 }

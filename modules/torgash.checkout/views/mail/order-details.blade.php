@@ -32,6 +32,13 @@
                 <td style="padding:8px 0; border-bottom:1px solid #f1f5f9; {{ $itemIndex > 0 ? 'padding-left:16px; color:#64748b;' : '' }}">
                     @if ($itemIndex > 0)&rarr;@endif
                     {{ $item['name'] }}
+                    @if (! empty($item['sku']))
+                        <div style="font-size:12px; color:#94a3b8;">{{ __('SKU') }}: {{ $item['sku'] }}</div>
+                    @endif
+                    {{-- Which variation was bought (OrderLines' snapshot). --}}
+                    @foreach ($item['variation'] ?? [] as $answer)
+                        <div style="font-size:12px;"><span style="color:#64748b;">{{ $answer['label'] }}:</span> {{ $answer['value'] }}</div>
+                    @endforeach
                     @foreach ($item['options'] ?? [] as $option)
                         @php $optionSign = ($option['amount'] ?? 0) < 0 ? '−' : '+'; @endphp
                         <div style="font-size:12px; color:#64748b;">{{ $optionSign }} {{ $option['label'] }}{{ ($option['qty'] ?? 1) > 1 ? ' ×'.$option['qty'] : '' }}</div>
@@ -66,3 +73,8 @@
     @endphp
     <p style="margin:0 0 14px; font-size:14px;"><span style="color:#64748b;">{{ __('Delivery address') }}:</span> {{ $orderAddress }}</p>
 @endif
+
+{{-- The shop's own questions answered (Orders\CheckoutFields). --}}
+@foreach ($order->fields ?? [] as $mailAnswer)
+    <p style="margin:0 0 6px; font-size:14px;"><span style="color:#64748b;">{{ $mailAnswer['label'] }}:</span> {!! nl2br(e($mailAnswer['value'])) !!}</p>
+@endforeach

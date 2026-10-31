@@ -59,6 +59,19 @@ class ProductDeliveryTest extends TestCase
         $this->assertStringContainsString('Delivery to Poltava', $this->get('http://localhost/product/'.$product->slug)->getContent());
     }
 
+    /** "Decide with the manager" leaves the product page and stays at checkout. */
+    public function test_a_method_can_stay_off_the_product_page(): void
+    {
+        $courier = ShippingMethod::where('name->en', 'Courier delivery')->firstOrFail();
+        $product = $this->product('PD-4');
+        $block = fn () => substr($html = $this->get('http://localhost/product/'.$product->slug)->getContent(), (int) strpos($html, 'torgash-product-delivery'));
+
+        $this->assertStringContainsString('Courier delivery', $block());
+
+        $courier->update(['on_product_page' => false]);
+        $this->assertStringNotContainsString('Courier delivery', $block());
+    }
+
     public function test_a_product_nobody_sends_has_no_delivery_block(): void
     {
         $product = $this->product('PD-2', ['needs_delivery' => false]);

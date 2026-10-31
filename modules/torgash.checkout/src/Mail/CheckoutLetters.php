@@ -94,6 +94,7 @@ class CheckoutLetters
             'total' => 'The order\'s total',
             'order_url' => 'The link to the order',
             'order_details' => 'Lines, sums, delivery and address (on a line of its own)',
+            'order_fields' => 'The answers to your own checkout fields, a line each',
         ];
     }
 
@@ -109,6 +110,8 @@ class CheckoutLetters
             'order_number' => (string) $order->order_number,
             'total' => $order->money($order->total),
             'order_url' => $order->customerUrl(),
+            // The shop's own checkout questions answered, a line each.
+            'order_fields' => \Torgash\Checkout\Orders\CheckoutFields::text($order),
         ];
     }
 

@@ -58,6 +58,50 @@
                     <div class="flex-1 min-w-0 flex flex-col">
                         <a href="{{ $lineUrl }}" class="font-medium leading-snug hover:text-primary line-clamp-2">{{ $item->product->t('name') }}</a>
                         <div class="text-sm opacity-50 mt-1">{{ __('SKU') }}: {{ $item->product->sku }}</div>
+                        {{-- Which variation this is. A plain line can become
+                             another one right here (CartController::swapVariation),
+                             one select per characteristic that is still a choice;
+                             a configured build only says what it is — its
+                             answers belong to its product. --}}
+                        @php
+                            $lineAxes = $item->variation !== [] && $item->config === []
+                                ? app(\Torgash\Catalog\Support\Variations::class)->shown($item->product) : [];
+                            $lineAxisIds = collect($lineAxes)->map(fn ($axis) => $axis['feature']->t('name'))->all();
+                        @endphp
+                        @if ($lineAxes !== [])
+                            {{-- A form per characteristic: each select names the
+                                 sibling it leads to, and two of them in one form
+                                 would both be sent. --}}
+                            <div class="mt-2 grid grid-cols-[auto_minmax(0,16rem)] items-center gap-x-3 gap-y-1.5 text-sm">
+                                @foreach ($lineAxes as $lineAxis)
+                                    @php $lineAxisId = 'line-'.$loop->parent->index.'-axis-'.$lineAxis['feature']->id; @endphp
+                                    <label for="{{ $lineAxisId }}" class="opacity-60">{{ $lineAxis['feature']->t('name') }}:</label>
+                                    <form method="POST" action="{{ route('cart.variation', $item->key) }}"
+                                          hx-post="{{ route('cart.variation', $item->key) }}" hx-trigger="change" hx-target="#cart-contents" hx-swap="innerHTML">
+                                        @csrf
+                                        <select id="{{ $lineAxisId }}" name="product_id" class="select select-sm w-full">
+                                            @foreach ($lineAxis['options'] as $lineOption)
+                                                @php $lineOptionGone = ! $lineOption['active'] && ! $lineOption['product']->isOrderable(); @endphp
+                                                <option value="{{ $lineOption['product']->id }}" @selected($lineOption['active']) @disabled($lineOptionGone)>{{ $lineOption['label'] }}{{ $lineOptionGone ? ' — '.__('Out of stock') : '' }}</option>
+                                            @endforeach
+                                        </select>
+                                    </form>
+                                @endforeach
+                                {{-- The answers that are not a choice here (one value left in stock) still say what the line is. --}}
+                                @foreach ($item->variation as $lineAnswer)
+                                    @continue(in_array($lineAnswer['label'], $lineAxisIds, true))
+                                    <span class="opacity-60">{{ $lineAnswer['label'] }}:</span>
+                                    <span class="font-medium">{{ $lineAnswer['value'] }}</span>
+                                @endforeach
+                            </div>
+                        @elseif ($item->variation !== [])
+                            <dl class="mt-1.5 grid grid-cols-[auto_1fr] gap-x-2 text-sm">
+                                @foreach ($item->variation as $lineAnswer)
+                                    <dt class="opacity-60">{{ $lineAnswer['label'] }}:</dt>
+                                    <dd class="font-medium">{{ $lineAnswer['value'] }}</dd>
+                                @endforeach
+                            </dl>
+                        @endif
                         @if ($item->problem)
                             {{-- The stock fell, or the product was closed, while
                                  it waited here: said on the line, before the

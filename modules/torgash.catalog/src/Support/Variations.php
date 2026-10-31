@@ -155,6 +155,53 @@ class Variations
     }
 
     /**
+     * What each product IS within its group, as a line of a basket or an
+     * order prints it — "Colour: Purple · Memory: 128 GB": its answers on the
+     * variation characteristics, in their order. Only for products in a group
+     * (a lone product has nothing it was chosen from); one query for the
+     * characteristics and one for the answers, however many products.
+     *
+     * @param  iterable<Product>  $products
+     * @return array<int, list<array{label: string, value: string}>>  by product id; a product with none is absent
+     */
+    public function answersFor(iterable $products): array
+    {
+        $grouped = (new Collection(is_array($products) ? $products : iterator_to_array($products, false)))
+            ->filter(fn ($product) => $product instanceof Product && $product->variation_group)
+            ->values();
+
+        if ($grouped->isEmpty()) {
+            return [];
+        }
+
+        $features = Feature::query()->where('purpose', Feature::PURPOSE_VARIATION)
+            ->orderBy('sort')->orderBy('id')->get()->keyBy('id');
+        if ($features->isEmpty()) {
+            return [];
+        }
+
+        $grouped->loadMissing('featureAssignments.featureValue');
+
+        $answers = [];
+        foreach ($grouped as $product) {
+            $own = [];
+            foreach ($product->featureAssignments as $assignment) {
+                if ($features->has($assignment->feature_id) && ($answer = $this->answer($assignment)) !== null) {
+                    $own[$assignment->feature_id] = $answer['label'];
+                }
+            }
+
+            foreach ($features as $featureId => $feature) {
+                if (isset($own[$featureId])) {
+                    $answers[$product->id][] = ['label' => (string) $feature->t('name'), 'value' => $own[$featureId]];
+                }
+            }
+        }
+
+        return $answers;
+    }
+
+    /**
      * The best member for switching one axis to one value: it has that value
      * and keeps as many of THIS product's other answers as it can — so moving
      * from black 256 to white lands on white 256, not on white 128.

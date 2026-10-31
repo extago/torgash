@@ -463,3 +463,23 @@ sequence. A check that can only refuse after the write is no check.
   personal; on the product page it is re-fetched on `torgash:cart-changed`.
   The shipping RATE's own "free over" is the delivery step's (per method
   and zone, known only with an address) — not shown here.
+
+## The shop's own checkout fields (2026-11-01)
+
+`Models\CheckoutField` (`m_checkout_fields`) — a question of the shop's own,
+placed under the recipient / the delivery / above the notes, asked of a
+buyer type and of the shipping methods it names (`appliesTo()`; an offer id
+`method:offer` counts as its method). REQUIRED ONLY WHERE ASKED: the
+storefront hides AND disables a field not asked (read from the form on every
+change and after a re-quote), the server asks `appliesTo()` again.
+
+The answers are a LIST on the order (`m_checkout_orders.fields`,
+`[{code, label, value}]`) written by `Orders\CheckoutFields::answers()` —
+NEVER folded into `notes` (the customer's words, edited by managers). A
+choice is stored in the shop's base language (options are one text per
+language, matched by line), so answers can be counted. Read by: the order
+card, the confirmation page, the invoice, `mail/order-details`, the letter
+token `{order_fields}`, automations (`order.fields.<code>`,
+`order.fields_text`), the exim column `fields` (read only) and the API.
+Asked by the storefront checkout only — the admin's own order, one click and
+the API do not demand them. Deleting a field leaves orders' answers alone.

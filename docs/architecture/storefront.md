@@ -730,3 +730,11 @@ newsletter campaign's deliveries take it before the subscription's own.
 - **The page switcher** (`pagination::daisyui`) works out its own window: a phone gets first · what is on screen (one "2–3") · last, a wider screen two neighbours each side.
 - **One hint, core's (2026-10-31)**: anything that explains itself on hover is `<x-popover hover>` — a label's hint, a delivery method's note, what "+24 points" means, a countdown's "until the sale ends". It opens under the pointer, on focus and with a tap, turns away from the screen's edge, and with no `panel-class` takes `.torgash-hint`, so every hint reads the same. No daisyUI `tooltip` / `data-tip` (a dark plate of another look, nothing on a touch screen), no hand-made panel (labels had one while they sat inside the card's link), and `title` only as the name of an ICON button beside its `aria-label` — a phone never shows a title, so a title is never the only place something is said. `StorefrontHintsTest` fails on a `data-tip` in a storefront view.
 - **A card's links are its photo and its name** (2026-10-31): the code, the price and the rest are text to select and copy; the labels and a module's corner marks stand over the photo from OUTSIDE its link (`product-card.blade.php`), so a hint on them opens without leaving the page.
+
+- **A module's own fields on the storefront form**: it adds a section with
+  `core.storefront.form.sections` (a FILTER, not `hook_render` — form fields
+  dropped by an isolated failure would save as empty), its rules with
+  `core.storefront.rules`, and writes them on `core.storefront.saved`
+  (`{storefront, request}`) as that storefront's settings — only when the
+  request carried its section (a hidden marker), never on any save.
+  `torgash.locations`' popular towns are the worked example.

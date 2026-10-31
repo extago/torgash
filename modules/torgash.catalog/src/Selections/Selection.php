@@ -35,7 +35,10 @@ class Selection
 
         [$source, $arg] = $resolved;
 
-        $query = ($source['apply'])(Product::listed(), $arg, $settings, $context);
+        // One card per colour, as the catalogue shows it (Support\VariationCards).
+        $query = app(\Torgash\Catalog\Support\VariationCards::class)->collapse(
+            ($source['apply'])(Product::listed(), $arg, $settings, $context),
+        );
         $sort = (string) ($settings['sort'] ?? '');
 
         $query = $sort === '' && is_callable($source['order'])

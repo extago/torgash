@@ -224,6 +224,28 @@ this file is the reasoning. Read it before changing anything it covers.
   `Variations::shown()` — when one value alone is still orderable and the page
   holds it. A page holding a sold-out value keeps the row (the way to the one
   for sale); `for()`, the variants table and the facts keep every axis.
+- **One card per colour, the sizes chosen on it** (2026-10-31, the clothing
+  scenario). A variation characteristic has a ROLE (`Feature::variation_role`):
+  `card` — each value its own card (what every group did before) — or
+  `choice` — chosen on the card (Size, Insole). A product's card is its group
+  plus its answers on the `card` characteristics, worked out in SQL each time
+  (`Support\VariationCards::keySql()`, never stored, so nothing goes stale).
+  `Listing::applyFilters()` ends in `VariationCards::collapse()` — every
+  listing, its count and its pages show ONE member per card: the best of
+  those that passed the filters (so "size 42" opens the card at 42), orderable
+  first, then a member that takes from nobody, then the oldest. Product
+  blocks (`Selection`) collapse the same way; a search's id list through
+  `collapseIds()`. No `choice` characteristic → queries untouched.
+  **Content is inherited when READ, never copied** (`Product::contentFrom()`):
+  a member with no photos / description / short description / attributes /
+  shop characteristics shows its source's — `content_source_id` ("Takes its
+  content from", the product form's Variations tab, the exim column by SKU),
+  else automatically a member of its own card with photos. Never a chain.
+  Every field of the member stays its own and editable — the SKU, the
+  external id for 1C, the price, the stock, the SEO fields (templates are
+  worked out per page: `{feature:size}`). Read through `galleryImages()`,
+  `primaryImageUrl()`, `t()` (INHERITED_TEXT), `featureRows()` and
+  `shownAssignments()`; the editor reads the product's own.
 - **A listing with the panel is ONE thing, over any set** —
   `Torgash\Catalog\Listing\Listing` (the panel's options, applying the
   filters, the sorts, the chips, the count on "Show 12 products") and
