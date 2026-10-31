@@ -12,7 +12,7 @@
          (app.css, `admin-tabs`); LINKS keeping the rule chosen. --}}
     <div class="admin-tabs-row">
         <nav class="admin-tabs" aria-label="{{ __('Run log') }}">
-            @foreach (['' => __('All'), 'sent' => __('sent'), 'failed' => __('failed'), 'skipped' => __('skipped')] as $statusKey => $statusLabel)
+            @foreach (['' => __('All'), 'sent' => __('sent'), 'retry' => __('retry'), 'failed' => __('failed'), 'skipped' => __('skipped')] as $statusKey => $statusLabel)
                 <a href="{{ route('admin.automations.runs', array_filter(['status' => $statusKey, 'rule' => request('rule')], fn ($v) => $v !== null && $v !== '')) }}"
                    @class(['admin-tab', 'is-active' => (string) request('status', '') === (string) $statusKey])>
                     {{ \Illuminate\Support\Str::ucfirst($statusLabel) }}

@@ -23,6 +23,9 @@ class RuleRun extends Model
     /** Conditions no longer held when the delay ran out. */
     public const SKIPPED = 'skipped';
 
+    /** The receiver was not reached; the same action is queued again (RunRule). */
+    public const RETRY = 'retry';
+
     protected $table = 'm_automations_runs';
 
     protected $guarded = [];
@@ -48,6 +51,7 @@ class RuleRun extends Model
         return match ($this->status) {
             self::SENT => 'badge-success',
             self::FAILED => 'badge-error',
+            self::RETRY => 'badge-warning',
             default => 'badge-ghost',
         };
     }

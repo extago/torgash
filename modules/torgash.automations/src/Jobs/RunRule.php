@@ -10,6 +10,7 @@ use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
 use Torgash\Automations\Actions\Action;
 use Torgash\Automations\Models\Rule;
+use Torgash\Automations\Models\RuleAction;
 use Torgash\Automations\Models\RuleRun;
 use Torgash\Automations\RuleGuard;
 use Torgash\Automations\Subjects\Subject;
@@ -26,15 +27,24 @@ use Torgash\Automations\Subjects\Subjects;
  *
  * Ids are carried rather than model instances so a rule edited (or an order
  * changed) during the delay is read as it is NOW, not as it was when queued.
+ *
+ * A receiver that could not be reached — the host down, the connection
+ * dropped on the way to api.telegram.org, a "try later" (429) or an error
+ * of its own (5xx) — is tried again, and ONLY that action: an action
+ * answers `retry => true` (Action::run), and this job queues itself again
+ * for that one action after the shop's interval, up to the shop's count
+ * (settings `retries` / `retry_minutes`), each attempt a row of the log.
+ * The rest of the rule is never run twice: a status already set would be
+ * set again, a webhook already taken would be sent again. For the same
+ * reason the queue's own retry is off (`$tries = 1`): it would run the
+ * whole rule again, the delivered actions included.
  */
 class RunRule implements ShouldQueue
 {
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
-    public int $tries = 3;
-
-    /** Seconds. A receiver that is briefly down should not lose the event. */
-    public array $backoff = [60, 300];
+    /** The queue never re-runs the whole rule; a receiver not reached is retried per action (below). */
+    public int $tries = 1;
 
     /**
      * @param  int  $subjectId  the order's id, or the enquiry's — see `$subject`
@@ -47,6 +57,10 @@ class RunRule implements ShouldQueue
         public array $changed,
         public string $idempotencyKey,
         public string $subject = 'order',
+        /** Set on a retry: this one action, nothing else of the rule. */
+        public ?int $onlyActionId = null,
+        /** 1 on the first run; a retry carries the number it is. */
+        public int $attempt = 1,
     ) {}
 
     public function handle(): void
@@ -81,7 +95,7 @@ class RunRule implements ShouldQueue
             foreach ($rule->actions as $action) {
                 $class = $registry[$action->type] ?? null;
 
-                if (! $class) {
+                if (! $class || ($this->onlyActionId !== null && (int) $action->id !== $this->onlyActionId)) {
                     continue;
                 }
 
@@ -96,12 +110,52 @@ class RunRule implements ShouldQueue
                 /** @var Action $runner */
                 $runner = app($class);
                 $result = $runner->run($action, $model, $context, $this->idempotencyKey);
+                $detail = ($result['detail'] ?? []) + ($this->attempt > 1 ? ['attempt' => $this->attempt] : []);
 
-                $this->log($rule, $model, $result['status'], (string) $result['summary'], $result['detail']);
+                if (! empty($result['retry']) && $this->attempt <= self::retries()) {
+                    $this->retryLater($rule, $model, $action, (string) $result['summary'], $detail);
+
+                    continue;
+                }
+
+                $this->log($rule, $model, $result['status'], (string) $result['summary'], $detail);
             }
 
             $subject->afterActions();
         });
+    }
+
+    /** How many times an action the receiver did not take is tried again (0: never). */
+    public static function retries(): int
+    {
+        return max(0, min(20, (int) setting('torgash.automations', 'retries')));
+    }
+
+    /** Minutes between one attempt and the next. */
+    public static function retryMinutes(): int
+    {
+        return max(1, (int) setting('torgash.automations', 'retry_minutes'));
+    }
+
+    /**
+     * This one action again, after the interval: a row in the log saying so,
+     * and a copy of this job for that action alone with the attempt counted.
+     *
+     * @param  array<string, mixed>  $detail
+     */
+    protected function retryLater(Rule $rule, Model $model, RuleAction $action, string $why, array $detail): void
+    {
+        $minutes = self::retryMinutes();
+        $total = self::retries() + 1;
+
+        $this->log($rule, $model, RuleRun::RETRY, __('Attempt :attempt of :total, next in :minutes min: :why', [
+            'attempt' => $this->attempt, 'total' => $total, 'minutes' => $minutes, 'why' => $why,
+        ]), $detail + ['attempt' => $this->attempt, 'next_attempt_at' => now()->addMinutes($minutes)->toIso8601String()]);
+
+        dispatch((new self(
+            $this->ruleId, $this->subjectId, $this->event, $this->changed, $this->idempotencyKey, $this->subject,
+            onlyActionId: (int) $action->id, attempt: $this->attempt + 1,
+        ))->delay(now()->addMinutes($minutes)));
     }
 
     /** @param  array<string, mixed>|null  $detail */

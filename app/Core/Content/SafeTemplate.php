@@ -9,12 +9,20 @@ namespace App\Core\Content;
  * Blade compiles to PHP. Handing it a string an admin typed into a form makes
  * that form a way to run code on the server, and no amount of escaping
  * afterwards takes that back. In core because two modules that do not know
- * each other (automations, exim) need exactly this and nothing more. This understands exactly two things and nothing
+ * each other (automations, exim) need exactly this and nothing more. This understands exactly three things and nothing
  * else:
  *
  *   {{ order.total }}                       one value, by dotted path
  *   {{#order.items}} … {{/order.items}}     repeat the block per item,
  *                                           addressed inside as {{ item.sku }}
+ *   {{#item.options_text}} … {{/…}}         over a VALUE rather than a list:
+ *                                           the block once when it has one
+ *                                           (not empty, not 0), nothing when
+ *                                           it has not — "Options: …" only
+ *                                           where there are options
+ *
+ * A block inside a block is resolved with the row it is in, so a value's
+ * block inside the lines' loop reads the line's own value.
  *
  * Values are escaped for a JSON string context by default, because that is
  * what a webhook body is: a customer called `O"Brien` must not end the string
@@ -46,11 +54,14 @@ class SafeTemplate
     public const RAW = 'raw';
 
     /**
-     * Expand every `{{#path}}…{{/path}}` block over the list it names.
+     * Expand every `{{#path}}…{{/path}}` block: over the list it names, a row
+     * at a time — or, named after a value, once if the value is there and
+     * not at all if it is empty. A block's body goes through this again with
+     * the row bound, so a value's block inside the loop reads the row.
      *
-     * Non-greedy and non-nested on purpose: a body that needs a loop inside a
-     * loop is a body that should be built by a module's own action, not typed
-     * into a textarea.
+     * Non-greedy on purpose: two blocks of the SAME name one inside the other
+     * cannot be told apart, and a body that needs that is a body that should
+     * be built by a module's own action, not typed into a textarea.
      *
      * @param  array<string, mixed>  $context
      */
@@ -62,13 +73,18 @@ class SafeTemplate
                 $rows = self::lookup($match[1], $context);
 
                 if (! is_array($rows)) {
-                    return '';
+                    // A value: the block once, or nothing. 0 and "0" count as
+                    // nothing — "Discount: 0" is a line nobody wanted.
+                    return self::has($rows)
+                        ? self::values(self::loops($match[2], $context, $escape), $context, null, $escape)
+                        : '';
                 }
 
                 $out = [];
                 foreach ($rows as $row) {
                     if (is_array($row)) {
-                        $out[] = self::values($match[2], ['item' => $row] + $context, null, $escape);
+                        $rowContext = ['item' => $row] + $context;
+                        $out[] = self::values(self::loops($match[2], $rowContext, $escape), $rowContext, null, $escape);
                     }
                 }
 
@@ -115,6 +131,12 @@ class SafeTemplate
             },
             $template,
         );
+    }
+
+    /** Whether a value is there to show: not null, not false, not '', not 0. */
+    protected static function has(mixed $value): bool
+    {
+        return ! ($value === null || $value === false || $value === '' || $value === 0 || $value === '0' || $value === 0.0);
     }
 
     /** @param  array<string, mixed>  $context */

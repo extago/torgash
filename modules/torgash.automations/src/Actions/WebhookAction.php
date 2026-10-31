@@ -3,6 +3,7 @@
 namespace Torgash\Automations\Actions;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Support\Facades\Http;
 use Torgash\Automations\Models\RuleAction;
 use Torgash\Automations\Models\RuleRun;
@@ -75,9 +76,19 @@ class WebhookAction implements Action
             // 2xx is delivery. Anything else is the receiver saying no, and it
             // is a failure the shop owner has to be able to see — a webhook
             // that "ran" but was refused is the failure mode nobody notices.
+            // "Try later" (429) and the receiver's own errors (5xx) come round
+            // again (RunRule); the Idempotency-Key keeps a retry one deal.
             return $response->successful()
                 ? ['status' => RuleRun::SENT, 'summary' => 'HTTP '.$response->status(), 'detail' => $detail]
-                : ['status' => RuleRun::FAILED, 'summary' => 'HTTP '.$response->status(), 'detail' => $detail];
+                : ['status' => RuleRun::FAILED, 'summary' => 'HTTP '.$response->status(), 'detail' => $detail,
+                    'retry' => $response->status() === 429 || $response->serverError()];
+        } catch (ConnectionException $e) {
+            return [
+                'status' => RuleRun::FAILED,
+                'summary' => __('The receiver could not be reached: :error', ['error' => $e->getMessage()]),
+                'detail' => ['url' => $url, 'method' => $method, 'request' => $body],
+                'retry' => true,
+            ];
         } catch (\Throwable $e) {
             return [
                 'status' => RuleRun::FAILED,

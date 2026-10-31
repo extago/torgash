@@ -81,3 +81,18 @@ reads a literal pair in a template as its own echo (it did, twice).
   `item.option_label` / `item.is_part`. The template has no nested loops,
   so lists are joined into one string. Products are loaded in ONE query
   with their media and characteristics, never one per line.
+- **A block over a value (2026-10-31)**: `SafeTemplate` prints
+  `{{#path}}…{{/path}}` once when `path` is a non-empty scalar (not null,
+  '', false, 0) and not at all when it is empty, and resolves a block's body
+  with the row it is in — so `{{#item.options_text}}` inside the lines' loop
+  reads the line. The only way a template says "show only if there is one";
+  still no nested loops of the same name, no inverted blocks.
+- **A receiver not reached is retried per ACTION (2026-10-31)**: an action
+  answers `retry => true` (a connection error, 429, 5xx — never a 4xx);
+  `RunRule` logs the attempt as `retry` and queues a copy of itself for that
+  one action (`onlyActionId`, `attempt`) after `retry_minutes`, up to
+  `retries` times (module settings), then the row says failed. The queue's
+  own `$tries` is 1: a re-run of the whole job would deliver the other
+  actions twice. Telegram tries a dropped connection three times at once
+  first (`Http::retry`, connection errors only — a message Telegram took
+  but did not confirm would be sent twice).

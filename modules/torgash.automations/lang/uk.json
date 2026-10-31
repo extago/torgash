@@ -260,5 +260,13 @@
     "Weight, grams": "Вага, грами",
     "Options chosen with it: \"Licence: Windows Server 2022\"": "Вибрані з ним опції: «Ліцензія: Windows Server 2022»",
     "For a part of a configured product: what it was chosen as": "Для частини сконфігурованого товару: як що її вибрано",
-    "true for a part of a configured product": "true для частини сконфігурованого товару"
+    "true for a part of a configured product": "true для частини сконфігурованого товару",
+    "Retry an action the receiver did not take, times": "Повторювати дію, яку отримувач не прийняв, разів",
+    "A webhook whose host could not be reached, a Telegram message the network dropped, a receiver answering \"try later\" (429) or failing on its side (5xx): that one action — not the rest of the rule — is run again after the interval below, this many times, then marked failed. Every attempt is a row of the run log. 0 — never. A refusal (a wrong token, a chat not found, a 4xx) is never retried: it stays until fixed.": "Вебхук, до хоста якого не достукатися, повідомлення в Telegram, яке обірвала мережа, отримувач, що відповів «спробуйте пізніше» (429) або впав у себе (5xx): ця дія — а не решта правила — запускається знову через інтервал нижче, стільки разів, потім позначається як невдала. Кожна спроба — рядок журналу запусків. 0 — ніколи. Відмова (невірний токен, чат не знайдено, будь-який 4xx) не повторюється: вона лишається, доки її не виправлять.",
+    "Retry after, minutes": "Повторювати через, хвилин",
+    "Between one attempt and the next.": "Між однією спробою і наступною.",
+    "Attempt :attempt of :total, next in :minutes min: :why": "Спроба :attempt з :total, наступна через :minutes хв: :why",
+    "Telegram could not be reached: :error": "До Telegram не вдалося достукатися: :error",
+    "The receiver could not be reached: :error": "До отримувача не вдалося достукатися: :error",
+    "retry": "повтор"
 }

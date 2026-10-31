@@ -92,6 +92,20 @@ class TelegramActionTest extends TestCase
             \Torgash\Automations\Template::HTML,
         );
         $this->assertSame('Phone [Black] Colour: Black; Memory: 256 GB', $text);
+
+        // "Options: …" only where there are options: a block named after a
+        // VALUE shows once when it has one and not at all when it is empty —
+        // inside the lines' loop too, reading the line's own value.
+        $order->update(['items' => [
+            $order->fresh()->items[0],
+            ['product_id' => $product->id, 'sku' => 'TLG-V', 'name' => 'Phone', 'qty' => 1, 'unit_price' => 500_00, 'line_total' => 500_00],
+        ]]);
+        $text = \Torgash\Automations\Template::render(
+            "{{#order.items}}{{ item.name }}{{#item.options_text}} (Options: {{ item.options_text }}){{/item.options_text}}{{#item.is_part}} ↳{{/item.is_part}}\n{{/order.items}}{{#order.coupon}}Coupon: {{ order.coupon }}{{/order.coupon}}",
+            \Torgash\Automations\Context::forOrder($order->fresh(), 'checkout.order_placed'),
+            \Torgash\Automations\Template::HTML,
+        );
+        $this->assertSame("Phone (Options: Case: leather ×2)\nPhone\n", $text);
         $this->assertArrayHasKey('item.url', \Torgash\Automations\Context::catalogue()['Order lines'] ?? array_merge(...array_values(\Torgash\Automations\Context::catalogue())));
     }
 

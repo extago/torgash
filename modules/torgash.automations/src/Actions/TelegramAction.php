@@ -3,6 +3,7 @@
 namespace Torgash\Automations\Actions;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Support\Facades\Http;
 use Torgash\Automations\Models\RuleAction;
 use Torgash\Automations\Models\RuleRun;
@@ -59,7 +60,14 @@ class TelegramAction implements Action
         $shownUrl = 'https://api.telegram.org/bot…/sendMessage';
 
         try {
+            // A connection that drops on the way (from some networks one in
+            // forty does) is tried again at once, twice; what still fails is
+            // handed back with `retry` and comes round again after the shop's
+            // interval (RunRule). Only connection errors: a message Telegram
+            // took but did not confirm in time would otherwise be sent twice.
             $response = Http::timeout((int) setting('torgash.automations', 'timeout') ?: 10)
+                ->connectTimeout(5)
+                ->retry(3, 500, fn (\Throwable $e) => $e instanceof ConnectionException, throw: true)
                 ->withoutRedirecting()
                 ->asJson()
                 ->post('https://api.telegram.org/bot'.$token.'/sendMessage', [
@@ -82,11 +90,20 @@ class TelegramAction implements Action
             }
 
             // Telegram explains itself in `description` ("chat not found",
-            // "bot was blocked by the user") — that sentence is the fix.
+            // "bot was blocked by the user") — that sentence is the fix. "Too
+            // many requests" and its own 5xx are not: those come round again.
             return [
                 'status' => RuleRun::FAILED,
                 'summary' => 'HTTP '.$response->status().': '.((string) $response->json('description') ?: __('Telegram refused the message')),
                 'detail' => $detail,
+                'retry' => $response->status() === 429 || $response->serverError(),
+            ];
+        } catch (ConnectionException $e) {
+            return [
+                'status' => RuleRun::FAILED,
+                'summary' => __('Telegram could not be reached: :error', ['error' => str_replace($token, '…', $e->getMessage())]),
+                'detail' => ['url' => $shownUrl, 'method' => 'POST', 'request' => $text],
+                'retry' => true,
             ];
         } catch (\Throwable $e) {
             return [

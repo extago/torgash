@@ -24,6 +24,24 @@
             "help": "How long a webhook may take before it counts as failed. Runs happen in the queue, so this never delays a customer — but a receiver that hangs would hold a worker."
         },
         {
+            "key": "retries",
+            "type": "number",
+            "default": 3,
+            "label": "Retry an action the receiver did not take, times",
+            "help": "A webhook whose host could not be reached, a Telegram message the network dropped, a receiver answering \"try later\" (429) or failing on its side (5xx): that one action — not the rest of the rule — is run again after the interval below, this many times, then marked failed. Every attempt is a row of the run log. 0 — never. A refusal (a wrong token, a chat not found, a 4xx) is never retried: it stays until fixed.",
+            "keywords": {
+                "en": "retry attempts resend telegram webhook connection error timeout",
+                "ru": "повтор попытки переотправить телеграм вебхук ошибка соединения таймаут"
+            }
+        },
+        {
+            "key": "retry_minutes",
+            "type": "number",
+            "default": 2,
+            "label": "Retry after, minutes",
+            "help": "Between one attempt and the next."
+        },
+        {
             "key": "allow_private_hosts",
             "type": "checkbox",
             "default": false,

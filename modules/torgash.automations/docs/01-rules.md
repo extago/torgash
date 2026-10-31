@@ -88,10 +88,18 @@ rule, and the other way round.
 
 Every attempt is written to the **Run log** with what was sent and what came
 back — including a receiver that answered 4xx, which is the failure nobody
-notices otherwise. A failed request is retried twice, a minute and then five
-minutes later, carrying the same `Idempotency-Key` so the other side can
-tell a retry from a second order. The webhook also carries
-`X-Torgash-Event` — the trigger's name. The log is kept for **Keep the run
+notices otherwise. A receiver that could not be reached — its host down,
+the connection dropped on the way to Telegram, a "try later" (429) or an
+error on its side (5xx) — is tried again: that one action, not the rest of
+the rule, after **Retry after, minutes**, up to **Retry an action the
+receiver did not take, times** (3 and 2 minutes by default; 0 switches
+retries off). Each attempt is a row of the log, marked *retry* until the
+last one, which is *sent* or *failed*. A refusal — a wrong token, a chat
+not found, any 4xx — is never retried: it stays until somebody fixes it.
+A webhook carries the same `Idempotency-Key` on every attempt so the other
+side can tell a retry from a second order, and `X-Torgash-Event` — the
+trigger's name. A Telegram message the network dropped after Telegram had
+taken it can arrive twice; a lost one would be worse. The log is kept for **Keep the run
 log, days** (30 by default); the list shows a red count of what failed in
 the last 24 hours.
 
@@ -148,6 +156,16 @@ brand, the weight in grams, and the options chosen with it
 ```
 {{#order.items}}• <a href="{{ item.url }}">{{ item.name }}</a> {{ item.variation }} × {{ item.qty }}
 {{/order.items}}
+```
+
+A block named after a VALUE rather than a list is printed once when the
+value is there and not at all when it is empty — so a label or brackets
+around something not every order has go inside such a block, and a product
+without options gets no bare "Options:" and no empty "()":
+
+```
+{{#order.items}}• {{ item.name }}{{#item.options_text}} (options: {{ item.options_text }}){{/item.options_text}}
+{{/order.items}}{{#order.coupon}}Coupon: {{ order.coupon }}{{/order.coupon}}
 ```
 
 Two things worth knowing:
