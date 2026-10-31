@@ -236,14 +236,24 @@
    left edge: under a wide button the arrow pointed at the middle while the
    panel sat off to the right.) The UA's own popover box (centred,
    inset: 0, margin: auto) is undone first. popover-anchor.js does the same in
-   a browser that cannot. */
+   a browser that cannot.
+
+   Centred as `bottom` (the whole row under the button) + anchor-center, NOT
+   `bottom center`: that area is only as wide as the button, so any panel
+   wider than its button "overflowed" it and the browser took the first
+   fallback — a hint hung from the button's edge with all the room in the
+   world to centre. Now a fallback is taken only at the screen's edge.
+
+   margin-block 13px: the arrow is a 14px square turned 45°, ~12px out of the
+   panel — at 8px its point sat on the button (a label's lower edge). */
 .torgash-popover {
     position: fixed;
     inset: auto;
     margin: 0;
-    position-area: bottom center;
-    margin-block: 0.5rem;
-    position-try-fallbacks: bottom span-left, bottom span-right, top center, top span-left, top span-right;
+    position-area: bottom;
+    justify-self: anchor-center;
+    margin-block: 0.8125rem;
+    position-try-fallbacks: --pop-top, --pop-bottom-from-left, --pop-bottom-from-right, --pop-top-from-left, --pop-top-from-right;
     max-width: calc(100vw - 1rem);
     /* The UA gives a popover overflow: auto, which would cut the arrow off. */
     overflow: visible;
@@ -251,16 +261,28 @@
        the panel's background but UNDER its words — in a small hint the
        arrow's inner half would otherwise sit on the text. */
     isolation: isolate;
+    /* pointer-events is inherited, and a hint may be drawn inside a thing
+       that lets clicks through (a card's label corner): its panel is still
+       to be pointed at — kept open on the way, its words selected. */
+    pointer-events: auto;
 }
 .torgash-popover[data-placement="top"] {
-    position-area: top center;
-    position-try-fallbacks: top span-left, top span-right, bottom center, bottom span-left, bottom span-right;
+    position-area: top;
+    position-try-fallbacks: --pop-top-from-left, --pop-top-from-right, --pop-bottom, --pop-bottom-from-left, --pop-bottom-from-right;
 }
+@position-try --pop-bottom { position-area: bottom; justify-self: anchor-center; }
+@position-try --pop-top { position-area: top; justify-self: anchor-center; }
+/* Near the screen's left edge: from the button's left edge rightwards; near
+   the right edge, the other way. */
+@position-try --pop-bottom-from-left { position-area: bottom span-right; justify-self: start; }
+@position-try --pop-bottom-from-right { position-area: bottom span-left; justify-self: end; }
+@position-try --pop-top-from-left { position-area: top span-right; justify-self: start; }
+@position-try --pop-top-from-right { position-area: top span-left; justify-self: end; }
 /* A panel for a button at the edge of the page's grid (the town in the
    header's corner) hangs from the button's own edge instead, so it stays
    inside the grid rather than half past it. */
-.torgash-popover[data-align="start"] { position-area: bottom span-right; position-try-fallbacks: bottom span-left, top span-right; }
-.torgash-popover[data-align="end"] { position-area: bottom span-left; position-try-fallbacks: bottom span-right, top span-left; }
+.torgash-popover[data-align="start"] { position-area: bottom span-right; justify-self: normal; position-try-fallbacks: bottom span-left, top span-right; }
+.torgash-popover[data-align="end"] { position-area: bottom span-left; justify-self: normal; position-try-fallbacks: bottom span-right, top span-left; }
 /* Coming in: a short fade and a two-pixel glide towards the button
    (@starting-style — no script). Going out is at once: a closed panel is
    display: none whatever its classes say (below). */
@@ -273,6 +295,15 @@
 /* A class on the panel must never show it closed: `display` of any utility
    beats the browser's own [popover]:not(:popover-open) { display: none }. */
 .torgash-popover:not(:popover-open) { display: none !important; }
+/* A hint's words (<x-popover hover> with no panel-class of its own): the
+   storefront's one look of a hint — a label's "French brand", a delivery
+   method's note, what "+28 points" means. Its words can be selected. */
+.torgash-hint {
+    width: max-content; max-width: min(16rem, calc(100vw - 2rem));
+    padding: 0.5rem 0.75rem;
+    font-size: 0.8125rem; line-height: 1.35; font-weight: 400; text-align: left; white-space: normal;
+    user-select: text;
+}
 /* Its arrow: a square of the panel's own background and border, turned 45°,
    half out of the edge facing the button. popover-anchor.js says which edge
    (`data-side`: the panel is below or above its button) and where the
@@ -304,7 +335,7 @@
 .torgash-account-nav:has(.torgash-account-places:popover-open) .torgash-account-chevron { rotate: 180deg; }
 @media (width >= 48rem) {
     .torgash-account-places.torgash-popover:not(:popover-open) { display: block !important; }
-    .torgash-account-places.torgash-popover { position: static; margin: 0; width: auto; max-width: none; transition: none; }
+    .torgash-account-places.torgash-popover { position: static; margin: 0; width: auto; max-width: none; transition: none; justify-self: normal; }
 }
 
 /* A part of a form a phone folds behind its own button (the wishlist's
@@ -1325,16 +1356,6 @@ html:not(.torgash-js) .torgash-js-only { display: none !important; }
     color: var(--lbl-fg-dark, var(--lbl-fg, var(--color-neutral-content)));
 }
 
-/* A label's hint ("French brand"): a panel in the page's colours that opens
-   under the pointer or on focus (a tap, on a phone), away from the corner the
-   label stands in — the side is chosen in label-badge.blade.php. */
-/* inline-flex, not inline-block: an inline box keeps a line of text's
-   height under the badge, and a label with a hint stood 7px further from the
-   next one than a label without. */
-.torgash-label-tip { position: relative; display: inline-flex; cursor: help; outline: none; }
-/* The corner whose hint is open comes up over its neighbours — the card's
-   own buttons (wishlist, compare) share z-10 and come later in the markup. */
-.torgash-label-corner:has(.torgash-label-tip:is(:hover, :focus, :focus-within)) { z-index: 40; }
 /* A label's height: daisyUI's sizes are for counters in a line of text, and
    on a photo "New" read as a sliver. */
 .badge.torgash-label { padding-inline: 0.5rem; font-weight: 600; }
@@ -1342,34 +1363,6 @@ html:not(.torgash-js) .torgash-js-only { display: none !important; }
 .badge.torgash-label.badge-sm { --size: 1.375rem; }
 .badge.torgash-label.badge-md { --size: 1.625rem; }
 .badge.torgash-label.badge-lg { --size: 1.875rem; }
-.torgash-label-tip-panel {
-    position: absolute; z-index: 30;
-    width: max-content; max-width: min(16rem, calc(100vw - 2rem));
-    padding: 0.625rem 0.875rem; border-radius: var(--radius-box, 0.5rem);
-    background: var(--color-base-100); color: var(--color-base-content);
-    box-shadow: 0 8px 28px rgb(0 0 0 / 0.16);
-    font-size: 0.8125rem; line-height: 1.35; font-weight: 400; text-align: left; white-space: normal;
-    /* display: none while closed, not visibility: hidden — a hidden panel
-       still takes room, and one near a phone's edge widened the whole page
-       sideways. allow-discrete keeps the fade both ways. */
-    display: none; opacity: 0; transform: translateY(-2px);
-    transition: opacity 0.15s, transform 0.15s, display 0.15s allow-discrete;
-    /* Its words can be selected and copied: the pointer may go onto it, and
-       a strip over the gap (::before) keeps it open on the way there. */
-    pointer-events: auto; cursor: text; user-select: text;
-}
-a:has([data-inert-text]:hover) { -webkit-user-drag: none; }
-.torgash-label-tip-panel::before { content: ""; position: absolute; inset-inline: 0; height: 0.625rem; }
-.torgash-label-tip-panel.top-full::before { bottom: 100%; }
-.torgash-label-tip-panel.bottom-full::before { top: 100%; }
-.torgash-label-tip:hover .torgash-label-tip-panel,
-.torgash-label-tip:focus .torgash-label-tip-panel,
-.torgash-label-tip:focus-within .torgash-label-tip-panel { display: block; opacity: 1; transform: none; }
-@starting-style {
-    .torgash-label-tip:hover .torgash-label-tip-panel,
-    .torgash-label-tip:focus .torgash-label-tip-panel,
-    .torgash-label-tip:focus-within .torgash-label-tip-panel { opacity: 0; transform: translateY(-2px); }
-}
 
 /* Admin tables scroll SIDEWAYS only. A table sits in an overflow-x-auto box so
    a wide one can scroll across, and a box that scrolls one way scrolls both:
@@ -1778,7 +1771,7 @@ a:has([data-inert-text]:hover) { -webkit-user-drag: none; }
 /* The panel: the section's name, then its items. Beside the icon, below
    it when the screen's foot is near. */
 .torgash-admin .admin-sidebar-flyout {
-    position-area: right span-bottom; position-try-fallbacks: right span-top;
+    position-area: right span-bottom; position-try-fallbacks: right span-top; justify-self: normal;
     margin: 0 0 0 0.5rem; width: 16rem; padding: 0.5rem; max-height: calc(100dvh - 2rem); overflow-y: auto;
     background-color: var(--color-base-100); color: var(--color-base-content);
     border: 1px solid var(--color-base-300); border-radius: var(--radius-box); box-shadow: 0 10px 30px -10px oklch(0% 0 0 / 0.35);

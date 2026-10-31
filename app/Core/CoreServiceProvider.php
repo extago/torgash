@@ -45,6 +45,13 @@ class CoreServiceProvider extends ServiceProvider
     public function register(): void
     {
         $this->app->singleton(HookBus::class);
+        // The shop's own wording of the engine's texts (Admin → Texts) laid
+        // over the lang files: the framework's loader, wrapped before anything
+        // asks the translator for a word.
+        $this->app->singleton(\App\Core\Translation\TextOverrides::class);
+        $this->app->extend('translation.loader', fn (\Illuminate\Translation\FileLoader $loader, $app) => \App\Core\Translation\TextLoader::from(
+            $loader, $app['files'], $app->make(\App\Core\Translation\TextOverrides::class),
+        ));
         $this->app->singleton(\App\Core\Tasks\CurrentTask::class);
         $this->app->singleton(SettingsManager::class);
         $this->app->singleton(ThemeManager::class);

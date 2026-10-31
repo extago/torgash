@@ -267,9 +267,12 @@ class ReviewsServiceProvider extends ServiceProvider
             app(Aggregates::class)->prime(collect($context['products'] ?? []));
         });
 
+        // Priority 5: the stars come first in the card's row, before a bonus
+        // or a video mark — what a shopper reads right after the name, and in
+        // one column across the grid whatever else a card has.
         hook_listen('catalog.product.card_meta', function (string $value, array $context) {
             return $value.$this->mark($context['product'] ?? null, compact: true);
-        });
+        }, 5);
 
         hook_listen('catalog.product.title_meta', function (string $value, array $context) {
             return $value.$this->mark($context['product'] ?? null);

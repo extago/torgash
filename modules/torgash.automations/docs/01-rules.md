@@ -137,6 +137,19 @@ or, for an API:
 {"lines":[{{#order.items}}{"sku":"{{ item.sku }}","qty":{{ item.qty }}},{{/order.items}}]}
 ```
 
+A line also knows its product: a link to it (`item.url`, and
+`item.admin_url` for the admin), its photo (`item.image_url`), its
+variation in one line (`item.variation` — "black, 256 GB"), any
+characteristic by its code (`item.features.COLOR` — the code is on the
+characteristic's form) or all of them at once (`item.features_text`), the
+brand, the weight in grams, and the options chosen with it
+(`item.options_text`). A message that links its lines:
+
+```
+{{#order.items}}• <a href="{{ item.url }}">{{ item.name }}</a> {{ item.variation }} × {{ item.qty }}
+{{/order.items}}
+```
+
 Two things worth knowing:
 
 * **Amounts are minor units** — `order.total` is `15000` for 150.00, which

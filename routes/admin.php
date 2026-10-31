@@ -156,6 +156,9 @@ Route::middleware(['auth', 'can:admin.access'])->group(function () {
         Route::patch('languages/{language}/status', [LanguagesController::class, 'status'])->name('languages.status');
         Route::post('languages/{language}/base', [LanguagesController::class, 'makeBase'])->name('languages.base');
         Route::resource('languages', LanguagesController::class)->except(['show']);
+        // The shop's own wording of the engine's texts, over the lang files.
+        Route::get('texts', [\App\Http\Controllers\Admin\TextsController::class, 'index'])->name('texts.index');
+        Route::post('texts', [\App\Http\Controllers\Admin\TextsController::class, 'save'])->name('texts.save');
     });
 
     // A rate reprices every product priced in that currency.

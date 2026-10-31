@@ -186,10 +186,10 @@ class VideoTest extends TestCase
         app(Videos::class)->add('product', $with->id, 'https://vimeo.com/111111');
 
         $html = $this->get('http://localhost/catalog/cameras')->assertOk()->getContent();
-        $this->assertSame(1, substr_count($html, 'title="'.__('Has a video').'"'));
+        $this->assertSame(1, substr_count($html, 'torgash-video-mark'));
 
         app(SettingsManager::class)->set('torgash.video', 'card_icon', false);
-        $this->get('http://localhost/catalog/cameras')->assertDontSee('title="'.__('Has a video').'"', false);
+        $this->get('http://localhost/catalog/cameras')->assertDontSee('torgash-video-mark', false);
     }
 
     /** In the bin a product keeps its videos; gone for good, it takes them along. */

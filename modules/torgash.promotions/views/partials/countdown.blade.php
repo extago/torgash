@@ -40,12 +40,18 @@
         <span class="text-sm opacity-70">{{ $label }}</span>
     @endif
     @if (! empty($countdownPill))
-        <span class="torgash-countdown-pill" title="{{ __('Until the sale ends') }}">
-            <x-icon name="zap" size="sm" />
-            {{-- One flex item for the time: the colons must not get the gap. --}}
-            <span x-show="days > 0"><span x-text="days"></span>{{ __('d') }}</span>
-            <span><span x-text="hours"></span>:<span x-text="minutes"></span><span x-show="days === 0">:<span x-text="seconds"></span></span></span>
-        </span>
+        {{-- What the time counts down to is core's hint (<x-popover hover>).
+             pointer-events-auto: on a card the pill stands among the labels,
+             whose corner lets clicks through to the photo. --}}
+        <x-popover hover class="torgash-countdown-pill pointer-events-auto">
+            {{ __('Until the sale ends') }}
+            <x-slot:trigger>
+                <x-icon name="zap" size="sm" />
+                {{-- One flex item for the time: the colons must not get the gap. --}}
+                <span x-show="days > 0"><span x-text="days"></span>{{ __('d') }}</span>
+                <span><span x-text="hours"></span>:<span x-text="minutes"></span><span x-show="days === 0">:<span x-text="seconds"></span></span></span>
+            </x-slot:trigger>
+        </x-popover>
     @elseif (! empty($countdownBoxes))
         <div class="torgash-countdown-boxes">
             @foreach (['days' => __('d.'), 'hours' => __('h.'), 'minutes' => __('min.'), 'seconds' => __('sec.')] as $countdownUnit => $countdownWord)

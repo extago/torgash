@@ -17,6 +17,7 @@ use Torgash\Checkout\Models\Order;
 use Torgash\Checkout\Models\OrderLog;
 use Torgash\Checkout\Orders\ClientFacts;
 use Torgash\Checkout\Orders\OneClick;
+use Torgash\Checkout\Orders\OrderNumbers;
 use Torgash\Checkout\Orders\OrderChanges;
 use Torgash\Checkout\Shipping\LocationStore;
 use Torgash\Checkout\Support\Statuses;
@@ -370,12 +371,47 @@ class CheckoutServiceProvider extends ServiceProvider
         // in — offering a status that can never be bought would be a tick box
         // that switches nothing on. Filled in here because the manifest cannot
         // know the shop's own statuses.
+        // "Next order number" moves the sequence (Orders\OrderNumbers) — once
+        // the screen has checked it is above the last one issued, which a
+        // change announced after the write could not refuse.
+        hook_listen('core.settings.saving', function (array $errors, array $context) {
+            if (($context['module'] ?? null) !== 'torgash.checkout' || ! array_key_exists('order_number_next', $context['values'] ?? [])) {
+                return $errors;
+            }
+
+            $next = (int) $context['values']['order_number_next'];
+
+            if ($next > 0 && $next !== (int) setting('torgash.checkout', 'order_number_next')
+                && ($why = app(OrderNumbers::class)->refusal($next)) !== null) {
+                $errors['order_number_next'] = $why;
+            }
+
+            return $errors;
+        });
+
+        hook_listen('core.setting.changed', function (array $context) {
+            if (($context['module'] ?? null) === 'torgash.checkout' && ($context['key'] ?? null) === 'order_number_next' && (int) $context['to'] > 0) {
+                app(OrderNumbers::class)->startFrom((int) $context['to']);
+            }
+
+            return $context;
+        });
+
         hook_listen('core.settings.fields', function (array $fields, array $context) {
             if (($context['module'] ?? null) !== 'torgash.checkout') {
                 return $fields;
             }
 
             return array_map(function (array $field) {
+                // What the numbers look like now, and where the count stands.
+                if (in_array($field['key'] ?? null, ['order_number_prefix', 'order_number_next'], true)) {
+                    $numbers = app(OrderNumbers::class);
+                    $last = $numbers->last();
+                    $field['help'] = __($field['help']).' '.($last === null
+                        ? __('No order has been numbered yet.')
+                        : __('The last number issued: :number.', ['number' => $numbers->format($last)]));
+                }
+
                 if (($field['key'] ?? null) === 'client_facts') {
                     $field['options'] = collect(app(ClientFacts::class)->all())
                         ->map(fn (array $fact) => $fact['label'])

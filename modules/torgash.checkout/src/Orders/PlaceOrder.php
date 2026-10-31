@@ -415,7 +415,9 @@ class PlaceOrder
             return $order;
         });
 
-        $order->update(['order_number' => 'TG-'.str_pad((string) $order->id, 6, '0', STR_PAD_LEFT)]);
+        // Its name: the next of the shop's sequence, in the shop's format
+        // (OrderNumbers) — never the row's id.
+        $order->update(['order_number' => app(OrderNumbers::class)->next()]);
 
         if ($saveAddress && auth()->check()) {
             $addresses = auth()->user()->addresses();

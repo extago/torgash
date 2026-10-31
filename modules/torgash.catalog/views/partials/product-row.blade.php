@@ -59,13 +59,14 @@
     </div>
 
     <div class="col-start-2 sm:col-start-3 flex items-center justify-between sm:justify-end gap-4">
-        <a href="{{ $rowUrl }}" class="flex flex-col items-start sm:items-end min-w-0 sm:min-w-28" tabindex="-1">
+        <div class="flex flex-col items-start sm:items-end min-w-0 sm:min-w-28">
             {{-- Not beside a "from" — see product-card.blade.php. --}}
             @if (! $rowPriceIsFrom && $product->discountPercent() > 0)
                 <span class="text-xs torgash-old-price whitespace-nowrap">{{ format_price($product->oldPrice()) }}</span>
             @endif
             <span class="text-lg font-bold leading-tight whitespace-nowrap torgash-price">{{ $rowShownPrice->format($product) }}</span>
-        </a>
+            {!! hook_render('catalog.product.card_price_extra', ['product' => $product]) !!}
+        </div>
         <div class="flex items-center gap-2 shrink-0">
             {{-- A fixed width for the basket's place (its stepper, a gap and the button,
                  10rem), filled or not: a row that cannot be bought would

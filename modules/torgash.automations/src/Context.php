@@ -2,6 +2,10 @@
 
 namespace Torgash\Automations;
 
+use Torgash\Catalog\Models\Product;
+use Torgash\Catalog\Models\ProductFeature;
+use Torgash\Catalog\Support\Measurements;
+use Torgash\Catalog\Support\Variations;
 use Torgash\Checkout\Models\Order;
 use Torgash\Checkout\Orders\PaymentState;
 
@@ -26,6 +30,13 @@ class Context
      */
     public static function forOrder(Order $order, string $event, array $changed = []): array
     {
+        // The lines' products in ONE query, with what a message may say
+        // about them (photo, characteristics, weight) — never one per line.
+        $products = Product::whereIn('id', array_filter(array_column($order->items ?? [], 'product_id')))
+            ->withCardData()->with('featureAssignments.feature', 'featureAssignments.featureValue')
+            ->get()->keyBy('id');
+        app(Measurements::class)->prime($products);
+
         return [
             'event' => $event,
             'changed' => implode(',', $changed),
@@ -65,7 +76,7 @@ class Context
                 'shipping_method' => (string) $order->shipping_method_name,
                 'coupon' => (string) $order->coupon_code,
                 'placed_at' => $order->created_at?->toIso8601String() ?? '',
-                'items' => array_map(fn (array $item) => [
+                'items' => array_map(fn (array $item) => self::line($item, $products[$item['product_id'] ?? 0] ?? null) + [
                     'product_id' => $item['product_id'] ?? null,
                     'sku' => (string) ($item['sku'] ?? ''),
                     'name' => (string) ($item['name'] ?? ''),
@@ -78,6 +89,82 @@ class Context
                 ], $order->items ?? []),
             ],
         ];
+    }
+
+    /**
+     * What a line says beyond its money: the product's addresses and photo,
+     * its variation ("black, 256 GB"), its characteristics by code
+     * (`item.features.COLOR`) and in one line, the options chosen with it,
+     * and — for a part of a configured product — what it was chosen as.
+     * Every product field is '' once the product is gone.
+     *
+     * @param  array<string, mixed>  $item
+     * @return array<string, mixed>
+     */
+    protected static function line(array $item, ?Product $product): array
+    {
+        $options = array_map(
+            fn (array $option) => (string) $option['label'].((int) ($option['qty'] ?? 1) > 1 ? ' ×'.(int) $option['qty'] : ''),
+            (array) ($item['options'] ?? []),
+        );
+
+        $features = [];
+        $featuresText = [];
+
+        if ($product) {
+            $assignments = $product->featureAssignments
+                ->filter(fn (ProductFeature $pf) => $pf->feature && (string) $pf->feature->code !== '')
+                ->sortBy(fn (ProductFeature $pf) => [(int) $pf->feature->sort, (int) $pf->feature_id]);
+
+            foreach ($assignments as $pf) {
+                $text = trim((string) $pf->display());
+
+                if ($text === '') {
+                    continue;
+                }
+
+                // A list characteristic may hold several values: one entry.
+                $code = (string) $pf->feature->code;
+                $features[$code] = isset($features[$code]) ? $features[$code].', '.$text : $text;
+            }
+
+            foreach ($assignments->unique('feature_id') as $pf) {
+                if (isset($features[$pf->feature->code])) {
+                    $featuresText[] = $pf->feature->t('name').': '.$features[$pf->feature->code];
+                }
+            }
+        }
+
+        return [
+            'url' => $product ? route('catalog.product', $product->slug) : '',
+            'admin_url' => $product ? route('admin.catalog.products.edit', $product->id) : '',
+            'image_url' => $product ? (string) $product->primaryImageUrl(400) : '',
+            'variation' => $product ? self::variation($product) : '',
+            'features' => $features,
+            'features_text' => implode('; ', $featuresText),
+            'brand' => $product ? (string) ($product->brandValue()?->display() ?? '') : '',
+            'weight' => $product?->resolvedWeight() ?? '',
+            'options_text' => implode('; ', $options),
+            'option_label' => (string) ($item['option_label'] ?? ''),
+            'is_part' => isset($item['parent_key']),
+        ];
+    }
+
+    /** The product's answers on its group's variation axes, in one line — '' for a product in no group. */
+    protected static function variation(Product $product): string
+    {
+        $group = app(Variations::class)->for($product);
+        $labels = [];
+
+        foreach ($group['axes'] as $axis) {
+            $label = $group['values'][$product->id][$axis['feature']->id]['label'] ?? '';
+
+            if ($label !== '') {
+                $labels[] = $label;
+            }
+        }
+
+        return implode(', ', $labels);
     }
 
     /**
@@ -134,6 +221,17 @@ class Context
                 'item.line_total_formatted' => 'Line total with the currency',
                 'item.unit_price_decimal' => 'Price of one',
                 'item.product_id' => 'Product id',
+                'item.url' => 'Link to the product',
+                'item.admin_url' => 'Link to the product in the admin',
+                'item.image_url' => 'Link to the product\'s photo',
+                'item.variation' => 'Variation in one line: "black, 256 GB"',
+                'item.features.CODE' => 'A characteristic by its code: item.features.COLOR',
+                'item.features_text' => 'Every characteristic in one line: "Colour: black; Memory: 256 GB"',
+                'item.brand' => 'Brand',
+                'item.weight' => 'Weight, grams',
+                'item.options_text' => 'Options chosen with it: "Licence: Windows Server 2022"',
+                'item.option_label' => 'For a part of a configured product: what it was chosen as',
+                'item.is_part' => 'true for a part of a configured product',
             ],
             'Technical' => [
                 'order.id' => 'Order id',
@@ -168,6 +266,8 @@ class Context
             'order.coupon', 'order.placed_at',
             'item.sku', 'item.name', 'item.qty', 'item.unit_price', 'item.unit_price_decimal',
             'item.line_total', 'item.line_total_decimal', 'item.line_total_formatted', 'item.product_id',
+            'item.url', 'item.admin_url', 'item.image_url', 'item.variation', 'item.features_text',
+            'item.brand', 'item.weight', 'item.options_text', 'item.option_label', 'item.is_part',
         ];
     }
 

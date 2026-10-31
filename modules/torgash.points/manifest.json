@@ -99,6 +99,17 @@
             "help": "What buying the product earns, and to a guest — that it would earn it with an account."
         },
         {
+            "key": "card_place",
+            "type": "select",
+            "default": "meta",
+            "options": {
+                "meta": "After the reviews, under the name",
+                "price": "Under the price"
+            },
+            "label": "Points on a product card",
+            "help": "In the catalogue's grid and list, the wishlist and the comparison. The product page always shows them under the price."
+        },
+        {
             "key": "points_prices",
             "type": "checkbox",
             "default": false,

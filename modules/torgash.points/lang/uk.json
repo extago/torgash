@@ -101,5 +101,9 @@
     "Saved.": "Збережено.",
     "Has points": "Є бали",
     "Empty — any balance above zero.": "Порожньо — будь-який баланс більше нуля.",
-    "At least": "Не менше"
+    "At least": "Не менше",
+    "After the reviews, under the name": "Після відгуків, під назвою",
+    "Under the price": "Під ціною",
+    "Points on a product card": "Бали в картці товару",
+    "In the catalogue's grid and list, the wishlist and the comparison. The product page always shows them under the price.": "У сітці та списку каталогу, в обраному й порівнянні. На сторінці товару вони завжди під ціною."
 }

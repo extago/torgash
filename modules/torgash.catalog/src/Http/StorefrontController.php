@@ -389,6 +389,16 @@ class StorefrontController extends Controller
      * need it. reachable(), not visible(): a "hidden" product is deliberately
      * absent from every listing but still opens on its own URL.
      */
+    /** `/p/{id}`: on to the product's own address — the slug's, never a second one. */
+    public function productById(int $id)
+    {
+        $product = Product::reachable()->find($id);
+
+        abort_unless($product, 404);
+
+        return redirect()->route('catalog.product', $product->slug, 301);
+    }
+
     protected function findProduct(string $slug): ?Product
     {
         return Product::where('slug', $slug)->reachable()

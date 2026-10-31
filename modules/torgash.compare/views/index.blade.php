@@ -139,6 +139,7 @@
                                                         <span class="text-xs torgash-old-price">{{ format_price($compareProduct->oldPrice()) }}</span>
                                                     @endif
                                                     <span class="text-lg font-bold leading-tight torgash-price">{{ $compareShown->format($compareProduct) }}</span>
+                                                    {!! hook_render('catalog.product.card_price_extra', ['product' => $compareProduct]) !!}
                                                     <span @class([
                                                         'text-xs mt-0.5',
                                                         'torgash-availability torgash-availability-'.$compareProduct->effectiveAvailabilityKey(),

@@ -191,6 +191,33 @@ class PointsTest extends TestCase
         $this->assertSame(100, app(Ledger::class)->balance($this->customer->id));
     }
 
+    /** On a card the points stand after the stars, or under the price — the
+     *  shop's choice; the product page keeps them under its price either way. */
+    public function test_a_card_shows_the_points_where_the_shop_chose(): void
+    {
+        $category = Category::create(['name' => ['en' => 'Points place'], 'slug' => 'pt-place']);
+        Product::where('sku', 'PT-1')->firstOrFail()->categories()->attach($category->id);
+
+        $card = function (): string {
+            $html = $this->actingAs($this->customer)->get('http://localhost/catalog/pt-place')->assertOk()->getContent();
+            $dom = new \DOMDocument;
+            @$dom->loadHTML('<?xml encoding="utf-8">'.$html);
+            $xpath = new \DOMXPath($dom);
+
+            // The text of the price's own column, and of everything else.
+            $price = $xpath->query('//*[contains(@class, "torgash-card-buy")]')->item(0)->textContent;
+
+            return str_contains($price, '+24') ? 'price' : (str_contains($html, '+24') ? 'meta' : 'none');
+        };
+
+        $this->assertSame('meta', $card());
+
+        app(\App\Core\Settings\SettingsManager::class)->set('torgash.points', 'card_place', 'price');
+
+        $this->assertSame('price', $card());
+        $this->actingAs($this->customer)->get('http://localhost/product/pt-table')->assertOk()->assertSee('+24');
+    }
+
     public function test_expired_points_are_written_off_oldest_first(): void
     {
         app(\App\Core\Settings\SettingsManager::class)->set('torgash.points', 'lifetime_months', 1);

@@ -135,6 +135,18 @@
 {"lines":[{{#order.items}}{"sku":"{{ item.sku }}","qty":{{ item.qty }}},{{/order.items}}]}
 ```
 
+Строка знает и свой товар: ссылку на него (`item.url`, для админки —
+`item.admin_url`), фото (`item.image_url`), вариацию одной строкой
+(`item.variation` — «чёрный, 256 ГБ»), любую характеристику по её коду
+(`item.features.COLOR` — код виден в форме характеристики) или все сразу
+(`item.features_text`), бренд, вес в граммах и выбранные с ним опции
+(`item.options_text`). Сообщение со ссылками на товары:
+
+```
+{{#order.items}}• <a href="{{ item.url }}">{{ item.name }}</a> {{ item.variation }} × {{ item.qty }}
+{{/order.items}}
+```
+
 Два важных момента:
 
 * **Суммы — в минорных единицах**: `order.total` для 150.00 равен `15000`,

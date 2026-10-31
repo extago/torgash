@@ -4,9 +4,11 @@
      are the drawer's own additions to the cell — raw attributes, so they are
      never anything but template code.
 
-     The cell is a DIV holding the link and, beside it, the price row: a buy
-     button is a form, and a form (or any control) inside an <a> is invalid
-     markup whose click is the link's. For the same reason the photograph's
+     The cell is a DIV, and only the photograph and the name are links to the
+     product: the code, the price and the rest stay plain text a shopper can
+     select and copy (a card that was one big link could not be copied from).
+     A buy button is a form, and a form inside an <a> is invalid markup whose
+     click is the link's; for the same reason the photograph's
      top-right corner (catalog.product.card_corner — the heart, and whatever
      else toggles a product into a list) is drawn OVER the figure from outside
      the link rather than inside it.
@@ -27,13 +29,23 @@
 @endphp
 <div {!! $cardAttributes ?? '' !!} @if ($cardPanel) data-card-panel @endif
      class="torgash-card relative p-3 md:p-4 flex flex-col gap-1 {{ $cardClass ?? '' }}">
-<a href="{{ route('catalog.product', $product->slug) }}" class="flex flex-col gap-1 flex-1">
-    <figure class="aspect-square bg-base-200 relative mb-2">
-        @include('torgash.catalog::partials.label-badges', [
-            'labels' => $cardLabels, 'position' => 'list', 'product' => $product,
-            'badgesRightInset' => $cardCorner !== '',
-            'badgesExtra' => $cardFlags,
-        ])
+@php $cardUrl = route('catalog.product', $product->slug); @endphp
+<div class="flex flex-col gap-1 flex-1">
+    {{-- The labels stand over the photograph from OUTSIDE its link, as the
+         corner's buttons do: a plain label lets the click through to the
+         photo beneath (pointer-events-none), but one with a hint is a thing
+         to tap — inside the link, a tap on a phone opened the hint and
+         followed the link in the same breath. --}}
+    <div class="relative mb-2">
+    @include('torgash.catalog::partials.label-badges', [
+        'labels' => $cardLabels, 'position' => 'list', 'product' => $product,
+        'badgesRightInset' => $cardCorner !== '',
+        'badgesExtra' => $cardFlags,
+    ])
+    {{-- Out of the tab order: the name below is the same link, and one
+         stop per card is what a keyboard wants. --}}
+    <a href="{{ $cardUrl }}" class="block" tabindex="-1">
+    <figure class="aspect-square bg-base-200 relative">
         {{-- 400: the catalogue card's box. Asking for a width is what
              makes the media module's thumbnails actually get used —
              without it this served the full-size original. --}}
@@ -84,6 +96,8 @@
             <x-no-image class="w-full h-full" />
         @endif
     </figure>
+    </a>
+    </div>
     {{-- text-xs, same as the product page's own SKU line: an
          arbitrary 11px here made the identical label render at two
          sizes one scroll apart. --}}
@@ -93,7 +107,7 @@
     {{-- Three lines on a phone: a card there is half the screen, and two
          lines cut "Ubiquiti UniFi Enterprise Firewall…" before the words
          that tell two models apart. --}}
-    <div class="text-sm leading-snug line-clamp-3 md:line-clamp-2">{{ $product->t('name') }}</div>
+    <a href="{{ $cardUrl }}" class="text-sm leading-snug line-clamp-3 md:line-clamp-2 hover:text-primary">{{ $product->t('name') }}</a>
     {{-- One line under the name for what another module knows about
          this product and a card should say — a rating today. A
          listener MUST answer for a whole page in one query (it is
@@ -142,7 +156,7 @@
         $shownPrice = app(\Torgash\Catalog\Pricing\ShownPrice::class);
         $priceIsFrom = $shownPrice->isFrom($product);
     @endphp
-</a>
+</div>
     {{-- The price, and whatever another module offers to DO with the product
          from here — the basket's button (torgash.cart). Catalog knows nothing
          of carts; without such a module the row is the price alone. --}}
@@ -151,7 +165,7 @@
          sends the button to the line below (app.css, .torgash-card-buy). --}}
     @php $cardActions = hook_render('catalog.product.card_actions', ['product' => $product]); @endphp
     <div class="torgash-card-buy flex flex-wrap items-end justify-between gap-x-2 gap-y-1 mt-1">
-        <a href="{{ route('catalog.product', $product->slug) }}" class="flex flex-col shrink-0 whitespace-nowrap" tabindex="-1">
+        <div class="flex flex-col shrink-0 whitespace-nowrap">
             {{-- Not beside a "from": the struck-through number was the old
                  price of the bare product, and setting it against the
                  cheapest BUILD claims a discount that was never given. --}}
@@ -159,7 +173,12 @@
                 <span class="text-xs torgash-old-price">{{ format_price($product->oldPrice()) }}</span>
             @endif
             <span class="text-lg font-bold leading-tight torgash-price">{{ $shownPrice->format($product) }}</span>
-        </a>
+            {{-- What another module says about the price itself — bonus
+                 points, when the shop puts them here rather than in the row
+                 under the name. Wraps: it is a line under the price, not
+                 something to widen the column for. --}}
+            {!! hook_render('catalog.product.card_price_extra', ['product' => $product]) !!}
+        </div>
         @if (trim($cardActions) !== '')
             <div class="ml-auto">{!! $cardActions !!}</div>
         @endif
@@ -183,8 +202,8 @@
     @if ($cardPanel)
         {{-- A second copy of the words for the pointer, not for a reader: the
              card's own copy is what a screen reader and a phone get. --}}
-        <a href="{{ route('catalog.product', $product->slug) }}" class="torgash-card-panel" tabindex="-1" aria-hidden="true">
+        <div class="torgash-card-panel" aria-hidden="true">
             <span class="line-clamp-6">{{ $cardShortDescription }}</span>
-        </a>
+        </div>
     @endif
 </div>

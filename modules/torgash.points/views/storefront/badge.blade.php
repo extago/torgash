@@ -7,11 +7,16 @@
         </span>
     @endif
     @if ($pointsEarn > 0)
-        <span class="opacity-70 flex items-center gap-1" title="{{ __('Bonus points for buying it') }}">
-            @if ($pointsPrice === null)<x-icon name="coins" size="sm" />@endif
-            {{ $pointsGuest && $pointsWhere === 'page'
-                ? trans_choice('+:points point with an account|+:points points with an account', $pointsEarn, ['points' => number_format($pointsEarn, 0, '.', ' ')])
-                : trans_choice('+:points point|+:points points', $pointsEarn, ['points' => number_format($pointsEarn, 0, '.', ' ')]) }}
-        </span>
+        {{-- What "+24" means is core's hint (<x-popover hover>): a title
+             never shows on a phone, where most of these are read. --}}
+        <x-popover hover class="opacity-70 hover:opacity-100 flex items-center gap-1">
+            {{ __('Bonus points for buying it') }}
+            <x-slot:trigger>
+                @if ($pointsPrice === null)<x-icon name="coins" size="sm" />@endif
+                {{ $pointsGuest && $pointsWhere === 'page'
+                    ? trans_choice('+:points point with an account|+:points points with an account', $pointsEarn, ['points' => number_format($pointsEarn, 0, '.', ' ')])
+                    : trans_choice('+:points point|+:points points', $pointsEarn, ['points' => number_format($pointsEarn, 0, '.', ' ')]) }}
+            </x-slot:trigger>
+        </x-popover>
     @endif
 </div>

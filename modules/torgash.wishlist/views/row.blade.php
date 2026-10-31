@@ -49,6 +49,7 @@
                 <span class="opacity-70">{{ __('You save :amount', ['amount' => format_price(max(0, $wishRow->oldPrice() - $wishRow->effectivePrice()))]) }}</span>
             </div>
         @endif
+        {!! hook_render('catalog.product.card_price_extra', ['product' => $wishRow]) !!}
     </div>
     <div class="col-span-2 flex items-center gap-2 shrink-0">
         {!! hook_render('catalog.product.card_actions', ['product' => $wishRow, 'place' => 'wishlist', 'quantity' => 'open']) !!}

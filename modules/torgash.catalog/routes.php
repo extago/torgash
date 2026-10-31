@@ -38,3 +38,8 @@ Route::get('/product/{slug}.md', [StorefrontController::class, 'productText'])
     ->middleware('throttle:torgash-agent')->name('catalog.product.text');
 
 Route::get('/product/{slug}', [StorefrontController::class, 'product'])->name('catalog.product')->middleware('page.cache:product');
+// A product by its id, for whoever holds the id and not the slug — a
+// Telegram message, a 1C document, a manager on the phone: `/p/151` sends
+// on (301) to the product's own address, so the slug stays the one address
+// search engines know; a product that is gone or unreachable answers 404.
+Route::get('/p/{id}', [StorefrontController::class, 'productById'])->whereNumber('id')->name('catalog.product.by_id');

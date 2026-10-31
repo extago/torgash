@@ -635,3 +635,10 @@ rows. `category_nav_hide_empty` never hides the current row or the way up.
   every product there already is the brand. `X-Catalog-Count` answered as on
   any listing. `BrandPageListingTest`.
 
+
+- **A product by its id — `/p/{id}` (2026-10-31)**: for whoever holds the
+  id and not the slug (a Telegram message, a 1C document, a manager on the
+  phone). Never a second address of the page: a 301 to `catalog.product`
+  (the slug's, in the locale shape the request came in), 404 for a product
+  that is not `reachable()`. Registered through `StorefrontRoutes::group`
+  like every storefront route, so `/ru/p/151` exists too.

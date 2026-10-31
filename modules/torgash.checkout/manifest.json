@@ -18,6 +18,35 @@
     },
     "settings": [
         {
+            "key": "order_number_prefix",
+            "type": "text",
+            "default": "TG-",
+            "label": "Order number prefix",
+            "help": "Letters before the number: TG-000123. May be empty. Only orders placed from now on; a number already given stays on its letters and invoices.",
+            "keywords": {
+                "en": "order number format prefix letters numbering",
+                "ru": "номер заказа формат префикс буквы нумерация"
+            }
+        },
+        {
+            "key": "order_number_digits",
+            "type": "number",
+            "default": 6,
+            "label": "Digits in the order number",
+            "help": "The number is padded with zeros to this many digits: 6 — 000123. 0 — as it is: 123."
+        },
+        {
+            "key": "order_number_next",
+            "type": "number",
+            "default": 0,
+            "label": "Next order number",
+            "help": "The number the next order gets; the ones after count on from it. For a shop moving in, to carry on from the old shop's count — or to start from 15 000 rather than 1. Only above the last number issued. 0 — the count goes on as it is.",
+            "keywords": {
+                "en": "start order number from counter sequence first order",
+                "ru": "стартовый номер заказа начать с счётчик первый заказ"
+            }
+        },
+        {
             "key": "one_click",
             "type": "checkbox",
             "default": false,

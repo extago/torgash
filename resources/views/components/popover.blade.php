@@ -14,7 +14,10 @@
     (CLAUDE.md, Blade gotchas).
 
     `hover` opens it on hover and focus as well — for a hint, never for a
-    panel of buttons. The browser's own hover trigger (`interestfor`) is
+    panel of buttons. It is the ONLY hint on the storefront: no daisyUI
+    `tooltip`, no hand-made panel, and `title` only as the spoken name of an
+    icon button (a phone never shows a title). With no panel-class a hint
+    takes `.torgash-hint` (app.css), so every hint reads the same. The browser's own hover trigger (`interestfor`) is
     Chrome-only for now; popover-anchor.js stands in until it is not.
 
     A browser without anchor positioning (iOS 18 and older) still opens it;
@@ -51,9 +54,11 @@
      @class([
          'torgash-popover torgash-bar-panel bg-base-100 text-base-content border border-base-300',
          // Both are centred on their button (app.css); a hint is just
-         // smaller and lighter.
+         // smaller and lighter — and, unless its owner says otherwise, the
+         // storefront's ONE look of a hint: a few lines of small text.
          'rounded-md shadow-md' => $hover,
          'rounded-box shadow-lg' => ! $hover,
+         'torgash-hint' => $hover && $panelClass === '',
          $panelClass,
      ])>
     {{ $slot }}

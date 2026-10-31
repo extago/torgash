@@ -130,11 +130,12 @@ class SettingsController extends Controller
     public function update(Request $request, string $module, ModuleManager $modules, SettingsManager $settings)
     {
         $manifest = $this->configurable($module, $modules);
+        $values = [];
 
         foreach ($this->stored($manifest) as $def) {
             $key = $def['key'];
 
-            $value = match ($def['type'] ?? 'text') {
+            $values[$key] = match ($def['type'] ?? 'text') {
                 'checkbox' => $request->boolean($key),
                 'number' => $request->filled($key) ? (float) $request->input($key) : null,
                 // Ticking nothing submits nothing at all, so "none chosen" and
@@ -150,7 +151,18 @@ class SettingsController extends Controller
                 'image' => $this->image($request, $key, (string) $settings->get($module, $key, '')),
                 default => $request->input($key),
             };
+        }
 
+        // A module's say on its own values before any is written — "the next
+        // order number is below the last one issued" — keyed by field, so
+        // one refusal keeps the whole page as it was.
+        $refusals = hook_filter('core.settings.saving', [], ['module' => $module, 'values' => $values]);
+
+        if ($refusals !== []) {
+            throw ValidationException::withMessages($refusals);
+        }
+
+        foreach ($values as $key => $value) {
             $settings->set($module, $key, $value);
         }
 

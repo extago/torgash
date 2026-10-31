@@ -1,7 +1,7 @@
 {{-- Auto-generated content_type="payment_methods" / "shipping_methods".
-     A method's note is a hover tip where there is a pointer, and a line of
-     its own on a phone — a phone cannot hover, and a hidden tip still widens
-     the page past the screen's edge.
+     A method's note is core's hint (<x-popover hover>) behind an ⓘ on a wide
+     screen, and a line of its own on a phone and a tablet — read there
+     without a tap.
 
      Logos (the method's own `logo`, uploaded on its admin form) are what a
      buyer recognises before reading — a card scheme, a carrier's colours. Once
@@ -25,9 +25,11 @@
                 <span>— {{ $method['name'] }}</span>
             @endif
             @if ($method['note'])
-                <span class="tooltip max-lg:hidden" data-tip="{{ $method['note'] }}">
-                    <x-icon name="info" size="sm" class="opacity-40" />
-                </span>
+                <x-popover hover placement="top" :label="__('More about :method', ['method' => $method['name']])"
+                           class="max-lg:hidden inline-flex opacity-40 hover:opacity-100">
+                    {{ $method['note'] }}
+                    <x-slot:trigger><x-icon name="info" size="sm" /></x-slot:trigger>
+                </x-popover>
                 <span @class(['lg:hidden basis-full text-xs opacity-70', 'pl-3.5' => ! $methodsWithLogos, 'pl-13' => $methodsWithLogos])>{{ $method['note'] }}</span>
             @endif
         </li>

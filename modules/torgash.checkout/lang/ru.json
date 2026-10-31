@@ -118,7 +118,7 @@
     "Regions": "Регионы",
     "Remove": "Удалить",
     "Rule": "Правило",
-    "SKU": "Артикул",
+    "SKU": "Код",
     "Save this address to my account": "Сохранить этот адрес в моём аккаунте",
     "Select a country": "Выберите страну",
     "Set a rate": "Задать тариф",
@@ -626,5 +626,15 @@
     "What the customer asked for, in their words.": "Что попросил покупатель, его словами.",
     "No account matches — the order will be a guest's.": "Аккаунт не найден — заказ будет гостевым.",
     "Tax ID": "Налоговый номер",
-    "Stock": "Остаток"
+    "Stock": "Остаток",
+    "Order number prefix": "Префикс номера заказа",
+    "Letters before the number: TG-000123. May be empty. Only orders placed from now on; a number already given stays on its letters and invoices.": "Буквы перед номером: TG-000123. Может быть пустым. Только для заказов с этого момента; уже выданный номер остаётся в письмах и счетах.",
+    "Digits in the order number": "Цифр в номере заказа",
+    "The number is padded with zeros to this many digits: 6 — 000123. 0 — as it is: 123.": "Номер дополняется нулями до стольких цифр: 6 — 000123. 0 — как есть: 123.",
+    "Next order number": "Следующий номер заказа",
+    "The number the next order gets; the ones after count on from it. For a shop moving in, to carry on from the old shop's count — or to start from 15 000 rather than 1. Only above the last number issued. 0 — the count goes on as it is.": "Номер, который получит следующий заказ; дальше счёт идёт от него. Для переезжающего магазина — продолжить счёт старого, или начать с 15 000, а не с 1. Только больше последнего выданного. 0 — счёт идёт как есть.",
+    "The next order number must be 1 or more.": "Следующий номер заказа — не меньше 1.",
+    "The last number issued is :last — the next one can only be above it.": "Последний выданный номер — :last; следующий может быть только больше.",
+    "No order has been numbered yet.": "Ни один заказ ещё не пронумерован.",
+    "The last number issued: :number.": "Последний выданный номер: :number."
 }

@@ -39,7 +39,7 @@
     }
 
     function place(panel, b) {
-        var gap = 8;
+        var gap = 13; // app.css: .torgash-popover's margin-block
         var height = panel.offsetHeight;
         var below = b.bottom + gap + height <= window.innerHeight;
         var wantTop = panel.getAttribute('data-placement') === 'top';

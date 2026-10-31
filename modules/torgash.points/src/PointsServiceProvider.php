@@ -183,10 +183,21 @@ class PointsServiceProvider extends ServiceProvider
     {
         hook_listen('catalog.products.listed', fn (array $context) => app(Earning::class)->prime($context['products'] ?? []));
 
+        // One of two places on a card, as the shop chose: the row under the
+        // name (after the stars), or under the price. Every list that draws
+        // the one draws the other (grid, list, wishlist, comparison).
         hook_listen('catalog.product.card_meta', function (string $html, array $context) {
             $product = $context['product'] ?? null;
 
-            return $product instanceof Product ? $html.$this->badge($product, 'card') : $html;
+            return $product instanceof Product && setting('torgash.points', 'card_place') !== 'price'
+                ? $html.$this->badge($product, 'card') : $html;
+        });
+
+        hook_listen('catalog.product.card_price_extra', function (string $html, array $context) {
+            $product = $context['product'] ?? null;
+
+            return $product instanceof Product && setting('torgash.points', 'card_place') === 'price'
+                ? $html.$this->badge($product, 'card') : $html;
         });
 
         hook_listen('catalog.product.price_extra', function (string $html, array $context) {

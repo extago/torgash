@@ -118,7 +118,7 @@
     "Regions": "Регіони",
     "Remove": "Видалити",
     "Rule": "Правило",
-    "SKU": "Артикул",
+    "SKU": "Код",
     "Save this address to my account": "Зберегти цю адресу в моєму акаунті",
     "Select a country": "Виберіть країну",
     "Set a rate": "Задати тариф",
@@ -626,5 +626,15 @@
     "What the customer asked for, in their words.": "Що попросив покупець, його словами.",
     "No account matches — the order will be a guest's.": "Обліковий запис не знайдено — замовлення буде гостьовим.",
     "Tax ID": "Податковий номер",
-    "Stock": "Залишок"
+    "Stock": "Залишок",
+    "Order number prefix": "Префікс номера замовлення",
+    "Letters before the number: TG-000123. May be empty. Only orders placed from now on; a number already given stays on its letters and invoices.": "Літери перед номером: TG-000123. Може бути порожнім. Лише для замовлень відтепер; уже виданий номер лишається в листах і рахунках.",
+    "Digits in the order number": "Цифр у номері замовлення",
+    "The number is padded with zeros to this many digits: 6 — 000123. 0 — as it is: 123.": "Номер доповнюється нулями до стількох цифр: 6 — 000123. 0 — як є: 123.",
+    "Next order number": "Наступний номер замовлення",
+    "The number the next order gets; the ones after count on from it. For a shop moving in, to carry on from the old shop's count — or to start from 15 000 rather than 1. Only above the last number issued. 0 — the count goes on as it is.": "Номер, який отримає наступне замовлення; далі лік іде від нього. Для магазину, що переїжджає, — продовжити лік старого, або почати з 15 000, а не з 1. Лише більше за останній виданий. 0 — лік іде як є.",
+    "The next order number must be 1 or more.": "Наступний номер замовлення — не менше 1.",
+    "The last number issued is :last — the next one can only be above it.": "Останній виданий номер — :last; наступний може бути лише більшим.",
+    "No order has been numbered yet.": "Жодне замовлення ще не пронумероване.",
+    "The last number issued: :number.": "Останній виданий номер: :number."
 }

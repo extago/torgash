@@ -65,3 +65,19 @@ text. Variables for a PERSON exist beside the machine ones (`total_formatted`,
 `status_label`, `admin_url`), and the picker is a card beside the form that
 inserts where the cursor was — its braces are built in JavaScript, since Blade
 reads a literal pair in a template as its own echo (it did, twice).
+
+- **A message links what it names (2026-10-31)**: `order.admin_url` is the
+  order's card, `item.url` the product's own address on the storefront and
+  `item.admin_url` its card in the admin ('' once the product is gone —
+  `Context::forOrder` looks the lines' products up in ONE query). Written as
+  `<a href="{{ item.url }}">` in a Telegram text: values are HTML-escaped,
+  and an address escapes to itself.
+  A line also says what the product IS (`Context::line`): `item.image_url`,
+  `item.variation` ("black, 256 GB" — the answers on the group's variation
+  axes), `item.features.<CODE>` (a characteristic by its code, the shop's
+  rows only — the product's own free-text rows have no code) and
+  `item.features_text`, `item.brand`, `item.weight` (grams),
+  `item.options_text` and, for a part of a configured product,
+  `item.option_label` / `item.is_part`. The template has no nested loops,
+  so lists are joined into one string. Products are loaded in ONE query
+  with their media and characteristics, never one per line.

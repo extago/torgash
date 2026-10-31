@@ -3,6 +3,7 @@
 @section('title', __('Languages'))
 @section('title_hint', __('The languages the shop can be written in. A storefront chooses which of them it offers; every text in the admin can be filled in for each.'))
 @section('title_actions')
+    <a href="{{ route('admin.texts.index') }}" class="btn btn-ghost gap-1.5"><x-icon name="text" size="sm" /> {{ __('Texts') }}</a>
     <a href="{{ route('admin.languages.create') }}" class="btn btn-primary">+ {{ __('New language') }}</a>
 @endsection
 

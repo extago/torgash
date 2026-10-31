@@ -39,6 +39,62 @@ class TelegramActionTest extends TestCase
         ])->fresh();
     }
 
+    /** A message links its lines: a product's address and its card in the admin, '' once the product is gone. */
+    public function test_a_line_carries_the_products_addresses(): void
+    {
+        $product = \Torgash\Catalog\Models\Product::create(['sku' => 'TLG-P', 'name' => ['en' => 'Widget'], 'slug' => 'tlg-widget', 'price' => 50_00, 'stock' => 5, 'status' => 'active']);
+        $order = $this->order();
+        $order->update(['items' => [
+            ['product_id' => $product->id, 'sku' => 'TLG-P', 'name' => 'Widget', 'qty' => 1, 'unit_price' => 50_00, 'line_total' => 50_00],
+            ['product_id' => $product->id + 100000, 'sku' => 'GONE', 'name' => 'Gone', 'qty' => 1, 'unit_price' => 50_00, 'line_total' => 50_00],
+        ]]);
+
+        $items = \Torgash\Automations\Context::forOrder($order->fresh(), 'checkout.order_placed')['order']['items'];
+
+        $this->assertSame(route('catalog.product', 'tlg-widget'), $items[0]['url']);
+        $this->assertSame(route('admin.catalog.products.edit', $product->id), $items[0]['admin_url']);
+        $this->assertSame(['', ''], [$items[1]['url'], $items[1]['admin_url']]);
+        $this->assertSame(['', [], ''], [$items[1]['variation'], $items[1]['features'], $items[1]['image_url']]);
+    }
+
+    /**
+     * A line says what the product IS: its variation in one line, any
+     * characteristic by its code, all of them in one line, the options
+     * chosen with it — and, in the text, through the template's own paths.
+     */
+    public function test_a_line_says_its_variation_characteristics_and_options(): void
+    {
+        $colour = \Torgash\Catalog\Models\Feature::create(['name' => ['en' => 'Colour'], 'code' => 'TLG_COLOR', 'input_type' => 'select', 'purpose' => 'variation']);
+        $black = \Torgash\Catalog\Models\FeatureValue::create(['feature_id' => $colour->id, 'value' => ['en' => 'Black'], 'slug' => 'tlg-black', 'sort' => 1]);
+        \Torgash\Catalog\Models\FeatureValue::create(['feature_id' => $colour->id, 'value' => ['en' => 'White'], 'slug' => 'tlg-white', 'sort' => 2]);
+        $memory = \Torgash\Catalog\Models\Feature::create(['name' => ['en' => 'Memory'], 'code' => 'TLG_MEMORY', 'input_type' => 'text']);
+
+        $product = \Torgash\Catalog\Models\Product::create(['sku' => 'TLG-V', 'name' => ['en' => 'Phone'], 'slug' => 'tlg-phone', 'price' => 500_00, 'stock' => 5, 'status' => 'active']);
+        $product->featureAssignments()->create(['feature_id' => $colour->id, 'feature_value_id' => $black->id]);
+        $product->featureAssignments()->create(['feature_id' => $memory->id, 'value_text' => '256 GB']);
+
+        $order = $this->order();
+        $order->update(['items' => [[
+            'product_id' => $product->id, 'sku' => 'TLG-V', 'name' => 'Phone', 'qty' => 1, 'unit_price' => 500_00, 'line_total' => 500_00,
+            'options' => [['label' => 'Case: leather', 'qty' => 2, 'amount' => 20_00]],
+        ]]]);
+
+        $line = \Torgash\Automations\Context::forOrder($order->fresh(), 'checkout.order_placed')['order']['items'][0];
+
+        $this->assertSame(['TLG_COLOR' => 'Black', 'TLG_MEMORY' => '256 GB'], $line['features']);
+        $this->assertSame('Colour: Black; Memory: 256 GB', $line['features_text']);
+        $this->assertSame('Case: leather ×2', $line['options_text']);
+        $this->assertFalse($line['is_part']);
+
+        $text = \Torgash\Automations\Template::render(
+            "{{#order.items}}{{ item.name }} [{{ item.features.TLG_COLOR }}] {{ item.features_text }}{{/order.items}}",
+            \Torgash\Automations\Context::forOrder($order->fresh(), 'checkout.order_placed'),
+            \Torgash\Automations\Template::HTML,
+        );
+        $this->assertSame('Phone [Black] Colour: Black; Memory: 256 GB', $text);
+        $this->assertArrayHasKey('item.url', \Torgash\Automations\Context::catalogue()['Order lines'] ?? array_merge(...array_values(\Torgash\Automations\Context::catalogue())));
+    }
+
     protected function rule(array $config): Rule
     {
         $rule = Rule::create(['name' => 'Telegram', 'enabled' => true, 'event' => 'checkout.order_placed', 'delay_minutes' => 0]);

@@ -249,5 +249,16 @@
     "URL": "URL",
     "Value": "Значення",
     "saved — leave blank to keep it": "збережено — залиште порожнім, щоб не змінювати",
-    "selected": "вибрано"
+    "selected": "вибрано",
+    "Link to the product": "Посилання на товар",
+    "Link to the product in the admin": "Посилання на товар в адмінці",
+    "Link to the product's photo": "Посилання на фото товару",
+    "Variation in one line: \"black, 256 GB\"": "Варіація одним рядком: «чорний, 256 ГБ»",
+    "A characteristic by its code: item.features.COLOR": "Характеристика за її кодом: item.features.COLOR",
+    "Every characteristic in one line: \"Colour: black; Memory: 256 GB\"": "Усі характеристики одним рядком: «Колір: чорний; Пам'ять: 256 ГБ»",
+    "Brand": "Бренд",
+    "Weight, grams": "Вага, грами",
+    "Options chosen with it: \"Licence: Windows Server 2022\"": "Вибрані з ним опції: «Ліцензія: Windows Server 2022»",
+    "For a part of a configured product: what it was chosen as": "Для частини сконфігурованого товару: як що її вибрано",
+    "true for a part of a configured product": "true для частини сконфігурованого товару"
 }

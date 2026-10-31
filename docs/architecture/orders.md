@@ -410,3 +410,29 @@ language: a phone order with no name has `customer_name` NULL and screens say
 "Ordered by phone" through `Order::customerLabel()`. A name is required only
 when there is a parcel to hand over (`needs_address`); otherwise a phone
 suffices. 1C gets the phone as the counterparty's name.
+
+## An order's number (2026-10-31)
+
+`order_number` — what the customer and the shop call the order — is drawn
+from a Postgres sequence of its own, `m_checkout_order_numbers`
+(`Orders\OrderNumbers::next()`, called by `PlaceOrder` alone), never from
+the row's id: the id counts from 1 whatever the shop wants, while a shop
+moving in wants to carry on from the old shop's count, or to start from
+15 000. Three settings of `torgash.checkout`: `order_number_prefix`
+("TG-", may be empty), `order_number_digits` (padded with zeros; 0 = as
+it is) and `order_number_next` — the number the next order gets, which
+moves the sequence (`startFrom`) and is refused at or below the last
+number issued (`refusal`; `order_number` is unique). Only new orders: a
+number already given is on letters and invoices and stays. A sequence is
+outside transactions, so a rolled-back order leaves a gap — the shape of
+sequential numbering, nothing reads one. The number is never what
+authorises reading an order (`OrderKey`): it is sequential by design.
+The migration starts the sequence above the orders already there, so a
+shop that numbered by id goes on without a gap.
+
+The refusal lives in a seam of the settings screen: `core.settings.saving`
+(a filter over `[field => message]`, given the module and every value
+about to be written) is asked BEFORE anything is stored, so one refusal
+keeps the whole page as it was; `core.setting.changed` (announced by
+`SettingsManager::set` after the write, from whatever door) then moves the
+sequence. A check that can only refuse after the write is no check.

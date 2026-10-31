@@ -11,11 +11,6 @@
  *   data-close-dialog             closes the dialog it is in.
  *   data-print                    prints the page.
  *   data-select                   selects the field's text on click.
- *   data-inert-text               text inside a link that is read, not
- *                                 followed (a label's hint on a card): a
- *                                 click on it does not open the link (app.css
- *                                 stops the link being dragged meanwhile, so
- *                                 a drag over it selects).
  *   data-submit-on-change         sends its form when the value changes
  *                                 (a filter's select); requestSubmit, so htmx
  *                                 and data-confirm hear it like a click.
@@ -72,10 +67,6 @@
         const field = target.closest('[data-select]');
         if (field && typeof field.select === 'function') {
             field.select();
-        }
-
-        if (target.closest('[data-inert-text]')) {
-            event.preventDefault();
         }
     }, true);
 })();

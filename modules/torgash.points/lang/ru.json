@@ -101,5 +101,9 @@
     "Saved.": "Сохранено.",
     "Has points": "Есть баллы",
     "Empty — any balance above zero.": "Пусто — любой баланс больше нуля.",
-    "At least": "Не менее"
+    "At least": "Не менее",
+    "After the reviews, under the name": "После отзывов, под названием",
+    "Under the price": "Под ценой",
+    "Points on a product card": "Баллы в карточке товара",
+    "In the catalogue's grid and list, the wishlist and the comparison. The product page always shows them under the price.": "В сетке и списке каталога, в избранном и сравнении. На странице товара они всегда под ценой."
 }

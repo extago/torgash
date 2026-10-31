@@ -70,7 +70,16 @@ class LabelAppearanceTest extends TestCase
 
         $this->get('http://localhost/catalog')->assertOk()
             ->assertSee('badge torgash-label badge-xs torgash-label-custom', false)
-            ->assertSee('torgash-label-tip-panel', false);
+            ->assertSee('A French brand')
+            ->assertSee('data-popover-hover', false);
+
+        // A hint is a thing to tap: on a card it stands beside the photo's
+        // link, never inside it, or the tap that opens it also leaves the page.
+        $dom = new \DOMDocument;
+        @$dom->loadHTML('<?xml encoding="utf-8">'.$this->get('http://localhost/catalog')->getContent());
+        $xpath = new \DOMXPath($dom);
+        $this->assertSame(1, $xpath->query('//*[contains(@class, "torgash-card")]//*[@data-popover-hover][.//*[contains(@class, "torgash-label")]]')->length);
+        $this->assertSame(0, $xpath->query('//a//*[@data-popover-hover]')->length);
     }
 
     public function test_a_picture_is_cut_to_its_shape(): void

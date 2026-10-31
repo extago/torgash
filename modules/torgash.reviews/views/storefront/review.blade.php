@@ -175,19 +175,27 @@
             ])
 
             @auth
-                <details class="group/reply text-sm basis-full sm:basis-auto sm:order-none order-last [&[open]]:basis-full">
-                    <summary class="list-none cursor-pointer inline-flex items-center gap-1.5 btn btn-ghost btn-sm">
+                {{-- Open, the "Reply" that opened it steps aside: a button
+                     still saying "Reply" above the box read as a second way to
+                     answer, while what it did was close it. "Cancel" beside
+                     "Send" says that, where the eye already is. --}}
+                <details class="group/reply text-sm basis-full sm:basis-auto sm:order-none order-last [&[open]]:basis-full"
+                         x-data x-on:toggle="$el.open && $nextTick(() => $refs.body.focus())">
+                    <summary class="list-none cursor-pointer inline-flex items-center gap-1.5 btn btn-ghost btn-sm group-open/reply:hidden">
                         <x-icon name="message-square-reply" size="sm" />
                         {{ __('Reply') }}
                     </summary>
 
-                    <form method="POST" action="{{ route('reviews.reply', $review) }}" class="mt-2 flex flex-col gap-2">
+                    <form method="POST" action="{{ route('reviews.reply', $review) }}" class="flex flex-col gap-2">
                         @csrf
                         <x-form-guard form="review_reply" />
-                        <textarea name="body" rows="3" required
+                        <textarea name="body" rows="3" required x-ref="body"
                                   class="textarea textarea-bordered w-full"
                                   placeholder="{{ __('Your answer') }}"></textarea>
-                        <button class="btn btn-sm btn-primary self-start">{{ __('Send') }}</button>
+                        <div class="flex items-center gap-2">
+                            <button class="btn btn-sm btn-primary">{{ __('Send') }}</button>
+                            <button type="button" class="btn btn-sm btn-ghost" x-on:click="$el.closest('details').open = false">{{ __('Cancel') }}</button>
+                        </div>
                     </form>
                 </details>
             @else

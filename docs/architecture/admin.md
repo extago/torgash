@@ -290,3 +290,35 @@ and under a finger".
   ring drawn by an invisible `::after` counts) and icon-only buttons without
   a name — `adminProbe({ widths: [390, 820] })`, then
   `__probe.worst('overflow', 390)`.
+
+## Texts — the shop's own wording over the lang files (2026-10-31)
+
+Every string the code prints is an English key translated by lang files
+(ADR-005), and a shop may want another word for one — "Cashback" for
+"Bonus points", in Russian or in English alike. Written into a lang file
+the word would go with the next update, so it is a ROW:
+`text_overrides` (locale, key, value), read over the JSON strings by
+`App\Core\Translation\TextLoader` (the framework's `FileLoader`, wrapped in
+`CoreServiceProvider::register`) from `TextOverrides::for($locale)` — one
+map per language in the application cache for ever, dropped when a row
+changes. A change also empties the translator's loaded lines, flushes the
+page cache and restarts the web and queue workers (they keep the texts they
+booted with). No per-request cost: the translator keeps its lines for the
+life of the worker.
+
+- **Words only.** A text is printed escaped wherever it goes (a menu item,
+  an aria-label, a placeholder, a letter's subject, an SMS, a string inside
+  a script), so markup is refused (`TextOverrides::refusal`); the shop's
+  own HTML has its own places (HTML blocks, snippets). A text keeps the
+  key's `:placeholders` — none missing, none the key does not have — and a
+  key with `|` keeps forms. No variables of the shop's own: a text has
+  what its key has.
+- **The screen** (Admin → Texts, `languages.manage`): every key the enabled
+  modules', the theme chain's and core's lang files declare
+  (`TextCatalogue`), searched in any language (`mb_stripos` over a few
+  thousand strings), one form a text with a field per enabled language
+  (English's file value is the key), Save appearing once a field is
+  touched, a changed text marked and offering "Back to the original". A
+  value equal to the file's is no row.
+- **Not for content.** What the shop types (a product's name, a page) is
+  translatable jsonb on its row; this is only for the engine's own words.
