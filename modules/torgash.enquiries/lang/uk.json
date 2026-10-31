@@ -78,7 +78,7 @@
     "We already have your enquiry — we will be in touch.": "Ваша заявка вже в нас — ми зв'яжемося з вами.",
     "We have not replied yet — we will, here.": "Ми ще не відповіли — відповімо тут.",
     "When": "Коли",
-    "When to call": "Коли телефонувати",
+    "When to call": "Коли дзвонити",
     "Where it came from": "Звідки прийшло",
     "Who": "Кому",
     "Write a reply to the customer": "Напишіть відповідь покупцеві",
@@ -288,5 +288,18 @@
     "Where it is shown": "Де показувати",
     "made from the name": "складеться з назви",
     "selected": "вибрано",
-    "unassigned": "не призначено"
+    "unassigned": "не призначено",
+    "from": "з",
+    "until": "до",
+    "At hours of my choosing": "Вказати свій час",
+    "From :from to :to": "З :from до :to",
+    "From :from": "З :from",
+    "Until :to": "До :to",
+    ":from–:to by your clock": ":from–:to за вашим часом",
+    "it is :time there now (:difference h)": "у клієнта зараз :time (:difference год)",
+    "Say from what time, until what time, or both.": "Вкажіть, з якого часу, до якого — або і те, і інше.",
+    "Another time zone": "Інший часовий пояс",
+    "From what time": "З якого часу",
+    "Until what time": "До якого часу",
+    "By your local time": "За вашим місцевим часом"
 }

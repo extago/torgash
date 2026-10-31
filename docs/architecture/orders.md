@@ -436,3 +436,30 @@ about to be written) is asked BEFORE anything is stored, so one refusal
 keeps the whole page as it was; `core.setting.changed` (announced by
 `SettingsManager::set` after the write, from whatever door) then moves the
 sequence. A check that can only refuse after the write is no check.
+
+- **The minimum order is ONE rule, `Orders\MinimumOrder`** (2026-10-31,
+  settings `min_order_amount` / `min_order_one_click` / `min_order_product`).
+  Measured on the GOODS — `CartManager::total()`, a Quote's `subtotal` —
+  before a coupon and without delivery: a coupon must not refuse an order
+  the customer was told was over the line, and delivery is unknown until the
+  address is. The basket holds its button back (`cart.checkout_allowed`) and
+  draws the bar (`partials/minimum`, `cart.summary_after_total`); GET
+  /checkout under it goes back to the basket; `PlaceOrder::place()` refuses
+  it anyway (`$minimum`, true unless one click is let off) — never for `$as`
+  (a manager's order, an exchange). The product page's note is a personal
+  part re-fetched on `torgash:cart-changed`.
+
+- **Free delivery as a goal is the promotions' own answer**
+  (`Torgash\Promotions\FreeShippingGoal`, `CartPricing::freeShipping()`,
+  2026-10-31, settings `free_shipping_cart` / `free_shipping_product`). A
+  sum is promised only where a free_shipping tier would REALLY win at it:
+  every "Cart subtotal is at least" of such tiers above the goods is tried
+  through the same `winners()` the price uses (the basket's lines, group and
+  usage as they are), smallest first — a promotion that wants a category the
+  basket lacks promises nothing, and a richer tier of the same promotion
+  that wins first is respected. Measured on the same goods subtotal as the
+  minimum order. Shop-wide gate first (`offersFreeShipping()`, nothing of
+  the visitor — it is drawn into a page kept for guests), then the bar is
+  personal; on the product page it is re-fetched on `torgash:cart-changed`.
+  The shipping RATE's own "free over" is the delivery step's (per method
+  and zone, known only with an address) — not shown here.

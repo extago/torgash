@@ -91,10 +91,13 @@ class CartServiceProvider extends ServiceProvider
             // quantity to stand open: `quantity => open`. Hidden until hover is
             // a card's economy, and in a row it only made the button jump.
             $open = ($context['quantity'] ?? null) === 'open';
+            // `quantity => none`: a table too narrow for the stepper to open
+            // in (the variants window) — the button alone, adding one.
+            $none = ($context['quantity'] ?? null) === 'none';
 
             return $html.view('torgash.cart::partials.list-buy', [
                 'listBuyProduct' => $context['product'],
-                'listBuyQuantity' => $open || (bool) setting('torgash.cart', 'card_quantity'),
+                'listBuyQuantity' => ! $none && ($open || (bool) setting('torgash.cart', 'card_quantity')),
                 'listBuyQuantityOpen' => $open,
                 'listBuyAfter' => null,
                 // `variation => chosen`: a row that IS one variation (the

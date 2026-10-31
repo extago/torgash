@@ -119,16 +119,13 @@ class Kinds
             'fields' => [
                 ['key' => 'name', 'type' => 'text', 'label' => 'Your name'],
                 ['key' => 'phone', 'type' => 'tel', 'required' => true, 'label' => 'Phone'],
+                // A part of the day or the person's own hours, by their own
+                // clock, which the form takes from the browser (CallTime).
                 [
                     'key' => 'time',
-                    'type' => 'select',
+                    'type' => 'call_time',
                     'label' => 'When to call',
-                    'options' => [
-                        'any' => 'Any time',
-                        'morning' => 'Morning',
-                        'afternoon' => 'Afternoon',
-                        'evening' => 'Evening',
-                    ],
+                    'options' => CallTime::OPTIONS,
                 ],
                 ['key' => 'comment', 'type' => 'textarea', 'label' => 'Anything we should know'],
             ],

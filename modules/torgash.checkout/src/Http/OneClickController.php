@@ -136,28 +136,33 @@ class OneClickController extends Controller
             ]);
         }
 
-        $order = $placer->place(
-            [
-                // No name typed is stored as none, never as words in this
-                // buyer's language (Order::customerLabel() says it on screen).
-                'customer_name' => $validated['customer_name'] ?: auth()->user()?->name,
-                // An order has to be addressable somehow, and this buyer gave a
-                // phone. CustomerRef makes the phone the identity; the email
-                // column stays empty rather than being filled with something
-                // invented, which is exactly what older engines do here instead.
-                'email' => auth()->user()?->email,
-                'phone' => $validated['phone'],
-                'shipping_method_id' => $oneClick->shippingMethodId(),
-                'payment_method_id' => $oneClick->paymentMethod()->id,
-            ],
-            $cart,
-            $coupons,
-            new Location,
-            $quote,
-        );
-
-        if (! $forCart) {
-            $oneClick->discard($cart);
+        // The throwaway basket goes whatever the answer: a refused order (the
+        // shelf, the minimum) used to leave it behind as an abandoned cart.
+        try {
+            $order = $placer->place(
+                [
+                    // No name typed is stored as none, never as words in this
+                    // buyer's language (Order::customerLabel() says it on screen).
+                    'customer_name' => $validated['customer_name'] ?: auth()->user()?->name,
+                    // An order has to be addressable somehow, and this buyer gave a
+                    // phone. CustomerRef makes the phone the identity; the email
+                    // column stays empty rather than being filled with something
+                    // invented, which is exactly what older engines do here instead.
+                    'email' => auth()->user()?->email,
+                    'phone' => $validated['phone'],
+                    'shipping_method_id' => $oneClick->shippingMethodId(),
+                    'payment_method_id' => $oneClick->paymentMethod()->id,
+                ],
+                $cart,
+                $coupons,
+                new Location,
+                $quote,
+                minimum: app(\Torgash\Checkout\Orders\MinimumOrder::class)->coversOneClick(),
+            );
+        } finally {
+            if (! $forCart) {
+                $oneClick->discard($cart);
+            }
         }
 
         $request->session()->put('last_order_number', $order->order_number);

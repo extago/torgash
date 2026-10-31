@@ -111,3 +111,15 @@ contact (`either`), because an account may have no email.
   sent as a thin `CampaignMail` carrying List-Unsubscribe / one-click
   headers, its links through `/newsletter/c/{token}/{link}` — which redirects
   ONLY to a link stored for that campaign, never to what the request asks.
+
+- **The phone MASK only helps the hand** (`App\Core\Support\PhoneMask`,
+  core settings `phone_mask` / `phone_mask_custom` in "Phone numbers", a
+  storefront's own over them from its form via `SettingsManager::own()`):
+  presets Ukraine / Russia-Kazakhstan / international + a pattern of one's own
+  (`_` = a digit, `cleanPattern()` refuses anything else). ONE script,
+  `public/assets/js/phone-mask.js`, printed on `core.footer` with the pattern
+  in its own `data-*` attributes, listens on the document so fields drawn
+  later by a dialog are masked too; it drops the trunk prefix ("0…", "8…"),
+  takes a pasted full number, and backspace over a literal removes the digit
+  before it. The server never trusts it — `Phones` still reads the number.
+  A field opts out with `data-phone-mask="off"`.

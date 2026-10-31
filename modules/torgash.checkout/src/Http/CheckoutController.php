@@ -11,6 +11,7 @@ use Torgash\Cart\CartManager;
 use Torgash\Checkout\CouponManager;
 use Torgash\Checkout\Models\Order;
 use Torgash\Checkout\Models\PaymentMethod;
+use Torgash\Checkout\Orders\MinimumOrder;
 use Torgash\Checkout\Orders\OrderKey;
 use Torgash\Checkout\Orders\PlaceOrder;
 use Torgash\Checkout\Shipping\Location;
@@ -30,7 +31,9 @@ class CheckoutController extends Controller
 
     public function create(CartManager $cart, CouponManager $coupons, LocationStore $store)
     {
-        if ($cart->items()->isEmpty()) {
+        // Under the shop's minimum the basket is where the way on is: it says
+        // how much is missing (MinimumOrder), the form would only refuse.
+        if ($cart->items()->isEmpty() || app(MinimumOrder::class)->shortfall($cart->total()) > 0) {
             return redirect()->route('cart.index');
         }
 
@@ -67,6 +70,16 @@ class CheckoutController extends Controller
             // neither is not a choice, and offering it is offering a Pay button
             // that fails at the last step.
             'paymentMethods' => $this->paymentMethods(),
+        ]);
+    }
+
+    /** The product page's note on the minimum order, again — after the basket changed (partials/minimum). */
+    public function minimum(Request $request)
+    {
+        $place = (string) $request->query('place');
+
+        return view('torgash.checkout::partials.minimum', [
+            'minimumPlace' => in_array($place, ['price', 'buy_box', 'after_buy_box'], true) ? $place : 'buy_box',
         ]);
     }
 

@@ -188,12 +188,34 @@ class CoreSettings
                 'keywords' => ['en' => 'spam fake orders callback verification sms', 'ru' => 'спам фейковые заказы обратный звонок подтверждение смс'],
             ],
             [
+                'key' => '_g_phones',
+                'type' => 'group',
+                'label' => 'Phone numbers',
+            ],
+            [
                 'key' => 'default_country',
                 'type' => 'text',
                 'default' => '',
                 'label' => 'Country a phone number is read in',
                 'help' => 'Two letters (UA, PL, DE, US). A number typed without its + and country code is read as this country\'s — unless the customer chose a town, then the town\'s country. Empty: a number must be typed with its code. It is also the country the town window opens on.',
                 'keywords' => ['en' => 'phone country code international', 'ru' => 'телефон код страны'],
+            ],
+            // How a phone field helps the hand that types it — App\Core\Support\PhoneMask.
+            [
+                'key' => 'phone_mask',
+                'type' => 'select',
+                'default' => 'none',
+                'options' => \App\Core\Support\PhoneMask::OPTIONS,
+                'label' => 'Phone mask in the storefront\'s forms',
+                'help' => 'Every phone field — checkout, one click, callback and the shop\'s own forms, registration — fills in the code and the brackets as the customer types; "0931234567" and "89161234567" are understood too. Only typing: the number is still checked by its country\'s rules. A storefront can choose its own on its form.',
+                'keywords' => ['en' => 'phone mask format input template', 'ru' => 'маска телефона формат ввода шаблон номера'],
+            ],
+            [
+                'key' => 'phone_mask_custom',
+                'type' => 'text',
+                'default' => '',
+                'label' => 'The pattern of my own',
+                'help' => 'For "A pattern of my own": "_" for a digit, the rest as written — +998 (__) ___-__-__. Only digits, "_", spaces, + ( ) - and dots.',
             ],
             [
                 'key' => '_g_time',

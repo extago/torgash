@@ -269,5 +269,7 @@
     "A photo from its products": "Фото из её товаров",
     "A subcategory with no tile picture shows the photo of its most popular product in stock.": "Подкатегория без своей картинки для плитки покажет фото самого популярного товара в наличии.",
     "How many products": "Сколько товаров",
-    "Under each name, counting everything inside the subcategory.": "Под каждым названием — считая всё, что внутри подкатегории."
+    "Under each name, counting everything inside the subcategory.": "Под каждым названием — считая всё, что внутри подкатегории.",
+    "The bottom bar on a phone": "Нижняя панель на телефоне",
+    "Off — the bar is not drawn, and the wishlist and the basket with their counts move into the phone's header. Home is the logo, the catalogue and the account are in the menu.": "Выключено — панели нет, а избранное и корзина со счётчиками переезжают в шапку телефона. На главную ведёт логотип, каталог и кабинет — в меню."
 }

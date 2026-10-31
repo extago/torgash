@@ -21,7 +21,8 @@
     @foreach ($enquiry->answers() as $answer)
         <tr>
             <td style="padding:6px 12px 6px 0; border-bottom:1px solid #f1f5f9; color:#64748b; vertical-align:top; width:35%;">{{ $answer['label'] }}</td>
-            <td style="padding:6px 0; border-bottom:1px solid #f1f5f9; white-space:pre-line;">{{ $answer['value'] }}</td>
+            <td style="padding:6px 0; border-bottom:1px solid #f1f5f9; white-space:pre-line;">{{ $answer['value'] }}@if ($forShop && ! empty($answer['note']))
+<span style="display:block; font-size:12px; color:#b45309;">{{ __('Another time zone') }}: {{ $answer['note'] }}</span>@endif</td>
         </tr>
     @endforeach
 </table>

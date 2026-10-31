@@ -212,6 +212,7 @@ class FeaturesController extends Controller
             'shown_in' => 'nullable|array',
             'is_color' => 'nullable|boolean',
             'in_short_description' => 'nullable|boolean',
+            'hide_single_in_stock' => 'nullable|boolean',
             'product_style' => ['nullable', Rule::in(Feature::PRODUCT_STYLES)],
             'filter_style' => ['nullable', Rule::in(Feature::FILTER_STYLES)],
         ]);
@@ -252,6 +253,9 @@ class FeaturesController extends Controller
             // How the values are drawn — see Feature::PRODUCT_STYLES.
             'product_style' => $validated['product_style'] ?? 'labels',
             'filter_style' => $validated['filter_style'] ?? 'list',
+            // A variation row left out once one value alone is for sale —
+            // see Variations::shown().
+            'hide_single_in_stock' => $validated['purpose'] === Feature::PURPOSE_VARIATION && $request->boolean('hide_single_in_stock'),
         ];
     }
 

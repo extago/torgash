@@ -126,6 +126,15 @@ Telegram, a webhook, a reminder — is an automation off
 at the dialog through the `core.contacts.callback` filter, so core still does
 not know this module's name and content keeps working when it is uninstalled.
 
+**"When to call" is a field TYPE, `call_time`** (`Torgash\Enquiries\CallTime`):
+a part of the day or the person's own hours (`custom`, from/until, either may
+be blank), always by THEIR clock — the form fills a hidden `zone` from the
+browser (`Intl…timeZone`). Stored as `{when, from, to, zone}`; a bare string
+(an older row, an API client) still reads. Staff see `staffNote()` — the hours
+by the shop's clock (`app.timezone`) and the time there now — in the inbox and
+the shop's letter, only when the offsets differ. The shop's own forms can use
+the type too (`Form::TYPES`).
+
 ## Returns (torgash.rma)
 
 A return is a KIND of enquiry, and this module is the half an enquiry cannot

@@ -151,7 +151,7 @@
          x-show="away" x-cloak
          x-transition:enter="transition ease-out duration-200" x-transition:enter-start="translate-y-full opacity-0"
          x-transition:leave="transition ease-in duration-150" x-transition:leave-end="translate-y-full opacity-0"
-         class="torgash-buybar lg:hidden fixed inset-x-0 bottom-16 z-30 bg-base-100 border-t border-base-300 shadow-[0_-6px_16px_rgb(0_0_0/0.06)] px-4 py-2 flex items-center gap-3">
+         class="torgash-buybar lg:hidden fixed inset-x-0 bottom-(--torgash-bottom-bar-h) z-30 bg-base-100 border-t border-base-300 shadow-[0_-6px_16px_rgb(0_0_0/0.06)] px-4 py-2 flex items-center gap-3">
         <div class="min-w-0 grow">
             <div class="text-xs opacity-60 truncate">{{ $product->t('name') }}</div>
             <div class="text-lg font-bold leading-tight whitespace-nowrap">{{ $buyBarPrice }}</div>

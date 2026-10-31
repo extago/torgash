@@ -71,4 +71,22 @@ class MobileHeaderTest extends TestCase
         $this->assertStringContainsString('href="tel:+380441112233"', $html);
         $this->assertStringContainsString('x-on:click.prevent="document.getElementById(\'torgash-contacts-sheet\').showModal()"', $html);
     }
+
+    /** The bottom bar switched off: no bar, nothing kept for it, and its basket and wishlist come up into the header with the bar's ids. */
+    public function test_without_the_bottom_bar_the_basket_and_wishlist_move_into_the_header(): void
+    {
+        $this->get('http://localhost/');
+        app(SettingsManager::class)->set(app(ThemeSettings::class)->moduleId(), 'tabbar', false, Storefront::query()->orderBy('id')->firstOrFail()->id);
+
+        foreach (['search', 'logo'] as $shape) {
+            $header = $this->shape($shape);
+            $this->assertStringContainsString('id="tabbar-badge-cart"', $header, $shape);
+            $this->assertStringContainsString('id="tabbar-badge-wishlist"', $header, $shape);
+        }
+
+        $html = $this->get('http://localhost/')->getContent();
+        $this->assertStringContainsString('torgash-no-bottom-bar', $html);
+        $this->assertStringNotContainsString('aria-label="Main sections"', $html);
+        $this->assertSame(1, substr_count($html, 'id="tabbar-badge-cart"'), 'one id per page');
+    }
 }

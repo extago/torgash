@@ -274,5 +274,18 @@
     "priority": "пріоритет",
     "selected": "вибрано",
     "Countdown on product cards": "Таймер на картках товарів",
-    "A small timer among the labels on the card's photo, for a product in a running sale that has \"Show a countdown\" ticked and an end. On the product page the full countdown under the price is always there.": "Маленький таймер серед міток на фото картки — у товару в поточній акції, де ввімкнено «Показувати зворотний відлік» і задано закінчення. На сторінці товару повний таймер під ціною є завжди."
+    "A small timer among the labels on the card's photo, for a product in a running sale that has \"Show a countdown\" ticked and an end. On the product page the full countdown under the price is always there.": "Маленький таймер серед міток на фото картки — у товару в поточній акції, де ввімкнено «Показувати зворотний відлік» і задано закінчення. На сторінці товару повний таймер під ціною є завжди.",
+    "Activated": "Активовано",
+    "on orders from :amount": "при замовленні від :amount",
+    "Delivery of this order is free": "Безкоштовну доставку активовано для цього замовлення",
+    "Add goods worth :missing more and delivery is free": "Додайте товарів ще на :missing — і доставка буде безкоштовною",
+    "Free delivery as a goal": "Індикатор безкоштовної доставки",
+    "A bar in the basket": "Смуга в кошику",
+    "Under the basket's total: from what sum delivery is free, a bar of how much the basket already holds, and what is missing — or that it is won. Drawn only while a running promotion with \"Free shipping\" and \"Cart subtotal is at least\" could give it to this basket.": "Під підсумком кошика: від якої суми доставка безкоштовна, смуга — скільки вже набрано, і скільки бракує — або що доставка вже безкоштовна. Видно, лише поки чинна акція зі знижкою «Безкоштовна доставка» та умовою «Сума кошика не менше» може дати її цьому кошику.",
+    "Not shown": "Не показувати",
+    "Under the price": "Під ціною",
+    "Under the buy button": "Під кнопкою покупки",
+    "Under the buy panel, as a card of its own": "Під панеллю купівлі, окремою карткою",
+    "On the product page": "На сторінці товару",
+    "The same note beside the product, kept up to date as things go into the basket.": "Та сама примітка поруч із товаром; оновлюється, коли щось кладуть у кошик."
 }

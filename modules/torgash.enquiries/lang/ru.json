@@ -288,5 +288,18 @@
     "Where it is shown": "Где показывать",
     "made from the name": "составится из названия",
     "selected": "выбрано",
-    "unassigned": "не назначен"
+    "unassigned": "не назначен",
+    "from": "с",
+    "until": "до",
+    "At hours of my choosing": "Указать своё время",
+    "From :from to :to": "С :from до :to",
+    "From :from": "С :from",
+    "Until :to": "До :to",
+    ":from–:to by your clock": ":from–:to по вашему времени",
+    "it is :time there now (:difference h)": "у клиента сейчас :time (:difference ч)",
+    "Say from what time, until what time, or both.": "Укажите, с какого времени, до какого — или и то и другое.",
+    "Another time zone": "Другой часовой пояс",
+    "From what time": "С какого времени",
+    "Until what time": "До какого времени",
+    "By your local time": "По вашему местному времени"
 }

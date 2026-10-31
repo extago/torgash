@@ -11,6 +11,8 @@
       over the whole row and a cross folds it back; on a search page it
       starts unfolded, holding what was asked. No basket here: the tab bar
       has it with its count, and a second count would be a second #cart-badge.
+      With the bar switched off (theme `tabbar`) the wishlist and the basket
+      come up here instead, in every shape (`mobile-header-icons`).
       The phone icon opens a sheet from the bottom — the blocks of the
       `storefront.mobile.contacts` zone, laid out for a thumb — and dials
       straight away while that zone is empty (or with no script).
@@ -24,6 +26,7 @@
     $mobilePhone = $mobileHeader === 'logo' && theme_setting('mobile_header_phone', true)
         ? app(\App\Core\Content\ContactPlaceholders::class)->phone() : '';
     $mobileContacts = $mobilePhone !== '' ? trim(zone('storefront.mobile.contacts', ['storefront' => $storefront])) : '';
+    $mobileIcons = ! theme_setting('tabbar', true);
 @endphp
 <header class="torgash-bar torgash-header-bar lg:hidden bg-neutral text-neutral-content sticky top-0 z-30 shadow-md"
         @if ($mobileHeader === 'logo') x-data="{ searching: @js(filled(request('q'))) }" @endif>
@@ -71,6 +74,14 @@
             </button>
             {!! hook_render('storefront.search.controls', ['storefront' => $storefront]) !!}
         </form>
+
+        @if ($mobileIcons)
+            {{-- Folded away with the rest of the row while the logo shape's
+                 search is open. --}}
+            <div class="flex items-center gap-2 shrink-0" @if ($mobileHeader === 'logo') x-show="! searching" @endif>
+                @personal('layouts.partials.mobile-header-icons', ['storefront' => $storefront], true)
+            </div>
+        @endif
 
         @if ($mobileHeader === 'logo')
             <button type="button" x-cloak x-show="searching" x-on:click="searching = false" class="btn btn-ghost btn-square btn-touch shrink-0" aria-label="{{ __('Close the search') }}">

@@ -494,4 +494,48 @@ class OneClickTest extends TestCase
         return $this->post('http://localhost/verify-contact/check', ['verify_form' => $form, 'phone' => $phone, 'verify_code' => $sent[count($sent) - 1]])
             ->getCookie(\App\Core\Verification\FormVerification::COOKIE)->getValue();
     }
+
+    /**
+     * The shop's minimum and one click (`min_order_one_click`): by default a
+     * product cheaper than the minimum has no button — it would take a phone
+     * number for an order the shop then refuses — and a hand-built request is
+     * refused all the same, leaving no basket behind; `hide` takes the button
+     * off every product, `exempt` lets one click take any amount.
+     */
+    public function test_the_minimum_order_and_one_click(): void
+    {
+        $settings = app(SettingsManager::class);
+        $settings->set('torgash.checkout', 'min_order_amount', 1000);
+        $page = 'http://localhost/product/bought-in-one-click';
+        $carts = \Illuminate\Support\Facades\DB::table('m_cart_carts')->count();
+
+        $this->get($page)->assertOk()->assertDontSee('Buy in one click');
+        $this->post('http://localhost/one-click', $this->payload())->assertSessionHasErrors('cart');
+        $this->assertSame(0, Order::count());
+        $this->assertSame($carts, \Illuminate\Support\Facades\DB::table('m_cart_carts')->count(), 'the throwaway basket went with the refusal');
+
+        $settings->set('torgash.checkout', 'min_order_amount', 200);
+        $this->get($page)->assertOk()->assertSee('Buy in one click');
+
+        $settings->set('torgash.checkout', 'min_order_one_click', 'hide');
+        $this->get($page)->assertOk()->assertDontSee('Buy in one click');
+
+        $settings->set('torgash.checkout', 'min_order_amount', 1000);
+        $settings->set('torgash.checkout', 'min_order_one_click', 'exempt');
+        $this->get($page)->assertOk()->assertSee('Buy in one click');
+        $this->post('http://localhost/one-click', $this->payload())->assertSessionHasNoErrors();
+        $this->assertSame(250_00, Order::latest('id')->firstOrFail()->subtotal);
+    }
+
+    /** A setting saved while it was a tick still reads: on — the default, off — not applying. */
+    public function test_the_old_tick_still_reads(): void
+    {
+        $settings = app(SettingsManager::class);
+        $minimum = app(\Torgash\Checkout\Orders\MinimumOrder::class);
+
+        $settings->set('torgash.checkout', 'min_order_one_click', true);
+        $this->assertSame('hide_cheaper', $minimum->oneClickMode());
+        $settings->set('torgash.checkout', 'min_order_one_click', false);
+        $this->assertSame('exempt', $minimum->oneClickMode());
+    }
 }

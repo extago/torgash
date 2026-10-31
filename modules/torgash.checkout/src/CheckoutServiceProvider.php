@@ -16,6 +16,7 @@ use Torgash\Catalog\Models\Product;
 use Torgash\Checkout\Models\Order;
 use Torgash\Checkout\Models\OrderLog;
 use Torgash\Checkout\Orders\ClientFacts;
+use Torgash\Checkout\Orders\MinimumOrder;
 use Torgash\Checkout\Orders\OneClick;
 use Torgash\Checkout\Orders\OrderNumbers;
 use Torgash\Checkout\Orders\OrderChanges;
@@ -124,6 +125,7 @@ class CheckoutServiceProvider extends ServiceProvider
 
         $this->announceOrderChanges();
         $this->oneClick();
+        $this->minimumOrder();
         $this->scheduleUpkeep();
 
         // Asking about your own order, and reading the answer. A soft
@@ -365,6 +367,47 @@ class CheckoutServiceProvider extends ServiceProvider
      * setting them up is standing, and the same idiom a gateway and the 1C
      * service id already use.
      */
+    /**
+     * The shop's minimum order (Orders\MinimumOrder): the basket's panel with
+     * its bar and its button held back while the goods are under it, and the
+     * note on the product page where the shop puts it (`min_order_product`).
+     * PlaceOrder refuses the order itself; these only say so in time.
+     */
+    protected function minimumOrder(): void
+    {
+        hook_listen('cart.checkout_allowed', function (bool $allowed, array $context) {
+            return $allowed && app(MinimumOrder::class)->shortfall($context['cart']->total()) === 0;
+        });
+
+        hook_listen('cart.summary_after_total', function (string $html, array $context) {
+            if (app(MinimumOrder::class)->amount() === 0) {
+                return $html;
+            }
+
+            return $html.view('torgash.checkout::partials.minimum', [
+                'minimumPlace' => 'cart',
+                'minimumGoods' => $context['cart']->total(),
+            ])->render();
+        });
+
+        // The product page: one of three positions, the visitor's basket in
+        // it — a personal part on a page kept ready for guests.
+        $note = function (string $place) {
+            return function (string $html, array $context) use ($place) {
+                if (setting('torgash.checkout', 'min_order_product', 'buy_box') !== $place
+                    || ! ($context['product'] ?? null) instanceof Product
+                    || app(MinimumOrder::class)->amount() === 0) {
+                    return $html;
+                }
+
+                return $html.personal('torgash.checkout::partials.minimum', ['minimumPlace' => $place], reusable: true);
+            };
+        };
+        hook_listen('catalog.product.price_extra', $note('price'));
+        hook_listen('cart.buy_box.bottom', $note('buy_box'));
+        hook_listen('catalog.product.after_buy_box', $note('after_buy_box'));
+    }
+
     protected function oneClick(): void
     {
         // Which statuses may show the button: the ones a product can be BOUGHT
@@ -436,7 +479,8 @@ class CheckoutServiceProvider extends ServiceProvider
             // Resolved inside the listener, never captured at boot: a listener
             // outlives the request under a persistent worker, and a captured
             // service reading settings is a static wearing a different hat.
-            if (! $oneClick->isAvailable() || ! $oneClick->offersFor($context['product'])) {
+            if (! $oneClick->isAvailable() || ! $oneClick->offersFor($context['product'])
+                || ! app(MinimumOrder::class)->offersOneClickFor($context['product'])) {
                 return $value;
             }
 
@@ -454,6 +498,13 @@ class CheckoutServiceProvider extends ServiceProvider
             $cart = $context['cart'];
 
             if (! $oneClick->isAvailableForCart() || ! $oneClick->offersForCart($cart)) {
+                return $value;
+            }
+
+            // Under the minimum, when it covers one click too: the order would
+            // be refused after the customer typed their number.
+            $minimum = app(MinimumOrder::class);
+            if ($minimum->coversOneClick() && $minimum->shortfall($cart->total()) > 0) {
                 return $value;
             }
 

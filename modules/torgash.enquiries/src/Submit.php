@@ -176,6 +176,8 @@ class Submit
                 'number' => [$presence, 'numeric', 'between:-1000000000,1000000000'],
                 'date' => [$presence, 'date'],
                 'select', 'radio' => [$presence, 'string', $choices],
+                // {when, from, to, zone} — cleaned to what is kept below.
+                'call_time' => [$presence, 'array'],
                 'checkboxes' => [$presence, 'array'],
                 // A tick box ticked sends "yes"; a required one is "must be ticked".
                 'yes' => [$required ? 'accepted' : 'nullable', 'in:yes'],
@@ -197,12 +199,37 @@ class Submit
             $names['consent'] = self::consentText($form);
         }
 
-        $values = Validator::make($request->all(), $rules, [
+        // "When to call" sent as a bare choice ("evening" — an older form, an
+        // API client) is the same answer as {when: evening}.
+        $input = $request->all();
+        foreach ($fields as $field) {
+            if ($field['type'] === 'call_time' && is_string($input[$field['key']] ?? null) && $input[$field['key']] !== '') {
+                $input[$field['key']] = ['when' => $input[$field['key']]];
+            }
+        }
+
+        $values = Validator::make($input, $rules, [
             'consent.accepted' => __('Tick the box to agree, or the form cannot be sent.'),
         ], $names)->validate();
 
         // The answers only — what was ticked is kept as the agreement it was.
         unset($values['attachments']);
+
+        // "When to call": a known choice, own hours only for `custom` — and
+        // at least one of them there, or the choice said nothing.
+        foreach ($fields as $field) {
+            if ($field['type'] !== 'call_time' || ! array_key_exists($field['key'], $values)) {
+                continue;
+            }
+
+            $call = CallTime::clean($values[$field['key']]);
+
+            if ($call && $call['when'] === 'custom' && ! isset($call['from']) && ! isset($call['to'])) {
+                throw ValidationException::withMessages([$field['key'] => __('Say from what time, until what time, or both.')]);
+            }
+
+            $values[$field['key']] = $call;
+        }
 
         if ($form?->consent) {
             $values['consent'] = 'yes';

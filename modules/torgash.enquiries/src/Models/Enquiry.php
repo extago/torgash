@@ -312,7 +312,7 @@ class Enquiry extends Model implements HasMedia
      * way it was written. Falls back to the key when an answer arrived with no
      * label recorded — a row written by an older version, or by an import.
      *
-     * @return list<array{key: string, label: string, value: string}>
+     * @return list<array{key: string, label: string, value: string, note?: ?string}>
      */
     public function answers(): array
     {
@@ -329,6 +329,19 @@ class Enquiry extends Model implements HasMedia
 
         foreach ($values as $key => $value) {
             if ($value === null || $value === '') {
+                continue;
+            }
+
+            // "When to call" (CallTime): said back as it was said, and for
+            // staff by the shop's clock too when the person's is another.
+            if ($call = \Torgash\Enquiries\CallTime::from($value)) {
+                $rows[] = [
+                    'key' => (string) $key,
+                    'label' => (string) ($labels[$key] ?? $key),
+                    'value' => $call->describe((array) ($options[$key] ?? [])),
+                    'note' => $call->staffNote(),
+                ];
+
                 continue;
             }
 
@@ -356,7 +369,12 @@ class Enquiry extends Model implements HasMedia
     {
         $value = $this->fields['values'][$key] ?? null;
 
-        return $value === null || $value === '' ? null : (string) $value;
+        // The stored answer, not its words: for "when to call", the choice.
+        if ($call = \Torgash\Enquiries\CallTime::from($value)) {
+            return $call->when;
+        }
+
+        return $value === null || $value === '' || is_array($value) ? null : (string) $value;
     }
 
     /**

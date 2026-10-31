@@ -270,6 +270,26 @@
                                class="input input-bordered w-full">
                         <p class="label whitespace-normal">{{ __('Where the callback button goes. Leave empty and it falls back to dialling the number.') }}</p>
                     </fieldset>
+                    {{-- This storefront's own phone mask (Support\PhoneMask); empty — the shop's. --}}
+                    @php
+                        $storefrontMask = (string) old('phone_mask', $phoneMask['mode']);
+                        $shopMask = (string) setting('core', 'phone_mask', 'none');
+                    @endphp
+                    <div class="grid md:grid-cols-2 gap-4" x-data="{ mask: @js($storefrontMask) }">
+                        <fieldset class="fieldset p-0"><legend class="fieldset-legend">{{ __('Phone mask in the storefront\'s forms') }}</legend>
+                            <select name="phone_mask" x-model="mask" class="select w-full">
+                                <option value="">{{ __('As in the shop\'s settings: :mask', ['mask' => __(\App\Core\Support\PhoneMask::OPTIONS[$shopMask] ?? \App\Core\Support\PhoneMask::OPTIONS['none'])]) }}</option>
+                                @foreach (\App\Core\Support\PhoneMask::OPTIONS as $maskKey => $maskLabel)
+                                    <option value="{{ $maskKey }}" @selected($storefrontMask === $maskKey)>{{ __($maskLabel) }}</option>
+                                @endforeach
+                            </select>
+                        </fieldset>
+                        <fieldset class="fieldset p-0" x-show="mask === 'custom'" x-cloak><legend class="fieldset-legend">{{ __('The pattern of my own') }}</legend>
+                            <input name="phone_mask_custom" value="{{ old('phone_mask_custom', $phoneMask['custom']) }}"
+                                   class="input input-bordered w-full font-mono" placeholder="+998 (__) ___-__-__">
+                            @error('phone_mask_custom') <p class="label text-error whitespace-normal">{{ $message }}</p> @enderror
+                        </fieldset>
+                    </div>
                 </div>
             </section>
         </div>

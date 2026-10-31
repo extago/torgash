@@ -1211,6 +1211,14 @@
             "help": "Dials the shop's phone from Settings → Contacts; not drawn when there is none."
         },
         {
+            "key": "tabbar",
+            "section": "mobile",
+            "type": "checkbox",
+            "default": true,
+            "label": "The bottom bar on a phone",
+            "help": "Off — the bar is not drawn, and the wishlist and the basket with their counts move into the phone's header. Home is the logo, the catalogue and the account are in the menu."
+        },
+        {
             "key": "tabbar_menu",
             "section": "mobile",
             "type": "select",

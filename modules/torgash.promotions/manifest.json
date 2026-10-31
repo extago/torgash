@@ -38,6 +38,31 @@
             "default": true,
             "label": "Countdown on product cards",
             "help": "A small timer among the labels on the card's photo, for a product in a running sale that has \"Show a countdown\" ticked and an end. On the product page the full countdown under the price is always there."
+        },
+        {
+            "key": "_g_free_shipping",
+            "type": "group",
+            "label": "Free delivery as a goal"
+        },
+        {
+            "key": "free_shipping_cart",
+            "type": "checkbox",
+            "default": true,
+            "label": "A bar in the basket",
+            "help": "Under the basket's total: from what sum delivery is free, a bar of how much the basket already holds, and what is missing — or that it is won. Drawn only while a running promotion with \"Free shipping\" and \"Cart subtotal is at least\" could give it to this basket."
+        },
+        {
+            "key": "free_shipping_product",
+            "type": "select",
+            "default": "buy_box",
+            "options": {
+                "none": "Not shown",
+                "price": "Under the price",
+                "buy_box": "Under the buy button",
+                "after_buy_box": "Under the buy panel, as a card of its own"
+            },
+            "label": "On the product page",
+            "help": "The same note beside the product, kept up to date as things go into the basket."
         }
     ]
 }

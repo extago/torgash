@@ -135,6 +135,102 @@ class CartPricing
     }
 
     /**
+     * Free delivery as a goal the customer can see (the basket's bar, the
+     * product page's note): is it already won, and if not, from what goods
+     * subtotal would it be? Asked of the same `winners()` the price is, only
+     * at a trial subtotal — so a threshold is promised only where a
+     * free_shipping tier would REALLY win, with every other condition of its
+     * promotion (categories, group, usage) as the basket stands now, and a
+     * richer tier of the same promotion that wins first is respected.
+     *
+     * `threshold` is the smallest "Cart subtotal is at least" of the free
+     * shipping tiers above the goods that wins when tried; when already won,
+     * the threshold of the tier that won (null for one without a sum).
+     *
+     * @param  list<array{product_id: int, category_ids: list<int>, qty: int, line_total: int}>  $lines
+     * @return array{active: bool, threshold: ?int}|null  null — no free delivery to be had
+     */
+    public function freeShipping(array $lines, int $subtotal, ?User $user): ?array
+    {
+        $quantity = array_sum(array_column($lines, 'qty'));
+        $categoryIds = $this->categoryIds($lines);
+        $wins = function (int $trial) use ($lines, $quantity, $categoryIds, $user): ?PromotionTier {
+            foreach ($this->winners($lines, $trial, $quantity, $categoryIds, $user, null, null) as [, $tier]) {
+                if ($tier->discount_type === PromotionTier::FREE_SHIPPING) {
+                    return $tier;
+                }
+            }
+
+            return null;
+        };
+
+        if ($won = $wins($subtotal)) {
+            return ['active' => true, 'threshold' => $this->subtotalFloor($won)];
+        }
+
+        $candidates = [];
+        foreach (app(PromotionCache::class)->activeInZone(Promotion::ZONE_CART) as $promotion) {
+            foreach ($promotion->tiers as $tier) {
+                // Every sum the tier names: which of them opens it ("all" or
+                // "any" of its conditions) is the trial's to say.
+                if ($tier->discount_type === PromotionTier::FREE_SHIPPING) {
+                    foreach ($this->subtotalFloors($tier) as $floor) {
+                        if ($floor > $subtotal) {
+                            $candidates[] = $floor;
+                        }
+                    }
+                }
+            }
+        }
+
+        sort($candidates);
+        foreach (array_unique($candidates) as $threshold) {
+            if ($wins($threshold)) {
+                return ['active' => false, 'threshold' => $threshold];
+            }
+        }
+
+        return null;
+    }
+
+    /**
+     * Whether any running cart promotion gives free delivery from a sum —
+     * the shop-wide question asked before anything per visitor is drawn, so
+     * a shop without such a promotion pays nothing for the notes. Nothing of
+     * the visitor here (not even where a promotion applies): the answer is
+     * drawn into a page kept for every guest; the note itself is personal.
+     */
+    public function offersFreeShipping(): bool
+    {
+        foreach (app(PromotionCache::class)->activeInZone(Promotion::ZONE_CART) as $promotion) {
+            foreach ($promotion->tiers as $tier) {
+                if ($tier->discount_type === PromotionTier::FREE_SHIPPING && $this->subtotalFloors($tier) !== []) {
+                    return true;
+                }
+            }
+        }
+
+        return false;
+    }
+
+    /** @return list<int> a tier's every "Cart subtotal is at least" */
+    protected function subtotalFloors(PromotionTier $tier): array
+    {
+        return array_values(array_map(
+            fn (array $rule) => (int) ($rule['value'] ?? 0),
+            array_filter($tier->rules(), fn (array $rule) => ($rule['operator'] ?? null) === 'subtotal_gte'),
+        ));
+    }
+
+    /** The sum a won tier was won by, to name it: all its floors must hold — the highest; any — the lowest. */
+    protected function subtotalFloor(PromotionTier $tier): ?int
+    {
+        $floors = $this->subtotalFloors($tier);
+
+        return $floors === [] ? null : ($tier->matchAny() ? min($floors) : max($floors));
+    }
+
+    /**
      * Every promotion's winning tier, usage-gated, whatever kind it is —
      * lines() and sideEffects() each keep only the half they care about.
      *

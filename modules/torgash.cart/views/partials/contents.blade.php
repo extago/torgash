@@ -184,7 +184,12 @@
                     </p>
                 @endif
 
-                @if (\Illuminate\Support\Facades\Route::has('checkout.create'))
+                {{-- Whether the basket may go on to checkout as it stands — a
+                     module that says no (the shop's minimum order) says why
+                     itself, above (cart.summary_after_total). --}}
+                @if (\Illuminate\Support\Facades\Route::has('checkout.create') && ! hook_filter('cart.checkout_allowed', true, ['cart' => $cart]))
+                    <button type="button" class="btn btn-primary btn-lg w-full" disabled>{{ __('Proceed to checkout') }}</button>
+                @elseif (\Illuminate\Support\Facades\Route::has('checkout.create'))
                     <a href="{{ route('checkout.create') }}" class="btn btn-primary btn-lg w-full">{{ __('Proceed to checkout') }}</a>
                 @else
                     <button class="btn btn-disabled btn-lg w-full" disabled>{{ __('Checkout coming soon') }}</button>

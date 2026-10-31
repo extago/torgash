@@ -271,6 +271,20 @@
                     </p>
                 </div></section>
 
+                {{-- A variation axis only: when it stops being a choice
+                     (Support\Variations::shown()). --}}
+                <section x-show="purpose === 'variation'" class="card bg-base-100 border border-base-300"><div class="card-body gap-3">
+                    <h3 class="font-semibold">{{ __('Choosing a variation') }}</h3>
+                    <label class="flex gap-2.5 items-start cursor-pointer">
+                        <input type="checkbox" name="hide_single_in_stock" value="1" class="checkbox checkbox-sm mt-0.5"
+                               @checked(old('hide_single_in_stock', $feature->hide_single_in_stock ?? false))>
+                        <span class="text-sm leading-snug">
+                            {{ __('Hide the choice when one value is left in stock') }}
+                            <span class="block text-xs opacity-60">{{ __('For example "New / As new": once the new ones are sold out, the product page no longer offers this row. The other values\' pages stay where they are.') }}</span>
+                        </span>
+                    </label>
+                </div></section>
+
                 {{-- How the values are DRAWN — a list's values only. The control
                      underneath never changes (a link to the variation, a tick in
                      the filter form); see Feature::PRODUCT_STYLES. --}}

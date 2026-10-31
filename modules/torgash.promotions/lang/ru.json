@@ -274,5 +274,18 @@
     "priority": "приоритет",
     "selected": "выбрано",
     "Countdown on product cards": "Таймер на карточках товаров",
-    "A small timer among the labels on the card's photo, for a product in a running sale that has \"Show a countdown\" ticked and an end. On the product page the full countdown under the price is always there.": "Маленький таймер среди меток на фото карточки — у товара в идущей акции, где включено «Показывать обратный отсчёт» и задано окончание. На странице товара полный таймер под ценой есть всегда."
+    "A small timer among the labels on the card's photo, for a product in a running sale that has \"Show a countdown\" ticked and an end. On the product page the full countdown under the price is always there.": "Маленький таймер среди меток на фото карточки — у товара в идущей акции, где включено «Показывать обратный отсчёт» и задано окончание. На странице товара полный таймер под ценой есть всегда.",
+    "Activated": "Активировано",
+    "on orders from :amount": "при заказе от :amount",
+    "Delivery of this order is free": "Бесплатная доставка активирована для этого заказа",
+    "Add goods worth :missing more and delivery is free": "Добавьте товаров ещё на :missing — и доставка будет бесплатной",
+    "Free delivery as a goal": "Индикатор бесплатной доставки",
+    "A bar in the basket": "Полоса в корзине",
+    "Under the basket's total: from what sum delivery is free, a bar of how much the basket already holds, and what is missing — or that it is won. Drawn only while a running promotion with \"Free shipping\" and \"Cart subtotal is at least\" could give it to this basket.": "Под итогом корзины: от какой суммы доставка бесплатна, полоса — сколько уже набрано, и сколько не хватает — или что доставка уже бесплатна. Видна, только пока действующая акция со скидкой «Бесплатная доставка» и условием «Сумма корзины не меньше» может дать её этой корзине.",
+    "Not shown": "Не показывать",
+    "Under the price": "Под ценой",
+    "Under the buy button": "Под кнопкой покупки",
+    "Under the buy panel, as a card of its own": "Под панелью покупки, отдельной карточкой",
+    "On the product page": "На странице товара",
+    "The same note beside the product, kept up to date as things go into the basket.": "Та же заметка рядом с товаром; обновляется, когда что-то кладут в корзину."
 }

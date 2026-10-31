@@ -106,6 +106,31 @@
                         </option>
                     @endforeach
                 </select>
+            @elseif ($type === 'call_time')
+                {{-- "When to call" (CallTime): a part of the day or own hours,
+                     by the person's own clock — which the browser names in the
+                     hidden field, so staff see it by the shop's clock too.
+                     Without a script the hours simply stay in view. --}}
+                @php
+                    $callTimeWhen = is_array($value) ? (string) ($value['when'] ?? 'any') : (string) ($value ?: 'any');
+                @endphp
+                <div class="flex flex-col gap-2" x-data="{ when: @js($callTimeWhen) }">
+                    <select name="{{ $key }}[when]" aria-label="{{ $label }}" x-model="when" class="select select-bordered w-full">
+                        @foreach ($field['options'] ?? [] as $optionValue => $optionLabel)
+                            <option value="{{ $optionValue }}" @selected($callTimeWhen === (string) $optionValue)>{{ Kinds::localized($optionLabel, $optionValue) }}</option>
+                        @endforeach
+                    </select>
+                    <div class="flex items-center gap-2" x-show="when === 'custom'" x-cloak>
+                        <span class="text-sm opacity-70">{{ __('from') }}</span>
+                        <input type="time" name="{{ $key }}[from]" value="{{ is_array($value) ? ($value['from'] ?? '') : '' }}" step="900"
+                               aria-label="{{ __('From what time') }}" class="input input-bordered grow min-w-0">
+                        <span class="text-sm opacity-70">{{ __('until') }}</span>
+                        <input type="time" name="{{ $key }}[to]" value="{{ is_array($value) ? ($value['to'] ?? '') : '' }}" step="900"
+                               aria-label="{{ __('Until what time') }}" class="input input-bordered grow min-w-0">
+                    </div>
+                    <input type="hidden" name="{{ $key }}[zone]" value="" x-init="$el.value = Intl.DateTimeFormat().resolvedOptions().timeZone || ''">
+                    <p class="text-xs opacity-60">{{ __('By your local time') }}</p>
+                </div>
             @elseif ($type === 'radio' || $type === 'checkboxes')
                 <div class="flex flex-col gap-1.5">
                     @foreach ($field['options'] ?? [] as $optionValue => $optionLabel)

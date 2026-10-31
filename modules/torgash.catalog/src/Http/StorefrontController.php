@@ -463,7 +463,7 @@ class StorefrontController extends Controller
 
         // The pickers: global characteristics marked as variation axes, never
         // free-form attributes — see Support\Variations.
-        $variations = app(\Torgash\Catalog\Support\Variations::class)->for($product)['axes'];
+        $variations = app(\Torgash\Catalog\Support\Variations::class)->shown($product);
 
         $clubPriceTypes = PriceType::where('show_on_storefront', true)->where('is_base', false)
             ->where('enabled', true)->with('customerGroups')->orderBy('sort')->get();

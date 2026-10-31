@@ -164,3 +164,14 @@ this file is the reasoning. Read it before changing anything it covers.
   charged rounded to its shown places and stays as shown. Used by the cart,
   the basket dialog and badge, the checkout and its shipping prices — the
   catalogue and the product page keep the shop's rounding.
+
+- **Whether the basket may go on, and that it changed, are hooks the cart
+  asks and events it raises** (2026-10-31). `cart.checkout_allowed` (bool,
+  `['cart']`) — a module that says no explains itself in its own part of the
+  summary (checkout's minimum order), the cart only disables "Proceed to
+  checkout" and swaps the added-dialog's "Go to checkout" for the basket.
+  Every answer that changed the basket carries `HX-Trigger:
+  torgash:cart-changed` (`CartController::CHANGED`; the kits' add too), for
+  whatever shows the basket outside the out-of-band parts — listen with
+  `hx-trigger="torgash:cart-changed from:body"`. A new way of changing the
+  basket raises it as well.

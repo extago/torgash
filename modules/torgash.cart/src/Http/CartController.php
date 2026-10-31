@@ -75,7 +75,7 @@ class CartController extends Controller
             'mode' => $mode,
             'basketCount' => $cart->count(),
             'basketTotal' => (int) $items->sum('line_total'),
-        ]);
+        ])->header('HX-Trigger', self::CHANGED);
     }
 
     /**
@@ -110,7 +110,7 @@ class CartController extends Controller
     {
         abort_unless(Product::reachable()->whereKey($product->id)->exists(), 404);
 
-        $variations = app(\Torgash\Catalog\Support\Variations::class)->for($product)['axes'];
+        $variations = app(\Torgash\Catalog\Support\Variations::class)->shown($product);
 
         return view('torgash.cart::partials.choose', [
             'product' => $product,
@@ -127,7 +127,7 @@ class CartController extends Controller
 
         return view('torgash.cart::partials.quick', [
             'product' => $product,
-            'variations' => app(\Torgash\Catalog\Support\Variations::class)->for($product)['axes'],
+            'variations' => app(\Torgash\Catalog\Support\Variations::class)->shown($product),
             'specs' => $product->featureAssignments
                 ->filter(fn ($pf) => $pf->feature && $pf->display() !== null && $pf->feature->shows('buy_box'))
                 ->take(max(0, (int) setting('torgash.catalog', 'buy_box_specs_max', 4))),
@@ -176,6 +176,14 @@ class CartController extends Controller
         return $this->answer($request, $cart);
     }
 
+    /**
+     * The DOM event every answer that changed the basket raises on the page
+     * (`HX-Trigger`), for whatever shows something of the basket that the
+     * out-of-band parts below do not cover — checkout's note on the minimum
+     * order listens with `hx-trigger="torgash:cart-changed from:body"`.
+     */
+    public const CHANGED = 'torgash:cart-changed';
+
     /** What a page can show of the basket, as cart.js reports it (SHOWS). */
     public const PARTS = ['badge', 'tabbar', 'contents'];
 
@@ -222,7 +230,7 @@ class CartController extends Controller
     protected function answer(Request $request, CartManager $cart)
     {
         return $request->header('HX-Request')
-            ? view('torgash.cart::partials.contents', ['cart' => $cart])
+            ? response()->view('torgash.cart::partials.contents', ['cart' => $cart])->header('HX-Trigger', self::CHANGED)
             : redirect()->route('cart.index');
     }
 }

@@ -41,6 +41,8 @@ class Form extends Model
         'checkboxes' => 'Several of several',
         'yes' => 'Tick box',
         'file' => 'Photos',
+        // A part of the day or own hours, by the person's clock (CallTime).
+        'call_time' => 'When to call',
     ];
 
     /** The types whose key is fixed — see TYPES. */
@@ -121,7 +123,11 @@ class Form extends Model
                 'label' => (array) ($field['label'] ?? []),
                 'help' => (array) ($field['help'] ?? []),
                 'required' => (bool) ($field['required'] ?? false),
-                'options' => $type === 'yes' ? ['yes' => 'Yes'] : $options,
+                'options' => match ($type) {
+                    'yes' => ['yes' => 'Yes'],
+                    'call_time' => \Torgash\Enquiries\CallTime::OPTIONS,
+                    default => $options,
+                },
             ];
         }
 

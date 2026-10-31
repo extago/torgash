@@ -1271,6 +1271,15 @@ html:has([data-sections-nav]) .torgash-buy-mini { top: calc(var(--torgash-header
     body.torgash-storefront { --torgash-header-h: 3.5rem !important; }
 }
 
+/* The phone's bottom bar (h-16), as one number for everything that stands
+   over it — the page's own padding, the buy strip, a consent banner, a
+   floating button — so switching the bar off (theme setting `tabbar`) brings
+   them all down to the edge. Zero from lg up, where there is no bar. */
+body.torgash-storefront { --torgash-bottom-bar-h: 0rem; }
+@media (width < 64rem) {
+    body.torgash-storefront:not(.torgash-no-bottom-bar) { --torgash-bottom-bar-h: 4rem; }
+}
+
 /*
  * What only a script can open. The theme marks <html> with `.torgash-js` from
  * its <head>; everything below applies ONLY under it, so a browser with no
@@ -1309,7 +1318,7 @@ html:not(.torgash-js) .torgash-js-only { display: none !important; }
 /* The phone's buy strip (cart's buy box) stands over the tab bar: the page
    keeps room for both, so the footer's last line is never under it. */
 @media (width < 64rem) {
-    body.torgash-storefront.torgash-has-buybar { padding-bottom: 8rem; }
+    body.torgash-storefront.torgash-has-buybar { padding-bottom: calc(var(--torgash-bottom-bar-h) + 4rem); }
 }
 
 /*

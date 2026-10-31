@@ -89,4 +89,14 @@ class StorefrontController extends Controller
             'listing' => $listing,
         ]);
     }
+
+    /** The product page's note on free delivery, again — after the basket changed (partials/free-shipping). */
+    public function freeShipping(Request $request)
+    {
+        $place = (string) $request->query('place');
+
+        return view('torgash.promotions::partials.free-shipping', [
+            'shippingGoalPlace' => in_array($place, ['price', 'buy_box', 'after_buy_box'], true) ? $place : 'buy_box',
+        ]);
+    }
 }

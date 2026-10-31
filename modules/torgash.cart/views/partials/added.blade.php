@@ -42,7 +42,9 @@
         {{-- On a phone the two stack full width, the way on to paying first. --}}
         <div class="px-5 py-4 bg-base-200 flex flex-col-reverse sm:flex-row sm:items-center sm:justify-between gap-3 rounded-b-box [&>.btn]:max-sm:w-full">
             <button type="button" class="btn btn-outline" data-cart-dialog-close>{{ __('Continue shopping') }}</button>
-            @if (\Illuminate\Support\Facades\Route::has('checkout.create'))
+            {{-- Not on to checkout while a module holds it back (the minimum
+                 order): the basket is where that is explained. --}}
+            @if (\Illuminate\Support\Facades\Route::has('checkout.create') && hook_filter('cart.checkout_allowed', true, ['cart' => app(\Torgash\Cart\CartManager::class)]))
                 <a href="{{ route('checkout.create') }}" class="btn btn-primary gap-2"><x-icon name="circle-check" /> {{ __('Go to checkout') }}</a>
             @else
                 <a href="{{ route('cart.index') }}" class="btn btn-primary gap-2"><x-icon name="shopping-bag" /> {{ __('Open the basket') }}</a>

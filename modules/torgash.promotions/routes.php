@@ -11,3 +11,7 @@ Route::get('/sale', [StorefrontController::class, 'index'])->name('promotions.in
 // missing or out-of-storefront slug means (404 here), and Eloquent's own
 // binding would answer before it could.
 Route::get('/sale/{slug}', [StorefrontController::class, 'show'])->name('promotions.show');
+
+// The product page's note on free delivery, drawn again when the basket
+// changes on the page (partials/free-shipping).
+Route::get('/promotions/free-shipping', [StorefrontController::class, 'freeShipping'])->name('promotions.free_shipping');

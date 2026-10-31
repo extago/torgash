@@ -27,8 +27,8 @@
         <section data-privacy-banner role="region" aria-label="{{ __('Cookies') }}"
                  @class([
                      'fixed z-50 bg-base-100 text-base-content border border-base-300 shadow-xl',
-                     'inset-x-0 bottom-16 lg:bottom-0 border-x-0 border-b-0' => ! $bannerCorner,
-                     'left-4 right-4 bottom-20 sm:right-auto sm:max-w-sm lg:bottom-4 rounded-box' => $bannerCorner,
+                     'inset-x-0 bottom-(--torgash-bottom-bar-h) lg:bottom-0 border-x-0 border-b-0' => ! $bannerCorner,
+                     'left-4 right-4 bottom-[calc(var(--torgash-bottom-bar-h)+1rem)] sm:right-auto sm:max-w-sm lg:bottom-4 rounded-box' => $bannerCorner,
                  ])>
             <div @class(['flex gap-3', 'container mx-auto max-w-(--torgash-container) px-(--torgash-gutter) py-4 flex-col lg:flex-row lg:items-center' => ! $bannerCorner, 'p-4 flex-col' => $bannerCorner])>
                 <p class="text-sm flex-1">

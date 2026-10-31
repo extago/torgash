@@ -1637,5 +1637,17 @@
     "Nothing changed yet: every text reads as the engine wrote it.": "Поки нічого не змінено: усі тексти такі, як написав рушій.",
     "Was: :text": "Було: :text",
     "Back to the original": "Повернути як було",
-    "Core": "Ядро"
+    "Core": "Ядро",
+    "Phone numbers": "Номери телефонів",
+    "No mask": "Без маски",
+    "Ukraine: +380 (__) ___-__-__": "Україна: +380 (__) ___-__-__",
+    "Russia, Kazakhstan: +7 (___) ___-__-__": "Росія, Казахстан: +7 (___) ___-__-__",
+    "International: + and the digits": "Міжнародний: + і цифри",
+    "A pattern of my own": "Свій шаблон",
+    "Phone mask in the storefront's forms": "Маска телефону у формах вітрини",
+    "Every phone field — checkout, one click, callback and the shop's own forms, registration — fills in the code and the brackets as the customer types; \"0931234567\" and \"89161234567\" are understood too. Only typing: the number is still checked by its country's rules. A storefront can choose its own on its form.": "Кожне поле телефону — оформлення замовлення, «в 1 клік», зворотний дзвінок і власні форми магазину, реєстрація — саме підставляє код країни й дужки, поки покупець набирає номер; «0931234567» і «89161234567» теж розуміються. Маска лише допомагає набрати: номер і далі перевіряється за правилами своєї країни. Вітрина може вибрати свою маску у своїй формі.",
+    "The pattern of my own": "Свій шаблон маски",
+    "For \"A pattern of my own\": \"_\" for a digit, the rest as written — +998 (__) ___-__-__. Only digits, \"_\", spaces, + ( ) - and dots.": "Для «Свій шаблон»: «_» — цифра, решта як написано — +998 (__) ___-__-__. Лише цифри, «_», пробіли, + ( ) - і крапки.",
+    "A pattern needs \"_\" for each digit and may hold only digits, spaces, + ( ) - and dots — for example +998 (__) ___-__-__.": "У шаблоні потрібен «_» на кожну цифру, і в ньому можуть бути лише цифри, пробіли, + ( ) - і крапки — наприклад, +998 (__) ___-__-__.",
+    "As in the shop's settings: :mask": "Як у налаштуваннях магазину: :mask"
 }

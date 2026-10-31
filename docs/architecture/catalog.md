@@ -218,6 +218,12 @@ this file is the reasoning. Read it before changing anything it covers.
   keep their pages but no picker leads to them, and the admin table marks
   them in yellow. A picker's value leads to the member that keeps this
   product's other answers.
+  A choice that stopped being one (2026-10-31): an axis marked
+  `hide_single_in_stock` ("New / As new", the new ones sold out) is left out
+  of the PICKERS — product page, choice window, quick view, all through
+  `Variations::shown()` — when one value alone is still orderable and the page
+  holds it. A page holding a sold-out value keeps the row (the way to the one
+  for sale); `for()`, the variants table and the facts keep every axis.
 - **A listing with the panel is ONE thing, over any set** —
   `Torgash\Catalog\Listing\Listing` (the panel's options, applying the
   filters, the sorts, the chips, the count on "Show 12 products") and
@@ -547,7 +553,9 @@ rows. `category_nav_hide_empty` never hides the current row or the way up.
   picture, code, one column per axis from `Variations::for()`, availability,
   price, and the basket's own `catalog.product.card_actions` with
   `variation => chosen` — a row IS one variation, so it adds itself and only
-  what a module asks (`cart.product.asks`) still opens the choice window.
+  what a module asks (`cart.product.asks`) still opens the choice window —
+  and `quantity => none`: the button alone, a stepper opening on hover
+  shifted the whole table.
   Rows are loaded `withCardData()` and announced on `catalog.products.listed`;
   sorting reorders the rows by their data attributes (no JSON in markup).
   Only drawn when the group offers more than one member.

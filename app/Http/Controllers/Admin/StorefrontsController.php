@@ -138,16 +138,46 @@ class StorefrontsController extends Controller
             'themes' => app(ThemeManager::class)->available(),
             'languages' => Language::query()->orderByDesc('enabled')->orderBy('sort')->get(),
             'currencies' => Currency::query()->orderByDesc('enabled')->orderBy('sort')->orderBy('code')->get(),
+            // Its own phone mask, if it has one ('' — the shop's).
+            'phoneMask' => $storefront->exists ? [
+                'mode' => (string) app(\App\Core\Settings\SettingsManager::class)->own('core', 'phone_mask', $storefront->id),
+                'custom' => (string) app(\App\Core\Settings\SettingsManager::class)->own('core', 'phone_mask_custom', $storefront->id),
+            ] : ['mode' => '', 'custom' => ''],
         ]);
     }
 
     /** Saving stays on the form; "Save and close" in the gear goes back to the list. */
     protected function afterSave(Request $request, Storefront $storefront, string $status)
     {
+        $this->savePhoneMask($request, $storefront);
+
         return ($request->input('after_save') === 'close'
             ? redirect()->route('admin.storefronts.index')
             : redirect()->route('admin.storefronts.edit', $storefront))
             ->with('status', $status);
+    }
+
+    /**
+     * The phone mask as this storefront's own setting (SettingsManager with
+     * its id — Support\PhoneMask reads it before the shop's): "as the shop"
+     * removes the override rather than copying today's value into it.
+     */
+    protected function savePhoneMask(Request $request, Storefront $storefront): void
+    {
+        $settings = app(\App\Core\Settings\SettingsManager::class);
+        $mode = (string) $request->input('phone_mask', '');
+
+        if ($mode === '') {
+            $settings->forget('core', 'phone_mask', $storefront->id);
+            $settings->forget('core', 'phone_mask_custom', $storefront->id);
+
+            return;
+        }
+
+        $settings->set('core', 'phone_mask', $mode, $storefront->id);
+        $mode === 'custom'
+            ? $settings->set('core', 'phone_mask_custom', trim((string) $request->input('phone_mask_custom')), $storefront->id)
+            : $settings->forget('core', 'phone_mask_custom', $storefront->id);
     }
 
     /**
@@ -190,6 +220,13 @@ class StorefrontsController extends Controller
             'home_title' => 'nullable|string|max:255',
             'home_description' => 'nullable|string|max:500',
             'closed_message' => 'nullable|string|max:2000',
+            // This storefront's own phone mask; empty — the shop's (savePhoneMask()).
+            'phone_mask' => ['nullable', 'string', Rule::in(array_keys(\App\Core\Support\PhoneMask::OPTIONS))],
+            'phone_mask_custom' => ['nullable', 'string', 'max:60', function (string $attribute, $value, $fail) use ($request) {
+                if ($request->input('phone_mask') === 'custom' && \App\Core\Support\PhoneMask::cleanPattern((string) $value) === null) {
+                    $fail(__('A pattern needs "_" for each digit and may hold only digits, spaces, + ( ) - and dots — for example +998 (__) ___-__-__.'));
+                }
+            }],
             ...SharePicture::rules(),
         ], [
             'code.regex' => __('Latin letters, digits, dashes and underscores only.'),

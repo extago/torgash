@@ -26,6 +26,9 @@ Route::post('/checkout/account/code', [CheckoutAccountController::class, 'send']
 Route::post('/checkout/account/verify', [CheckoutAccountController::class, 'verify'])->name('checkout.account.verify');
 Route::post('/checkout/account/resend', [CheckoutAccountController::class, 'resend'])->name('checkout.account.resend');
 
+// The product page's note on the minimum order, drawn again when the basket
+// changes on the page (partials/minimum).
+Route::get('/checkout/minimum', [CheckoutController::class, 'minimum'])->name('checkout.minimum');
 Route::get('/checkout', [CheckoutController::class, 'create'])->name('checkout.create');
 Route::post('/checkout', [CheckoutController::class, 'store'])->name('checkout.store');
 Route::post('/checkout/quote', [DeliveryController::class, 'quote'])->name('checkout.quote');

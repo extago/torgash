@@ -58,8 +58,10 @@
     $headerHeight = ($stuckHeaderRem + ($stripSticks ? 3 : 0)).'rem';
 @endphp
 {{-- Which buttons a card's photo shows, per device (theme settings
-     card_corner_*; the rules are app.css, .torgash-corner-more). --}}
-<body class="torgash-storefront min-h-screen bg-base-200 flex flex-col max-lg:pb-16"
+     card_corner_*; the rules are app.css, .torgash-corner-more). Without the
+     phone's bottom bar (theme setting `tabbar`) `--torgash-bottom-bar-h` is 0,
+     and whatever stands over the bar comes down to the edge. --}}
+<body @class(['torgash-storefront min-h-screen bg-base-200 flex flex-col max-lg:pb-(--torgash-bottom-bar-h)', 'torgash-no-bottom-bar' => ! theme_setting('tabbar', true)])
       data-card-corner-phone="{{ theme_setting('card_corner_phone', 'more') }}" data-card-corner-tablet="{{ theme_setting('card_corner_tablet', 'all') }}" data-card-corner-computer="{{ theme_setting('card_corner_computer', 'hover') }}"
       style="--torgash-header-h: {{ $headerHeight }}; --torgash-strip-top: {{ $stuckHeaderRem }}rem">
     {{-- The three slots a module needs to reach the page without patching a
@@ -179,7 +181,9 @@
          here rather than repeating a <script> in every view that uses it. --}}
     {{-- Its counts are the visitor's own: drawn for each of them on a page
          kept ready for guests (PLAN §61). --}}
-    @personal('layouts.partials.mobile-tabbar', ['storefront' => $storefront], true)
+    @if (theme_setting('tabbar', true))
+        @personal('layouts.partials.mobile-tabbar', ['storefront' => $storefront], true)
+    @endif
 
     {{-- Always, not only when the popover component pushed it: a shop's own
          HTML block (the contacts in the header) opens a popover with plain

@@ -125,6 +125,36 @@ class Variations
     }
 
     /**
+     * The axes a visitor is offered as a CHOICE (the product page, the choice
+     * window, quick view): `for()`'s axes without the ones that have stopped
+     * being a choice. A characteristic marked `hide_single_in_stock` drops
+     * out when only one of its values is still for sale and this page already
+     * holds it — "New / As new" once the new ones are sold out. A page that
+     * holds a sold-out value keeps the row: it is the way to the one in stock.
+     * The variants table and the facts keep reading `for()`.
+     *
+     * @return list<array{feature: Feature, options: list<array>}>
+     */
+    public function shown(Product $product): array
+    {
+        $group = $this->for($product);
+
+        return array_values(array_filter($group['axes'], function (array $axis) use ($group, $product) {
+            $featureId = $axis['feature']->id;
+            if (! $axis['feature']->hide_single_in_stock) {
+                return true;
+            }
+
+            $forSale = $group['offered']
+                ->filter(fn (Product $member) => $member->isOrderable())
+                ->map(fn (Product $member) => $group['values'][$member->id][$featureId]['key'] ?? null)
+                ->filter()->unique()->values();
+
+            return ! ($forSale->count() === 1 && $forSale->first() === ($group['values'][$product->id][$featureId]['key'] ?? null));
+        }));
+    }
+
+    /**
      * The best member for switching one axis to one value: it has that value
      * and keeps as many of THIS product's other answers as it can — so moving
      * from black 256 to white lands on white 256, not on white 128.

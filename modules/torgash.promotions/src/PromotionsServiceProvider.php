@@ -169,6 +169,42 @@ class PromotionsServiceProvider extends ServiceProvider
     }
 
     /**
+     * Free delivery as a goal (FreeShippingGoal, partials/free-shipping): a
+     * bar in the basket's summary (`free_shipping_cart`) and a note on the
+     * product page where the shop puts it (`free_shipping_product`). Only
+     * while some running promotion gives free delivery from a sum — the
+     * shop-wide question; whether THIS basket may have it is the personal
+     * part's to answer.
+     */
+    protected function freeShippingGoal(): void
+    {
+        hook_listen('core.seo.private_routes', fn (array $names) => [...$names, 'promotions.free_shipping']);
+
+        hook_listen('cart.summary_after_total', function (string $html) {
+            if (! setting('torgash.promotions', 'free_shipping_cart', true) || ! app(CartPricing::class)->offersFreeShipping()) {
+                return $html;
+            }
+
+            return $html.view('torgash.promotions::partials.free-shipping', ['shippingGoalPlace' => 'cart'])->render();
+        });
+
+        $note = function (string $place) {
+            return function (string $html, array $context) use ($place) {
+                if (setting('torgash.promotions', 'free_shipping_product', 'buy_box') !== $place
+                    || ! ($context['product'] ?? null) instanceof Product
+                    || ! app(CartPricing::class)->offersFreeShipping()) {
+                    return $html;
+                }
+
+                return $html.personal('torgash.promotions::partials.free-shipping', ['shippingGoalPlace' => $place], reusable: true);
+            };
+        };
+        hook_listen('catalog.product.price_extra', $note('price'));
+        hook_listen('cart.buy_box.bottom', $note('buy_box'));
+        hook_listen('catalog.product.after_buy_box', $note('after_buy_box'));
+    }
+
+    /**
      * The storefront's half: the note under a product's price, and the sale
      * pages in the sitemap.
      *
@@ -179,6 +215,8 @@ class PromotionsServiceProvider extends ServiceProvider
      */
     protected function storefront(): void
     {
+        $this->freeShippingGoal();
+
         hook_listen('catalog.product.price_extra', function (string $html, array $context) {
             $promotions = app(CatalogPricing::class)->matching($context['product'], auth()->user());
 
@@ -703,51 +741,10 @@ class PromotionsServiceProvider extends ServiceProvider
         return false;
     }
 
-    /**
-     * The cart as this module reads it — and the one place another module can
-     * take a line OUT of what a promotion may discount.
-     *
-     * A line already carrying a discount of its own (a kit's, today) is not
-     * discounted twice: that is the shop owner's own rule (PLAN §33.8), and
-     * "the case is half price in the set AND ten per cent off because it is an
-     * accessory" is how a shop ends up selling below cost. `discounted` is
-     * stated here rather than guessed by the answerer — a line whose parts
-     * take money OFF is discounted, whoever put that part there.
-     *
-     * @return list<array{product_id: int, category_ids: list<int>, qty: int, line_total: int, discounted: bool}>
-     */
+    /** The cart as this module reads it — see BasketLines. */
     protected function basketLines(Collection $items): array
     {
-        $productIds = $items->pluck('product.id')->all();
-        $categoriesByProduct = Product::whereIn('id', $productIds)
-            ->with('categories:id')
-            ->get()
-            ->mapWithKeys(fn (Product $p) => [$p->id => $p->categories->pluck('id')->map('intval')->all()]);
-
-        $lines = $items->map(fn ($item) => [
-            // The line's own name and what it is made of. Both are its PUBLIC
-            // shape (cart states a line as `{key, product_id, qty, config}`
-            // and prices it into parts), and neither is read here: they are
-            // for a module that priced this line and has to recognise its own
-            // work — see `config` below.
-            'key' => $item->key,
-            'parts' => (array) ($item->parts ?? []),
-            'product_id' => $item->product->id,
-            'category_ids' => $categoriesByProduct[$item->product->id] ?? [],
-            'qty' => $item->qty,
-            'line_total' => $item->line_total,
-            'discounted' => collect($item->parts ?? [])->contains(fn (array $part) => $part['amount'] < 0),
-            // The line's own configuration bag, passed through untouched and
-            // never read here: it is the line's PUBLIC shape (cart states it
-            // as `{key, product_id, qty, config}`), and a module that priced
-            // this line needs it to recognise its own work. `discounted`
-            // above only catches a discount written as a negative part, and
-            // not every module writes one — a kit prices its parts below the
-            // shelf price instead.
-            'config' => (array) ($item->config ?? []),
-        ])->all();
-
-        return array_values(hook_filter('promotions.cart_lines', $lines, []));
+        return BasketLines::of($items);
     }
 
     /** @return list<array{product_id: int, category_ids: list<int>, qty: int, line_total: int}> */

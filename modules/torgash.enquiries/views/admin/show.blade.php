@@ -135,7 +135,8 @@
                                     @foreach ($enquiry->answers() as $answer)
                                         <tr>
                                             <td class="whitespace-nowrap opacity-60 w-1/4 align-top">{{ $answer['label'] }}</td>
-                                            <td class="whitespace-pre-line">{{ $answer['value'] }}</td>
+                                            <td class="whitespace-pre-line">{{ $answer['value'] }}@if (! empty($answer['note']))
+<span class="block text-xs text-warning-content/80 bg-warning/15 rounded px-1.5 py-0.5 mt-1 w-fit">{{ __('Another time zone') }}: {{ $answer['note'] }}</span>@endif</td>
                                         </tr>
                                     @endforeach
                                 </tbody>

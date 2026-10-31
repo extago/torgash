@@ -210,6 +210,8 @@ class PlaceOrder
      *                                    is written down about the browser (ClientFacts), which is not
      *                                    taken at all once `user_id` names somebody else: that request is
      *                                    the manager's.
+     * @param  bool  $minimum  hold the order to the shop's minimum (MinimumOrder) — one click
+     *                         passes the shop's `min_order_one_click`; never for `$as`
      */
     public function place(
         array $validated,
@@ -220,7 +222,15 @@ class PlaceOrder
         array $shippingFields = [],
         bool $saveAddress = false,
         array $as = [],
+        bool $minimum = true,
     ): Order {
+        // The shop's minimum order, on the goods (MinimumOrder). The basket
+        // already holds its button back; asked here again, because the shop
+        // API and a stale tab never saw that button.
+        if ($as === [] && $minimum && ($short = app(MinimumOrder::class)->refusal($quote->subtotal))) {
+            throw \Illuminate\Validation\ValidationException::withMessages(['cart' => $short]);
+        }
+
         // A basket filled before a product was closed to this customer's group
         // (PLAN §46) is not placed with it: the basket still holds it, the
         // order may not. A manager placing on somebody's behalf decides that.

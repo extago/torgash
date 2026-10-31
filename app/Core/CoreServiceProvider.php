@@ -301,6 +301,29 @@ class CoreServiceProvider extends ServiceProvider
         // theme written without it still gets its notices.
         hook_listen('core.footer', fn (string $html) => $html.view('components.notices')->render(), 1);
 
+        // The phone mask (Support\PhoneMask): one script for every phone field
+        // of the storefront, its pattern in the tag's own attributes.
+        hook_listen('core.footer', function (string $html) {
+            $mask = \App\Core\Support\PhoneMask::for(current_storefront()?->id);
+
+            return $mask === null ? $html : $html.sprintf(
+                '<script nonce="%s" src="%s" data-mode="%s" data-pattern="%s" data-trunk="%s" defer></script>',
+                e(csp_nonce()), e(asset_url('/assets/js/phone-mask.js')), e($mask['mode']), e($mask['pattern']), e($mask['trunk']),
+            );
+        });
+
+        // A pattern of one's own that cannot be one is refused before it is stored.
+        hook_listen('core.settings.saving', function (array $errors, array $context) {
+            $values = $context['values'] ?? [];
+
+            if (($context['module'] ?? null) === 'core' && ($values['phone_mask'] ?? null) === 'custom'
+                && \App\Core\Support\PhoneMask::cleanPattern((string) ($values['phone_mask_custom'] ?? '')) === null) {
+                $errors['phone_mask_custom'] = __('A pattern needs "_" for each digit and may hold only digits, spaces, + ( ) - and dots — for example +998 (__) ___-__-__.');
+            }
+
+            return $errors;
+        });
+
         // Staff are told what customers see differently from them — a closed
         // storefront, safe mode. Both are asked first, cheaply; the roles are
         // loaded only when one of them is true.

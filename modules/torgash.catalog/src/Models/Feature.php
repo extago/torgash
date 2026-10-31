@@ -49,7 +49,7 @@ class Feature extends Model
      * report the legacy answer for a row that is not legacy at all. Mirrored
      * here for the same reason `availability_status` is on Product.
      */
-    protected $attributes = ['shown_in' => '["filters","specs","buy_box"]', 'product_style' => 'labels', 'filter_style' => 'list'];
+    protected $attributes = ['shown_in' => '["filters","specs","buy_box"]', 'product_style' => 'labels', 'filter_style' => 'list', 'hide_single_in_stock' => false];
 
     /** The picker's style as it can be drawn: swatches need a colour characteristic, images a variation axis. */
     public function productStyle(): string
@@ -72,7 +72,7 @@ class Feature extends Model
 
     protected function casts(): array
     {
-        return ['name' => 'array', 'shown_in' => 'array', 'is_color' => 'bool', 'in_short_description' => 'bool'];
+        return ['name' => 'array', 'shown_in' => 'array', 'is_color' => 'bool', 'in_short_description' => 'bool', 'hide_single_in_stock' => 'bool'];
     }
 
     public function group(): BelongsTo

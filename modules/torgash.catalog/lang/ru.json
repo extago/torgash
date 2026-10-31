@@ -1232,5 +1232,8 @@
     "Characteristics in this group": "Характеристики в этой группе",
     "None yet — a characteristic picks its group on its own form.": "Пока ни одной — характеристика выбирает группу в своей форме.",
     "See the catalogue: the lists of products and categories and a product's card, without changing anything": "Смотреть каталог: списки товаров и категорий и карточку товара, ничего не меняя",
-    "Read only": "Только чтение"
+    "Read only": "Только чтение",
+    "Choosing a variation": "Выбор вариации",
+    "Hide the choice when one value is left in stock": "Скрывать выбор, когда в наличии осталось одно значение",
+    "For example \"New / As new\": once the new ones are sold out, the product page no longer offers this row. The other values' pages stay where they are.": "Например, «Новый / Как новый»: когда новые закончились, на странице товара этого ряда больше нет. Страницы остальных значений остаются на месте."
 }

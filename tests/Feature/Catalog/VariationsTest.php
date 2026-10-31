@@ -110,4 +110,32 @@ class VariationsTest extends TestCase
             ->assertSee('VT4 Colour')
             ->assertSee('href="'.route('catalog.product', 'vt4-b').'"', false);
     }
+
+    /** "New / As new" with the new ones sold out: the row is no choice any more — on the page that holds the value for sale. */
+    public function test_an_axis_with_one_value_left_for_sale_can_be_hidden(): void
+    {
+        [$condition, $conditions] = $this->variationAxis('VT5 Condition', ['new', 'as new']);
+        [$color, $colors] = $this->variationAxis('VT5 Colour', ['black', 'white']);
+
+        $newBlack = $this->product('VT5-NB', ['stock' => 0, 'variation_group' => 'vt5']);
+        $usedBlack = $this->product('VT5-UB', ['variation_group' => 'vt5']);
+        $usedWhite = $this->product('VT5-UW', ['variation_group' => 'vt5']);
+        foreach ([[$newBlack, 'new', 'black'], [$usedBlack, 'as new', 'black'], [$usedWhite, 'as new', 'white']] as [$member, $state, $shade]) {
+            $this->answer($member, $conditions[$state]);
+            $this->answer($member, $colors[$shade]);
+        }
+
+        $ids = fn (Product $product) => array_map(fn ($axis) => $axis['feature']->id, app(Variations::class)->shown($product));
+
+        $this->assertSame([$condition->id, $color->id], $ids($usedBlack), 'not marked: shown as before');
+
+        $condition->update(['hide_single_in_stock' => true]);
+
+        $this->assertSame([$color->id], $ids($usedBlack), 'one condition left for sale, and this page holds it');
+        $this->assertSame([$condition->id, $color->id], $ids($newBlack), 'a sold-out page keeps the way to the one for sale');
+        $this->assertCount(2, app(Variations::class)->for($usedBlack)['axes'], 'the variants table still has every column');
+
+        $newBlack->update(['stock' => 3]);
+        $this->assertSame([$condition->id, $color->id], $ids($usedBlack->fresh()), 'back in stock: a choice again');
+    }
 }

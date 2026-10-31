@@ -144,7 +144,7 @@ class KitController extends Controller
 
             $cart->add($main->id, 1, $config);
 
-            return view('torgash.cart::partials.changed');
+            return response()->view('torgash.cart::partials.changed')->header('HX-Trigger', \Torgash\Cart\Http\CartController::CHANGED);
         }
 
         // A simple set is a convenient way to put several ordinary things in
@@ -157,7 +157,7 @@ class KitController extends Controller
             $cart->add($line['product']->id, max(1, (int) $line['qty']));
         }
 
-        return view('torgash.cart::partials.changed');
+        return response()->view('torgash.cart::partials.changed')->header('HX-Trigger', \Torgash\Cart\Http\CartController::CHANGED);
     }
 
     /**

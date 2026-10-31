@@ -48,6 +48,12 @@ class SettingsManager
         return $this->defaults[$module][$key] ?? $default;
     }
 
+    /** A storefront's OWN value for the key — its override, not the shop's or the default; null without one. */
+    public function own(string $module, string $key, int $storefrontId): mixed
+    {
+        return $this->loaded($module, $storefrontId)[$key] ?? null;
+    }
+
     /** Was a value STORED for the key (this storefront's or the global one) — not merely defaulted? */
     public function has(string $module, string $key, ?int $storefrontId = null): bool
     {

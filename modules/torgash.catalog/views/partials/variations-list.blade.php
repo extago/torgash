@@ -100,7 +100,7 @@
                         </td>
                         <td class="text-right font-semibold whitespace-nowrap">{{ $variantsPrices->format($variantsMember) }}</td>
                         <td class="text-right">
-                            {!! hook_render('catalog.product.card_actions', ['product' => $variantsMember, 'variation' => 'chosen']) !!}
+                            {!! hook_render('catalog.product.card_actions', ['product' => $variantsMember, 'variation' => 'chosen', 'quantity' => 'none']) !!}
                         </td>
                     </tr>
                 @endforeach

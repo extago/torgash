@@ -200,7 +200,15 @@ this file is the reasoning. Read it before changing anything it covers.
   offered to menus but kept out of the automatic five (the comparison), so
   cart and wishlist add their own; each tab's badge is ALWAYS in the
   markup as `#tabbar-badge-{key}` (hidden at zero) so an add can refresh it out
-  of band beside the header's counter. Anything opens the drawer by
+  of band beside the header's counter. The bar can be switched off (theme
+  `tabbar`, 2026-10-31): the body gets `torgash-no-bottom-bar`, the bar's height
+  is ONE variable, `--torgash-bottom-bar-h` (4rem below `lg`, else 0), which
+  everything standing over the bar reads (page padding, the buy strip, the
+  consent banner, a floating button — never `bottom-16` by hand), and the
+  wishlist and the basket move into the phone header in every shape
+  (`mobile-header-icons`, personal): the bar's own `storefront.tabbar`
+  entries with the bar's ids `#tabbar-badge-{key}` — still one per page, so
+  the out-of-band refresh needs no change. Anything opens the drawer by
   dispatching `torgash-drawer`. A category's `icon` is a Lucide name, checked
   against the file before drawing. **What only a script can open is folded
   away only under `html.torgash-js`** (set by the theme's head): the filter
