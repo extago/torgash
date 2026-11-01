@@ -1243,5 +1243,9 @@
     "Takes its content from": "Берёт данные у",
     "Automatically: a product of the same card with photos": "Автоматически: товар той же карточки с фото",
     "Photos, description, short description and characteristics this product has none of are shown from that one. Nothing is copied: whatever you fill in here is this product's own and wins; the code, external id, price, stock and weight are always its own.": "Фото, описание, краткое описание и характеристики, которых у этого товара нет, показываются от выбранного. Ничего не копируется: всё, что заполнено здесь, — своё и важнее; артикул, внешний ID, цена, остаток и вес всегда свои.",
-    "Takes its content from (SKU)": "Берёт данные у (артикул)"
+    "Takes its content from (SKU)": "Берёт данные у (артикул)",
+    "Product prices": "Цены товаров",
+    "Quantity prices": "Цены за количество",
+    "Price type prices": "Цены по типам цен",
+    "Price history": "История цен"
 }

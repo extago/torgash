@@ -57,9 +57,9 @@ class OrderPayments
             'gateway' => $payment->gateway,
             'external_id' => $payment->external_id,
             'state' => $payment->state,
-            // Minor units of the order's `currency`, like every amount on it.
-            'requested' => $payment->requested,
-            'held' => $payment->held(),
+            // Decimal strings of the order's `currency`, like every amount on it.
+            'requested' => api_money($payment->requested === null ? null : (int) $payment->requested),
+            'held' => api_money((int) $payment->held()),
             // Set when the payment was made for an order since poured into this one.
             'order_id' => $payment->order_id !== $order->id ? $payment->order_id : null,
             'created_at' => $payment->created_at?->toIso8601String(),

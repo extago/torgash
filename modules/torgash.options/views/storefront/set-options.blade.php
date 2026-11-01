@@ -18,7 +18,7 @@
         // Blade does not recognise a directive written immediately after a
         // word character, so an "endif" followed straight by an "unless"
         // compiles half-open — see docs/LESSONS.md.
-        $suffix = ($showPrices && $amount !== 0 ? ' '.($amount > 0 ? '+' : '−').format_price(abs($amount)) : '')
+        $suffix = ($showPrices && $amount !== 0 ? ' '.($amount > 0 ? '+' : '−').format_unit_price(abs($amount)) : '')
             .($orderable ? '' : ' — '.$setProduct->stockLabel());
     @endphp
     {{-- Sold out is an ANSWER: shown, refused, and saying which it is. A

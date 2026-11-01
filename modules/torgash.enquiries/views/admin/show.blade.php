@@ -281,7 +281,7 @@
                                         <tr>
                                             <td>{{ $line['name'] ?? '' }}</td>
                                             <td class="w-16 text-right opacity-70">× {{ $line['qty'] ?? 1 }}</td>
-                                            <td class="w-32 text-right">{{ admin_price((int) ($line['unit_price'] ?? 0)) }}</td>
+                                            <td class="w-32 text-right">{{ admin_unit_price((int) ($line['unit_price'] ?? 0)) }}</td>
                                         </tr>
                                     @endforeach
                                 </tbody>

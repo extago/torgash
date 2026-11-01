@@ -155,10 +155,10 @@ class RequestReturn
                 'name' => $line['name'] ?? null,
                 'qty' => $qty,
                 'unit_price' => $unit,
-                // Recomputed rather than sliced off the order's line total: a
-                // partial return of a line owes its own share, and the order's
-                // total is for the whole of it.
-                'line_total' => $unit * $qty,
+                // This return's share of the order line's total — not
+                // price × quantity, which at a price finer than a cent would
+                // not add up to what was paid (Eligibility::share()).
+                'line_total' => Eligibility::share($line, $qty),
             ];
         }
 

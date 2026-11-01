@@ -84,7 +84,7 @@ class ShownPrice
      */
     public function format(Product $product, ?int $base = null): string
     {
-        $price = format_price($this->amount($product, $base));
+        $price = format_unit_price($this->amount($product, $base));
 
         return $this->isFrom($product, $base)
             ? __('from :price', ['price' => $price])

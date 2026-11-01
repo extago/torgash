@@ -28,7 +28,7 @@
                 <span class="flex flex-col items-end text-sm tabular-nums">
                     <span class="font-semibold whitespace-nowrap">{{ format_price($line->line_total, exact: true) }}</span>
                     @if ($line->qty > 1)
-                        <span class="opacity-60 whitespace-nowrap">{{ $line->qty }} × {{ format_price($line->unit_price, exact: true) }}</span>
+                        <span class="opacity-60 whitespace-nowrap">{{ $line->qty }} × {{ format_unit_price($line->unit_price) }}</span>
                     @endif
                 </span>
             @endif

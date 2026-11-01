@@ -27,7 +27,6 @@
     "An open object — this resource has not declared its fields.": "Відкритий об'єкт — цей ресурс не оголосив своїх полів.",
     "A token from Admin → API. It names a user, and every permission check is the admin panel’s own.": "Токен з «Адмін → API-токени». Він називає користувача, і всі перевірки прав — ті самі, що в панелі керування.",
     "Two halves. `/api/v2/admin/…` answers with everything the shop knows and needs a bearer token; `/api/v2/shop/…` is public, exactly as the storefront’s own pages are, and only GET is routed for its resources.": "Дві половини. `/api/v2/admin/…` відповідає всім, що знає магазин, і вимагає Bearer-токен; `/api/v2/shop/…` відкритий так само, як сторінки самої вітрини, і для його ресурсів зареєстровано лише GET.",
-    "Every amount is an integer in **minor units** — 1999 is 19.99 — and the currency is always named beside it. A price is two facts, and sending the number alone is how an exchange puts one currency into another’s column.": "Будь-яка сума — ціле число в **мінорних одиницях**: 1999 — це 19,99, і валюту завжди названо поруч. Ціна — це два факти, і надсилання самого лише числа — спосіб покласти одну валюту в колонку іншої.",
     "A row is addressed by our id **or** by whatever key your own system knows it as, so an integration never has to store our autoincrements.": "Рядок адресується нашим id **або** тим ключем, яким його знає ваша система, — обміну не потрібно зберігати наші автоінкременти.",
     "Answers are enveloped: a single row as `{\"data\": …}`, a list as `{\"data\": [...], \"meta\": {...}}`, a refusal as `{\"message\": …}` with `errors` when fields are at fault.": "Відповіді в конверті: один рядок — `{\"data\": …}`, список — `{\"data\": [...], \"meta\": {...}}`, відмова — `{\"message\": …}`, а коли винні поля, ще й `errors`.",
     "Which storefront this call is about — its id or its code. The default storefront otherwise.": "Про яку вітрину цей виклик — її id або код. Інакше вітрина за замовчуванням.",
@@ -66,7 +65,6 @@
     "Our id, the sku, or the id your own system knows it by.": "Наш id, артикул або id, яким його знає ваша система.",
     "0 removes the line.": "0 прибирає рядок.",
     "What the visitor’s prices are displayed in.": "У чому показуються ціни цьому відвідувачеві.",
-    "Minor units. Already reflects any quantity break this line has crossed.": "Мінорні одиниці. Уже з урахуванням порогу за кількістю, якщо рядок його перейшов.",
     "What has been answered, and what is on offer": "Що вже відповіли і що запропоновано",
     "Answer a step": "Відповісти на крок",
     "Place the order": "Оформити замовлення",
@@ -125,5 +123,8 @@
     "Expired": "Минула",
     "Present only when this line cannot be ordered as it stands — out of stock, or more than is left. Completing the checkout is refused until it is put right.": "Є лише тоді, коли рядок не можна замовити як є: товару немає або його менше, ніж у рядку. Поки це не виправлено, оформлення замовлення відхиляється.",
     "Select all on this page": "Вибрати всі на сторінці",
-    "selected": "вибрано"
+    "selected": "вибрано",
+    "Money is a **decimal string in major units** with a dot — `\"199990.00\"` — and the currency is always named beside it; it is written to the API in the same format (a JSON number is accepted too). An amount (a line’s total, an order’s, delivery, a payment) has two places; a price per unit has exactly as many as the shop keeps a price (2–4, `\"0.0120\"`), and a price sent with more is refused rather than rounded. A line’s total is its price × quantity rounded once, half away from zero.": "Гроші — **десятковий рядок в основних одиницях** з крапкою — `\"199990.00\"`, і валюта завжди вказана поруч; до API вони записуються в тому ж форматі (JSON-число теж приймається). Сума (підсумок рядка, замовлення, доставка, платіж) має два знаки; ціна за одиницю — рівно стільки, скільки магазин зберігає в ціні (2–4, `\"0.0120\"`), а ціну з більшою кількістю знаків відхиляють, а не округлюють. Підсумок рядка — ціна × кількість, округлена один раз, 0,5 — від нуля.",
+    "A price per unit as a decimal string, with the places the shop keeps. Already reflects any quantity break this line has crossed.": "Ціна за одиницю десятковим рядком, з тією кількістю знаків, яку зберігає магазин. Уже враховує сходинку ціни за кількість, яку перейшов рядок.",
+    "An amount: a decimal string with two places.": "Сума: десятковий рядок із двома знаками."
 }

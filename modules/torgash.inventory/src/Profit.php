@@ -77,7 +77,8 @@ class Profit
         $line = [
             'goods' => $goods,
             'delivery' => $delivery,
-            'cost' => (int) ($cost->cost ?? 0),
+            // Unit costs are price units (PLAN §65); the order's cost is an amount.
+            'cost' => price_scale()->amount((int) ($cost->cost ?? 0)),
             'unknown' => (int) ($cost->unknown ?? 0),
             'expenses' => (int) ($own->expenses ?? 0),
             'income' => (int) ($own->income ?? 0),

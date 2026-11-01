@@ -132,7 +132,7 @@ class ProductCard
             return str_replace('color:#dc2626', 'color:#0f172a', $price);
         }
 
-        return '<span style="font-size:13px;color:#94a3b8;text-decoration:line-through;">'.e(self::plain(format_price($product->oldPrice()))).'</span>'
+        return '<span style="font-size:13px;color:#94a3b8;text-decoration:line-through;">'.e(self::plain(format_unit_price($product->oldPrice()))).'</span>'
             .' <span style="display:inline-block;font-size:12px;font-weight:700;line-height:1;color:#ffffff;background:#dc2626;border-radius:6px;padding:3px 6px;vertical-align:1px;">−'.$percent.'%</span>'
             .'<br>'.$price;
     }

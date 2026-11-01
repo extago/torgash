@@ -94,29 +94,35 @@ class PriceTypeMarkupRulesController extends Controller
             'markup_type' => 'required|in:percent,fixed',
             'markup_value' => 'required|numeric',
             'rounding_mode' => 'required|in:nearest,psychological',
-            'round_to' => 'required|numeric|min:1',
+            'round_to' => 'required|numeric|gt:0',
             'round_direction' => ['nullable', Rule::in(['nearest', 'up', 'down'])],
             'psychological_offset' => 'nullable|numeric|min:0',
             'sort' => 'nullable|integer',
             'enabled' => 'nullable|boolean',
         ]);
 
+        // Money here is in price units (PLAN §65), the same scale as a
+        // product's cost price, which is what these numbers are compared with
+        // and added to.
+        $units = fn ($major) => price_scale()->fromMajor($major);
+
         return [
             'name' => trim($validated['name'] ?? '') !== '' ? [$locale => $validated['name']] : null,
-            // cost_price_min/max, round_to compare/operate in minor units, same convention as Product::price.
-            'cost_price_min' => isset($validated['cost_price_min']) ? (int) round($validated['cost_price_min'] * 100) : null,
-            'cost_price_max' => isset($validated['cost_price_max']) ? (int) round($validated['cost_price_max'] * 100) : null,
+            'cost_price_min' => isset($validated['cost_price_min']) ? $units($validated['cost_price_min']) : null,
+            'cost_price_max' => isset($validated['cost_price_max']) ? $units($validated['cost_price_max']) : null,
             'markup_type' => $validated['markup_type'],
             // Percent entered as e.g. "35" -> stored as basis points (3500 = 35.00%);
-            // fixed entered in major units -> minor units. Same *100 scale either way.
-            'markup_value' => (int) round($validated['markup_value'] * 100),
+            // fixed entered in major units -> price units.
+            'markup_value' => $validated['markup_type'] === 'percent'
+                ? (int) round($validated['markup_value'] * 100)
+                : (int) $units($validated['markup_value']),
             'rounding_mode' => $validated['rounding_mode'],
-            // Entered in major units (e.g. "10" = round to nearest $10), stored in minor
-            // units so it composes directly with the already-minor-unit marked-up price.
-            'round_to' => (int) round($validated['round_to'] * 100),
+            // Entered in major units (e.g. "10" = round to nearest $10), stored in
+            // price units so it composes directly with the marked-up price.
+            'round_to' => max(1, (int) $units($validated['round_to'])),
             'round_direction' => $validated['rounding_mode'] === 'nearest' ? ($validated['round_direction'] ?? 'nearest') : null,
             'psychological_offset' => $validated['rounding_mode'] === 'psychological'
-                ? (int) round(($validated['psychological_offset'] ?? 0) * 100) : null,
+                ? (int) $units($validated['psychological_offset'] ?? 0) : null,
             'sort' => $validated['sort'] ?? 0,
             'enabled' => $request->boolean('enabled'),
         ];

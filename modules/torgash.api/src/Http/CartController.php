@@ -132,11 +132,10 @@ class CartController extends Controller
                     'url' => url('/api/v2/shop/products/'.$item->product->id),
                 ],
                 'quantity' => $item->qty,
-                // Minor units of the shop's books, like every other amount on
-                // the wire. The visitor's own currency is a display question,
-                // and `currency` above says which one that is.
-                'unit_price' => $item->unit_price,
-                'line_total' => $item->line_total,
+                // Decimal strings in the shop's books (PLAN §65): a price per
+                // unit with the places the shop keeps, an amount with two.
+                'unit_price' => api_price((int) $item->unit_price),
+                'line_total' => api_money((int) $item->line_total),
                 // What is inside this line and already in its price: the
                 // processors, the licences, the extended warranty. Absent for
                 // a plain product rather than an empty list, so a client
@@ -145,7 +144,7 @@ class CartController extends Controller
                     'label' => $part['label'],
                     'quantity' => $part['qty'],
                     'per_item' => $part['per_unit'],
-                    'amount' => $part['amount'],
+                    'amount' => api_price((int) $part['amount']),
                     'product_id' => $part['product_id'],
                 ], $item->parts)]),
                 // Why this line cannot be ordered as it stands — the stock fell
@@ -154,7 +153,7 @@ class CartController extends Controller
                 ...($item->problem === null ? [] : ['problem' => $item->problem]),
             ])->values(),
             'count' => $cart->count(),
-            'total' => $cart->total(),
+            'total' => api_money((int) $cart->total()),
             'coupon' => $cart->couponCode(),
         ];
     }

@@ -46,6 +46,13 @@ class CheckoutServiceProvider extends ServiceProvider
 
     public function boot(): void
     {
+
+        // Prices per unit this module keeps, moved by core when the shop
+        // changes how many places a price has (PLAN §65).
+        hook_listen('core.price.columns', fn (array $columns) => [...$columns,
+            \App\Core\Support\PriceColumns::jsonLines('Order lines', 'm_checkout_orders', 'items', ['unit_price'], ['options' => ['amount']]),
+        ]);
+
         // Its part of the demo shop (PLAN §55.3), after the catalogue's products.
         hook_listen('core.demo.parts', fn (array $parts) => $parts + [
             'checkout' => ['label' => 'Coupons', 'after' => ['catalog'], 'install' => fn (\App\Core\Demo\DemoPack $pack) => app(Demo\CheckoutDemo::class)->install($pack)],

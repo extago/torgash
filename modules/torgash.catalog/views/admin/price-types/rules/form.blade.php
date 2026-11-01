@@ -9,37 +9,39 @@
         $typeName = $priceType->t('name', $locale) ?: $priceType->code;
         $selectedCategoryIds = $rule->exists ? $rule->categories->pluck('id')->all() : [];
         $selectedFeatureValueIds = $rule->exists ? $rule->featureValues->pluck('id')->all() : [];
-        $major = fn ($minor, $default = '') => $minor !== null ? $minor / 100 : $default;
+        $major = fn ($units, $default = '') => price_input($units, $default);
+        $perMajor = price_scale()->perMajor();
     @endphp
 
     {{-- The example at the bottom is PriceTypeMarkupRule::apply() done in the browser, on
-         the same minor units, so what it shows is what the server will do. --}}
+         the same price units, so what it shows is what the server will do. --}}
     <form method="POST"
           action="{{ $rule->exists ? route('admin.catalog.price-types.rules.update', [$priceType, $rule]) : route('admin.catalog.price-types.rules.store', $priceType) }}"
           class="flex flex-col gap-4"
           x-data="{
               mode: '{{ old('rounding_mode', $rule->rounding_mode ?? 'nearest') }}',
               markupType: '{{ old('markup_type', $rule->markup_type ?? 'percent') }}',
-              markup: {{ \Illuminate\Support\Js::from((string) old('markup_value', $rule->exists ? $rule->markup_value / 100 : '')) }},
-              roundTo: {{ \Illuminate\Support\Js::from((string) old('round_to', $rule->exists ? $rule->round_to / 100 : '100')) }},
+              markup: {{ \Illuminate\Support\Js::from((string) old('markup_value', $rule->exists ? ($rule->markup_type === 'percent' ? $rule->markup_value / 100 : price_input($rule->markup_value)) : '')) }},
+              roundTo: {{ \Illuminate\Support\Js::from((string) old('round_to', $rule->exists ? price_input($rule->round_to) : '100')) }},
               direction: '{{ old('round_direction', $rule->round_direction ?? 'nearest') }}',
               offset: {{ \Illuminate\Support\Js::from((string) old('psychological_offset', $major($rule->psychological_offset, '0.01'))) }},
               sampleCost: '1000',
+              perMajor: {{ $perMajor }},
               example() {
-                  const cost = Math.round(parseFloat(this.sampleCost) * 100);
-                  const m = Math.round(parseFloat(this.markup) * 100);
-                  const n = Math.max(1, Math.round(parseFloat(this.roundTo) * 100));
+                  const cost = Math.round(parseFloat(this.sampleCost) * this.perMajor);
+                  const m = this.markupType === 'fixed' ? Math.round(parseFloat(this.markup) * this.perMajor) : Math.round(parseFloat(this.markup) * 100);
+                  const n = Math.max(1, Math.round(parseFloat(this.roundTo) * this.perMajor));
                   if (! Number.isFinite(cost) || ! Number.isFinite(m)) return '—';
                   const marked = this.markupType === 'fixed' ? cost + m : Math.round(cost * (10000 + m) / 10000);
                   let price;
                   if (this.mode === 'psychological') {
-                      price = Math.max(0, Math.floor(marked / n) * n - Math.round((parseFloat(this.offset) || 0) * 100));
+                      price = Math.max(0, Math.floor(marked / n) * n - Math.round((parseFloat(this.offset) || 0) * this.perMajor));
                   } else {
                       price = this.direction === 'up' ? Math.ceil(marked / n) * n
                           : this.direction === 'down' ? Math.floor(marked / n) * n
                           : Math.round(marked / n) * n;
                   }
-                  return (price / 100).toLocaleString(undefined, { minimumFractionDigits: price % 100 ? 2 : 0, maximumFractionDigits: 2 });
+                  return (price / this.perMajor).toLocaleString(undefined, { minimumFractionDigits: price % this.perMajor ? 2 : 0, maximumFractionDigits: {{ price_scale()->places() }} });
               },
           }">
         @csrf
@@ -117,11 +119,11 @@
                         <x-admin.picker name="feature_value_ids[]" :label="__('Characteristic values')" :options="$featureValueOptions" :selected="$selectedFeatureValueIds" :empty="__('Any value')" />
                         <div class="grid sm:grid-cols-2 gap-4">
                             <fieldset class="fieldset p-0"><legend class="fieldset-legend">{{ __('Cost price from') }}</legend>
-                                <input type="number" step="0.01" min="0" name="cost_price_min" value="{{ old('cost_price_min', $major($rule->cost_price_min)) }}"
+                                <input type="number" step="{{ price_step() }}" min="0" name="cost_price_min" value="{{ old('cost_price_min', $major($rule->cost_price_min)) }}"
                                        class="input input-bordered w-full" placeholder="0.00">
                             </fieldset>
                             <fieldset class="fieldset p-0"><legend class="fieldset-legend">{{ __('Cost price up to') }}</legend>
-                                <input type="number" step="0.01" min="0" name="cost_price_max" value="{{ old('cost_price_max', $major($rule->cost_price_max)) }}"
+                                <input type="number" step="{{ price_step() }}" min="0" name="cost_price_max" value="{{ old('cost_price_max', $major($rule->cost_price_max)) }}"
                                        class="input input-bordered w-full" placeholder="0.00">
                             </fieldset>
                         </div>
@@ -140,7 +142,7 @@
                                     <label class="btn join-item" :class="markupType === 'fixed' && 'btn-active'">
                                         <input type="radio" name="markup_type" value="fixed" x-model="markupType" class="hidden"> {{ __('amount') }}
                                     </label>
-                                    <input type="number" step="0.01" required name="markup_value" x-model="markup"
+                                    <input type="number" step="any" required name="markup_value" x-model="markup"
                                            class="input input-bordered join-item w-36" :placeholder="markupType === 'percent' ? '35' : '500'">
                                 </div>
                             </fieldset>
@@ -164,7 +166,7 @@
                              both submitted, and the hidden one used to win. --}}
                         <div class="grid sm:grid-cols-2 gap-4">
                             <fieldset class="fieldset p-0"><legend class="fieldset-legend" x-text="mode === 'nearest' ? @js(__('Round to')) : @js(__('Round down to'))"></legend>
-                                <input type="number" step="0.01" min="0.01" name="round_to" x-model="roundTo" class="input input-bordered w-full" placeholder="100">
+                                <input type="number" step="{{ price_step() }}" min="{{ price_step() }}" name="round_to" x-model="roundTo" class="input input-bordered w-full" placeholder="100">
                             </fieldset>
                             <fieldset class="fieldset p-0" x-show="mode === 'nearest'"><legend class="fieldset-legend">{{ __('Direction') }}</legend>
                                 <select name="round_direction" x-model="direction" class="select select-bordered w-full" :disabled="mode !== 'nearest'">
@@ -174,14 +176,14 @@
                                 </select>
                             </fieldset>
                             <fieldset class="fieldset p-0" x-show="mode === 'psychological'" x-cloak><legend class="fieldset-legend">{{ __('Then subtract') }}</legend>
-                                <input type="number" step="0.01" min="0" name="psychological_offset" x-model="offset" class="input input-bordered w-full"
+                                <input type="number" step="{{ price_step() }}" min="0" name="psychological_offset" x-model="offset" class="input input-bordered w-full"
                                        placeholder="0.01" :disabled="mode !== 'psychological'">
                             </fieldset>
                         </div>
 
                         <div class="rounded-box bg-base-200 p-3 flex flex-wrap items-center gap-2 text-sm">
                             <span class="opacity-70">{{ __('Example: cost') }}</span>
-                            <input type="number" step="0.01" min="0" x-model="sampleCost" class="input input-bordered input-sm w-28" aria-label="{{ __('Example cost') }}">
+                            <input type="number" step="{{ price_step() }}" min="0" x-model="sampleCost" class="input input-bordered input-sm w-28" aria-label="{{ __('Example cost') }}">
                             <x-icon name="arrow-right" size="sm" class="opacity-50" />
                             <span class="font-semibold tabular-nums" x-text="example()"></span>
                         </div>

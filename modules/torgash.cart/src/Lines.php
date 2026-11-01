@@ -234,9 +234,10 @@ class Lines
      *
      * @param  array<string, mixed>  $part
      */
+    /** What a part adds to its line, as an AMOUNT (minor units): its price units × how many, rounded once. */
     public static function partTotal(array $part, int $qty): int
     {
-        return (int) $part['amount'] * (int) $part['qty'] * ($part['per_unit'] ? max(1, $qty) : 1);
+        return price_scale()->amount((int) $part['amount'] * (int) $part['qty'] * ($part['per_unit'] ? max(1, $qty) : 1));
     }
 
     /**
@@ -244,7 +245,7 @@ class Lines
      * summary and `PlaceOrder` cannot come to different totals for one line.
      *
      * @param  list<array<string, mixed>>  $parts
-     * @return array{unit_price: int, extra_total: int, line_total: int}
+     * @return array{unit_price: int, extra_price: int, extra_total: int, line_total: int} unit_price and extra_price in price units, the two totals in minor units
      */
     public static function money(int $basePrice, array $parts, int $qty): array
     {
@@ -261,10 +262,19 @@ class Lines
 
         $unitPrice = $basePrice + $perUnit;
 
+        // A price per unit is in PRICE units, the line in minor ones (PLAN
+        // §65): the multiplication is done exactly and rounded ONCE, so a
+        // thousand pieces at $0.012 are $12.00, not a thousand cents rounded.
+        // With two places both scales are the same and nothing rounds.
+        $scale = price_scale();
+
         return [
             'unit_price' => $unitPrice,
-            'extra_total' => $perLine,
-            'line_total' => $unitPrice * max(1, $qty) + $perLine,
+            // What is charged once per line, still in price units — for a
+            // "from" price or a kit's own price, which are prices, not sums.
+            'extra_price' => $perLine,
+            'extra_total' => $scale->amount($perLine),
+            'line_total' => $scale->amount($unitPrice * max(1, $qty) + $perLine),
         ];
     }
 

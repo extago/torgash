@@ -150,6 +150,23 @@ class CoreSettings
                 'help' => 'Same for length, width and height. Stored in whole millimetres.',
             ],
             [
+                'key' => '_g_prices',
+                'type' => 'group',
+                'label' => 'Prices',
+            ],
+            [
+                'key' => \App\Core\Support\PriceScale::SETTING,
+                'type' => 'select',
+                'default' => '2',
+                'options' => [
+                    '2' => '2 — as the currency (0.01)',
+                    '3' => '3 (0.001)',
+                    '4' => '4 (0.0001)',
+                ],
+                'label' => 'Places in a product price',
+                'help' => 'For goods that cost less than a cent in the shop\'s currency — a rouble in a shop keeping dollars is $0.012. Only prices per unit get the extra places; a line\'s total, the order, delivery and payment are always rounded to the cent. Changing it recalculates every stored price at once; fewer places are refused while some price would lose digits.',
+            ],
+            [
                 'key' => '_g_accounts',
                 'type' => 'group',
                 'label' => 'Customer accounts',

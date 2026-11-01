@@ -193,7 +193,7 @@ class OrderDocument
             $xml->el('name', $item['name'] ?? null);
             $xml->el('article', $item['sku'] ?? null);
             $this->unit($xml);
-            $xml->el('price_per_unit', $this->money($order, (int) ($item['unit_price'] ?? 0)));
+            $xml->el('price_per_unit', price_scale()->plain((int) ($item['unit_price'] ?? 0), $order->currency_code));
             $xml->el('quantity', (int) ($item['qty'] ?? 0));
             $xml->el('total', $this->money($order, (int) ($item['line_total'] ?? 0)));
             $xml->close();

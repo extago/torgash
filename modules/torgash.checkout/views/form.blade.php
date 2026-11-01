@@ -146,7 +146,7 @@
                                 @foreach ($checkoutItem->parts as $part)
                                     <span class="block text-xs opacity-60">↳ {{ $part['label'] }}@if ($part['qty'] > 1) ×{{ $part['qty'] }}@endif</span>
                                 @endforeach
-                                <span class="block text-sm opacity-60 mt-0.5 tabular-nums">{{ $checkoutItem->qty }} × {{ format_price($checkoutItem->unit_price, exact: true) }}</span>
+                                <span class="block text-sm opacity-60 mt-0.5 tabular-nums">{{ $checkoutItem->qty }} × {{ format_unit_price($checkoutItem->unit_price) }}</span>
                             </span>
                             <span class="font-semibold whitespace-nowrap tabular-nums">{{ format_price($checkoutItem->line_total, exact: true) }}</span>
                         </li>

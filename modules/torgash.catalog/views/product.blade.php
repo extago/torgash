@@ -237,10 +237,10 @@
                          the discount as MONEY — "you save 640" is what a customer
                          compares with the next shop, a percent is not. --}}
                     <div class="flex items-center gap-x-2.5 gap-y-1 flex-wrap mt-2 text-sm">
-                        <span class="torgash-old-price">{{ format_price($oldPrice) }}</span>
+                        <span class="torgash-old-price">{{ format_unit_price($oldPrice) }}</span>
                         <span class="badge torgash-discount badge-sm font-semibold">&minus;{{ $discountPercent }}%</span>
                         @if ($oldPrice > $effectivePrice)
-                            <span class="torgash-discount-text font-medium">{{ __('You save :amount', ['amount' => format_price($oldPrice - $effectivePrice)]) }}</span>
+                            <span class="torgash-discount-text font-medium">{{ __('You save :amount', ['amount' => format_unit_price($oldPrice - $effectivePrice)]) }}</span>
                         @endif
                     </div>
                 @endif
@@ -254,7 +254,7 @@
                     <div class="text-xs opacity-60 mt-1" data-lowest-price>
                         {{ __('Lowest price in the :days days before the discount: :price', [
                             'days' => app(\Torgash\Catalog\Pricing\PriceHistory::class)->days(),
-                            'price' => format_price($product->prior_lowest_price),
+                            'price' => format_unit_price($product->prior_lowest_price),
                         ]) }}
                     </div>
                 @endif
@@ -268,7 +268,7 @@
                     @continue($clubPrice >= $effectivePrice)
                     <div class="flex items-center gap-2 mt-2 px-3 py-2 rounded-box bg-accent/10 border border-accent/20">
                         <x-icon name="gem" size="sm" class="text-accent shrink-0" />
-                        <span class="text-sm font-medium text-accent">{{ $clubType->t('name') }}: {{ format_price($clubPrice) }}</span>
+                        <span class="text-sm font-medium text-accent">{{ $clubType->t('name') }}: {{ format_unit_price($clubPrice) }}</span>
                         @if ($clubType->t('storefront_note'))
                             {{-- The note is a question ("How to get this
                                  price?"), so it opens the answer: who buys at
@@ -280,7 +280,7 @@
                             @endphp
                             <x-popover class="badge badge-ghost badge-sm ms-auto cursor-pointer hover:bg-base-300 underline decoration-dotted underline-offset-2"
                                        panel-class="w-72 p-4 text-sm flex flex-col gap-2">
-                                <p class="font-semibold">{{ $clubType->t('name') }}: {{ format_price($clubPrice) }}</p>
+                                <p class="font-semibold">{{ $clubType->t('name') }}: {{ format_unit_price($clubPrice) }}</p>
                                 @if ($clubMine)
                                     <p>{{ __('This price is yours: it is what you pay at checkout.') }}</p>
                                 @else
@@ -355,7 +355,7 @@
                                     &middot; {{ $tier->customerGroup->t('name') }}
                                 @endif
                             </span>
-                            <span class="font-semibold">{{ format_price($tier->price) }}</span>
+                            <span class="font-semibold">{{ format_unit_price($tier->price) }}</span>
                         </div>
                     @endforeach
                 </div>
@@ -433,7 +433,7 @@
                             <div class="flex items-baseline gap-2 mt-1 flex-wrap">
                                 <span class="text-lg font-bold torgash-price">{{ $shownPrice->format($product) }}</span>
                                 @if (! $priceIsFrom && $discountPercent > 0)
-                                    <span class="text-sm torgash-old-price">{{ format_price($oldPrice) }}</span>
+                                    <span class="text-sm torgash-old-price">{{ format_unit_price($oldPrice) }}</span>
                                 @endif
                             </div>
                         </div>

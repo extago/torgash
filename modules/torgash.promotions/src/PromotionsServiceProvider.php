@@ -28,6 +28,15 @@ class PromotionsServiceProvider extends ServiceProvider
 
     public function boot(): void
     {
+
+        // Prices per unit this module keeps, moved by core when the shop
+        // changes how many places a price has (PLAN §65).
+        hook_listen('core.price.columns', fn (array $columns) => [...$columns,
+            ['name' => 'Catalog promotions', 'table' => 'm_promotions_tiers', 'columns' => ['discount_value'],
+                'where' => fn ($q) => $q->whereIn('discount_type', \Torgash\Promotions\Models\PromotionTier::MONEY_VALUE_TYPES)
+                    ->whereIn('promotion_id', fn ($p) => $p->select('id')->from('m_promotions_promotions')->where('zone', 'catalog'))],
+        ]);
+
         // A sale starts, ends and opens its weekly window with nothing
         // written: a page kept ready for guests is kept only until the next
         // of those moments (PLAN §61). Which order took which sale is on

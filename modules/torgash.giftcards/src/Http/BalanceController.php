@@ -37,7 +37,8 @@ class BalanceController extends Controller
         return response()->json(['data' => [
             'last4' => $card->last4,
             'state' => $card->state(),
-            'balance' => (int) $card->balance,
+            // A decimal string, like every amount the API writes (PLAN §65).
+            'balance' => api_money((int) $card->balance),
             'currency' => shop_currency(),
             'expires_at' => $card->expires_at?->toIso8601String(),
         ]]);

@@ -1023,6 +1023,36 @@ class CatalogServiceProvider extends ServiceProvider
         });
 
         // Derived prices are rounded to the books currency's places.
+        // Every price per unit catalog keeps, for core to move when the shop
+        // changes how many places a price has (PLAN §65). Percentages are
+        // not prices: a markup rule's value only when it is an amount.
+        hook_listen('core.price.columns', fn (array $columns) => [...$columns,
+            ['name' => 'Product prices', 'table' => 'm_catalog_products', 'example' => 'sku',
+                'columns' => ['price', 'price_original', 'cost_price', 'cost_price_original', 'list_price', 'list_price_original', 'prior_lowest_price']],
+            ['name' => 'Quantity prices', 'table' => 'm_catalog_product_prices', 'columns' => ['price', 'price_original']],
+            ['name' => 'Price type prices', 'table' => 'm_catalog_product_price_type_overrides', 'columns' => ['price', 'price_original']],
+            ['name' => 'Markup rules', 'table' => 'm_catalog_price_type_markup_rules', 'columns' => ['cost_price_min', 'cost_price_max', 'round_to', 'psychological_offset']],
+            ['name' => 'Markup rules', 'table' => 'm_catalog_price_type_markup_rules', 'columns' => ['markup_value'],
+                'where' => fn ($q) => $q->where('markup_type', 'fixed')],
+            ['name' => 'Price history', 'table' => 'm_catalog_price_history', 'columns' => ['price']],
+            ['name' => 'Filter pages', 'table' => 'm_catalog_filter_pages', 'example' => 'slug', 'columns' => ['price_min', 'price_max']],
+            [
+                'name' => 'Filter page rules',
+                'lossy' => fn (int $divisor) => \Illuminate\Support\Facades\DB::table('m_catalog_filter_rules')->whereNotNull('price_bounds')
+                    ->pluck('price_bounds')
+                    ->filter(fn ($bounds) => collect(json_decode((string) $bounds, true) ?: [])
+                        ->contains(fn ($b) => (($b['min'] ?? null) !== null && $b['min'] % $divisor !== 0) || (($b['max'] ?? null) !== null && $b['max'] % $divisor !== 0)))
+                    ->count(),
+                'rescale' => function (int $multiply, int $divide) {
+                    foreach (\Illuminate\Support\Facades\DB::table('m_catalog_filter_rules')->whereNotNull('price_bounds')->get(['id', 'price_bounds']) as $row) {
+                        $move = fn ($v) => $v === null ? null : intdiv((int) $v * $multiply, $divide);
+                        $bounds = array_map(fn ($b) => ['min' => $move($b['min'] ?? null), 'max' => $move($b['max'] ?? null)] + $b, json_decode((string) $row->price_bounds, true) ?: []);
+                        \Illuminate\Support\Facades\DB::table('m_catalog_filter_rules')->where('id', $row->id)->update(['price_bounds' => json_encode($bounds)]);
+                    }
+                },
+            ],
+        ]);
+
         hook_listen('core.currency.precision_changed', function () {
             $prices = app(Prices::class);
             foreach (\Torgash\Catalog\Models\Product::query()->whereNotNull('price_currency')->distinct()->pluck('price_currency') as $code) {
@@ -1261,7 +1291,7 @@ class CatalogServiceProvider extends ServiceProvider
             // the currency in hand when the amount is converted.
             ['key' => 'price_currency', 'group' => 'prices', 'label' => 'Price currency', 'get' => fn (Product $p) => $p->price_currency, 'set' => fn (Product $p, $v) => $p->price_currency = ($v ?: null)],
             ['key' => 'base_price', 'group' => 'prices', 'label' => 'Base price', 'get' => fn (Product $p) => $p->price, 'set' => function (Product $p, $v) {
-                foreach (app(Prices::class)->columns(['price' => ((int) $v) / 100], $p->price_currency) as $column => $value) {
+                foreach (app(Prices::class)->columns(['price' => price_scale()->decimal((int) $v)], $p->price_currency) as $column => $value) {
                     $p->{$column} = $value;
                 }
             }],
@@ -1281,7 +1311,7 @@ class CatalogServiceProvider extends ServiceProvider
             // file most likely to be handed to an outsider, and nothing in a
             // price feed needs to know what the shop paid.
             ['key' => 'list_price', 'group' => 'prices', 'label' => 'List price (RRP)', 'get' => fn (Product $p) => $p->list_price, 'set' => function (Product $p, $v) {
-                $typed = ($v === '' || $v === null) ? null : ((int) $v) / 100;
+                $typed = ($v === '' || $v === null) ? null : price_scale()->decimal((int) $v);
 
                 foreach (app(Prices::class)->columns(['list_price' => $typed], $p->price_currency) as $column => $value) {
                     $p->{$column} = $value;
@@ -1491,7 +1521,7 @@ class CatalogServiceProvider extends ServiceProvider
 
                 ProductPriceTypeOverride::updateOrCreate(
                     ['product_id' => $p->id, 'price_type_id' => $type->id],
-                    app(Prices::class)->row(((int) $v) / 100, $p->price_currency),
+                    app(Prices::class)->row(price_scale()->decimal((int) $v), $p->price_currency),
                 );
             },
         ])->values()->all();

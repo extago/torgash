@@ -21,8 +21,8 @@
             'discount_type' => $slot->discount_type,
             'discount_percent' => $slot->discount_percent,
             'discount_amount' => $slot->discount_amount_original !== null
-                ? number_format($slot->discount_amount_original / 100, 2, '.', '')
-                : number_format($slot->discount_amount / 100, 2, '.', ''),
+                ? price_input((int) $slot->discount_amount_original)
+                : price_input((int) $slot->discount_amount),
             'discount_currency' => $slot->discount_currency,
             'required' => (bool) $slot->required,
             'swappable' => (bool) $slot->swappable,
@@ -233,7 +233,7 @@
                                     <fieldset class="fieldset p-0 col-span-2 md:col-span-1" x-show="row.discount_type === 'fixed' || row.discount_type === 'to_price'" x-cloak>
                                         <legend class="fieldset-legend">{{ __('Amount') }}</legend>
                                         <div class="join w-full">
-                                            <input type="number" step="0.01" :name="`slots[${index}][discount_amount]`" x-model="row.discount_amount"
+                                            <input type="number" step="{{ price_step() }}" :name="`slots[${index}][discount_amount]`" x-model="row.discount_amount"
                                                    class="input input-bordered join-item w-full min-w-0">
                                             <select :name="`slots[${index}][discount_currency]`" x-model="row.discount_currency" class="select select-bordered join-item w-24 shrink-0" aria-label="{{ __('Currency') }}">
                                                 <option value="">{{ shop_currency() }}</option>

@@ -114,5 +114,6 @@
     "Return #:id received and written off": "Повернення №:id отримано й списано",
     "Exchange order :number created for return #:id": "Для повернення №:id створено замовлення-обмін :number",
     "Order :number has a return.": "За замовленням :number оформлено повернення.",
-    "Send": "Надіслати"
+    "Send": "Надіслати",
+    "Return lines": "Рядки повернень"
 }

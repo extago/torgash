@@ -92,14 +92,14 @@ class ReturnResources
                     },
                 ],
                 'refund' => [
-                    'description' => 'Give the money back, in minor units of the shop\'s own currency. Where a gateway took it, it is asked to return it; a payment that is only on hold is RELEASED rather than transferred, because paying a customer money that never left their card costs the shop twice. Where no gateway took it, the refund is recorded and a person makes the transfer.',
+                    'description' => 'Give the money back, as a decimal string in major units of the shop\'s own currency. Where a gateway took it, it is asked to return it; a payment that is only on hold is RELEASED rather than transferred, because paying a customer money that never left their card costs the shop twice. Where no gateway took it, the refund is recorded and a person makes the transfer.',
                     'body' => [
-                        'amount' => ['type' => 'integer', 'description' => 'Minor units of the shop\'s books.', 'example' => 39920],
+                        'amount' => ['type' => 'string', 'description' => 'A decimal string in major units of the shop\'s books, two places at most.', 'example' => '399.20'],
                         'note' => ['type' => 'string|null'],
                     ],
                     'apply' => function (ReturnRequest $return, array $data) {
                         $validated = Validator::make($data, [
-                            'amount' => ['required', 'integer', 'min:1'],
+                            'amount' => ['required', \App\Core\Support\PriceScale::amountRule(), 'gt:0'],
                             'note' => ['nullable', 'string', 'max:5000'],
                         ])->validate();
 
@@ -107,7 +107,7 @@ class ReturnResources
 
                         app(Handling::class)->refund(
                             $return,
-                            $validated['amount'],
+                            (int) \App\Core\Support\PriceScale::minorFrom($validated['amount']),
                             auth()->user(),
                             $validated['note'] ?? null,
                         );
@@ -179,12 +179,12 @@ class ReturnResources
             'state' => ['type' => 'string', 'description' => 'requested | approved | declined | received | completed — where the goods and the money are, deliberately not the ticket\'s conversation status.'],
             'lines' => ['type' => 'array', 'description' => 'What is being sent back, frozen off the order at the price the customer actually paid.', 'of' => [
                 'product_id' => 'integer', 'sku' => 'string|null', 'name' => 'string|null',
-                'qty' => 'integer', 'unit_price' => 'integer', 'line_total' => 'integer',
+                'qty' => 'integer', 'unit_price' => 'string', 'line_total' => 'string',
             ]],
-            'lines_total' => ['type' => 'integer', 'description' => 'What those goods came to, in minor units of the shop\'s books. The starting point for a refund, not the answer.'],
+            'lines_total' => ['type' => 'string', 'description' => 'What those goods came to, as a decimal string in the shop\'s books. The starting point for a refund, not the answer.'],
             'disposition' => ['type' => 'string|null', 'description' => 'restock | writeoff — decided at receipt, because what is in the parcel is only known once it is opened.'],
             'warehouse_id' => ['type' => 'integer|null', 'description' => 'Where the parcel arrived, when that is not where it shipped from.'],
-            'refund_amount' => ['type' => 'integer|null', 'description' => 'Minor units. Not derivable from the lines: a shop may keep the postage or agree something else.'],
+            'refund_amount' => ['type' => 'string|null', 'description' => 'A decimal string. Not derivable from the lines: a shop may keep the postage or agree something else.'],
             'exchange_order_id' => 'integer|null',
             'surcharge' => ['type' => 'string|null', 'description' => 'none | due | owed — what is left to settle after an exchange, recorded as a decision and never charged.'],
             'received_at' => ['type' => 'string|null', 'format' => 'date-time'],
@@ -205,11 +205,11 @@ class ReturnResources
             'order_number' => $return->order?->order_number,
             'resolution' => $return->resolution,
             'state' => $return->state,
-            'lines' => $return->lines,
-            'lines_total' => $return->linesTotal(),
+            'lines' => array_map(fn (array $line) => \Torgash\Checkout\Api\CheckoutResources::apiLine($line), (array) $return->lines),
+            'lines_total' => api_money((int) $return->linesTotal()),
             'disposition' => $return->disposition,
             'warehouse_id' => $return->warehouse_id,
-            'refund_amount' => $return->refund_amount,
+            'refund_amount' => $return->refund_amount === null ? null : api_money((int) $return->refund_amount),
             'exchange_order_id' => $return->exchange_order_id,
             'surcharge' => $return->surcharge,
             'received_at' => $return->received_at?->toIso8601String(),

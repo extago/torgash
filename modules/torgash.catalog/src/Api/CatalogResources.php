@@ -83,8 +83,8 @@ class CatalogResources
                 'description' => 'string|null',
                 'image' => ['type' => 'string|null', 'description' => 'The primary photo, already sized for a card.'],
                 'currency' => ['type' => 'string', 'description' => 'What the prices below are displayed in — follows Accept-Language and the storefront.'],
-                'price' => ['type' => 'integer', 'description' => 'Minor units, through the same display filter the page uses: a tax module’s addition is already inside it.'],
-                'old_price' => ['type' => 'integer|null', 'description' => 'What it was struck through from, when there is one.'],
+                'price' => ['type' => 'string', 'description' => 'Decimal string in major units of `currency`, with the places the shop keeps a price ("1299.00", "0.0120"), through the same display filter the page uses: a tax module’s addition is already inside it.'],
+                'old_price' => ['type' => 'string|null', 'description' => 'What it was struck through from, when there is one — the same format.'],
                 'in_stock' => ['type' => 'boolean', 'description' => 'Orderable right now — a preorder counts, a discontinued product does not, whatever its stock number says.'],
                 'characteristics' => ['type' => 'array', 'description' => 'The shop’s characteristics of this product — the ones its filters, variations and brand pages are made of — as the page’s specifications show them. One of two stores; the other is `features`, and nothing copies one into the other.', 'of' => [
                     'code' => ['type' => 'string', 'description' => 'The characteristic’s code: stable across renames and languages.'],
@@ -108,12 +108,12 @@ class CatalogResources
                 'short_description' => app(ShortDescription::class)->for($p),
                 'description' => $p->t('description'),
                 'image' => $p->primaryImageUrl(),
-                // Through the same filter the storefront prices with, and in
-                // the same minor units. `currency` says what a client should
-                // format them as.
+                // Through the same filter the storefront prices with, as
+                // decimal strings in `currency` (PLAN §65) — converted at
+                // today's rate when the visitor reads another currency.
                 'currency' => current_currency(),
-                'price' => hook_filter('catalog.price.display', $p->effectivePrice(), ['product' => $p]),
-                'old_price' => $p->oldPrice(),
+                'price' => api_price((int) hook_filter('catalog.price.display', $p->effectivePrice(), ['product' => $p]), current_currency()),
+                'old_price' => api_price($p->oldPrice() ?: null, current_currency()),
                 'in_stock' => $p->isOrderable(),
                 'characteristics' => $this->characteristics($p, forVisitor: true),
                 'features' => $p->featureRows(),
@@ -180,9 +180,9 @@ class CatalogResources
                 'availability_status' => ['type' => 'string', 'description' => 'One of the registered availability statuses — see the schema field of the same name.'],
                 'sku' => 'string',
                 'external_id' => ['type' => 'string|null', 'description' => 'What your own system calls this row.'],
-                'price' => ['type' => 'number', 'description' => 'MAJOR units here — what a human reads on an invoice. Stored exactly as the admin form would store it: the typed number kept, the shop’s own price derived from it.', 'example' => 420.5],
-                'cost_price' => 'number',
-                'list_price' => 'number',
+                'price' => ['type' => 'string', 'description' => 'A decimal string in MAJOR units, a dot as the separator — "420.50", "0.0125" — exactly the format the API answers with (a JSON number is accepted too). At most as many places as the shop keeps a price; more is refused with 422 rather than rounded. Stored exactly as the admin form would store it: the typed number kept, the shop’s own price derived from it.', 'example' => '420.50'],
+                'cost_price' => ['type' => 'string', 'description' => 'Decimal string, like `price`.'],
+                'list_price' => ['type' => 'string', 'description' => 'Decimal string, like `price`.'],
                 'price_currency' => ['type' => 'string|null', 'description' => 'What the prices above are typed in. Omit for the shop’s own currency.'],
                 'categories' => ['type' => 'array', 'description' => 'The product’s categories, ALL of them: the list replaces what is there. A number is a category id, a string its `external_id`. One the shop does not have refuses the whole write — a product is never quietly left in fewer categories than you sent.', 'example' => [12, '1c-0042']],
                 'variation_group' => ['type' => 'string|null', 'description' => 'The group word the product’s variations share; null takes it out. Refused when the product would answer every variation characteristic exactly as a product already in the group — nothing would tell the two apart.'],
@@ -262,11 +262,11 @@ class CatalogResources
             'stock' => 'integer',
             'availability_status' => ['type' => 'string', 'description' => 'A second axis from `status`: whether the product can be bought right now and whether `stock` even applies. A registry, not a fixed enum — `in_stock`/`out_of_stock`/`preorder`/`discontinued`/`unlimited` ship in core, a module may add its own.'],
             'currency' => ['type' => 'string', 'description' => 'The shop’s books — the units `price`, `cost_price` and `list_price` are in.'],
-            'price' => ['type' => 'integer', 'description' => 'Minor units of `currency`. DERIVED when the price was typed in another currency: it is recomputed on save and on every rate change.'],
+            'price' => ['type' => 'string', 'description' => 'Decimal string in major units of `currency`, with exactly as many places as the shop keeps a price (2–4): "199990.00", "0.0120". DERIVED when the price was typed in another currency: it is recomputed on save and on every rate change.', 'example' => '420.50'],
             'price_currency' => ['type' => 'string|null', 'description' => 'What the shop actually agreed the price in, when that is not its own currency.'],
-            'price_typed' => ['type' => 'number|null', 'description' => 'The number a human typed, in `price_currency`. This is the fixed one; `price` follows it.'],
-            'cost_price' => 'integer|null',
-            'list_price' => 'integer|null',
+            'price_typed' => ['type' => 'string|null', 'description' => 'The number a human typed, in `price_currency`, as a decimal string. This is the fixed one; `price` follows it.'],
+            'cost_price' => ['type' => 'string|null', 'description' => 'Decimal string, like `price`.'],
+            'list_price' => ['type' => 'string|null', 'description' => 'Decimal string, like `price`.'],
             'weight' => ['type' => 'integer|null', 'description' => 'Whole grams, always. Null means not measured, which is a different answer from 0 — the shipping engine acts on it.'],
             'dimensions' => ['type' => 'object', 'description' => 'Whole millimetres, always.', 'of' => [
                 'length' => 'integer|null', 'width' => 'integer|null', 'height' => 'integer|null',
@@ -352,11 +352,11 @@ class CatalogResources
             // what the shop actually agreed, in `price_currency`, where those
             // differ (§52).
             'currency' => shop_currency(),
-            'price' => $product->price,
+            'price' => api_price((int) $product->price),
             'price_currency' => $product->price_currency,
-            'price_typed' => $product->price_original,
-            'cost_price' => $product->cost_price,
-            'list_price' => $product->list_price,
+            'price_typed' => api_price($product->price_original === null ? null : (int) $product->price_original),
+            'cost_price' => api_price($product->cost_price === null ? null : (int) $product->cost_price),
+            'list_price' => api_price($product->list_price === null ? null : (int) $product->list_price),
             'weight' => $product->weight,
             'dimensions' => ['length' => $product->length, 'width' => $product->width, 'height' => $product->height],
             'categories' => $product->categories->map(fn (Category $c) => [
@@ -411,6 +411,15 @@ class CatalogResources
         // sent in the product's own currency is stored the way the admin form
         // would have stored it — books amount derived, typed amount kept.
         $prices = array_intersect_key($data, array_flip(['price', 'cost_price', 'list_price']));
+
+        // A decimal string (or a number) in major units, never finer than
+        // the shop keeps a price (PLAN §65): "0.01255" at four places is a
+        // mistake to report, not a price to round quietly.
+        foreach ($prices as $field => $value) {
+            if ($value !== null && $value !== '' && (price_scale()->fromMajor($value) === null || price_scale()->tooPrecise($value))) {
+                throw \Illuminate\Validation\ValidationException::withMessages([$field => __('A price may have at most :places places after the point.', ['places' => price_scale()->places()])]);
+            }
+        }
 
         if ($prices !== []) {
             // Major units on the wire: an exchange writes what a human would

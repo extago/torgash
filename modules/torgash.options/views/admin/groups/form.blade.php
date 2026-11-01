@@ -20,8 +20,8 @@
             'source' => $choice->source,
             'price_rule' => $choice->price_rule,
             'amount' => $choice->amount_original !== null
-                ? number_format($choice->amount_original / 100, 2, '.', '')
-                : number_format($choice->amount / 100, 2, '.', ''),
+                ? price_input((int) $choice->amount_original)
+                : price_input((int) $choice->amount),
             'currency' => $choice->currency,
             'percent' => $choice->percent,
             'weight' => $choice->weight,
@@ -199,7 +199,7 @@
                                     <fieldset class="fieldset p-0" x-show="uses(row, 'amount')" x-cloak>
                                         <legend class="fieldset-legend">{{ __('Amount') }}</legend>
                                         <div class="join w-full">
-                                            <input type="number" step="0.01" :name="`choices[${index}][amount]`" x-model="row.amount"
+                                            <input type="number" step="{{ price_step() }}" :name="`choices[${index}][amount]`" x-model="row.amount"
                                                    class="input input-bordered join-item w-full min-w-0">
                                             <select :name="`choices[${index}][currency]`" x-model="row.currency" class="select select-bordered join-item w-24 shrink-0" aria-label="{{ __('Currency') }}">
                                                 <option value="">{{ shop_currency() }}</option>

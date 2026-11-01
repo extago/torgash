@@ -425,8 +425,12 @@ class PromotionsController extends Controller
                 // A money value is typed in major units and stored in minor
                 // ones; a percent is the number itself. One list answers it,
                 // so a new money-valued type cannot be added and forgotten.
+                // A catalog promotion's money is a price per unit, kept with
+                // the places a price has (PLAN §65); a cart one's is an amount.
                 'discount_value' => in_array($discountType, PromotionTier::MONEY_VALUE_TYPES, true)
-                    ? (int) round((float) ($tier['discount_value'] ?? 0) * 100)
+                    ? ($promotion->zone === 'catalog'
+                        ? (int) price_scale()->fromMajor($tier['discount_value'] ?? 0)
+                        : (int) round((float) ($tier['discount_value'] ?? 0) * 100))
                     : (int) ($tier['discount_value'] ?? 0),
                 'discount_scope' => $discountScope,
                 'give_group_id' => $discountType === PromotionTier::GIVE_GROUP ? (int) ($tier['give_group_id'] ?? 0) ?: null : null,

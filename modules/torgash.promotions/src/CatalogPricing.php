@@ -34,7 +34,7 @@ class CatalogPricing
             $tier = $this->winningTier($promotion, $product, $user);
             if ($tier) {
                 $candidates[] = [
-                    'price' => max(0, $product->price - $tier->discountFor($product->price)),
+                    'price' => max(0, $product->price - $tier->discountFor($product->price, true)),
                     'label' => $promotion->t('name'),
                 ];
             }
@@ -77,7 +77,7 @@ class CatalogPricing
         $addTotal = 0;
         foreach ($matches as [$promotion, $tier]) {
             if ($promotion->combine === Promotion::STACK_ADD) {
-                $addTotal += $tier->discountFor($price);
+                $addTotal += $tier->discountFor($price, true);
                 $labels[] = $promotion->t('name');
             }
         }
@@ -87,7 +87,7 @@ class CatalogPricing
         // left, in priority order — the literal "double discount".
         foreach ($matches as [$promotion, $tier]) {
             if ($promotion->combine === Promotion::STACK_MULTIPLY) {
-                $price = max(0, $price - $tier->discountFor($price));
+                $price = max(0, $price - $tier->discountFor($price, true));
                 $labels[] = $promotion->t('name');
             }
         }

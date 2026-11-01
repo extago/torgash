@@ -21,6 +21,15 @@ class InventoryServiceProvider extends ServiceProvider
 
     public function boot(): void
     {
+
+        // Prices per unit this module keeps, moved by core when the shop
+        // changes how many places a price has (PLAN §65).
+        hook_listen('core.price.columns', fn (array $columns) => [...$columns,
+            ['name' => 'Stock document costs', 'table' => 'm_inventory_document_lines', 'columns' => ['unit_cost', 'unit_cost_original']],
+            ['name' => 'Batch costs', 'table' => 'm_inventory_batches', 'columns' => ['unit_cost']],
+            ['name' => 'Movement costs', 'table' => 'm_inventory_move_costs', 'columns' => ['unit_cost']],
+        ]);
+
         // The journal, documents and costs are on no guest's page (PLAN §61);
         // stock itself is announced as it moves.
         page_cache()->unseen(['m_inventory_moves', 'm_inventory_move_costs', 'm_inventory_documents', 'm_inventory_document_lines', 'm_inventory_batches', 'm_inventory_order_costs']);

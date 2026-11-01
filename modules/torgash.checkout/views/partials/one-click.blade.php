@@ -10,7 +10,7 @@
              a build's price is the buy box's, and quoting the bare one here
              promised a number the order would not have. --}}
         <p class="text-sm opacity-70 mb-3">
-            {{ $product->t('name') }}@unless (hook_filter('cart.product.asks', false, ['product' => $product])) — {{ format_price($product->effectivePrice()) }}@endunless
+            {{ $product->t('name') }}@unless (hook_filter('cart.product.asks', false, ['product' => $product])) — {{ format_unit_price($product->effectivePrice()) }}@endunless
         </p>
 
         @include('torgash.checkout::partials.one-click-form', ['product' => $product, 'oneClickBuyForm' => $oneClickBuyForm ?? null])

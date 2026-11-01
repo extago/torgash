@@ -97,7 +97,7 @@ class ShopApiTest extends TestCase
         $this->patchJson($url, ['product' => 'SHOP-1', 'quantity' => 3])
             ->assertOk()
             ->assertJsonPath('data.count', 3)
-            ->assertJsonPath('data.total', 7500);
+            ->assertJsonPath('data.total', '75.00');
 
         $this->patchJson($url, ['product' => 'SHOP-1', 'quantity' => 1])
             ->assertOk()
@@ -153,8 +153,8 @@ class ShopApiTest extends TestCase
             'product' => 'SHOP-1', 'quantity' => 2,
         ])->json('data');
 
-        $this->assertSame(2500, $body['items'][0]['unit_price']);
-        $this->assertSame(5000, $body['items'][0]['line_total']);
-        $this->assertSame(5000, $body['total']);
+        $this->assertSame('25.00', $body['items'][0]['unit_price']);
+        $this->assertSame('50.00', $body['items'][0]['line_total']);
+        $this->assertSame('50.00', $body['total']);
     }
 }

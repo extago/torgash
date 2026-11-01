@@ -13,7 +13,7 @@
                     </div>
                 </div>
                 <div class="flex items-center gap-2 shrink-0">
-                    <span class="text-sm opacity-70">{{ admin_price($product->price, $order->currency_code) }}</span>
+                    <span class="text-sm opacity-70">{{ admin_unit_price($product->price, $order->currency_code) }}</span>
                     <button class="btn btn-sm btn-primary"
                             hx-post="{{ route('admin.orders.items.store', $order) }}"
                             hx-vals='@json(['product_id' => $product->id])'

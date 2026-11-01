@@ -152,7 +152,8 @@ class BulkEdit
                 }
             }
 
-            $new = round($new, 2);
+            // The places the shop keeps a price with (PLAN §65), not always two.
+            $new = round($new, price_scale()->places());
             if ($new < 0) {
                 return false;
             }
@@ -170,7 +171,7 @@ class BulkEdit
             ? $product->{$field.'_original'}
             : $product->{$field};
 
-        return $minor === null ? null : $minor / 100;
+        return $minor === null ? null : price_scale()->toMajor($minor);
     }
 
     protected function relations(Product $product, string $relation, array $changes): bool

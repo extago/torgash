@@ -496,7 +496,7 @@ class PlaceOrder
         foreach ($taken as $part) {
             OrderLog::record($order, 'Paid in advance: :what (:amount)', [
                 'what' => (string) ($part['label'] ?? ''),
-                'amount' => format_price((int) $part['amount'], $order->currency_code),
+                'amount' => format_unit_price((int) $part['amount'], $order->currency_code),
             ], by: null);
         }
     }

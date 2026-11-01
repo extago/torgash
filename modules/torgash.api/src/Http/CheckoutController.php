@@ -150,14 +150,14 @@ class CheckoutController extends Controller
                 'order' => [
                     'number' => $order->order_number,
                     'status' => $order->status,
-                    'total' => $order->total,
+                    'total' => api_money((int) $order->total),
                     'currency' => $order->currency_code,
                     'payment' => [
                         'state' => $order->payment_state,
                         'currency' => $order->paymentCurrency(),
                         // What is left after a gift card: the bank's part.
-                        'amount' => $order->chargeMinor($order->chargeNow()),
-                        'prepaid' => $order->prepaid_total,
+                        'amount' => api_money($order->chargeMinor($order->chargeNow())),
+                        'prepaid' => api_money((int) $order->prepaid_total),
                         'url' => $payment,
                     ],
                 ],
@@ -228,7 +228,7 @@ class CheckoutController extends Controller
                 'label' => $option->label,
                 // Null when a carrier answered but named no price — the shop
                 // will quote it by hand, and a client must not print "free".
-                'cost' => $option->cost,
+                'cost' => $option->cost === null ? null : api_money((int) $option->cost),
                 'delivery_time' => $option->delivery_time ?? null,
                 'needs_address' => $option->needs_address ?? true,
                 // A provider option that needs more from the customer (a branch
@@ -245,16 +245,17 @@ class CheckoutController extends Controller
                 'charged_in' => $method->chargeCurrencyFor(current_currency()),
             ])->values(),
             'currency' => current_currency(),
-            'subtotal' => $quote->subtotal,
-            'discount' => $quote->discount,
+            // Decimal strings, two places (PLAN §65).
+            'subtotal' => api_money((int) $quote->subtotal),
+            'discount' => api_money((int) $quote->discount),
             // The coupon and what comes off after it (bonus points), line by line.
-            'discounts' => $this->discountLines($cart),
-            'total' => $grand = $this->grand($cart, $quote, $answers),
+            'discounts' => array_map(fn (array $line) => ['amount' => api_money($line['amount'])] + $line, $this->discountLines($cart)),
+            'total' => api_money($grand = $this->grand($cart, $quote, $answers)),
             // Paid before any bank is asked - a gift card on the cart - and
             // what is left.
-            'prepaid' => $prepaid = array_map(fn (array $line) => array_intersect_key($line, array_flip(['label', 'amount', 'card_id'])),
-                app(\Torgash\Checkout\Totals::class)->prepaidLines($cart, $grand, $quote->shippingCost())),
-            'to_pay' => max(0, $grand - array_sum(array_column($prepaid, 'amount'))),
+            'prepaid' => array_map(fn (array $line) => ['amount' => api_money((int) ($line['amount'] ?? 0))] + $line, $prepaid = array_map(fn (array $line) => array_intersect_key($line, array_flip(['label', 'amount', 'card_id'])),
+                app(\Torgash\Checkout\Totals::class)->prepaidLines($cart, $grand, $quote->shippingCost()))),
+            'to_pay' => api_money(max(0, $grand - array_sum(array_column($prepaid, 'amount')))),
         ];
     }
 

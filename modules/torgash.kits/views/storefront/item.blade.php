@@ -62,9 +62,9 @@
         @include('torgash.kits::storefront.main-extra', ['kitId' => $kit->id, 'mainPrice' => $price, 'mainParts' => $mainParts ?? []])
     @else
         <div class="flex items-baseline gap-1.5">
-            <span class="font-semibold {{ $full > $price ? 'torgash-discount-text' : 'torgash-price' }}">{{ format_price($price) }}</span>
+            <span class="font-semibold {{ $full > $price ? 'torgash-discount-text' : 'torgash-price' }}">{{ format_unit_price($price) }}</span>
             @if ($full > $price)
-                <span class="text-xs torgash-old-price">{{ format_price($full) }}</span>
+                <span class="text-xs torgash-old-price">{{ format_unit_price($full) }}</span>
             @endif
             @if ($qty > 1)
                 <span class="text-xs opacity-50">×{{ $qty }}</span>

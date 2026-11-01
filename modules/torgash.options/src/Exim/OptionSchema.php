@@ -166,7 +166,7 @@ class OptionSchema
                 // Must come AFTER `currency`, which is why it is listed after
                 // it — the same ordering rule `price_currency`/`base_price`
                 // already state.
-                $money = app(Prices::class)->row(((int) $v) / 100, $c->currency);
+                $money = app(Prices::class)->row(price_scale()->decimal((int) $v), $c->currency);
 
                 $c->amount = $money['price'];
                 $c->amount_original = $money['price_original'];

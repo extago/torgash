@@ -67,6 +67,25 @@ class PromotionTier extends Model
         return ['conditions' => 'array', 'discount_scope' => 'array'];
     }
 
+    /**
+     * Whether `discount_value` is a price per unit (price units): a money
+     * value of a CATALOG promotion — it comes off a product's price. A cart
+     * promotion's money value is an amount off the order, in minor units.
+     */
+    public function valueIsUnitPrice(?string $zone = null): bool
+    {
+        return in_array($this->discount_type, self::MONEY_VALUE_TYPES, true)
+            && ($zone ?? $this->promotion?->zone) === 'catalog';
+    }
+
+    /** The money value as an admin reads it, on the scale it is kept in. */
+    public function adminValue(): string
+    {
+        $value = (int) ($this->discount_value ?? 0);
+
+        return $this->valueIsUnitPrice() ? admin_unit_price($value) : admin_price($value);
+    }
+
     public function promotion(): BelongsTo
     {
         return $this->belongsTo(Promotion::class);
@@ -120,14 +139,17 @@ class PromotionTier extends Model
      * not a surcharge: "everything down to 999" leaves a 500 item at 500,
      * which is why the floor is here rather than trusted to the caller.
      */
-    public function discountFor(int $price): int
+    public function discountFor(int $price, bool $perUnit = false): int
     {
         $value = (int) ($this->discount_value ?? 0);
+        // A catalog promotion cuts a PRICE PER UNIT (price units, PLAN §65),
+        // a cart one an amount: each rounds the way its number does.
+        $round = $perUnit ? fn ($v) => price_scale()->round($v) : fn ($v) => round_money($v);
 
         $discount = match ($this->discount_type) {
-            self::PERCENT => round_money($price * $value / 100),
+            self::PERCENT => $round($price * $value / 100),
             self::FIXED => $value,
-            self::TO_PERCENT => $price - round_money($price * $value / 100),
+            self::TO_PERCENT => $price - $round($price * $value / 100),
             self::TO_AMOUNT => $price - $value,
             default => 0,
         };

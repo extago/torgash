@@ -441,6 +441,131 @@ if (! function_exists('admin_price')) {
     }
 }
 
+if (! function_exists('price_scale')) {
+    /**
+     * Prices per unit and their places (PLAN §65): what a price unit is, how a
+     * typed price becomes one, how a line's amount comes out of them. See
+     * App\Core\Support\PriceScale.
+     */
+    function price_scale(): \App\Core\Support\PriceScale
+    {
+        return app(\App\Core\Support\PriceScale::class);
+    }
+}
+
+if (! function_exists('format_unit_price')) {
+    /**
+     * A PRICE PER UNIT (price units, not minor units) as the shop writes it —
+     * $0.012 when the shop keeps more places. Amounts (a line, an order) stay
+     * with format_price(). With two places the two are the same function.
+     */
+    function format_unit_price(int $units, ?string $currencyCode = null): string
+    {
+        return price_scale()->format($units, $currencyCode);
+    }
+}
+
+if (! function_exists('admin_unit_price')) {
+    /**
+     * A price per unit on an admin screen — admin_price() for price units:
+     * read in the currency the admin picked, converted from `$source`.
+     */
+    function admin_unit_price(int $units, ?string $source = null): string
+    {
+        $scale = price_scale();
+
+        if ($scale->places() === \App\Core\Support\PriceScale::MIN) {
+            return admin_price($units, $source);
+        }
+
+        $source ??= shop_currency();
+        $target = admin_currency() ?? $source;
+
+        if ($target === $source) {
+            return $scale->format($units, $source);
+        }
+
+        $rate = (float) (app(Currencies::class)->find($source)?->rate ?: 1);
+
+        return $scale->format($rate > 0 ? (int) round($units / $rate) : $units, $target);
+    }
+}
+
+if (! function_exists('api_price')) {
+    /**
+     * A PRICE PER UNIT as the API writes it (PLAN §65): a decimal string in
+     * major units with exactly the places the shop keeps — "0.0120",
+     * "199990.00" — in the books currency, or converted into `$code` at
+     * today's rate. Null stays null. A client never needs to know what a
+     * minor unit is.
+     */
+    function api_price(?int $units, ?string $code = null): ?string
+    {
+        if ($units === null) {
+            return null;
+        }
+
+        $scale = price_scale();
+
+        if ($code === null || $code === shop_currency()) {
+            return $scale->decimal($units);
+        }
+
+        $rate = (float) (app(Currencies::class)->find($code)?->rate ?: 1);
+
+        return number_format($units / $scale->perMajor() * $rate, $scale->places(), '.', '');
+    }
+}
+
+if (! function_exists('api_money')) {
+    /**
+     * An AMOUNT as the API writes it: a decimal string with two places —
+     * "199990.00" — converted into `$code` at `$rate` when given (an order
+     * in the currency it was charged in). Null stays null.
+     */
+    function api_money(?int $minor, ?float $rate = null): ?string
+    {
+        if ($minor === null) {
+            return null;
+        }
+
+        return $rate === null || $rate == 1.0
+            ? \App\Core\Support\PriceScale::digits($minor, 2)
+            : number_format($minor / 100 * $rate, 2, '.', '');
+    }
+}
+
+if (! function_exists('price_input')) {
+    /**
+     * A price per unit as a form field's value: a plain number with a dot,
+     * trimmed to the places it needs ("0.012", "999.00") — '' for none. What
+     * `price_scale()->fromMajor()` reads back without loss.
+     */
+    function price_input(?int $units, string $default = ''): string
+    {
+        return $units === null ? $default : price_scale()->trimmed($units);
+    }
+}
+
+if (! function_exists('price_step')) {
+    /** The `step` of a price per unit's number field: "0.01", "0.001" or "0.0001". */
+    function price_step(): string
+    {
+        return '0.'.str_repeat('0', price_scale()->places() - 1).'1';
+    }
+}
+
+if (! function_exists('money_decimal')) {
+    /**
+     * An AMOUNT in minor units as a decimal string with two places and a dot
+     * — "199990.00": what the API answers with. Integer arithmetic.
+     */
+    function money_decimal(int $minor): string
+    {
+        return \App\Core\Support\PriceScale::digits($minor, 2);
+    }
+}
+
 if (! function_exists('units')) {
     /**
      * Units of measure — what a weight or a size is typed and shown in, against

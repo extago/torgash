@@ -28,8 +28,9 @@
                 let n = change.mode === 'set' ? v : (change.mode === 'percent' ? base * (1 + v / 100) : base + v);
                 const step = parseInt(this.round);
                 if (change.mode !== 'set' && step > 0) n = Math.round(n / step) * step;
-                const fmt = (x) => x.toLocaleString(undefined, { maximumFractionDigits: 2 });
-                return fmt(base) + ' → ' + fmt(Math.round(n * 100) / 100);
+                const per = {{ price_scale()->perMajor() }};
+                const fmt = (x) => x.toLocaleString(undefined, { maximumFractionDigits: {{ price_scale()->places() }} });
+                return fmt(base) + ' → ' + fmt(Math.round(n * per) / per);
             },
         }">
     <div class="modal-box max-w-3xl p-0 flex flex-col max-h-[90vh]">

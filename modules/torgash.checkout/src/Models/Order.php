@@ -218,6 +218,28 @@ class Order extends Model
         return admin_currency() === null ? $this->money($amount) : admin_price($amount, $this->currency_code);
     }
 
+    /**
+     * A PRICE PER UNIT of this order (a line's `unit_price`, an option's
+     * amount) — price units, not minor ones (PLAN §65) — in the currency and
+     * at the rate the order was agreed in, with the places it needs.
+     */
+    public function unitMoney(int $units): string
+    {
+        $currency = app(Currencies::class)->find($this->chargeCurrency());
+
+        if (! $currency) {
+            return price_scale()->trimmed($units).' '.$this->chargeCurrency();
+        }
+
+        return price_scale()->formatAt($units, $currency, $this->chargeRate(), $this->chargeCurrency() === $this->currency_code);
+    }
+
+    /** {@see unitMoney()} as an admin reads it — {@see adminMoney()} for prices per unit. */
+    public function adminUnitMoney(int $units): string
+    {
+        return admin_currency() === null ? $this->unitMoney($units) : admin_unit_price($units, $this->currency_code);
+    }
+
     protected function print(int $amount, string $code, float $rate): string
     {
         $currency = app(Currencies::class)->find($code);

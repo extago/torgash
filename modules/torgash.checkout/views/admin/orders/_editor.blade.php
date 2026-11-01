@@ -64,7 +64,7 @@
                             @foreach ($item['options'] ?? [] as $option)
                                 <div class="text-xs opacity-50">
                                     {{ ($option['amount'] ?? 0) < 0 ? '−' : '+' }} {{ $option['label'] }}@if (($option['qty'] ?? 1) > 1) ×{{ $option['qty'] }}@endif
-                                    @if (($option['amount'] ?? 0) !== 0) · {{ $order->adminMoney(abs((int) $option['amount'])) }} @endif
+                                    @if (($option['amount'] ?? 0) !== 0) · {{ $order->adminUnitMoney(abs((int) $option['amount'])) }} @endif
                                 </div>
                             @endforeach
                         </td>
@@ -77,8 +77,8 @@
                                     <input name="qty" type="number" min="1" step="1" value="{{ $item['qty'] }}"
                                            class="input input-bordered w-20" aria-label="{{ __('Qty') }}">
                                     <span class="opacity-40">×</span>
-                                    <input name="unit_price" type="number" min="0" step="0.01"
-                                           value="{{ number_format($item['unit_price'] / 100, 2, '.', '') }}"
+                                    <input name="unit_price" type="number" min="0" step="{{ price_step() }}"
+                                           value="{{ price_input((int) $item['unit_price']) }}"
                                            class="input input-bordered w-32" aria-label="{{ __('Unit') }}">
                                     {{-- Typed in the books' own currency, whatever the row
                                          beside it is being READ in: an order's money must
@@ -91,7 +91,7 @@
                             </td>
                         @else
                             <td data-cell="qty">{{ $item['qty'] }}</td>
-                            <td data-cell="unit">{{ $order->adminMoney($item['unit_price']) }}</td>
+                            <td data-cell="unit">{{ $order->adminUnitMoney($item['unit_price']) }}</td>
                         @endif
                         <td class="font-semibold" data-cell="total">{{ $order->adminMoney($item['line_total']) }}</td>
                         @if ($editing)

@@ -224,7 +224,7 @@ final class ManagerOrder
                 continue;
             }
             $items[$index]['unit_price'] = $line['unit_price'];
-            $items[$index]['line_total'] = (int) $item['qty'] * $line['unit_price'];
+            $items[$index]['line_total'] = price_scale()->amount((int) $item['qty'] * $line['unit_price']);
             $changed = true;
         }
 
@@ -238,6 +238,7 @@ final class ManagerOrder
     {
         $value = trim($value);
 
-        return $value === '' ? null : max(0, (int) round((float) str_replace([' ', ','], ['', '.'], $value) * 100));
+        // Price units (PLAN §65), parsed digit by digit.
+        return $value === '' ? null : max(0, (int) price_scale()->fromMajor($value));
     }
 }

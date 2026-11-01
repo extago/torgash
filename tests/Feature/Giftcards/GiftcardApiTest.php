@@ -39,17 +39,17 @@ class GiftcardApiTest extends TestCase
 
     public function test_a_card_is_issued_read_corrected_and_switched_off(): void
     {
-        $issued = $this->api('POST', '/api/v2/admin/giftcards', ['amount' => 50000, 'recipient_email' => 'friend@example.test'])
+        $issued = $this->api('POST', '/api/v2/admin/giftcards', ['amount' => '500.00', 'recipient_email' => 'friend@example.test'])
             ->assertCreated()->json('data');
 
         $this->assertMatchesRegularExpression('/^[A-Z0-9]{4}(-[A-Z0-9]{4}){3}$/', $issued['code']);
-        $this->assertSame(50000, $issued['balance']);
+        $this->assertSame('500.00', $issued['balance']);
 
         $read = $this->api('GET', '/api/v2/admin/giftcards/'.$issued['id'])->assertOk()->json('data');
         $this->assertArrayNotHasKey('code', $read, 'the code is handed out once');
 
-        $this->api('POST', '/api/v2/admin/giftcards/'.$issued['id'].'/actions/adjust', ['amount' => -10000, 'reason' => 'Correction'])
-            ->assertOk()->assertJsonPath('data.balance', 40000);
+        $this->api('POST', '/api/v2/admin/giftcards/'.$issued['id'].'/actions/adjust', ['amount' => '-100.00', 'reason' => 'Correction'])
+            ->assertOk()->assertJsonPath('data.balance', '400.00');
         $this->api('POST', '/api/v2/admin/giftcards/'.$issued['id'].'/actions/disable')->assertOk()->assertJsonPath('data.state', 'disabled');
 
         $this->api('GET', '/api/v2/admin/giftcards?filter[code]='.strtolower($issued['code']))->assertOk()->assertJsonPath('data.0.id', $issued['id']);
@@ -60,7 +60,7 @@ class GiftcardApiTest extends TestCase
         [$card, $code] = app(Issuer::class)->issue(300_00);
         Product::create(['sku' => 'API-GC', 'name' => ['en' => 'Lamp'], 'slug' => 'api-gc-lamp', 'price' => 1000_00, 'stock' => 5, 'status' => 'active']);
 
-        $this->getJson('http://localhost/api/v2/shop/giftcards/'.$code)->assertOk()->assertJsonPath('data.balance', 300_00);
+        $this->getJson('http://localhost/api/v2/shop/giftcards/'.$code)->assertOk()->assertJsonPath('data.balance', '300.00');
         $this->getJson('http://localhost/api/v2/shop/giftcards/AAAA-BBBB-CCCC-DDDD')->assertNotFound();
 
         $cart = $this->postJson('http://localhost/api/v2/shop/carts')->json('data.token');
@@ -68,8 +68,9 @@ class GiftcardApiTest extends TestCase
 
         $answer = $this->patchJson('http://localhost/api/v2/shop/carts/'.$cart.'/checkout', ['code' => $code])->assertOk();
         $this->assertTrue($answer->json('code.ok'));
-        $this->assertSame(300_00, $answer->json('data.prepaid.0.amount'));
-        $this->assertSame($answer->json('data.total') - 300_00, $answer->json('data.to_pay'));
+        $this->assertSame('300.00', $answer->json('data.prepaid.0.amount'));
+        $minor = fn (string $decimal) => \App\Core\Support\PriceScale::minorFrom($decimal);
+        $this->assertSame($minor($answer->json('data.total')) - 300_00, $minor($answer->json('data.to_pay')));
 
         $this->patchJson('http://localhost/api/v2/shop/carts/'.$cart.'/checkout', ['remove_prepaid' => $card->id])
             ->assertOk()->assertJsonPath('data.prepaid', []);

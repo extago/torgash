@@ -135,8 +135,8 @@ class ProductsController extends Controller
             ->when($filters['availability'] ?? null, fn ($query, $key) => $query->where('availability_status', $key))
             ->when(($filters['stock'] ?? null) === 'in', fn ($query) => $query->where('stock', '>', 0))
             ->when(($filters['stock'] ?? null) === 'out', fn ($query) => $query->where('stock', '<=', 0))
-            ->when(($filters['price_min'] ?? null) !== null, fn ($query) => $query->where('price', '>=', (int) round($filters['price_min'] * 100)))
-            ->when(($filters['price_max'] ?? null) !== null, fn ($query) => $query->where('price', '<=', (int) round($filters['price_max'] * 100)));
+            ->when(($filters['price_min'] ?? null) !== null, fn ($query) => $query->where('price', '>=', (int) price_scale()->fromMajor($filters['price_min'])))
+            ->when(($filters['price_max'] ?? null) !== null, fn ($query) => $query->where('price', '<=', (int) price_scale()->fromMajor($filters['price_max'])));
     }
 
     /**
@@ -154,7 +154,7 @@ class ProductsController extends Controller
         // just silently did nothing.
         $validator = Validator::make($request->all(), [
             'sku' => ['required', 'string', 'max:190', $this->uniqueRule('sku', $product)],
-            'price' => 'required|numeric|min:0',
+            'price' => ['required', 'numeric', 'min:0', price_scale()->rule()],
             'stock' => 'sometimes|integer',
         ]);
 
@@ -568,7 +568,7 @@ class ProductsController extends Controller
             // Typed in the product's price currency, like the tiers above.
             ProductPriceTypeOverride::updateOrCreate(
                 ['product_id' => $product->id, 'price_type_id' => $priceTypeId],
-                $prices->row((float) $raw, $currency),
+                $prices->row($raw, $currency),
             );
         }
     }
@@ -687,7 +687,7 @@ class ProductsController extends Controller
                 'customer_group_id' => in_array((int) ($row['customer_group_id'] ?? 0), $validGroupIds, true)
                     ? (int) $row['customer_group_id'] : null,
                 'min_qty' => max(1, (int) $row['min_qty']),
-                ...$prices->row(max(0, (float) $row['price']), $currency),
+                ...$prices->row((float) $row['price'] < 0 ? 0 : $row['price'], $currency),
             ]);
 
         $product->priceTiers()->delete();
@@ -711,9 +711,10 @@ class ProductsController extends Controller
             'name' => [Rule::requiredIf($isBaseLocale), 'nullable', 'string'],
             'description' => 'nullable|string',
             'short_description' => 'nullable|string|max:500',
-            'price' => 'required|numeric|min:0',
-            'cost_price' => 'nullable|numeric|min:0',
-            'list_price' => 'nullable|numeric|min:0',
+            'price' => ['required', 'numeric', 'min:0', price_scale()->rule()],
+            'cost_price' => ['nullable', 'numeric', 'min:0', price_scale()->rule()],
+            'list_price' => ['nullable', 'numeric', 'min:0', price_scale()->rule()],
+            'overrides.*' => ['nullable', 'numeric', 'min:0', price_scale()->rule()],
             // Which currency those three were typed in. Only honoured when the
             // shop turned the feature on: otherwise a stale form (or a crafted
             // request) could price a product in a currency the shop does not

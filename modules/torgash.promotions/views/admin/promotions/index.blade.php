@@ -163,13 +163,13 @@
                                                         @elseif ($tier->discount_type === PromotionTier::TO_PERCENT)
                                                             {{ __('price becomes :percent% of it', ['percent' => $tier->discount_value]) }}
                                                         @elseif ($tier->discount_type === PromotionTier::TO_AMOUNT)
-                                                            {{ __('price becomes :price', ['price' => admin_price($tier->discount_value)]) }}
+                                                            {{ __('price becomes :price', ['price' => $tier->adminValue()]) }}
                                                         @elseif ($tier->discount_type === PromotionTier::GIVE_GROUP)
                                                             {{ __('upgrade to :group', ['group' => $groupNames[$tier->give_group_id] ?? '#'.$tier->give_group_id]) }}
                                                         @elseif ($tier->discount_type === PromotionTier::FREE_PRODUCT)
                                                             {{ __('gift: :sku ×:qty', ['sku' => $productSkus[$tier->free_product_id] ?? '#'.$tier->free_product_id, 'qty' => $tier->free_qty]) }}
                                                         @else
-                                                            −{{ admin_price($tier->discount_value) }}
+                                                            −{{ $tier->adminValue() }}
                                                         @endif
                                                     </span>
                                                 </span>

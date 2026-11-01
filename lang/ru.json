@@ -1649,5 +1649,15 @@
     "The pattern of my own": "Свой шаблон маски",
     "For \"A pattern of my own\": \"_\" for a digit, the rest as written — +998 (__) ___-__-__. Only digits, \"_\", spaces, + ( ) - and dots.": "Для «Свой шаблон»: «_» — цифра, остальное как написано — +998 (__) ___-__-__. Только цифры, «_», пробелы, + ( ) - и точки.",
     "A pattern needs \"_\" for each digit and may hold only digits, spaces, + ( ) - and dots — for example +998 (__) ___-__-__.": "В шаблоне нужен «_» на каждую цифру, и в нём могут быть только цифры, пробелы, + ( ) - и точки — например, +998 (__) ___-__-__.",
-    "As in the shop's settings: :mask": "Как в настройках магазина: :mask"
+    "As in the shop's settings: :mask": "Как в настройках магазина: :mask",
+    "Prices": "Цены",
+    "2 — as the currency (0.01)": "2 — как у валюты (0,01)",
+    "3 (0.001)": "3 (0,001)",
+    "4 (0.0001)": "4 (0,0001)",
+    "Places in a product price": "Знаков в цене товара",
+    "For goods that cost less than a cent in the shop's currency — a rouble in a shop keeping dollars is $0.012. Only prices per unit get the extra places; a line's total, the order, delivery and payment are always rounded to the cent. Changing it recalculates every stored price at once; fewer places are refused while some price would lose digits.": "Для товаров дешевле копейки в валюте магазина — рубль в магазине, который ведёт учёт в долларах, стоит 0,012 $. Лишние знаки получает только цена за единицу; сумма строки, заказ, доставка и оплата всегда округляются до копейки. При смене все сохранённые цены пересчитываются сразу; меньше знаков не сохранится, пока какая-то цена потеряла бы цифры.",
+    "Some prices have more places than :places — fewer places would change them. Correct them first: :list.": "У некоторых цен больше знаков, чем :places, — с меньшим числом знаков они изменились бы. Сначала исправьте их: :list.",
+    "A price may have at most :places places after the point.": "В цене может быть не больше :places знаков после точки.",
+    "An amount must be a number such as 399.20.": "Сумма должна быть числом, например 399.20.",
+    "An amount may have at most two places after the point.": "В сумме может быть не больше двух знаков после точки."
 }

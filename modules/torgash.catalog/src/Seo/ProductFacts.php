@@ -199,7 +199,7 @@ class ProductFacts
 
         $price = $this->price();
         $currency = app(\App\Core\Support\Currencies::class)->find($price['currency']);
-        $written = $currency ? $currency->format((float) $price['amount']) : $price['amount'].' '.$price['currency'];
+        $written = $currency ? $currency->format((float) $price['amount'], strlen((string) strrchr($price['amount'], '.') ?: '.') - 1) : $price['amount'].' '.$price['currency'];
 
         return trim($head.($specs !== [] ? ': '.implode(', ', $specs) : '').'. '
             .($this->priceIsFrom() ? __('Price from :price.', ['price' => $written]) : __('Price :price.', ['price' => $written])));
@@ -303,12 +303,9 @@ class ProductFacts
     protected function money(int $minor): array
     {
         $code = current_storefront()?->default_currency ?? shop_currency();
-        $currency = app(Currencies::class)->find($code);
 
-        $amount = $currency
-            ? number_format(($minor / 100) * (float) $currency->rate, $currency->decimals, '.', '')
-            : number_format($minor / 100, 2, '.', '');
-
-        return ['minor' => $minor, 'amount' => $amount, 'currency' => $code];
+        // A price per unit (PLAN §65): "0.012" where the shop keeps more
+        // places, the currency's own places otherwise.
+        return ['minor' => $minor, 'amount' => price_scale()->plain($minor, $code), 'currency' => $code];
     }
 }

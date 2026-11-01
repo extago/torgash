@@ -273,7 +273,8 @@ class DocumentsController extends Controller
     {
         $typed = trim(str_replace([' ', ','], ['', '.'], (string) $typed));
 
-        return $typed === '' || ! is_numeric($typed) ? null : (int) round((float) $typed * 100);
+        // A unit cost is a price per unit: price units (PLAN §65).
+        return $typed === '' || ! is_numeric($typed) ? null : price_scale()->fromMajor($typed);
     }
 
     protected function warehouses()

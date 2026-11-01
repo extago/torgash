@@ -74,7 +74,7 @@
                                         $itemPicture = $itemProduct?->primaryImageUrl(160);
                                         $itemUrl = $itemProduct ? route('catalog.product', $itemProduct->slug) : null;
                                         $itemName = $order->itemLabel($item);
-                                        $itemUnit = $item['unit_price'] ?? (($item['qty'] ?? 0) > 0 ? (int) round(($item['line_total'] ?? 0) / $item['qty']) : null);
+                                        $itemUnit = $item['unit_price'] ?? (($item['qty'] ?? 0) > 0 ? price_scale()->fromMinor((int) round(($item['line_total'] ?? 0) / $item['qty'])) : null);
                                     @endphp
                                     <li @class(['flex gap-3 sm:gap-4 p-4 sm:px-5', 'ps-10 sm:ps-16 border-t-0 pt-0' => $itemIndex > 0])>
                                         <a @if ($itemUrl) href="{{ $itemUrl }}" @endif
@@ -105,7 +105,7 @@
                                                 @endif
                                                 <div class="text-sm opacity-60 mt-0.5">
                                                     {{ $orderQty($item['qty'] ?? 1) }} {{ __('pcs') }}
-                                                    @if ($itemUnit !== null) × {{ $order->money($itemUnit) }} @endif
+                                                    @if ($itemUnit !== null) × {{ $order->unitMoney($itemUnit) }} @endif
                                                     @if (! empty($item['sku'])) <span class="ms-2">{{ __('SKU') }}: {{ $item['sku'] }}</span> @endif
                                                 </div>
                                             </div>

@@ -56,9 +56,9 @@
                             @if ($isReceipt)
                                 <td class="text-end whitespace-nowrap">
                                     @if ($posted)
-                                        <span class="tabular-nums">{{ $line->unit_cost_original !== null ? number_format($line->unit_cost_original / 100, 2, '.', ' ').' '.$line->currency : '—' }}</span>
+                                        <span class="tabular-nums">{{ $line->unit_cost_original !== null ? price_scale()->trimmed((int) $line->unit_cost_original).' '.$line->currency : '—' }}</span>
                                     @else
-                                        <input type="text" inputmode="decimal" name="lines[{{ $line->id }}][cost]" value="{{ $line->unit_cost_original !== null ? number_format($line->unit_cost_original / 100, 2, '.', '') : '' }}" class="input input-sm input-bordered w-28 text-end" placeholder="0.00">
+                                        <input type="text" inputmode="decimal" name="lines[{{ $line->id }}][cost]" value="{{ price_input($line->unit_cost_original) }}" class="input input-sm input-bordered w-28 text-end" placeholder="0.00">
                                         <select name="lines[{{ $line->id }}][currency]" class="select select-sm select-bordered w-20" aria-label="{{ __('Currency') }}">
                                             @foreach ($currencies as $code)
                                                 <option value="{{ $code }}" @selected(($line->currency ?: shop_currency()) === $code)>{{ $code }}</option>
@@ -68,9 +68,9 @@
                                 </td>
                                 <td class="text-end tabular-nums whitespace-nowrap">
                                     @if ($posted && $line->unit_cost !== null)
-                                        {{ admin_price($line->unit_cost * $line->qty) }}
+                                        {{ admin_price(price_scale()->amount($line->unit_cost * $line->qty)) }}
                                     @elseif ($line->unit_cost_original !== null)
-                                        {{ number_format($line->unit_cost_original * $line->qty / 100, 2, '.', ' ') }} {{ $line->currency }}
+                                        {{ money_decimal(price_scale()->amount($line->unit_cost_original * $line->qty)) }} {{ $line->currency }}
                                     @else
                                         <span class="opacity-40">—</span>
                                     @endif

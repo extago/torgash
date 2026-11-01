@@ -324,6 +324,8 @@ class CoreServiceProvider extends ServiceProvider
             return $errors;
         });
 
+        $this->priceScaleChanges();
+
         // Staff are told what customers see differently from them — a closed
         // storefront, safe mode. Both are asked first, cheaply; the roles are
         // loaded only when one of them is true.
@@ -558,6 +560,66 @@ class CoreServiceProvider extends ServiceProvider
                 'url' => route('admin.system').'#updates',
                 'icon' => 'download',
             ]];
+        });
+    }
+
+    /**
+     * The places of a price per unit (PLAN §65): fewer are refused before the
+     * write while some price would lose digits, and after any change every
+     * declared price column is moved to the new places — or, when that fails,
+     * the setting is put back, so the number and the columns never disagree.
+     */
+    protected function priceScaleChanges(): void
+    {
+        $key = \App\Core\Support\PriceScale::SETTING;
+
+        hook_listen('core.settings.saving', function (array $errors, array $context) use ($key) {
+            $values = $context['values'] ?? [];
+
+            if (($context['module'] ?? null) !== 'core' || ! array_key_exists($key, $values)) {
+                return $errors;
+            }
+
+            $from = price_scale()->places();
+            $to = max(\App\Core\Support\PriceScale::MIN, min(\App\Core\Support\PriceScale::MAX, (int) $values[$key]));
+            $lost = app(\App\Core\Support\PriceColumns::class)->lossy($from, $to);
+
+            if ($lost !== []) {
+                $errors[$key] = __('Some prices have more places than :places — fewer places would change them. Correct them first: :list.', [
+                    'places' => $to,
+                    'list' => collect($lost)->map(fn (array $l) => label_text($l['name']).' — '.$l['count']
+                        .($l['examples'] !== [] ? ' ('.implode(', ', $l['examples']).')' : ''))->implode('; '),
+                ]);
+            }
+
+            return $errors;
+        });
+
+        hook_listen('core.setting.changed', function (array $change) use ($key) {
+            if ($change['module'] !== 'core' || $change['key'] !== $key || $change['storefront_id'] !== null) {
+                return;
+            }
+
+            $clamp = fn ($v) => max(\App\Core\Support\PriceScale::MIN, min(\App\Core\Support\PriceScale::MAX, (int) ($v ?? \App\Core\Support\PriceScale::MIN)));
+            $from = $clamp($change['from']);
+            $to = $clamp($change['to']);
+
+            try {
+                app(\App\Core\Support\PriceColumns::class)->rescale($from, $to);
+            } catch (\Throwable $e) {
+                // The columns are where they were (one transaction); the
+                // setting must say so too. Written past the manager, which
+                // would announce it — and move nothing — a second time.
+                \Illuminate\Support\Facades\DB::table('settings')
+                    ->where(['module' => 'core', 'key' => $key])->whereNull('storefront_id')
+                    ->update(['value' => json_encode((string) $from)]);
+                app(\App\Core\Settings\SettingsManager::class)->flush();
+
+                throw $e;
+            }
+
+            page_cache()->discardAll('price places changed');
+            hook_action('core.price.places_changed', ['from' => $from, 'to' => $to]);
         });
     }
 

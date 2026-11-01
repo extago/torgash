@@ -170,7 +170,7 @@
                  price of the bare product, and setting it against the
                  cheapest BUILD claims a discount that was never given. --}}
             @if (! $priceIsFrom && $product->discountPercent() > 0)
-                <span class="text-xs torgash-old-price">{{ format_price($product->oldPrice()) }}</span>
+                <span class="text-xs torgash-old-price">{{ format_unit_price($product->oldPrice()) }}</span>
             @endif
             <span class="text-lg font-bold leading-tight torgash-price">{{ $shownPrice->format($product) }}</span>
             {{-- What another module says about the price itself — bonus

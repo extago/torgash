@@ -239,8 +239,8 @@ class Label extends Model implements HasMedia
 
         $text = strtr($text, [
             '[discount]' => (string) $product->discountPercent(),
-            '[price]' => format_price($product->effectivePrice()),
-            '[old_price]' => format_price($product->oldPrice()),
+            '[price]' => format_unit_price($product->effectivePrice()),
+            '[old_price]' => format_unit_price($product->oldPrice()),
             '[views]' => (string) $product->views_count,
             '[sales]' => (string) $product->sales_count,
         ]);
@@ -350,7 +350,7 @@ class Label extends Model implements HasMedia
         $value = $rule['value'] ?? null;
 
         match ($rule['field'] ?? null) {
-            'price' => $q->{$method}('price', $operator, (int) round(((float) $value) * 100)),
+            'price' => $q->{$method}('price', $operator, (int) price_scale()->fromMajor(is_numeric($value) ? $value : 0)),
             'stock' => $q->{$method}('stock', $operator, (int) $value),
             'age_days' => $q->{$method}('created_at', $operator, now()->subDays((int) $value)),
             'views' => $q->{$method}('views_count', $operator, (int) $value),
@@ -489,7 +489,7 @@ class Label extends Model implements HasMedia
 
         $actual = match ($rule['field'] ?? null) {
             'discount' => $product->discountPercent(),
-            'price' => $product->price / 100,
+            'price' => price_scale()->toMajor($product->price),
             'stock' => $product->stock,
             'views' => $product->views_count,
             'sales' => $product->sales_count,

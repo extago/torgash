@@ -53,7 +53,7 @@
                         $orderable = $setProduct->isOrderable();
                         // See set-options.blade.php: a directive written right
                         // after a word character is not a directive.
-                        $suffix = ($showPrices && $amount !== 0 ? ' '.($amount > 0 ? '+' : '−').format_price(abs($amount)) : '')
+                        $suffix = ($showPrices && $amount !== 0 ? ' '.($amount > 0 ? '+' : '−').format_unit_price(abs($amount)) : '')
                             .($orderable ? '' : ' — '.$setProduct->stockLabel());
                     @endphp
                     {{-- Shown and refused rather than quietly dropped — the same
@@ -70,7 +70,7 @@
                 @php
                     $amount = $rules->apply($choice, $base, $chosenProduct);
                     $orderable = ! $chosenProduct || $chosenProduct->isOrderable();
-                    $suffix = ($showPrices && $amount !== 0 ? ' '.($amount > 0 ? '+' : '−').format_price(abs($amount)) : '')
+                    $suffix = ($showPrices && $amount !== 0 ? ' '.($amount > 0 ? '+' : '−').format_unit_price(abs($amount)) : '')
                         .($orderable ? '' : ' — '.$chosenProduct->stockLabel());
                 @endphp
                 <option value="{{ $choice->id }}" @selected($chosenValue === (string) $choice->id) @disabled(! $orderable)>

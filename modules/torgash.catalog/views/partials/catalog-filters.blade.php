@@ -36,8 +36,8 @@
     $priceRate = $priceCurrencyCode === shop_currency() ? 1.0 : (float) ($priceCurrency?->rate ?: 1);
     $priceSymbol = $priceCurrency?->symbol ?: $priceCurrencyCode;
     // The range this page's products span, in whole units of that currency.
-    $priceFloor = (int) floor(((int) $filters['price_min']) / 100 * $priceRate);
-    $priceCeil = (int) ceil(((int) $filters['price_max']) / 100 * $priceRate);
+    $priceFloor = (int) floor(((int) $filters['price_min']) / price_scale()->perMajor() * $priceRate);
+    $priceCeil = (int) ceil(((int) $filters['price_max']) / price_scale()->perMajor() * $priceRate);
     // About two hundred stops across the range, rounded to 1, 2 or 5 of a
     // power of ten, so the thumb lands on numbers a person would type.
     $priceSpan = max(1, $priceCeil - $priceFloor);
@@ -50,7 +50,7 @@
     $priceTypedHere = strtoupper((string) request('price_currency', shop_currency())) === $priceCurrencyCode;
     $priceShown = function (string $field, ?int $books, $pageBare) use ($priceTypedHere, $priceRate) {
         if (request()->filled($field)) {
-            return $priceTypedHere ? (string) request($field) : (string) round($books / 100 * $priceRate);
+            return $priceTypedHere ? (string) request($field) : (string) round($books / price_scale()->perMajor() * $priceRate);
         }
 
         return is_numeric($pageBare) ? (string) round((float) $pageBare * $priceRate) : '';

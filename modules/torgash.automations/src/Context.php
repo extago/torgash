@@ -111,7 +111,7 @@ class Context
                     'name' => (string) ($item['name'] ?? ''),
                     'qty' => (int) ($item['qty'] ?? 0),
                     'unit_price' => (int) ($item['unit_price'] ?? 0),
-                    'unit_price_decimal' => self::decimal((int) ($item['unit_price'] ?? 0)),
+                    'unit_price_decimal' => price_scale()->trimmed((int) ($item['unit_price'] ?? 0)),
                     'line_total' => (int) ($item['line_total'] ?? 0),
                     'line_total_decimal' => self::decimal((int) ($item['line_total'] ?? 0)),
                     'line_total_formatted' => $order->money((int) ($item['line_total'] ?? 0)),

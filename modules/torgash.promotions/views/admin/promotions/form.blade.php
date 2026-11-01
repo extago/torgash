@@ -25,7 +25,7 @@
                 'match' => $t->matchAny() ? 'any' : 'all',
                 'discount_type' => $t->discount_type,
                 'discount_value' => in_array($t->discount_type, \Torgash\Promotions\Models\PromotionTier::MONEY_VALUE_TYPES, true)
-                    ? ($t->discount_value ?? 0) / 100
+                    ? ($t->valueIsUnitPrice($promotion->zone) ? price_input((int) ($t->discount_value ?? 0)) : ($t->discount_value ?? 0) / 100)
                     : ($t->discount_value ?? 0),
                 'discount_scope_type' => $t->scope()['type'] ?? '',
                 'discount_scope_ids' => array_map('strval', $t->scope()['ids'] ?? []),
@@ -648,7 +648,7 @@
 
                             <fieldset class="fieldset p-0 w-32" x-show="adjusting.includes(tier.discount_type)" x-cloak>
                                 <legend class="fieldset-legend" x-text="valueLabel(tier.discount_type)"></legend>
-                                <input type="number" step="0.01" min="0" class="input input-bordered w-full" form="promotion-form"
+                                <input type="number" :step="zone === 'catalog' ? '{{ price_step() }}' : '0.01'" min="0" class="input input-bordered w-full" form="promotion-form"
                                        :name="`tiers[${ti}][discount_value]`" x-model="tier.discount_value">
                             </fieldset>
 

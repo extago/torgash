@@ -28,7 +28,7 @@ class DocumentValue
                 $unit = $posted ? (int) $line->unit_cost : $line->unit_cost_original;
                 $out[$line->id] = [
                     'unit' => $unit,
-                    'amount' => $unit === null ? null : $unit * (int) $line->qty,
+                    'amount' => $unit === null ? null : price_scale()->amount($unit * (int) $line->qty),
                     'unknown' => $unit === null ? (int) $line->qty : 0,
                     'currency' => $posted ? shop_currency() : ($line->currency ?: shop_currency()),
                     'estimate' => false,
@@ -43,7 +43,7 @@ class DocumentValue
 
             $out[$line->id] = [
                 'unit' => $known > 0 ? (int) round($amount / $known) : null,
-                'amount' => $known > 0 ? $amount : null,
+                'amount' => $known > 0 ? price_scale()->amount($amount) : null,
                 'unknown' => $unknown,
                 'currency' => shop_currency(),
                 'estimate' => ! $document->isPosted(),

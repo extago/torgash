@@ -112,7 +112,7 @@ class OrderLines
                 'name' => $part['name'] ?: $part['label'],
                 'qty' => $partQty,
                 'unit_price' => (int) $part['amount'],
-                'line_total' => (int) $part['amount'] * $partQty,
+                'line_total' => price_scale()->amount((int) $part['amount'] * $partQty),
                 // What it was chosen AS ("CPU"), which is not the same as
                 // what it is ("Intel Xeon E5-2407") — a picking list wants
                 // the second, an invoice reads better with both. The
@@ -129,8 +129,10 @@ class OrderLines
             'sku' => $line['sku'],
             'name' => $line['name'],
             'qty' => $qty,
+            // unit_price in price units, line_total in minor ones, rounded
+            // once on the product (PLAN §65).
             'unit_price' => $unitPrice,
-            'line_total' => $unitPrice * $qty,
+            'line_total' => price_scale()->amount($unitPrice * $qty),
         ];
 
         if ($folded !== []) {

@@ -30,6 +30,13 @@ class EnquiriesServiceProvider extends ServiceProvider
 
     public function boot(): void
     {
+
+        // Prices per unit this module keeps, moved by core when the shop
+        // changes how many places a price has (PLAN §65).
+        hook_listen('core.price.columns', fn (array $columns) => [...$columns,
+            \App\Core\Support\PriceColumns::jsonLines('Enquiry carts', 'm_enquiries_enquiries', 'cart', ['unit_price']),
+        ]);
+
         // A customer's enquiry and its conversation are on no guest's page (PLAN §61).
         page_cache()->unseen(['m_enquiries_enquiries', 'm_enquiries_messages']);
 

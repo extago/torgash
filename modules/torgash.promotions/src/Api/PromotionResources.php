@@ -152,7 +152,7 @@ class PromotionResources
                     'position' => 'integer',
                     'match' => 'string',
                     'discount_type' => 'string',
-                    'discount_value' => 'integer|null',
+                    'discount_value' => ['type' => 'integer|string|null', 'description' => 'A percent as an integer; money (`fixed`, `to_amount`) as a decimal string.'],
                     'discount' => 'string',
                     'conditions' => 'string',
                 ],
@@ -193,7 +193,12 @@ class PromotionResources
                 'position' => (int) $tier->position,
                 'match' => $tier->matchAny() ? 'any' : 'all',
                 'discount_type' => $tier->discount_type,
-                'discount_value' => $tier->discount_value,
+                // A percent is the number itself; money is a decimal string —
+                // a price per unit for a catalog promotion, an amount for a
+                // cart one (PLAN §65).
+                'discount_value' => in_array($tier->discount_type, PromotionTier::MONEY_VALUE_TYPES, true) && $tier->discount_value !== null
+                    ? ($tier->valueIsUnitPrice($promotion->zone) ? api_price((int) $tier->discount_value) : api_money((int) $tier->discount_value))
+                    : $tier->discount_value,
                 // The same sentences the admin list prints. A caller reading
                 // this to explain a discount to a human should not have to
                 // reimplement the vocabulary to do it.
@@ -211,9 +216,9 @@ class PromotionResources
 
         return match ($tier->discount_type) {
             PromotionTier::PERCENT => $value.'%',
-            PromotionTier::FIXED => admin_price($value),
+            PromotionTier::FIXED => $tier->adminValue(),
             PromotionTier::TO_PERCENT => __('price becomes :percent% of it', ['percent' => $value]),
-            PromotionTier::TO_AMOUNT => __('price becomes :price', ['price' => admin_price($value)]),
+            PromotionTier::TO_AMOUNT => __('price becomes :price', ['price' => $tier->adminValue()]),
             PromotionTier::FREE_SHIPPING => __('free shipping'),
             PromotionTier::GIVE_GROUP => __('upgrade to :group', ['group' => '#'.$tier->give_group_id]),
             PromotionTier::FREE_PRODUCT => __('gift: :sku ×:qty', ['sku' => '#'.$tier->free_product_id, 'qty' => $tier->free_qty]),

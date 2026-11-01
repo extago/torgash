@@ -67,6 +67,26 @@ class Eligibility
      *
      * @return list<array<string, mixed>> order lines with `qty` reduced
      */
+    /**
+     * What returning `$qty` more of a remaining line owes, in minor units: a
+     * share of the line's TOTAL, never price × quantity — at $0.012 apiece
+     * 333 pieces are 4.00 of a 12.00 line, and three such returns must come
+     * to 12.00, not 11.99 or 12.01. Worked out as the difference of two
+     * cumulative shares, so every return's part telescopes into exactly the
+     * line's total by the time the last piece is back (PLAN §65).
+     *
+     * @param  array<string, mixed>  $line  a line of `remaining()`
+     */
+    public static function share(array $line, int $qty): int
+    {
+        $bought = max(1, (int) ($line['bought_qty'] ?? $line['qty'] ?? 1));
+        $taken = (int) ($line['taken_qty'] ?? 0);
+        $total = (int) ($line['line_total'] ?? price_scale()->amount((int) ($line['unit_price'] ?? 0) * $bought));
+        $upTo = fn (int $n) => (int) round($total * min($n, $bought) / $bought);
+
+        return $upTo($taken + $qty) - $upTo($taken);
+    }
+
     public static function remaining(Order $order): array
     {
         $claimed = [];
@@ -93,7 +113,10 @@ class Eligibility
             $qty -= $take;
 
             if ($qty > 0) {
-                $remaining[] = ['qty' => $qty] + $line;
+                // How many the line had and how many earlier returns took:
+                // what a return OWES is worked out from the line's total
+                // with them (`share()`), so the parts add up to that total.
+                $remaining[] = ['qty' => $qty, 'bought_qty' => (int) ($line['qty'] ?? 0), 'taken_qty' => $take] + $line;
             }
         }
 

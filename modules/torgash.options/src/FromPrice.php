@@ -76,7 +76,7 @@ class FromPrice
         // Both numbers, because one unit is charged both: what repeats per unit
         // and what is charged once for the line are the same money when the
         // line is one item, and a card quotes one item.
-        return $money['unit_price'] + $money['extra_total'] - $base;
+        return $money['unit_price'] + $money['extra_price'] - $base;
     }
 
     /**

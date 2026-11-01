@@ -212,7 +212,7 @@
                                         $tag('#item.old_price').'…'.$tag('/item.old_price') => 'printed only when there is a value',
                                         $tag('^item.brand').'…'.$tag('/item.brand') => 'printed only when there is none',
                                         $tag('! a note ') => 'a comment, not printed',
-                                        $tag(' item.price | money ') => 'through a filter (several: | a | b)',
+                                        $tag(' item.price | price ') => 'through a filter (several: | a | b)',
                                     ] as $syntaxExample => $syntaxMeaning)
                                         <div class="flex items-baseline gap-2 min-w-0"><code class="font-mono shrink-0">{{ $syntaxExample }}</code> <span class="opacity-70 truncate">{{ __($syntaxMeaning) }}</span></div>
                                     @endforeach
@@ -221,7 +221,7 @@
                                         <div class="flex items-baseline gap-2 min-w-0"><code class="font-mono shrink-0">{{ $filterName }}</code> <span class="opacity-70 truncate">{{ __($filterMeaning) }}</span></div>
                                     @endforeach
                                     <div class="md:col-span-2 font-semibold mt-2">{{ __('For a product feed') }}</div>
-                                    <p class="md:col-span-2 opacity-70">{{ __('item.id, item.url, item.available (true/false), item.category_id, item.price and item.old_price (minor units — | money), item.pictures, item.params (name, value, code), item.brand, item.sku — and any column of the list above. A column the template names is read even when it is not ticked.') }}</p>
+                                    <p class="md:col-span-2 opacity-70">{{ __('item.id, item.url, item.available (true/false), item.category_id, item.price and item.old_price (prices per unit — | price), item.pictures, item.params (name, value, code), item.brand, item.sku — and any column of the list above. A column the template names is read even when it is not ticked.') }}</p>
                                 </div>
                             </details>
                         </div>

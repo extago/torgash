@@ -95,7 +95,8 @@ class Issuer
             }
 
             $answers = (array) (((array) ($line['config'] ?? []))[GiftConfig::KEY] ?? []);
-            $amount = (int) ($line['unit_price'] ?? 0);
+            // A card holds an AMOUNT (minor units); the line's price is in price units.
+            $amount = price_scale()->toMinor((int) ($line['unit_price'] ?? 0));
             $key = (string) ($line['key'] ?? $line['product_id']);
 
             for ($seq = 1; $seq <= max(1, (int) ($line['qty'] ?? 1)); $seq++) {

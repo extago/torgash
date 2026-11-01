@@ -62,9 +62,9 @@
                     <div class="text-xs line-clamp-2 leading-snug">{{ $candidate->t('name') }}</div>
 
                     <div class="flex items-baseline gap-1.5">
-                        <span class="text-sm font-semibold {{ $full > $price ? 'torgash-discount-text' : 'torgash-price' }}">{{ format_price($price) }}</span>
+                        <span class="text-sm font-semibold {{ $full > $price ? 'torgash-discount-text' : 'torgash-price' }}">{{ format_unit_price($price) }}</span>
                         @if ($full > $price)
-                            <span class="text-xs torgash-old-price">{{ format_price($full) }}</span>
+                            <span class="text-xs torgash-old-price">{{ format_unit_price($full) }}</span>
                         @endif
                     </div>
 

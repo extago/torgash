@@ -27,7 +27,6 @@
     "An open object — this resource has not declared its fields.": "Открытый объект — этот ресурс не объявил своих полей.",
     "A token from Admin → API. It names a user, and every permission check is the admin panel’s own.": "Токен из «Админ → API-токены». Он называет пользователя, и все проверки прав — те же, что в панели управления.",
     "Two halves. `/api/v2/admin/…` answers with everything the shop knows and needs a bearer token; `/api/v2/shop/…` is public, exactly as the storefront’s own pages are, and only GET is routed for its resources.": "Две половины. `/api/v2/admin/…` отвечает всем, что знает магазин, и требует Bearer-токен; `/api/v2/shop/…` открыт ровно так же, как страницы самой витрины, и для его ресурсов зарегистрирован только GET.",
-    "Every amount is an integer in **minor units** — 1999 is 19.99 — and the currency is always named beside it. A price is two facts, and sending the number alone is how an exchange puts one currency into another’s column.": "Любая сумма — целое число в **минорных единицах**: 1999 — это 19,99, и валюта всегда названа рядом. Цена — это два факта, и отправка одного лишь числа — способ положить одну валюту в колонку другой.",
     "A row is addressed by our id **or** by whatever key your own system knows it as, so an integration never has to store our autoincrements.": "Строка адресуется нашим id **или** тем ключом, которым её знает ваша система, — обмену не нужно хранить наши автоинкременты.",
     "Answers are enveloped: a single row as `{\"data\": …}`, a list as `{\"data\": [...], \"meta\": {...}}`, a refusal as `{\"message\": …}` with `errors` when fields are at fault.": "Ответы в конверте: одна строка — `{\"data\": …}`, список — `{\"data\": [...], \"meta\": {...}}`, отказ — `{\"message\": …}`, а когда виноваты поля, ещё и `errors`.",
     "Which storefront this call is about — its id or its code. The default storefront otherwise.": "О какой витрине этот вызов — её id или код. Иначе витрина по умолчанию.",
@@ -66,7 +65,6 @@
     "Our id, the sku, or the id your own system knows it by.": "Наш id, артикул или id, которым его знает ваша система.",
     "0 removes the line.": "0 убирает строку.",
     "What the visitor’s prices are displayed in.": "В чём показываются цены этому посетителю.",
-    "Minor units. Already reflects any quantity break this line has crossed.": "Минорные единицы. Уже с учётом порога по количеству, если строка его перешла.",
     "What has been answered, and what is on offer": "Что уже отвечено и что предложено",
     "Answer a step": "Ответить на шаг",
     "Place the order": "Оформить заказ",
@@ -125,5 +123,8 @@
     "Expired": "Истекла",
     "Present only when this line cannot be ordered as it stands — out of stock, or more than is left. Completing the checkout is refused until it is put right.": "Есть только тогда, когда строку нельзя заказать как есть: товара нет или его меньше, чем в строке. Пока это не исправлено, оформление заказа отклоняется.",
     "Select all on this page": "Выбрать все на странице",
-    "selected": "выбрано"
+    "selected": "выбрано",
+    "Money is a **decimal string in major units** with a dot — `\"199990.00\"` — and the currency is always named beside it; it is written to the API in the same format (a JSON number is accepted too). An amount (a line’s total, an order’s, delivery, a payment) has two places; a price per unit has exactly as many as the shop keeps a price (2–4, `\"0.0120\"`), and a price sent with more is refused rather than rounded. A line’s total is its price × quantity rounded once, half away from zero.": "Деньги — **десятичная строка в основных единицах** с точкой — `\"199990.00\"`, и валюта всегда указана рядом; в API они записываются в том же формате (JSON-число тоже принимается). У суммы (итог строки, заказа, доставка, платёж) два знака; у цены за единицу — ровно столько, сколько магазин хранит в цене (2–4, `\"0.0120\"`), а цена с большим числом знаков отклоняется, а не округляется. Итог строки — цена × количество, округлённое один раз, 0,5 — от нуля.",
+    "A price per unit as a decimal string, with the places the shop keeps. Already reflects any quantity break this line has crossed.": "Цена за единицу десятичной строкой, с тем числом знаков, которое хранит магазин. Уже учитывает ступень цены за количество, которую перешла строка.",
+    "An amount: a decimal string with two places.": "Сумма: десятичная строка с двумя знаками."
 }

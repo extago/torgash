@@ -27,9 +27,9 @@
                 <vendor>{{ item.brand }}</vendor>
                 {{/item.brand}}
                 <url>{{ item.url }}</url>
-                <price>{{ item.price | money }}</price>
+                <price>{{ item.price | price }}</price>
                 {{#item.old_price}}
-                <oldprice>{{ item.old_price | money }}</oldprice>
+                <oldprice>{{ item.old_price | price }}</oldprice>
                 {{/item.old_price}}
                 <currencyId>{{ shop.currency }}</currencyId>
                 <categoryId>{{ item.category_id }}</categoryId>

@@ -56,8 +56,9 @@ class Prices
                 continue;
             }
 
-            $value = $typed[$field];
-            $minor = ($value === null || $value === '') ? null : (int) round((float) $value * 100);
+            // Price units (PLAN §65): as many places as the shop keeps, parsed
+            // digit by digit — "0.0125" is 125 at four places, never 124.
+            $minor = price_scale()->fromMajor($typed[$field]);
 
             // In the shop's own currency there is nothing to remember and
             // nothing to derive: the typed number IS the stored number, and a
@@ -89,9 +90,7 @@ class Prices
     public function row(mixed $typedMajor, ?string $currency): array
     {
         $currency = $this->normalise($currency);
-        $minor = ($typedMajor === null || $typedMajor === '')
-            ? 0
-            : (int) round((float) $typedMajor * 100);
+        $minor = price_scale()->fromMajor($typedMajor) ?? 0;
 
         if (! $currency) {
             return ['price' => $minor, 'price_original' => null];
@@ -185,7 +184,7 @@ class Prices
             ]);
     }
 
-    /** Books minor units from another currency's, rounded to what the books show (see the class). */
+    /** Books price units from another currency's, rounded to what the books show (see the class). */
     protected function derive(int $minor, float $rate, bool $shown = true): int
     {
         $step = $shown ? $this->step() : 1;
@@ -194,12 +193,13 @@ class Prices
     }
 
     /**
-     * The smallest amount the books currency shows, in minor units: 1 for a
-     * currency printed with cents, 100 for one printed in whole units.
+     * The smallest step a derived price is rounded to, in price units: what
+     * the books currency shows while prices keep two places (1 for cents, 100
+     * for whole units), one price unit once the shop keeps more (PLAN §65).
      */
     protected function step(): int
     {
-        return app(Currencies::class)->step();
+        return price_scale()->step();
     }
 
     /** A usable, non-shop currency, or null for "the shop's own". */

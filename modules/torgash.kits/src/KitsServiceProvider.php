@@ -21,6 +21,13 @@ class KitsServiceProvider extends ServiceProvider
 
     public function boot(): void
     {
+
+        // Prices per unit this module keeps, moved by core when the shop
+        // changes how many places a price has (PLAN §65).
+        hook_listen('core.price.columns', fn (array $columns) => [...$columns,
+            ['name' => 'Kit discounts', 'table' => 'm_kits_slots', 'columns' => ['discount_amount', 'discount_amount_original']],
+        ]);
+
         // A kit's dates offer and withdraw it with nothing written: a page
         // kept ready for guests is kept only until the next (PLAN §61).
         page_cache()->changes(fn () => page_cache()->nextDateIn('m_kits_kits'));

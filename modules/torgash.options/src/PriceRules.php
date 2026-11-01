@@ -208,8 +208,8 @@ class PriceRules
     protected static function money(OptionChoice $choice): string
     {
         return $choice->currency && $choice->amount_original !== null
-            ? format_price((int) $choice->amount_original, (string) $choice->currency)
-            : admin_price((int) $choice->amount);
+            ? format_unit_price((int) $choice->amount_original, (string) $choice->currency)
+            : admin_unit_price((int) $choice->amount);
     }
 
     protected static function signed(float $number): string

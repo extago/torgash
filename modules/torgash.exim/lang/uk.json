@@ -200,7 +200,6 @@
     "Lists, conditions and filters": "Списки, умови й фільтри",
     "Filters": "Фільтри",
     "For a product feed": "Для фіда товарів",
-    "item.id, item.url, item.available (true/false), item.category_id, item.price and item.old_price (minor units — | money), item.pictures, item.params (name, value, code), item.brand, item.sku — and any column of the list above. A column the template names is read even when it is not ticked.": "item.id, item.url, item.available (true/false), item.category_id, item.price і item.old_price (у копійках — | money), item.pictures, item.params (name, value, code), item.brand, item.sku — і будь-яка колонка зі списку вище. Колонка, яку називає шаблон, читається, навіть якщо її не позначено.",
     "a list: once per element, the element is .": "список: по разу на елемент, сам елемент — .",
     "a list of records: their fields by name": "список записів: їхні поля за ім'ям",
     "printed only when there is a value": "виводиться, лише якщо значення є",
@@ -285,5 +284,7 @@
     "on a change": "за змінами",
     "Updated by themselves": "Оновлюються самі",
     "Line :line: skipped — :reason": "Рядок :line: пропущено — :reason",
-    "These rows match nothing and cannot make a new one — they will be skipped:": "Ці рядки ні з чим не збіглися, а новий запис із них не створити — їх буде пропущено:"
+    "These rows match nothing and cannot make a new one — they will be skipped:": "Ці рядки ні з чим не збіглися, а новий запис із них не створити — їх буде пропущено:",
+    "item.id, item.url, item.available (true/false), item.category_id, item.price and item.old_price (prices per unit — | price), item.pictures, item.params (name, value, code), item.brand, item.sku — and any column of the list above. A column the template names is read even when it is not ticked.": "item.id, item.url, item.available (true/false), item.category_id, item.price і item.old_price (ціни за одиницю — | price), item.pictures, item.params (name, value, code), item.brand, item.sku — і будь-яка колонка зі списку вище. Колонка, яку називає шаблон, читається, навіть якщо її не позначено.",
+    "a price per unit as a number: 7199000 → 71990, 1250 → 12.50, and 0.012 when the shop keeps more places": "ціна за одиницю числом: 7199000 → 71990, 1250 → 12.50 і 0.012, коли магазин зберігає більше знаків"
 }

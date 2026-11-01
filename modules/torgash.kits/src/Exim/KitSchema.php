@@ -138,7 +138,7 @@ class KitSchema
             ['key' => 'discount_amount', 'label' => 'Discount amount (minor units)', 'get' => fn (KitSlot $s) => $s->discount_amount_original ?? $s->discount_amount, 'set' => function (KitSlot $s, $v) {
                 // After `discount_currency`, for the reason every money pair
                 // in an export schema is ordered that way.
-                $money = app(Prices::class)->row(((int) $v) / 100, $s->discount_currency);
+                $money = app(Prices::class)->row(price_scale()->decimal((int) $v), $s->discount_currency);
 
                 $s->discount_amount = $money['price'];
                 $s->discount_amount_original = $money['price_original'];

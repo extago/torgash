@@ -80,8 +80,8 @@
                  would let a quick edit rewrite a price through an exchange
                  rate, which is the one thing this switcher must never do. --}}
             <span x-show="!editing" class="truncate">{{ $product->adminPrice() }}</span>
-            <input x-show="editing" x-cloak type="number" step="0.01" min="0" name="price"
-                   value="{{ number_format($product->typedPrice() / 100, 2, '.', '') }}"
+            <input x-show="editing" x-cloak type="number" step="{{ price_step() }}" min="0" name="price"
+                   value="{{ price_input($product->typedPrice()) }}"
                    class="input input-sm w-full" aria-label="{{ __('Price') }}">
             {{-- Which currency that box is in, when it is not the shop's own.
                  The list has no picker on purpose: a number typed here means

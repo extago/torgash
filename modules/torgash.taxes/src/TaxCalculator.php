@@ -41,12 +41,15 @@ class TaxCalculator
      */
     public function forCart(array $lines, int $discount = 0, int $shippingCost = 0, ?Location $where = null): array
     {
-        $subtotal = array_sum(array_map(fn ($line) => $line['unit_price'] * $line['qty'], $lines));
+        // A tax is worked out on the LINE, never per unit (PLAN §65): the
+        // price per unit may be finer than a cent, the line is an amount.
+        $lineAmount = fn (array $line) => price_scale()->amount($line['unit_price'] * $line['qty']);
+        $subtotal = array_sum(array_map($lineAmount, $lines));
         $result = [];
         $spent = 0;
 
         foreach (array_values($lines) as $i => $line) {
-            $lineTotal = $line['unit_price'] * $line['qty'];
+            $lineTotal = $lineAmount($line);
 
             $share = $subtotal > 0
                 ? ($i === count($lines) - 1 ? $discount - $spent : (int) round($discount * $lineTotal / $subtotal))
@@ -85,7 +88,9 @@ class TaxCalculator
     {
         $total = $price;
 
-        foreach ($this->charge($taxes, $price, 1) as $charge) {
+        // `$price` is a price per unit (price units, PLAN §65); a fixed tax
+        // is an amount in minor units and is brought onto the same scale.
+        foreach ($this->charge($taxes, $price, 1, price_scale()->perMinor()) as $charge) {
             if (! $charge['included']) {
                 $total += $charge['amount'];
             }
@@ -117,7 +122,7 @@ class TaxCalculator
      * @param  list<Tax>  $taxes
      * @return array<int, array{tax: Tax, amount: int, included: bool}>
      */
-    protected function charge(array $taxes, int $base, int $qty): array
+    protected function charge(array $taxes, int $base, int $qty, int $fixedScale = 1): array
     {
         if ($base <= 0) {
             return [];
@@ -142,7 +147,7 @@ class TaxCalculator
                 : $running;
 
             if ($tax->rate_type === Tax::FIXED) {
-                $amount = (int) $tax->rate_amount * ($perUnit ? 1 : $qty);
+                $amount = (int) $tax->rate_amount * $fixedScale * ($perUnit ? 1 : $qty);
             } elseif ($tax->price_includes_tax) {
                 $amount = $chargeBase - (int) round($chargeBase / (1 + $tax->rate_percent / 100));
             } else {

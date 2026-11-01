@@ -39,7 +39,7 @@ class PromotionApiTest extends TestCase
         $response->assertJsonPath('data.zone', 'catalog');
         $response->assertJsonPath('data.status', 'running');
         $response->assertJsonPath('data.tiers.0.discount_type', 'to_amount');
-        $response->assertJsonPath('data.tiers.0.discount_value', 999_00);
+        $response->assertJsonPath('data.tiers.0.discount_value', '999.00');
         $this->assertNotEmpty($response->json('data.tiers.0.discount'), 'the tier explains itself in words');
         $this->assertNotEmpty($response->json('data.tiers.0.conditions'));
     }

@@ -441,8 +441,8 @@
                             <fieldset class="fieldset p-0"><legend class="fieldset-legend">{{ __('Price (major units)') }} *</legend>
                                 @php $pricedIn = old('price_currency', $product->price_currency ?? ''); @endphp
                                 <div class="flex gap-2">
-                                    <input name="price" type="number" step="0.01" min="0" aria-label="{{ __('Price (major units)') }}"
-                                           value="{{ old('price', $product->exists ? $product->typedPrice() / 100 : '') }}" required
+                                    <input name="price" type="number" step="{{ price_step() }}" min="0" aria-label="{{ __('Price (major units)') }}"
+                                           value="{{ old('price', $product->exists ? price_input($product->typedPrice()) : '') }}" required
                                            class="input input-bordered w-full" placeholder="0.00">
 
                                     {{-- All three amounts on this card are in ONE currency: a
@@ -462,13 +462,13 @@
                                 </div>
                             </fieldset>
                             <label class="fieldset p-0"><span class="fieldset-legend">{{ __('RRP (list price)') }}</span>
-                                <input name="list_price" type="number" step="0.01" min="0"
-                                       value="{{ old('list_price', $product->list_price ? $product->typedPrice('list_price') / 100 : '') }}"
+                                <input name="list_price" type="number" step="{{ price_step() }}" min="0"
+                                       value="{{ old('list_price', $product->list_price ? price_input($product->typedPrice('list_price')) : '') }}"
                                        class="input input-bordered w-full" placeholder="0.00">
                             </label>
                             <label class="fieldset p-0"><span class="fieldset-legend">{{ __('Cost price') }}</span>
-                                <input name="cost_price" type="number" step="0.01" min="0"
-                                       value="{{ old('cost_price', $product->cost_price ? $product->typedPrice('cost_price') / 100 : '') }}"
+                                <input name="cost_price" type="number" step="{{ price_step() }}" min="0"
+                                       value="{{ old('cost_price', $product->cost_price ? price_input($product->typedPrice('cost_price')) : '') }}"
                                        class="input input-bordered w-full" placeholder="0.00">
                             </label>
                         </div>
@@ -483,7 +483,7 @@
                         @if ($product->exists && $product->price_currency)
                             <div class="text-xs opacity-60 -mt-2">
                                 {{ __('Kept in the shop\'s books as :amount, at 1 :from = :rate :to. Recomputed whenever that rate changes.', [
-                                    'amount' => format_price($product->price, shop_currency()),
+                                    'amount' => format_unit_price($product->price, shop_currency()),
                                     'from' => shop_currency(),
                                     'rate' => format_rate($currencies[$product->price_currency]->rate ?? 1, thousands: ' '),
                                     'to' => $product->price_currency,
@@ -514,7 +514,7 @@
                                 $initialTiers = collect($priceTiers ?? [])->map(fn ($t) => [
                                     'customer_group_id' => $t->customer_group_id,
                                     'min_qty' => $t->min_qty,
-                                    'price' => $t->typedPrice() / 100,
+                                    'price' => price_input($t->typedPrice()),
                                 ])->values();
                             @endphp
                             <div x-data="{
@@ -536,7 +536,7 @@
                                             @endforeach
                                         </select>
                                         <input type="number" x-model="row.min_qty" min="1" placeholder="{{ __('Min qty') }}" aria-label="{{ __('Min qty') }}" class="input input-bordered w-full">
-                                        <input type="number" x-model="row.price" min="0" step="0.01" placeholder="{{ __('Price') }}" aria-label="{{ __('Price') }}" class="input input-bordered w-full">
+                                        <input type="number" x-model="row.price" min="0" step="{{ price_step() }}" placeholder="{{ __('Price') }}" aria-label="{{ __('Price') }}" class="input input-bordered w-full">
                                         <button type="button" @click="removeRow(i)" class="btn btn-ghost btn-square text-error"
                                                 title="{{ __('Remove') }}" aria-label="{{ __('Remove') }}">
                                             <x-icon name="trash-2" size="sm" />
@@ -569,12 +569,12 @@
                                                 {{ $type->t('name', admin_content_locale()) }}
                                                 <span class="badge badge-sm badge-ghost font-mono">{{ $type->code }}</span>
                                             </div>
-                                            <input type="number" name="overrides[{{ $type->id }}]" min="0" step="0.01"
-                                                   value="{{ old('overrides.'.$type->id, ($priceOverrides[$type->id] ?? null) !== null ? $priceOverrides[$type->id] / 100 : '') }}"
+                                            <input type="number" name="overrides[{{ $type->id }}]" min="0" step="{{ price_step() }}"
+                                                   value="{{ old('overrides.'.$type->id, price_input($priceOverrides[$type->id] ?? null)) }}"
                                                    {{-- The computed price, in whatever the admin reads money in.
                                                         format_price() here showed it in the storefront's session
                                                         currency, which is not a currency anybody on this screen chose. --}}
-                                                   placeholder="{{ isset($priceGroupPreview[$type->id]) ? __('computed').': '.admin_price($priceGroupPreview[$type->id]) : __('no formula') }}"
+                                                   placeholder="{{ isset($priceGroupPreview[$type->id]) ? __('computed').': '.admin_unit_price($priceGroupPreview[$type->id]) : __('no formula') }}"
                                                    class="input input-bordered w-full">
                                         </div>
                                     @endforeach
@@ -1170,7 +1170,7 @@
                                                 @endif
                                             </td>
                                         @endforeach
-                                        <td class="text-end tabular-nums whitespace-nowrap">{{ admin_price($variant->price) }}</td>
+                                        <td class="text-end tabular-nums whitespace-nowrap">{{ admin_unit_price($variant->price) }}</td>
                                         <td class="text-end tabular-nums">{{ $variant->stock }}</td>
                                         <td><span class="text-xs">{{ __(ucfirst($variant->status)) }}</span></td>
                                     </tr>

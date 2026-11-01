@@ -18,7 +18,7 @@
                         @endunless
                     </span>
                     <span class="whitespace-nowrap">
-                        {{ $part['amount'] > 0 ? '+' : '−' }}{{ format_price(abs($part['amount'] * $part['qty'])) }}
+                        {{ $part['amount'] > 0 ? '+' : '−' }}{{ format_unit_price(abs($part['amount'] * $part['qty'])) }}
                     </span>
                 </li>
             @endforeach
@@ -27,6 +27,6 @@
 
     <div class="flex justify-between items-baseline gap-2 pt-1 border-t border-base-300">
         <span class="text-sm opacity-70">{{ __('Configured price') }}</span>
-        <span class="text-xl font-bold">{{ format_price($money['unit_price'] + $money['extra_total']) }}</span>
+        <span class="text-xl font-bold">{{ format_unit_price($money['unit_price'] + $money['extra_price']) }}</span>
     </div>
 </div>

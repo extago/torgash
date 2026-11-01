@@ -45,7 +45,7 @@ class CatalogInvariants
                     ->map(fn (Product $p) => [
                         'id' => (string) $p->id,
                         'title' => $p->sku ?: $p->t('name'),
-                        'detail' => ['Price: :price', ['price' => admin_price((int) $p->price)]],
+                        'detail' => ['Price: :price', ['price' => admin_unit_price((int) $p->price)]],
                         'url' => route('admin.catalog.products.edit', $p->id),
                     ]),
             ],

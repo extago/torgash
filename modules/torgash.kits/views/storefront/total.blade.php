@@ -2,14 +2,14 @@
      same arithmetic that will price the cart lines. --}}
 @if ($offer['saving'] > 0)
     <div class="text-xs opacity-60">{{ __('Recommended total') }}</div>
-    <div class="text-sm torgash-old-price">{{ format_price($offer['full_total']) }}</div>
+    <div class="text-sm torgash-old-price">{{ format_unit_price($offer['full_total']) }}</div>
 @endif
 
 <div class="text-xs opacity-60">{{ __('Price for the set') }}</div>
-<div class="text-2xl font-bold {{ $offer['saving'] > 0 ? 'torgash-discount-text' : 'torgash-price' }}">{{ format_price($offer['kit_total']) }}</div>
+<div class="text-2xl font-bold {{ $offer['saving'] > 0 ? 'torgash-discount-text' : 'torgash-price' }}">{{ format_unit_price($offer['kit_total']) }}</div>
 
 @if ($offer['saving'] > 0)
-    <div class="text-xs text-success">{{ __('You save :amount', ['amount' => format_price($offer['saving'])]) }}</div>
+    <div class="text-xs text-success">{{ __('You save :amount', ['amount' => format_unit_price($offer['saving'])]) }}</div>
 @endif
 
 <button type="submit" class="btn btn-primary btn-block mt-2 whitespace-nowrap">

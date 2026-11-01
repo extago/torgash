@@ -10,7 +10,7 @@
 
      $kitId, $mainPrice, $mainParts --}}
 <div id="kit-main-{{ $kitId }}" class="flex flex-col gap-1">
-    <div class="font-semibold">{{ format_price($mainPrice) }}</div>
+    <div class="font-semibold">{{ format_unit_price($mainPrice) }}</div>
 
     @if ($mainParts !== [])
         <ul class="text-xs opacity-70 leading-snug flex flex-col gap-0.5">

@@ -102,7 +102,7 @@
     };
 
     $priceTag = fn (int $amount) => $showPrices && $amount !== 0
-        ? ' '.($amount > 0 ? '+' : '−').format_price(abs($amount))
+        ? ' '.($amount > 0 ? '+' : '−').format_unit_price(abs($amount))
         : '';
 
     // One look for every answer that is ticked rather than typed: a framed
@@ -276,7 +276,7 @@
                 @endif
                 <p class="text-xs opacity-50">
                     @if ($showPrices && $priceAmount !== 0)
-                        {{ $priceAmount > 0 ? '+' : '−' }}{{ format_price(abs($priceAmount)) }}@if ($group->max_length) · @endif
+                        {{ $priceAmount > 0 ? '+' : '−' }}{{ format_unit_price(abs($priceAmount)) }}@if ($group->max_length) · @endif
                     @endif
                     @if ($group->max_length)
                         {{ __('up to :n characters', ['n' => $group->max_length]) }}
@@ -311,7 +311,7 @@
                        class="file-input w-full">
                 <p class="text-xs opacity-50">
                     @if ($showPrices && $priceAmount !== 0)
-                        {{ $priceAmount > 0 ? '+' : '−' }}{{ format_price(abs($priceAmount)) }} ·
+                        {{ $priceAmount > 0 ? '+' : '−' }}{{ format_unit_price(abs($priceAmount)) }} ·
                     @endif
                     {{ strtoupper(implode(', ', $files->types($group))) }}@if ($files->maxKb($group) > 0), {{ __('up to :n', ['n' => $files->maxKb($group) >= 1024 ? round($files->maxKb($group) / 1024, 1).' MB' : $files->maxKb($group).' KB']) }}@endif
                     @if ($chosenFile)

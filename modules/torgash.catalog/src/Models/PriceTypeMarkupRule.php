@@ -116,7 +116,7 @@ class PriceTypeMarkupRule extends Model
     /**
      * The rule in words, in three parts — which products, how much over cost,
      * how it is rounded — so the price type's card and anything else that
-     * lists rules say the same sentence. Amounts through admin_price(): these
+     * lists rules say the same sentence. Amounts through admin_unit_price(): these
      * are the shop's books.
      *
      * @return array{when: string, markup: string, rounding: string}
@@ -131,23 +131,23 @@ class PriceTypeMarkupRule extends Model
             $when[] = trans_choice(':count characteristic value|:count characteristic values', $this->featureValues->count(), ['count' => $this->featureValues->count()]);
         }
         if ($this->cost_price_min !== null) {
-            $when[] = __('cost from :amount', ['amount' => admin_price($this->cost_price_min)]);
+            $when[] = __('cost from :amount', ['amount' => admin_unit_price($this->cost_price_min)]);
         }
         if ($this->cost_price_max !== null) {
-            $when[] = __('cost up to :amount', ['amount' => admin_price($this->cost_price_max)]);
+            $when[] = __('cost up to :amount', ['amount' => admin_unit_price($this->cost_price_max)]);
         }
 
         return [
             'when' => $when ? implode(', ', $when) : __('every product'),
             'markup' => $this->markup_type === 'percent'
                 ? __('cost + :percent%', ['percent' => rtrim(rtrim(number_format($this->markup_value / 100, 2, '.', ''), '0'), '.')])
-                : __('cost + :amount', ['amount' => admin_price($this->markup_value)]),
+                : __('cost + :amount', ['amount' => admin_unit_price($this->markup_value)]),
             'rounding' => $this->rounding_mode === 'psychological'
-                ? __('down to :step, minus :offset', ['step' => admin_price($this->round_to), 'offset' => admin_price($this->psychological_offset ?? 0)])
+                ? __('down to :step, minus :offset', ['step' => admin_unit_price($this->round_to), 'offset' => admin_unit_price($this->psychological_offset ?? 0)])
                 : match ($this->round_direction) {
-                    'up' => __('up to :step', ['step' => admin_price($this->round_to)]),
-                    'down' => __('down to :step', ['step' => admin_price($this->round_to)]),
-                    default => __('to the nearest :step', ['step' => admin_price($this->round_to)]),
+                    'up' => __('up to :step', ['step' => admin_unit_price($this->round_to)]),
+                    'down' => __('down to :step', ['step' => admin_unit_price($this->round_to)]),
+                    default => __('to the nearest :step', ['step' => admin_unit_price($this->round_to)]),
                 },
         ];
     }

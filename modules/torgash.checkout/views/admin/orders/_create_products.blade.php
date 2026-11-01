@@ -19,7 +19,7 @@
                     <div class="text-xs opacity-50 font-mono">#{{ $product->id }} · {{ $product->sku }} · {{ __('Stock') }}: {{ $product->stock }}</div>
                 </div>
                 <div class="flex items-center gap-2 shrink-0">
-                    <span class="text-sm opacity-70">{{ admin_price((int) $product->price) }}</span>
+                    <span class="text-sm opacity-70">{{ admin_unit_price((int) $product->price) }}</span>
                     <button type="button" class="btn btn-sm btn-primary" x-on:click="add(@js($line))">{{ __('Add') }}</button>
                 </div>
             </div>

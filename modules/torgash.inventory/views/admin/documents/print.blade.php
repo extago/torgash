@@ -11,6 +11,7 @@
     $to = $document->to_warehouse_id ? pick_translation($warehouses->get($document->to_warehouse_id)?->name) : null;
     $shop = \App\Models\Storefront::query()->orderByDesc('is_default')->orderBy('id')->first();
     $money = fn (?int $minor, ?string $currency) => $minor === null ? '' : number_format($minor / 100, 2, '.', ' ').' '.$currency;
+    $unitMoney = fn (?int $units, ?string $currency) => $units === null ? '' : price_scale()->trimmed($units).' '.$currency;
 @endphp
 <html lang="{{ str_replace('_', '-', app()->getLocale()) }}" data-theme="torgash-light">
 <head>
@@ -161,7 +162,7 @@
                                         <td class="border border-base-300 px-2 py-1.5 text-end tabular-nums font-semibold">{{ $line->qty }}</td>
                                     @endif
                                     <td class="border border-base-300 px-2 py-1.5 text-center opacity-70">{{ __('pcs') }}</td>
-                                    <td class="border border-base-300 px-2 py-1.5 text-end tabular-nums whitespace-nowrap">{{ $value['unit'] === null ? '—' : $money($value['unit'], $value['currency']) }}</td>
+                                    <td class="border border-base-300 px-2 py-1.5 text-end tabular-nums whitespace-nowrap">{{ $value['unit'] === null ? '—' : $unitMoney($value['unit'], $value['currency']) }}</td>
                                     <td class="border border-base-300 px-2 py-1.5 text-end tabular-nums whitespace-nowrap">
                                         {{ $value['amount'] === null ? '—' : $money($value['amount'], $value['currency']) }}
                                         @if ($value['unknown'] > 0 && $value['amount'] !== null)

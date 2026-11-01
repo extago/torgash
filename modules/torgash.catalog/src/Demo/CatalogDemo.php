@@ -258,7 +258,7 @@ class CatalogDemo
      */
     public function minor(DemoPack $pack, float $dollars): int
     {
-        return (int) round($this->converted($dollars, $this->currency($pack)[1]) * 100);
+        return (int) round($this->converted($dollars, $this->currency($pack)[1]) * price_scale()->perMajor());
     }
 
     /** A converted demo price, rounded as the books currency is written — whole roubles, kopecks for euros. */

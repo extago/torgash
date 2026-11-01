@@ -243,7 +243,7 @@ class ProductImport
 
     protected function writePrice(Product $product, string $column, mixed $value, bool $nullable): void
     {
-        $typed = self::number($value);
+        $typed = self::decimal($value);
 
         if ($typed === null && ! $nullable) {
             return;
@@ -254,14 +254,20 @@ class ProductImport
         }
     }
 
-    /** Minor units as a person writes the amount: 129000 → "1290", 1250 → "12.50". */
-    public static function written(?int $minor): string
+    /**
+     * A price per unit as a person writes it: 129000 → "1290", 1250 →
+     * "12.50", and with four places 120 → "0.012" (PLAN §65). Price units,
+     * not minor units — the same scale as the column it reads.
+     */
+    public static function written(?int $units): string
     {
-        if ($minor === null) {
+        if ($units === null) {
             return '';
         }
 
-        return $minor % 100 === 0 ? (string) intdiv($minor, 100) : number_format($minor / 100, 2, '.', '');
+        $per = price_scale()->perMajor();
+
+        return $units % $per === 0 ? (string) intdiv($units, $per) : price_scale()->trimmed($units);
     }
 
     /** "Phones///Smartphones" — the category's path in the content's base language. */
@@ -303,20 +309,43 @@ class ProductImport
     /** "1 299,50" and "1,299.50" are both a person's way of writing 1299.5. */
     public static function number(mixed $value): ?float
     {
-        $text = preg_replace('/[\s\x{00A0}\x{202F}]/u', '', trim((string) $value)) ?? '';
+        $text = self::decimal($value);
+
+        return $text === null ? null : (float) $text;
+    }
+
+    /**
+     * A number from a spreadsheet cell as plain digits with a dot, or null —
+     * kept as TEXT so a price with four places reaches the price scale
+     * exactly ("0,0125" is 0.0125, never 0.012499…).
+     *
+     * The LAST separator is the decimal one and any before it group
+     * thousands — except a lone separator followed by exactly three digits,
+     * which groups thousands ("1,299", "15.000") unless the number starts
+     * with a zero ("0,012" is twelve thousandths: nobody writes a thousand
+     * as "0,012").
+     */
+    public static function decimal(mixed $value): ?string
+    {
+        $text = preg_replace('/[\s\x{00A0}\x{202F}\']/u', '', trim((string) $value)) ?? '';
 
         if ($text === '') {
             return null;
         }
 
-        // The LAST separator is the decimal one; any before it group thousands.
-        if (preg_match('/^(.*)[.,](\d{1,2})$/', $text, $m)) {
-            $text = str_replace([',', '.'], '', $m[1]).'.'.$m[2];
-        } else {
-            $text = str_replace([',', '.'], '', $text);
+        $sign = '';
+        if (str_starts_with($text, '-')) {
+            $sign = '-';
+            $text = substr($text, 1);
         }
 
-        return is_numeric($text) ? (float) $text : null;
+        if (preg_match('/^(.*)[.,](\d+)$/', $text, $m)) {
+            $lone = ! preg_match('/[.,]/', $m[1]);
+            $thousands = $lone && strlen($m[2]) === 3 && $m[1] !== '' && $m[1][0] !== '0';
+            $text = $thousands ? $m[1].$m[2] : str_replace([',', '.'], '', $m[1]).'.'.$m[2];
+        }
+
+        return preg_match('/^(\d+(\.\d+)?|\.\d+)$/', $text) ? $sign.$text : null;
     }
 
     protected function writeCategories(Product $product, mixed $value, array $ctx, bool $secondary): void

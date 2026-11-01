@@ -67,7 +67,7 @@ class Offer
         $config = Lines::spelled($main, $config);
         $parts = Lines::parts($main, 1, $config);
         $money = Lines::money((int) $main->effectivePrice(), $parts, 1);
-        $mainPrice = $money['unit_price'] + $money['extra_total'];
+        $mainPrice = $money['unit_price'] + $money['extra_price'];
         $slots = [];
         $taken = [];
         $fullTotal = $mainPrice;

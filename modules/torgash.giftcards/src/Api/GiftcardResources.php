@@ -50,8 +50,8 @@ class GiftcardResources
                 'last4' => ['type' => 'string', 'description' => 'How the card is named where its code must not be.'],
                 'code' => ['type' => 'string', 'description' => 'Only in the answer to `create` — the one moment it is handed out.'],
                 'state' => 'string',
-                'initial_amount' => ['type' => 'integer', 'description' => 'Minor units of the shop\'s books.'],
-                'balance' => ['type' => 'integer', 'description' => 'The sum of `entries`.'],
+                'initial_amount' => ['type' => 'string', 'description' => 'A decimal string in major units of the shop\'s books, two places.'],
+                'balance' => ['type' => 'string', 'description' => 'The sum of `entries`, as a decimal string.'],
                 'expires_at' => 'string|null',
                 'owner_user_id' => 'integer|null',
                 'recipient' => 'object',
@@ -65,7 +65,7 @@ class GiftcardResources
             'create' => fn (array $data) => $this->issue($data),
             'create_description' => 'Issue one card by hand. It is sent to `recipient_email` at once or on `deliver_at`. The answer carries the code — the only time the API hands it out.',
             'creatable' => [
-                'amount' => ['type' => 'integer', 'description' => 'Minor units of the shop\'s books.'],
+                'amount' => ['type' => 'string', 'description' => 'A decimal string in major units of the shop\'s books, two places.'],
                 'expires_at' => ['type' => 'string|null', 'description' => 'ISO 8601; absent = the shop\'s default, null = never.'],
                 'recipient_name' => 'string|null',
                 'recipient_email' => 'string|null',
@@ -73,7 +73,7 @@ class GiftcardResources
                 'message' => 'string|null',
                 'deliver_at' => 'string|null',
                 'owner_user_id' => ['type' => 'integer|null', 'description' => 'Put it in this account: only it can spend the card.'],
-                'rules' => ['type' => 'object|null', 'description' => '`categories` (ids, with their subtrees), `shipping` (bool), `max_percent`, `min_order` (minor units).'],
+                'rules' => ['type' => 'object|null', 'description' => '`categories` (ids, with their subtrees), `shipping` (bool), `max_percent`, `min_order` (a decimal string, like every amount).'],
             ],
             'writable' => [
                 'expires_at' => ['type' => 'string|null', 'description' => 'ISO 8601, or null for "never". Moving it forward revives an expired card.'],
@@ -94,11 +94,13 @@ class GiftcardResources
                 'adjust' => [
                     'description' => 'Correct the balance: a signed `amount` and a `reason` the customer will read in the history. Never below zero.',
                     'body' => [
-                        'amount' => ['type' => 'integer', 'description' => 'Minor units; negative takes money off.'],
+                        'amount' => ['type' => 'string', 'description' => 'A decimal string in major units, two places at most ("-150.00"); negative takes money off.'],
                         'reason' => 'string',
                     ],
                     'apply' => function (Card $card, array $data) {
-                        $valid = Validator::make($data, ['amount' => 'required|integer|not_in:0', 'reason' => 'required|string|max:500'])->validate();
+                        $valid = Validator::make($data, ['amount' => ['required', \App\Core\Support\PriceScale::amountRule()], 'reason' => 'required|string|max:500'])->validate();
+                        $valid['amount'] = (int) \App\Core\Support\PriceScale::minorFrom($valid['amount']);
+                        abort_if($valid['amount'] === 0, 422, __('An amount must be a number such as 399.20.'));
 
                         try {
                             app(Ledger::class)->adjust($card, (int) $valid['amount'], $valid['reason']);
@@ -136,7 +138,7 @@ class GiftcardResources
     protected function issue(array $data): Card
     {
         $valid = Validator::make($data, [
-            'amount' => 'required|integer|min:1',
+            'amount' => ['required', \App\Core\Support\PriceScale::amountRule(), 'gt:0'],
             'expires_at' => 'nullable|date',
             'recipient_name' => 'nullable|string|max:190',
             'recipient_email' => 'nullable|email|max:190',
@@ -146,6 +148,12 @@ class GiftcardResources
             'owner_user_id' => 'nullable|integer|exists:users,id',
             'rules' => 'nullable|array',
         ])->validate();
+
+        // `min_order` arrives as a decimal string like every amount, and is
+        // kept in minor units like every amount (PLAN §65).
+        if (isset($valid['rules']['min_order'])) {
+            $valid['rules']['min_order'] = \App\Core\Support\PriceScale::minorFrom($valid['rules']['min_order']);
+        }
 
         $attributes = array_intersect_key($valid, array_flip(['recipient_name', 'recipient_email', 'sender_name', 'message', 'owner_user_id', 'rules']));
         $attributes['source'] = 'issued';
@@ -158,7 +166,7 @@ class GiftcardResources
             $attributes['deliver_at'] = Carbon::parse($valid['deliver_at']);
         }
 
-        [$card, $code] = app(Issuer::class)->issue((int) $valid['amount'], $attributes);
+        [$card, $code] = app(Issuer::class)->issue((int) \App\Core\Support\PriceScale::minorFrom($valid['amount']), $attributes);
         app(Delivery::class)->sendDue([$card]);
 
         // The plain code rides this one answer and is never stored in it.
@@ -175,8 +183,8 @@ class GiftcardResources
             'last4' => $card->last4,
             'code' => $card->getAttribute('plain_code') ? \Torgash\Giftcards\Codes::format($card->getAttribute('plain_code')) : null,
             'state' => $card->state(),
-            'initial_amount' => (int) $card->initial_amount,
-            'balance' => (int) $card->balance,
+            'initial_amount' => api_money((int) $card->initial_amount),
+            'balance' => api_money((int) $card->balance),
             'expires_at' => $card->expires_at?->toIso8601String(),
             'owner_user_id' => $card->owner_user_id,
             'recipient' => [
@@ -189,11 +197,11 @@ class GiftcardResources
             'source' => $card->source,
             'order_id' => $card->order_id,
             'batch' => $card->batch,
-            'rules' => $card->rules,
+            'rules' => is_array($card->rules) && isset($card->rules['min_order']) ? ['min_order' => api_money((int) $card->rules['min_order'])] + $card->rules : $card->rules,
             'url' => $card->publicUrl(),
             'entries' => $card->entries()->limit(100)->get()->map(fn ($entry) => [
                 'type' => $entry->type,
-                'amount' => (int) $entry->amount,
+                'amount' => api_money((int) $entry->amount),
                 'order_id' => $entry->order_id,
                 'note' => $entry->note,
                 'by' => $entry->user_name,

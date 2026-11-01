@@ -1649,5 +1649,15 @@
     "The pattern of my own": "Свій шаблон маски",
     "For \"A pattern of my own\": \"_\" for a digit, the rest as written — +998 (__) ___-__-__. Only digits, \"_\", spaces, + ( ) - and dots.": "Для «Свій шаблон»: «_» — цифра, решта як написано — +998 (__) ___-__-__. Лише цифри, «_», пробіли, + ( ) - і крапки.",
     "A pattern needs \"_\" for each digit and may hold only digits, spaces, + ( ) - and dots — for example +998 (__) ___-__-__.": "У шаблоні потрібен «_» на кожну цифру, і в ньому можуть бути лише цифри, пробіли, + ( ) - і крапки — наприклад, +998 (__) ___-__-__.",
-    "As in the shop's settings: :mask": "Як у налаштуваннях магазину: :mask"
+    "As in the shop's settings: :mask": "Як у налаштуваннях магазину: :mask",
+    "Prices": "Ціни",
+    "2 — as the currency (0.01)": "2 — як у валюти (0,01)",
+    "3 (0.001)": "3 (0,001)",
+    "4 (0.0001)": "4 (0,0001)",
+    "Places in a product price": "Знаків у ціні товару",
+    "For goods that cost less than a cent in the shop's currency — a rouble in a shop keeping dollars is $0.012. Only prices per unit get the extra places; a line's total, the order, delivery and payment are always rounded to the cent. Changing it recalculates every stored price at once; fewer places are refused while some price would lose digits.": "Для товарів, дешевших за копійку у валюті магазину, — рубль у магазині, що веде облік у доларах, коштує 0,012 $. Додаткові знаки отримує лише ціна за одиницю; сума рядка, замовлення, доставка й оплата завжди округлюються до копійки. Під час зміни всі збережені ціни перераховуються одразу; менше знаків не збережеться, доки якась ціна втратила б цифри.",
+    "Some prices have more places than :places — fewer places would change them. Correct them first: :list.": "Деякі ціни мають більше знаків, ніж :places, — з меншою кількістю знаків вони змінилися б. Спершу виправте їх: :list.",
+    "A price may have at most :places places after the point.": "У ціні може бути не більше :places знаків після крапки.",
+    "An amount must be a number such as 399.20.": "Сума має бути числом, наприклад 399.20.",
+    "An amount may have at most two places after the point.": "У сумі може бути не більше двох знаків після крапки."
 }

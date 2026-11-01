@@ -58,7 +58,7 @@ class ProductPlaceholders
                 // that adds tax to displayed prices is not bypassed by writing
                 // the price into a block.
                 return $product
-                    ? format_price(hook_filter('catalog.price.display', $product->effectivePrice(), ['product' => $product]))
+                    ? format_unit_price(hook_filter('catalog.price.display', $product->effectivePrice(), ['product' => $product]))
                     : '';
             },
         ]);
@@ -69,7 +69,7 @@ class ProductPlaceholders
             'resolve' => function (array $context = []) {
                 $old = $this->product($context)?->oldPrice();
 
-                return $old ? format_price($old) : '';
+                return $old ? format_unit_price($old) : '';
             },
         ]);
 
@@ -89,7 +89,7 @@ class ProductPlaceholders
             'resolve' => function (array $context = []) {
                 $found = $this->club($context);
 
-                return $found ? format_price($found['price']) : '';
+                return $found ? format_unit_price($found['price']) : '';
             },
         ]);
 
@@ -425,7 +425,7 @@ class ProductPlaceholders
     protected function bound(array $context, string $which): string
     {
         if ($product = $this->product($context)) {
-            return format_price($product->publicPrice());
+            return format_unit_price($product->publicPrice());
         }
 
         // A filter page's prices are the prices of what IS on it: a title
@@ -439,7 +439,7 @@ class ProductPlaceholders
 
         $price = $query->toBase()->{$which}('price');
 
-        return $price === null ? '' : format_price((int) $price);
+        return $price === null ? '' : format_unit_price((int) $price);
     }
 
     /**

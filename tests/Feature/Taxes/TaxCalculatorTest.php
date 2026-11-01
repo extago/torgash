@@ -44,6 +44,19 @@ class TaxCalculatorTest extends TestCase
         $this->assertTrue($lines[array_key_first($lines)]->included());
     }
 
+    public function test_a_tax_is_worked_out_on_the_line_when_a_price_is_finer_than_a_cent(): void
+    {
+        // PLAN §65: four places, a price of 0.0125, a thousand of them. Per
+        // piece the 20% would be 0.0025 × 1000 rounded each time — on the line
+        // it is 12.50 gross, 10.42 net, 2.08 tax.
+        app(\App\Core\Settings\SettingsManager::class)->set('core', 'price_places', '4');
+        $this->tax('vat', 20, includes: true);
+
+        $lines = $this->calculator()->forCart([$this->line(125, 1000)]);
+
+        $this->assertSame(2_08, $lines[array_key_first($lines)]->amount);
+    }
+
     public function test_an_added_tax_is_a_share_of_the_price_on_top(): void
     {
         $this->tax('sales', 8.5, includes: false);

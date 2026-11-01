@@ -162,7 +162,8 @@ class GiftConfig
                 'label' => __('Card amount').': '.format_price((int) $answers['amount']),
                 'group' => __('Card amount'),
                 'per_unit' => true,
-                'amount' => (int) $answers['amount'] - ($base ?? (int) $product->effectivePrice()),
+                // The card's amount is minor units; a part's amount is price units.
+                'amount' => price_scale()->fromMinor((int) $answers['amount']) - ($base ?? (int) $product->effectivePrice()),
             ];
         }
 

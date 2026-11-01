@@ -43,7 +43,8 @@ class OrderPaymentsApiTest extends TestCase
 
         $this->assertSame(['inv-dep', 'inv-rest', 'inv-b'], array_column($payments, 'external_id'));
         $this->assertSame([null, null, $b->id], array_column($payments, 'order_id'));
-        $this->assertSame(150_00, array_sum(array_column($payments, 'held')));
+        // Decimal strings on the wire (PLAN §65).
+        $this->assertSame(150_00, array_sum(array_map(fn ($held) => \App\Core\Support\PriceScale::minorFrom($held), array_column($payments, 'held'))));
 
         // One order on its own says the same.
         $this->assertSame($payments, $this->api('/api/v2/admin/orders/'.$a->id)->json('data.payment.payments'));

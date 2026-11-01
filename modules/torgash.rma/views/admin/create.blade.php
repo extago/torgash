@@ -52,7 +52,7 @@
                                    class="input input-bordered w-20">
                             <span>{{ $line['name'] ?? '' }}</span>
                             <span class="opacity-60">{{ __('of :n', ['n' => $line['qty']]) }}</span>
-                            <span class="opacity-60">{{ admin_price((int) ($line['unit_price'] ?? 0)) }}</span>
+                            <span class="opacity-60">{{ admin_unit_price((int) ($line['unit_price'] ?? 0)) }}</span>
                         </label>
                     @endforeach
                 </div>

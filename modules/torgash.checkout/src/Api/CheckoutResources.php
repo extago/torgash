@@ -98,14 +98,14 @@ class CheckoutResources
             'status' => ['type' => 'string', 'description' => 'The shop’s own editable workflow. Moved through `actions/status`, never by a PATCH.'],
             'payment' => ['type' => 'object', 'description' => 'A second axis, never a status.', 'of' => [
                 'state' => ['type' => 'string', 'description' => 'The fixed vocabulary the engine and every gateway agree on.'],
-                'paid_total' => ['type' => 'integer|null', 'description' => 'Minor units of `currency`. Not derivable from the state: an underpayment and a partial refund are both “some, not all”.'],
-                'prepaid_total' => ['type' => 'integer', 'description' => 'The part of `paid_total` paid before any gateway was asked — a gift card. A refund gives it back first.'],
-                'deposit' => ['type' => 'integer|null', 'description' => 'Set when the order was sold with only part paid online and the rest on delivery: that part, frozen at placement.'],
+                'paid_total' => ['type' => 'string|null', 'description' => 'Decimal string in major units of `currency`, two places. Not derivable from the state: an underpayment and a partial refund are both “some, not all”.'],
+                'prepaid_total' => ['type' => 'string', 'description' => 'The part of `paid_total` paid before any gateway was asked — a gift card. A refund gives it back first.'],
+                'deposit' => ['type' => 'string|null', 'description' => 'Set when the order was sold with only part paid online and the rest on delivery: that part, frozen at placement.'],
                 'paid_at' => ['type' => 'string|null', 'format' => 'date-time'],
                 'method' => ['type' => 'string|null', 'description' => 'The name as the customer was sold it, printed for ever after.'],
                 'method_id' => ['type' => 'integer|null', 'description' => 'The link — which gateway, which currencies. Renaming a method does not detach it.'],
                 'currency' => ['type' => 'string|null', 'description' => 'What the bank is asked for, which is not always what the order is written in.'],
-                'amount' => ['type' => 'integer|null', 'description' => 'Minor units of the line above: what the bank is asked for, which is the total minus `prepaid_total`.'],
+                'amount' => ['type' => 'string|null', 'description' => 'Decimal string in the currency of the line above: what the bank is asked for, which is the total minus `prepaid_total`.'],
             ]],
             'customer' => ['type' => 'object', 'of' => [
                 'name' => 'string', 'email' => 'string', 'phone' => 'string|null',
@@ -115,16 +115,16 @@ class CheckoutResources
                 'method' => ['type' => 'string|null', 'description' => 'The name as it read when the order was placed.'],
                 'address' => 'string|null', 'city' => 'string|null',
                 'country' => 'string|null', 'postal_code' => 'string|null',
-                'cost' => 'integer|null',
+                'cost' => 'string|null',
                 'details' => ['type' => 'object|null', 'description' => 'What the chosen option asked for on top of the address — a branch to collect from, a carrier’s own tracking.'],
             ]],
             'currency' => ['type' => 'string', 'description' => 'The shop’s books — the units every amount on this order is stored in, and what its reports are in.'],
-            'subtotal' => 'integer',
-            'discount' => 'integer',
-            'total' => 'integer',
-            'items' => ['type' => 'array', 'description' => 'The lines as bought: what they were called and cost then, not what the catalogue says now.'],
+            'subtotal' => ['type' => 'string', 'description' => 'Decimal string in major units, two places: "199990.00".'],
+            'discount' => ['type' => 'string', 'description' => 'Decimal string, two places.'],
+            'total' => ['type' => 'string', 'description' => 'Decimal string, two places.'],
+            'items' => ['type' => 'array', 'description' => 'The lines as bought: what they were called and cost then, not what the catalogue says now. `unit_price` is a price per unit as a decimal string with the places the shop keeps ("0.0120"); `line_total` an amount with two ("12.00").'],
             'adjustments' => ['type' => 'array', 'description' => 'The structured breakdown of the total — taxes, fees — read from what this order was actually charged rather than recomputed. `included` means the amount is already inside the prices and is disclosed, not added.', 'of' => [
-                'code' => 'string', 'label' => 'string', 'amount' => 'integer', 'included' => 'boolean',
+                'code' => 'string', 'label' => 'string', 'amount' => 'string', 'included' => 'boolean',
             ]],
             'notes' => 'string|null',
             'fields' => ['type' => 'array', 'description' => 'The shop’s own checkout questions as answered: `code`, the question as it read (`label`) and the answer (`value`), in the shop’s base language, in the order asked.', 'of' => [
@@ -138,6 +138,31 @@ class CheckoutResources
         ];
     }
 
+    /**
+     * An order line as the API writes it: `unit_price` (and an option's
+     * `amount`) a price per unit, `line_total` an amount — both decimal
+     * strings (PLAN §65).
+     *
+     * @param  array<string, mixed>  $item
+     * @return array<string, mixed>
+     */
+    public static function apiLine(array $item): array
+    {
+        if (array_key_exists('unit_price', $item)) {
+            $item['unit_price'] = api_price((int) $item['unit_price']);
+        }
+
+        if (array_key_exists('line_total', $item)) {
+            $item['line_total'] = api_money((int) $item['line_total']);
+        }
+
+        if (isset($item['options']) && is_array($item['options'])) {
+            $item['options'] = array_map(fn ($o) => is_array($o) && isset($o['amount']) ? ['amount' => api_price((int) $o['amount'])] + $o : $o, $item['options']);
+        }
+
+        return $item;
+    }
+
     /** @return array<string, mixed> */
     protected function order(Order $order): array
     {
@@ -149,18 +174,18 @@ class CheckoutResources
             'status' => $order->status,
             'payment' => [
                 'state' => $order->payment_state,
-                'paid_total' => $order->paid_total,
+                'paid_total' => api_money($order->paid_total),
                 // The part of it paid before any gateway (a gift card).
-                'prepaid_total' => $order->prepaid_total,
+                'prepaid_total' => api_money($order->prepaid_total),
                 // Part online, the rest on delivery: what the bank is asked for.
-                'deposit' => $order->deposit_amount,
+                'deposit' => api_money($order->deposit_amount),
                 'paid_at' => $order->paid_at?->toIso8601String(),
                 'method' => $order->payment_method_name,
                 'method_id' => $order->payment_method_id,
                 // What the bank is actually asked for, when that is not the
                 // currency the order is written in (§52).
                 'currency' => $order->paymentCurrency(),
-                'amount' => $order->chargeMinor($order->chargeNow()),
+                'amount' => api_money($order->chargeMinor($order->chargeNow())),
             ],
             'customer' => [
                 'name' => $order->customer_name,
@@ -174,20 +199,24 @@ class CheckoutResources
                 'city' => $order->city,
                 'country' => $order->country,
                 'postal_code' => $order->postal_code,
-                'cost' => $order->shipping_cost,
+                'cost' => api_money($order->shipping_cost),
                 'details' => $order->shipping_details,
             ],
-            // Minor units of `currency`, which is the shop's books — the same
-            // units every amount on the row is stored in.
+            // Decimal strings in major units of `currency`, the shop's books
+            // (PLAN §65): amounts with two places, prices per unit with the
+            // places the shop keeps.
             'currency' => $order->currency_code,
-            'subtotal' => $order->subtotal,
-            'discount' => $order->discount_amount,
-            'total' => $order->total,
-            'items' => $order->items,
+            'subtotal' => api_money($order->subtotal),
+            'discount' => api_money($order->discount_amount),
+            'total' => api_money($order->total),
+            'items' => array_map(fn (array $item) => self::apiLine($item), (array) $order->items),
             // The structured breakdown of the total (taxes, fees), read from
             // what this order was actually charged rather than recomputed —
             // §15.1.7, answered by whichever modules added lines to it.
-            'adjustments' => hook_filter('checkout.order.extra_totals', [], ['order' => $order]),
+            'adjustments' => array_map(
+                fn (array $line) => ['amount' => api_money((int) ($line['amount'] ?? 0))] + $line,
+                hook_filter('checkout.order.extra_totals', [], ['order' => $order]),
+            ),
             'notes' => $order->notes,
             'fields' => $order->fields ?? [],
             'source' => $order->source,

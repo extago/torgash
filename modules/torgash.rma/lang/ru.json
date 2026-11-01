@@ -114,5 +114,6 @@
     "Return #:id received and written off": "Возврат №:id получен и списан",
     "Exchange order :number created for return #:id": "Для возврата №:id создан заказ-обмен :number",
     "Order :number has a return.": "По заказу :number оформлен возврат.",
-    "Send": "Отправить"
+    "Send": "Отправить",
+    "Return lines": "Строки возвратов"
 }

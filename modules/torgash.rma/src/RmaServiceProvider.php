@@ -31,6 +31,13 @@ class RmaServiceProvider extends ServiceProvider
 
     public function boot(): void
     {
+
+        // Prices per unit this module keeps, moved by core when the shop
+        // changes how many places a price has (PLAN §65).
+        hook_listen('core.price.columns', fn (array $columns) => [...$columns,
+            \App\Core\Support\PriceColumns::jsonLines('Return lines', 'm_rma_returns', 'lines', ['unit_price']),
+        ]);
+
         // Returns are on no guest's page (PLAN §61).
         page_cache()->unseen('m_rma_returns');
 

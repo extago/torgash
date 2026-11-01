@@ -62,7 +62,7 @@
         <div class="flex flex-col items-start sm:items-end min-w-0 sm:min-w-28">
             {{-- Not beside a "from" — see product-card.blade.php. --}}
             @if (! $rowPriceIsFrom && $product->discountPercent() > 0)
-                <span class="text-xs torgash-old-price whitespace-nowrap">{{ format_price($product->oldPrice()) }}</span>
+                <span class="text-xs torgash-old-price whitespace-nowrap">{{ format_unit_price($product->oldPrice()) }}</span>
             @endif
             <span class="text-lg font-bold leading-tight whitespace-nowrap torgash-price">{{ $rowShownPrice->format($product) }}</span>
             {!! hook_render('catalog.product.card_price_extra', ['product' => $product]) !!}

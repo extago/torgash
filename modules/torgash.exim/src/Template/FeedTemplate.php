@@ -34,6 +34,7 @@ class FeedTemplate
 {
     /** Each filter and what it does, for the profile form. */
     public const FILTERS = [
+        'price' => 'a price per unit as a number: 7199000 → 71990, 1250 → 12.50, and 0.012 when the shop keeps more places',
         'money' => 'minor units as an amount: 7199000 → 71990, 1250 → 12.50',
         'divide:N' => 'divided by N (grams to kilograms: divide:1000)',
         'multiply:N' => 'multiplied by N',
@@ -283,6 +284,14 @@ class FeedTemplate
         return null;
     }
 
+    /** Price units as a feed writes a price: "71990", "12.50", "0.012" — a dot, no thousands. */
+    protected static function priceText(int $units): string
+    {
+        $per = price_scale()->perMajor();
+
+        return $units % $per === 0 ? (string) intdiv($units, $per) : price_scale()->trimmed($units);
+    }
+
     protected static function truthy(mixed $value): bool
     {
         return ! ($value === null || $value === false || $value === '' || $value === [] || $value === 0 || $value === 0.0 || $value === '0');
@@ -298,6 +307,8 @@ class FeedTemplate
 
             $value = match ($name) {
                 'money' => $value === null || $value === '' ? '' : self::amount(((float) $value) / 100, 2),
+                // Price units (PLAN §65): exact, with the places the value needs.
+                'price' => $value === null || $value === '' || ! is_numeric($value) ? '' : self::priceText((int) $value),
                 'divide' => $value === null || $value === '' || ! $number ? $value : self::amount((float) $value / $number, 3),
                 'multiply' => $value === null || $value === '' ? $value : self::amount((float) $value * (float) $number, 3),
                 'round' => $value === null || $value === '' ? $value : self::amount(round((float) $value, (int) $number), max(0, (int) $number)),

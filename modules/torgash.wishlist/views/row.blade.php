@@ -40,13 +40,13 @@
         <div class="flex items-baseline gap-2">
             <span class="text-lg font-bold torgash-price">{{ $wishShown->format($wishRow) }}</span>
             @if ($wishDiscount > 0)
-                <span class="text-xs torgash-old-price">{{ format_price($wishRow->oldPrice()) }}</span>
+                <span class="text-xs torgash-old-price">{{ format_unit_price($wishRow->oldPrice()) }}</span>
             @endif
         </div>
         @if ($wishDiscount > 0)
             <div class="flex items-center gap-1 text-xs">
                 <span class="badge badge-warning badge-sm">−{{ $wishDiscount }}%</span>
-                <span class="opacity-70">{{ __('You save :amount', ['amount' => format_price(max(0, $wishRow->oldPrice() - $wishRow->effectivePrice()))]) }}</span>
+                <span class="opacity-70">{{ __('You save :amount', ['amount' => format_unit_price(max(0, $wishRow->oldPrice() - $wishRow->effectivePrice()))]) }}</span>
             </div>
         @endif
         {!! hook_render('catalog.product.card_price_extra', ['product' => $wishRow]) !!}

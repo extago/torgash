@@ -35,6 +35,13 @@ class WishlistServiceProvider extends ServiceProvider
 
     public function boot(): void
     {
+
+        // Prices per unit this module keeps, moved by core when the shop
+        // changes how many places a price has (PLAN §65).
+        hook_listen('core.price.columns', fn (array $columns) => [...$columns,
+            ['name' => 'Wishlist prices', 'table' => 'm_wishlist_items', 'columns' => ['price_at_add']],
+        ]);
+
         // What it keeps about a person, for core's personal-data registry (PLAN §49).
         hook_listen('core.personal_data', fn (array $context) => WishlistPersonalData::register($context['registry']));
 

@@ -139,7 +139,7 @@
                                                  negative part — so the sign is read from the
                                                  amount rather than assumed. --}}
                                             <span class="opacity-50 whitespace-nowrap">
-                                                {{ $part['amount'] > 0 ? '+' : '−' }}{{ format_price(abs($part['amount'] * $part['qty']), exact: true) }}
+                                                {{ $part['amount'] > 0 ? '+' : '−' }}{{ format_unit_price(abs($part['amount'] * $part['qty'])) }}
                                             </span>
                                         @endif
                                     </li>
@@ -197,7 +197,7 @@
                         <div class="text-end sm:w-32 sm:pt-1">
                             <div class="text-lg font-semibold whitespace-nowrap tabular-nums leading-tight">{{ format_price($item->line_total, exact: true) }}</div>
                             @if ($item->qty > 1)
-                                <div class="text-xs opacity-50 whitespace-nowrap mt-0.5">{{ __(':price each', ['price' => format_price($item->unit_price, exact: true)]) }}</div>
+                                <div class="text-xs opacity-50 whitespace-nowrap mt-0.5">{{ __(':price each', ['price' => format_unit_price($item->unit_price)]) }}</div>
                             @endif
                         </div>
                     </div>

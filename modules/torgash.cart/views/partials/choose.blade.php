@@ -21,7 +21,7 @@
         <span class="flex flex-col items-end shrink-0">
             <span class="text-lg font-bold torgash-price">{{ $chooseShown->format($product) }}</span>
             @if (! $chooseShown->isFrom($product) && $product->discountPercent() > 0)
-                <span class="text-xs torgash-old-price">{{ format_price($product->oldPrice()) }}</span>
+                <span class="text-xs torgash-old-price">{{ format_unit_price($product->oldPrice()) }}</span>
             @endif
         </span>
     </div>

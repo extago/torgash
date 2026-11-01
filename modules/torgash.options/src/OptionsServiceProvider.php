@@ -28,6 +28,13 @@ class OptionsServiceProvider extends ServiceProvider
 
     public function boot(): void
     {
+
+        // Prices per unit this module keeps, moved by core when the shop
+        // changes how many places a price has (PLAN §65).
+        hook_listen('core.price.columns', fn (array $columns) => [...$columns,
+            ['name' => 'Option prices', 'table' => 'm_options_choices', 'columns' => ['amount', 'amount_original']],
+        ]);
+
         // Files customers attach to an order line are on no guest's page (PLAN §61).
         page_cache()->unseen('m_options_files');
 

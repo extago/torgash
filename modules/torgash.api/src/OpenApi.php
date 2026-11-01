@@ -59,7 +59,7 @@ class OpenApi
     {
         return implode("\n\n", [
             __('Two halves. `/api/v2/admin/…` answers with everything the shop knows and needs a bearer token; `/api/v2/shop/…` is public, exactly as the storefront’s own pages are, and only GET is routed for its resources.'),
-            __('Every amount is an integer in **minor units** — 1999 is 19.99 — and the currency is always named beside it. A price is two facts, and sending the number alone is how an exchange puts one currency into another’s column.'),
+            __('Money is a **decimal string in major units** with a dot — `"199990.00"` — and the currency is always named beside it; it is written to the API in the same format (a JSON number is accepted too). An amount (a line’s total, an order’s, delivery, a payment) has two places; a price per unit has exactly as many as the shop keeps a price (2–4, `"0.0120"`), and a price sent with more is refused rather than rounded. A line’s total is its price × quantity rounded once, half away from zero.'),
             __('A row is addressed by our id **or** by whatever key your own system knows it as, so an integration never has to store our autoincrements.'),
             __('Answers are enveloped: a single row as `{"data": …}`, a list as `{"data": [...], "meta": {...}}`, a refusal as `{"message": …}` with `errors` when fields are at fault.'),
         ]);
@@ -435,12 +435,12 @@ class OpenApi
                 'items' => ['type' => 'array', 'of' => [
                     'product' => ['type' => 'object', 'of' => ['id' => 'integer', 'sku' => 'string', 'external_id' => 'string|null', 'name' => 'string', 'url' => 'string']],
                     'quantity' => 'integer',
-                    'unit_price' => ['type' => 'integer', 'description' => __('Minor units. Already reflects any quantity break this line has crossed.')],
-                    'line_total' => 'integer',
+                    'unit_price' => ['type' => 'integer', 'description' => __('A price per unit as a decimal string, with the places the shop keeps. Already reflects any quantity break this line has crossed.')],
+                    'line_total' => ['type' => 'string', 'description' => __('An amount: a decimal string with two places.')],
                     'problem' => ['type' => 'string', 'description' => __('Present only when this line cannot be ordered as it stands — out of stock, or more than is left. Completing the checkout is refused until it is put right.')],
                 ]],
                 'count' => 'integer',
-                'total' => 'integer',
+                'total' => 'string',
                 'coupon' => 'string|null',
             ]),
             'Checkout' => $this->object([
@@ -448,7 +448,7 @@ class OpenApi
                 'delivery' => ['type' => 'array', 'description' => __('Priced for the address given so far.'), 'of' => [
                     'id' => 'string',
                     'label' => 'string',
-                    'cost' => ['type' => 'integer|null', 'description' => __('Null when the carrier answered but named no price.')],
+                    'cost' => ['type' => 'string|null', 'description' => __('Null when the carrier answered but named no price.')],
                     'delivery_time' => 'string|null',
                     'needs_address' => ['type' => 'boolean', 'description' => __('False for an option collected in person, which is what makes the street optional.')],
                     'needs_fields' => ['type' => 'boolean', 'description' => __('The option wants something more from the customer — send it in `shipping_fields`.')],
@@ -460,18 +460,20 @@ class OpenApi
                     'charged_in' => ['type' => 'string', 'description' => __('The currency this method will ask the bank for, when it cannot take the one being shopped in.')],
                 ]],
                 'currency' => 'string',
-                'subtotal' => 'integer',
-                'discount' => 'integer',
+                'subtotal' => 'string',
+                'discount' => 'string',
+                'total' => 'string',
+                'to_pay' => 'string',
             ]),
             'PlacedOrder' => $this->object([
                 'number' => 'string',
                 'status' => 'string',
-                'total' => 'integer',
+                'total' => 'string',
                 'currency' => ['type' => 'string', 'description' => __('The shop’s books — the units every amount on the order is stored in.')],
                 'payment' => ['type' => 'object', 'of' => [
                     'state' => 'string',
                     'currency' => ['type' => 'string', 'description' => __('What the bank is asked for, which is not always what the order is written in.')],
-                    'amount' => 'integer',
+                    'amount' => 'string',
                     'url' => ['type' => 'string|null', 'description' => __('Where a browser would have been redirected — a gateway’s own page. Open it in a web view. Null when the method takes no money online.')],
                 ]],
             ]),

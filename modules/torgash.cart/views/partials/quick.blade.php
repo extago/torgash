@@ -48,7 +48,7 @@
             <div class="flex items-baseline gap-3 flex-wrap">
                 <span class="text-2xl font-bold torgash-price">{{ $quickShown->format($product) }}</span>
                 @if (! $quickShown->isFrom($product) && $product->discountPercent() > 0)
-                    <span class="torgash-old-price">{{ format_price($product->oldPrice()) }}</span>
+                    <span class="torgash-old-price">{{ format_unit_price($product->oldPrice()) }}</span>
                     <span class="badge badge-error badge-sm">−{{ $product->discountPercent() }}%</span>
                 @endif
             </div>

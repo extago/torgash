@@ -6,6 +6,7 @@ use App\Core\Content\Placeholders;
 use App\Core\Seo\HasPageMeta;
 use App\Core\Seo\PageSubject;
 use App\Core\Support\HasTranslations;
+use App\Core\Support\PriceScale;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -201,18 +202,21 @@ class FilterPage extends Model implements PageSubject
         return $this->price_min !== null || $this->price_max !== null;
     }
 
-    /** Minor units to a bare number — no currency sign, no thousands separator: an address may not move, so nothing locale-specific touches it. */
-    public static function bareAmount(int $minor): string
+    /** Price units to a bare number — no currency sign, no thousands separator: an address may not move, so nothing locale-specific touches it. */
+    public static function bareAmount(int $units): string
     {
-        return rtrim(rtrim(number_format($minor / 100, 2, '.', ''), '0'), '.');
+        $per = price_scale()->perMajor();
+        $text = PriceScale::digits($units, price_scale()->places());
+
+        return $units % $per === 0 ? (string) intdiv($units, $per) : rtrim($text, '0');
     }
 
-    /** The typed major-unit form back to minor units, or null for blank/unparsable input. */
+    /** The typed major-unit form back to price units, or null for blank/unparsable input. */
     public static function minorAmount(mixed $typed): ?int
     {
         $typed = trim((string) $typed);
 
-        return $typed === '' || ! is_numeric($typed) ? null : (int) round((float) $typed * 100);
+        return $typed === '' || ! is_numeric($typed) ? null : price_scale()->fromMajor($typed);
     }
 
     /** @return array<int, list<int>> */

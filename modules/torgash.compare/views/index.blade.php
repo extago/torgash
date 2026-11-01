@@ -136,7 +136,7 @@
                                             <div class="flex items-end justify-between gap-2 mt-auto pt-1">
                                                 <div class="flex flex-col min-w-0">
                                                     @if (! $compareFrom && $compareProduct->discountPercent() > 0)
-                                                        <span class="text-xs torgash-old-price">{{ format_price($compareProduct->oldPrice()) }}</span>
+                                                        <span class="text-xs torgash-old-price">{{ format_unit_price($compareProduct->oldPrice()) }}</span>
                                                     @endif
                                                     <span class="text-lg font-bold leading-tight torgash-price">{{ $compareShown->format($compareProduct) }}</span>
                                                     {!! hook_render('catalog.product.card_price_extra', ['product' => $compareProduct]) !!}

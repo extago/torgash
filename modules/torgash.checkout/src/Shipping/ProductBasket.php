@@ -28,7 +28,7 @@ class ProductBasket implements Basket
             'product' => $this->product,
             'qty' => 1,
             'unit_price' => $price,
-            'line_total' => $price,
+            'line_total' => price_scale()->amount($price),
         ]]);
     }
 
@@ -39,7 +39,8 @@ class ProductBasket implements Basket
 
     public function total(): int
     {
-        return $this->product->effectivePrice();
+        // An amount (minor units), as every basket's total is (PLAN §65).
+        return price_scale()->amount($this->product->effectivePrice());
     }
 
     public function weight(): int

@@ -79,6 +79,15 @@ class OrderPlaceholders
         return number_format(($minor / 100) * $order->chargeRate(), 2, '.', '');
     }
 
+    /** A price per unit (price units, PLAN §65) the same way: a dot, at least two places, more only when they are there. */
+    protected function unitAmount(Order $order, int $units): string
+    {
+        $scale = price_scale();
+        $text = number_format($units / $scale->perMajor() * $order->chargeRate(), $scale->places(), '.', '');
+
+        return $scale->places() > 2 ? preg_replace('/(\.\d\d\d*?)0+$/', '$1', $text) : $text;
+    }
+
     /**
      * The lines, in the shape every ecommerce tag wants them: an id, a name, a
      * unit price and a quantity.
@@ -101,7 +110,7 @@ class OrderPlaceholders
             $items[] = [
                 'sku' => (string) ($line['sku'] ?? ''),
                 'name' => (string) ($line['name'] ?? ''),
-                'price' => $this->amount($order, (int) ($line['unit_price'] ?? 0)),
+                'price' => $this->unitAmount($order, (int) ($line['unit_price'] ?? 0)),
                 'quantity' => (int) ($line['qty'] ?? 0),
             ];
         }

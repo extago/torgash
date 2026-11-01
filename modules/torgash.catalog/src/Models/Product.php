@@ -901,7 +901,7 @@ class Product extends Model implements HasMedia, PageSubject
      */
     public function adminPrice(string $field = 'price'): string
     {
-        return admin_price((int) $this->typedPrice($field), $this->pricedIn());
+        return admin_unit_price((int) $this->typedPrice($field), $this->pricedIn());
     }
 
     /**
@@ -963,7 +963,7 @@ class Product extends Model implements HasMedia, PageSubject
     protected function cheapestPriceCandidate(?User $user, int $qty): array
     {
         $percent = $user?->customerGroup?->discount_percent ?? 0;
-        $price = $percent > 0 ? round_money($this->price * (100 - $percent) / 100) : $this->price;
+        $price = $percent > 0 ? price_scale()->round($this->price * (100 - $percent) / 100) : $this->price;
 
         $groupId = $user?->customer_group_id;
         $tierPrice = $this->priceTiers
@@ -1095,7 +1095,7 @@ class Product extends Model implements HasMedia, PageSubject
             $price = $rule->apply($this->cost_price);
         } else {
             $price = $type->adjustment_percent
-                ? round_money($this->price * (100 + $type->adjustment_percent) / 100)
+                ? price_scale()->round($this->price * (100 + $type->adjustment_percent) / 100)
                 : $this->price;
         }
 

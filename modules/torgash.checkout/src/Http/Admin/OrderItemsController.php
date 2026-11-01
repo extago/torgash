@@ -77,7 +77,7 @@ class OrderItemsController extends Controller
 
         if ($existing !== false) {
             $items[$existing]['qty']++;
-            $items[$existing]['line_total'] = $items[$existing]['qty'] * $items[$existing]['unit_price'];
+            $items[$existing]['line_total'] = price_scale()->amount($items[$existing]['qty'] * $items[$existing]['unit_price']);
             $line = ['Item added: :name (now ×:qty)', ['name' => $items[$existing]['name'], 'qty' => $items[$existing]['qty']]];
         } else {
             $price = $this->priceFor($order, $product);
@@ -88,7 +88,7 @@ class OrderItemsController extends Controller
                 'name' => $product->t('name'),
                 'qty' => 1,
                 'unit_price' => $price,
-                'line_total' => $price,
+                'line_total' => price_scale()->amount($price),
             ];
             $line = ['Item added: :name ×1', ['name' => $product->t('name')]];
         }
@@ -102,7 +102,7 @@ class OrderItemsController extends Controller
     {
         $validated = $request->validate([
             'qty' => ['required', 'integer', 'min:1', 'max:100000'],
-            'unit_price' => ['required', 'string'],
+            'unit_price' => ['required', 'string', price_scale()->rule()],
         ]);
 
         $items = $order->items;
@@ -112,7 +112,7 @@ class OrderItemsController extends Controller
         $was = $items[$index];
         $items[$index]['qty'] = (int) $validated['qty'];
         $items[$index]['unit_price'] = $this->minorUnits($validated['unit_price']);
-        $items[$index]['line_total'] = $items[$index]['qty'] * $items[$index]['unit_price'];
+        $items[$index]['line_total'] = price_scale()->amount($items[$index]['qty'] * $items[$index]['unit_price']);
 
         if ($was['qty'] === $items[$index]['qty'] && $was['unit_price'] === $items[$index]['unit_price']) {
             return $this->editor($order, true);
@@ -121,9 +121,9 @@ class OrderItemsController extends Controller
         $this->commit($order, $items, 'Item changed: :name ×:from_qty @ :from_price → ×:qty @ :price', [
             'name' => $was['name'],
             'from_qty' => $was['qty'],
-            'from_price' => format_price($was['unit_price'], $order->currency_code),
+            'from_price' => format_unit_price($was['unit_price'], $order->currency_code),
             'qty' => $items[$index]['qty'],
-            'price' => format_price($items[$index]['unit_price'], $order->currency_code),
+            'price' => format_unit_price($items[$index]['unit_price'], $order->currency_code),
         ]);
 
         return $this->editor($order->fresh(), true);
@@ -310,8 +310,9 @@ class OrderItemsController extends Controller
             : (int) $product->price;
     }
 
+    /** A typed price per unit in price units (PLAN §65) — the name stayed from when they were minor ones. */
     protected function minorUnits(string $value): int
     {
-        return max(0, (int) round((float) str_replace([' ', ','], ['', '.'], $value) * 100));
+        return max(0, (int) price_scale()->fromMajor($value));
     }
 }

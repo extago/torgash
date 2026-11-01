@@ -122,7 +122,7 @@
                                             @endforeach
                                         </td>
                                         <td class="text-right">{{ $item['qty'] }}</td>
-                                        <td class="text-right">{{ $order->money($item['unit_price']) }}</td>
+                                        <td class="text-right">{{ $order->unitMoney($item['unit_price']) }}</td>
                                         <td class="text-right font-medium">{{ $order->money($item['line_total']) }}</td>
                                     </tr>
                                 @endforeach
