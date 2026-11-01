@@ -85,8 +85,51 @@ reads a literal pair in a template as its own echo (it did, twice).
   `{{#path}}…{{/path}}` once when `path` is a non-empty scalar (not null,
   '', false, 0) and not at all when it is empty, and resolves a block's body
   with the row it is in — so `{{#item.options_text}}` inside the lines' loop
-  reads the line. The only way a template says "show only if there is one";
-  still no nested loops of the same name, no inverted blocks.
+  reads the line. Its inverse `{{^path}}…{{/path}}` (2026-11-01) prints once
+  when the value is empty or the list has no rows — "if there is — this,
+  if not — that". Still no nested loops of the same name.
+- **What it was and who did it (2026-11-01)**: a subject's `$fire($event,
+  $model, $changed, $before)` hands the changed fields' RAW earlier values
+  (plain data, it rides the queue); the provider adds `Actor::now()` — a
+  signed-in staff member by name, a request with a session = the customer,
+  no session (callback, job, console) = the system — taken at the moment
+  of the change, since the queued job has no request to ask. `RunRule`
+  carries both as `$moment`; a subject with `before(Model, array)` says
+  them in its context's words, and `before.*` falls back to the current
+  value for whatever did not change (a test run included).
+  `checkout.order_status_changed` carries `from_code` for it — the row in
+  `from_status` may be gone.
+- **How an order was placed (2026-11-01)**: `m_checkout_orders.source`
+  (`OrderSource`: checkout, one_click, admin, api, exchange), written once
+  by `PlaceOrder` (`source:` argument; unsaid = admin when `$as`, else
+  checkout). NULL on older orders = not recorded, matched by no condition.
+- **Customer-facing actions (2026-11-01)**: `email` (EmailAction) sends
+  core's letter `automations.letter` (`editable: false`, words are the
+  rule's, the text a BLOCK so line breaks survive) through `Letters::send`
+  to the subject's own `email`, in its `locale`, the subject in the context
+  as `record` so the storefront/theme/domain are its. `note` writes an
+  order's line to OrderLog; anything else is offered on `automations.note`
+  (filter, `{subject, text, rule}` → true when written) — enquiries append
+  a dated line to `notes`. HasFields now draws `text` / `textarea` (full
+  width, `help`) besides `select`. Conditions `customer_orders`
+  (first/repeat by `customer_ref`, merged shells not counted) and `stock`
+  (a line short when its product is gone, below zero once deducted, or
+  below the line's qty while not deducted).
+- **Running low, asked per ORDER (2026-11-01)**: never by watching stock
+  moves — `LowStock::left()` is what the order leaves per product (an
+  order not yet deducted counted as if it were; lines of one product share
+  the shelf), `state()` low / out / oversold against `threshold()` (the
+  module's `low_stock_threshold`, 0 = catalogue's `stock_low_threshold`).
+  Context `item.stock|low_stock|stock_state`, `order.low_stock_count|text`;
+  conditions `stock.some_low` / `some_out`; preset `08-low-stock`.
+- **Formats (2026-11-01)**: `{{ path | lower | trim }}` — SafeTemplate's
+  FILTERS (lower, upper, trim, digits, phone, int, url), applied before the
+  escaping; an unknown name is skipped, not printed.
+- **Ready-made rules (2026-11-01)**: `presets/*.json` in the module, the
+  RuleTemplate shape with words as `{en, ru, uk}` maps, flattened to
+  `content_base_locale()` (the rule's text becomes the shop's own) and sent
+  through the same import review. A Telegram need left blank takes the
+  newest bot+chat the shop already has (`RuleTemplate::knownBot()`).
 - **A receiver not reached is retried per ACTION (2026-10-31)**: an action
   answers `retry => true` (a connection error, 429, 5xx — never a 4xx);
   `RunRule` logs the attempt as `retry` and queues a copy of itself for that

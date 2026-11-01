@@ -61,6 +61,9 @@ For an order:
 | City | is / contains |
 | Manager | somebody is assigned / nobody is assigned |
 | Coupon | any coupon was used / this coupon was used / no coupon was used |
+| The customer's orders | this is their first order / they have ordered before (by the account, or a guest's phone or email) |
+| Stock | every item is in stock / an item is not in stock (the product is gone, its stock went below zero — sold past the shelf, a preorder — or the order holds no units yet and there are fewer than the line has) / an item runs low after this order / an item is sold out after this order (see "Running low") |
+| How it was placed | is in / is not in: checkout, one click, by a manager, API, exchange for a return. An order placed before this was recorded is in none of them |
 
 For an enquiry: **Kind of enquiry** and **Enquiry status** (is in / is not
 in), **Contact left** (a phone number, an email, only a phone number, asked
@@ -82,6 +85,15 @@ One action or several, run in order:
   changes, see "Sharing a rule, and changing the order".
 * **Change the enquiry status** and **Assign the enquiry to a manager** — the
   same for an enquiry.
+* **Email the customer** — a subject and a text with the variables, to the
+  email on the order or the enquiry, in the shop's letter frame (logo,
+  colours, footer) and the theme of the storefront the order came from. A
+  blank line starts a paragraph. A customer with no email is a run log line
+  "The customer left no email" and no letter. Bank details for a transfer,
+  "we could not reach you — ring us back".
+* **Add a note to the history** — a line in the order's history (or the
+  enquiry's notes) beside the rule's name: "payment reminder sent". Seen by
+  the staff only.
 
 An action that makes sense only for orders is not offered on an enquiry's
 rule, and the other way round.
@@ -168,6 +180,16 @@ without options gets no bare "Options:" and no empty "()":
 {{/order.items}}{{#order.coupon}}Coupon: {{ order.coupon }}{{/order.coupon}}
 ```
 
+The inverted block — `^` instead of `#` — is printed when the value is NOT
+there (or the list is empty). Together they make "if there is — this, if
+not — that": an order placed in one click has no town, and instead of a
+bare "Town:" the message says why:
+
+```
+{{#order.city}}Town: {{ order.city }}, {{ order.address_line }}{{/order.city}}{{^order.city}}No town given (a one-click order){{/order.city}}
+{{^order.email}}No email — ring {{ order.phone }}{{/order.email}}
+```
+
 Two things worth knowing:
 
 * **Amounts are minor units** — `order.total` is `15000` for 150.00, which
@@ -179,6 +201,89 @@ Two things worth knowing:
 
 This is not Blade and cannot run code: it substitutes paths and repeats
 blocks, and anything else you type stays as typed.
+
+## Running low
+
+Stock is asked when an order happens, not watched all the time: a sale is
+what empties a shelf, and the message about the sale is the place for
+"1 left".
+
+Every line of the order has:
+
+* `{{ item.stock }}` — what is left on the shelf **after this order**. An
+  order that has not taken its units yet (awaiting payment) is counted as if
+  it had — the same number however the customer pays;
+* `{{ item.low_stock }}` — `true` when it runs low: at or below the
+  threshold, none left, or sold past the shelf;
+* `{{ item.stock_state }}` — the same as a code: `low`, `out`, `oversold`.
+
+And the order: `{{ order.low_stock_count }}` — how many of its products run
+low (for a heading printed once), `{{ order.low_stock_text }}` — them in one
+line.
+
+```
+{{#order.low_stock_count}}⚠️ Running low:
+{{#order.items}}{{#item.low_stock}}• {{ item.name }} ({{ item.variation }}) — {{ item.stock }} pcs.
+{{ item.url }}
+{{/item.low_stock}}{{/order.items}}{{/order.low_stock_count}}
+```
+
+The link opens the variation itself. **The threshold** is the module's
+setting "Running low at, pieces"; 0 — the catalogue's "Low stock
+threshold". The condition "Stock — an item runs low after this order" sends
+it as a rule of its own (to a buyer's chat, say); the ready-made one is
+"Running low", and "New order to Telegram" carries the block already.
+
+## Formats
+
+A value can go through a format: `{{ value | format }}`, several in a row —
+one after another.
+
+| Format | Does |
+|---|---|
+| `lower`, `upper` | lower / upper case |
+| `trim` | no spaces at the ends |
+| `digits` | only the digits: "+38 (067) 123" → "38067123" |
+| `phone` | a phone as one word: "+38 (067) 123" → "+38067123" |
+| `int` | a number without its fraction: "1042.25" → "1042" |
+| `url` | for a link's address: spaces and `&` encoded |
+
+```
+<a href="tel:{{ order.phone | phone }}">{{ order.phone }}</a>, total {{ order.total_decimal | int }}
+```
+
+## What it was, and who changed it
+
+A rule on a change of an order knows what the order was before and who
+changed it:
+
+* `{{ before.status_label }}`, `{{ before.total_formatted }}`,
+  `{{ before.payment_state_label }}`, `{{ before.manager }}`,
+  `{{ before.items_text }}` — the values before the change. A field that did
+  not change holds what it holds now, so "was → now" always reads;
+* `{{ actor.name }}` — who changed it: a manager's name, "the customer" or
+  "the system" (a payment confirmed by the gateway, an order cancelled by its
+  own deadline). `{{ actor.kind }}` says it as a code: `staff`, `customer`,
+  `system`;
+* `{{ changed_text }}` — what changed: "Status, Total".
+
+```
+Order {{ order.number }}: {{ before.status_label }} → {{ order.status_label }} ({{ actor.name }})
+```
+
+More about the order: `{{ order.source_label }}` — how it was placed ("One
+click", "By a manager"), `{{ order.date }}` — when, by the shop's clock
+("01.11.2026 14:05"), `{{ order.items_text }}` — the items in one line.
+
+## Ready-made rules
+
+**Automations → Ready-made rules**: a new order to Telegram, payment
+received, a large order, one-click orders to a manager, status changed, order
+cancelled, order edited after it was placed. The conditions and the message
+are written already; the rule asks for the Telegram bot and chat (leave them
+empty to use the ones your other rules use) and arrives switched off: check it
+with "Test" and enable it. From then on it is an ordinary rule — change
+anything.
 
 ## Testing it
 

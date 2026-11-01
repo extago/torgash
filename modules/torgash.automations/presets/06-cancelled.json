@@ -1,0 +1,36 @@
+{
+  "torgash_automation": 1,
+  "name": {
+    "en": "Order cancelled",
+    "ru": "Заказ отменён",
+    "uk": "Замовлення скасовано"
+  },
+  "about": {
+    "en": "The total and the items of a cancelled order — to put the goods back on sale and ring the customer if need be.",
+    "ru": "Сумма и состав отменённого заказа — чтобы вернуть товары в продажу и при необходимости перезвонить клиенту.",
+    "uk": "Сума й склад скасованого замовлення — щоб повернути товари в продаж і за потреби передзвонити клієнту."
+  },
+  "event": "checkout.order_status_changed",
+  "delay_minutes": 0,
+  "conditions": [
+    {
+      "kind": "status",
+      "operator": "status_in",
+      "value": {
+        "list": [
+          "cancelled"
+        ]
+      }
+    }
+  ],
+  "actions": [
+    {
+      "type": "telegram",
+      "text": {
+        "en": "❌ Order {{ order.number }} cancelled ({{ actor.name }}), {{ order.total_formatted }}\n{{ order.customer_name }}, {{ order.phone }}\n{{#order.items}}• {{ item.name }} × {{ item.qty }}\n{{/order.items}}{{ order.admin_url }}",
+        "ru": "❌ Заказ {{ order.number }} отменён ({{ actor.name }}), {{ order.total_formatted }}\n{{ order.customer_name }}, {{ order.phone }}\n{{#order.items}}• {{ item.name }} × {{ item.qty }}\n{{/order.items}}{{ order.admin_url }}",
+        "uk": "❌ Замовлення {{ order.number }} скасовано ({{ actor.name }}), {{ order.total_formatted }}\n{{ order.customer_name }}, {{ order.phone }}\n{{#order.items}}• {{ item.name }} × {{ item.qty }}\n{{/order.items}}{{ order.admin_url }}"
+      }
+    }
+  ]
+}

@@ -12,6 +12,7 @@ use Torgash\Catalog\Support\CategoryTree;
 use Torgash\Checkout\Models\Order;
 use Torgash\Checkout\Models\OrderStatus;
 use Torgash\Checkout\Orders\OrderChanges;
+use Torgash\Checkout\Orders\OrderSource;
 use Torgash\Checkout\Orders\PaymentState;
 
 /**
@@ -43,7 +44,7 @@ class OrderSubject extends BaseSubject
     public function listen(Closure $fire): void
     {
         hook_listen('checkout.order.changed', function (array $context) use ($fire) {
-            $fire('checkout.order.changed', $context['order'], (array) ($context['changed'] ?? []));
+            $fire('checkout.order.changed', $context['order'], (array) ($context['changed'] ?? []), Context::rawBefore((array) ($context['before'] ?? [])));
         });
 
         hook_listen('checkout.order_placed', function (array $context) use ($fire) {
@@ -51,7 +52,7 @@ class OrderSubject extends BaseSubject
         });
 
         hook_listen('checkout.order_status_changed', function (array $context) use ($fire) {
-            $fire('checkout.order_status_changed', $context['order'], ['status']);
+            $fire('checkout.order_status_changed', $context['order'], ['status'], isset($context['from_code']) ? ['status' => (string) $context['from_code']] : []);
         });
     }
 
@@ -80,6 +81,12 @@ class OrderSubject extends BaseSubject
         return Context::forOrder($model, $event, $changed);
     }
 
+    /** What the changed fields were, in the order context's own words. */
+    public function before(Model $model, array $raw): array
+    {
+        return Context::before($model, $raw);
+    }
+
     public function variables(): array
     {
         return Context::catalogue();
@@ -97,7 +104,10 @@ class OrderSubject extends BaseSubject
             'country' => ['input' => 'csv', 'placeholder' => 'UA, PL, DE'],
             'city' => ['input' => 'text'],
             'manager' => ['input' => 'none'],
+            'customer_orders' => ['input' => 'none'],
+            'stock' => ['input' => 'none'],
             'coupon' => ['input' => 'text', 'bare' => ['coupon_any', 'coupon_none']],
+            'source' => ['input' => 'list', 'options' => array_map(fn (string $label) => __($label), OrderSource::labels())],
         ];
 
         $kinds = [];

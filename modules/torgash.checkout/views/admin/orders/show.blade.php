@@ -21,7 +21,7 @@
             <x-icon name="arrow-left" size="lg" />
         </a>
         <div class="flex-1 min-w-0">
-            <div class="text-xs opacity-50 leading-none">{{ __('Order') }} · {{ $order->created_at->format('d.m.Y H:i') }}</div>
+            <div class="text-xs opacity-50 leading-none">{{ __('Order') }} · {{ $order->created_at->format('d.m.Y H:i') }}@if ($order->source) · {{ \Torgash\Checkout\Orders\OrderSource::label($order->source) }}@endif</div>
             <div class="font-semibold truncate leading-tight flex items-center gap-2">
                 <span class="font-mono">{{ $order->order_number }}</span>
                 <span class="inline-flex items-center gap-1.5 text-xs font-normal opacity-80">

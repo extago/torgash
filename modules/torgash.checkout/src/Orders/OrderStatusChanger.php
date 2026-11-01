@@ -30,6 +30,7 @@ class OrderStatusChanger
     public function change(Order $order, OrderStatus $to): Order
     {
         $from = OrderStatus::find($order->status);
+        $fromCode = (string) $order->status;
 
         // Closed both ways (PLAN §40.10/4): a merged order is a shell whose
         // goods and money are another order's, and only merging puts one
@@ -72,6 +73,9 @@ class OrderStatusChanger
                 // The row itself, for a listener that has to say it again in
                 // somebody else's language later (the order's history).
                 'from_status' => $from,
+                // The code even when its row is gone (a status deleted since,
+                // an import's own code): "was → now" still has a "was".
+                'from_code' => $fromCode,
             ]);
         }
 

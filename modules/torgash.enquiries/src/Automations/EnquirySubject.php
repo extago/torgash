@@ -49,7 +49,12 @@ class EnquirySubject extends BaseSubject
         foreach (array_keys($this->triggers()) as $event) {
             hook_listen($event, function (array $context) use ($fire, $event) {
                 if (($context['enquiry'] ?? null) instanceof Enquiry) {
-                    $fire($event, $context['enquiry'], $event === 'enquiries.enquiry.status_changed' ? ['status'] : []);
+                    $fire(
+                        $event,
+                        $context['enquiry'],
+                        $event === 'enquiries.enquiry.status_changed' ? ['status'] : [],
+                        isset($context['from']) ? ['status' => (string) $context['from']] : [],
+                    );
                 }
             });
         }
@@ -58,6 +63,14 @@ class EnquirySubject extends BaseSubject
     public function find(int $id): ?Model
     {
         return Enquiry::with(['manager', 'lastMessage'])->find($id);
+    }
+
+    /** What the status was, in the context's words (`before.status_label`). */
+    public function before(Model $model, array $raw): array
+    {
+        return isset($raw['status'])
+            ? ['status' => (string) $raw['status'], 'status_label' => Status::label((string) $raw['status'])]
+            : [];
     }
 
     public function sample(): ?Model
@@ -131,6 +144,10 @@ class EnquirySubject extends BaseSubject
             'What they wrote' => [
                 'enquiry.text' => 'The enquiry itself, line by line',
                 'enquiry.last_message' => 'The last message',
+            ],
+            'What changed' => [
+                'actor.name' => 'Who changed it: a manager\'s name, "the customer", "the system"',
+                'before.status_label' => 'Status before',
             ],
             'Technical' => [
                 'enquiry.id' => 'Enquiry id',

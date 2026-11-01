@@ -212,6 +212,8 @@ class PlaceOrder
      *                                    the manager's.
      * @param  bool  $minimum  hold the order to the shop's minimum (MinimumOrder) — one click
      *                         passes the shop's `min_order_one_click`; never for `$as`
+     * @param  string|null  $source  which door (OrderSource); unsaid, an order placed on
+     *                               somebody's behalf is a manager's and any other the checkout's
      */
     public function place(
         array $validated,
@@ -223,6 +225,7 @@ class PlaceOrder
         bool $saveAddress = false,
         array $as = [],
         bool $minimum = true,
+        ?string $source = null,
     ): Order {
         // The shop's minimum order, on the goods (MinimumOrder). The basket
         // already holds its button back; asked here again, because the shop
@@ -322,7 +325,7 @@ class PlaceOrder
 
         $order = DB::transaction(function () use (
             $validated, $quote, $shippingCost, $option, $shippingDetails, $paymentMethod,
-            $items, $basketLines, $status, $deductsStock, $appliedCoupon, $total, $prepaid, $deposit, $location, $as, $userId, $charge, $coupons, $cart,
+            $items, $basketLines, $status, $deductsStock, $appliedCoupon, $total, $prepaid, $deposit, $location, $as, $userId, $charge, $coupons, $cart, $source,
         ) {
             // The shelf, asked again with its rows locked: the basket may have
             // waited while the last unit went to somebody else. A manager
@@ -360,6 +363,7 @@ class PlaceOrder
                     $charge['charge_currency'] ?? shop_currency(),
                 ),
                 'locale' => $as['locale'] ?? app()->getLocale(),
+                'source' => $source ?? ($as === [] ? OrderSource::CHECKOUT : OrderSource::ADMIN),
                 'subtotal' => $quote->subtotal,
                 'coupon_code' => $appliedCoupon?->code,
                 'discount_amount' => $quote->discount,

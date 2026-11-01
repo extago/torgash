@@ -19,6 +19,13 @@
     // Photos ride the same POST, so the form must be multipart — and HTMX
     // told so, or it posts the words and drops the files.
     $enquiryHasFiles = in_array('file', array_column($enquiryFields, 'type'), true) && \Torgash\Enquiries\Attachments::enabled();
+    // A signed-in customer is not asked who they are: the name, phone and
+    // email the account knows are said in one line, and the fields stay
+    // folded away (and disabled, so nothing blank is sent) until they choose
+    // "other contacts". The server takes the account's on the marker
+    // (Submit::fromAccount). Only the fields the account can answer fold.
+    $enquiryKnown = \Torgash\Enquiries\Submit::accountContacts($enquiryFields);
+    $enquiryOwn = $enquiryKnown === [] || ($enquiryValues !== [] && empty($enquiryValues['contact_from_account']));
 @endphp
 
 {{-- hx-swap="outerHTML" on the form itself: the answer replaces this form,
@@ -29,7 +36,7 @@
 <form method="POST" action="{{ route('enquiries.store') }}"
       hx-post="{{ route('enquiries.store') }}" hx-swap="outerHTML" hx-disabled-elt="find button[type=submit]"
       @if ($enquiryHasFiles) enctype="multipart/form-data" hx-encoding="multipart/form-data" @endif
-      class="flex flex-col gap-3">
+      class="flex flex-col gap-3" x-data="{ ownContacts: @js($enquiryOwn) }">
     @csrf
     <input type="hidden" name="kind" value="{{ $enquiryKind }}">
     @if ($enquirySubjectId)
@@ -50,6 +57,17 @@
         <div class="alert alert-warning py-2 text-sm">{{ $general }}</div>
     @endif
 
+    @if ($enquiryKnown)
+        <div class="flex items-start justify-between gap-3 rounded-box bg-base-200 px-3 py-2 text-sm" x-show="! ownContacts" @if ($enquiryOwn) x-cloak @endif>
+            <input type="hidden" name="contact_from_account" value="1" :disabled="ownContacts" @disabled($enquiryOwn)>
+            <div class="min-w-0">
+                <div class="opacity-60 text-xs">{{ __('We will reply to') }}</div>
+                <div class="break-words">{{ implode(' · ', $enquiryKnown) }}</div>
+            </div>
+            <button type="button" class="link link-hover text-xs shrink-0 mt-0.5" @click="ownContacts = true">{{ __('Other contacts') }}</button>
+        </div>
+    @endif
+
     @foreach ($enquiryFields as $field)
         @php
             $key = $field['key'];
@@ -59,7 +77,8 @@
             $errorKey = $type === 'file' ? 'attachments' : $key;
             $error = ($enquiryErrors?->first($errorKey) ?? $errors->first($errorKey))
                 ?: ($type === 'checkboxes' ? ($enquiryErrors?->first($key.'.*') ?? $errors->first($key.'.*')) : '');
-            $value = $enquiryValues[$key] ?? old($key);
+            $value = $enquiryValues[$key] ?? old($key) ?? ($enquiryKnown[$key] ?? null);
+            $folds = isset($enquiryKnown[$key]);
         @endphp
 
         @continue($type === 'file' && ! $enquiryHasFiles)
@@ -81,7 +100,8 @@
             @continue
         @endif
 
-        <fieldset class="fieldset p-0">
+        <fieldset class="fieldset p-0"
+                  @if ($folds) x-show="ownContacts" :disabled="! ownContacts" @if (! $enquiryOwn) x-cloak disabled @endif @endif>
             <legend class="fieldset-legend text-xs">
                 {{ $label }}
                 @if (! empty($field['required']))

@@ -1,0 +1,26 @@
+{
+  "torgash_automation": 1,
+  "name": {
+    "en": "New order to Telegram",
+    "ru": "Новый заказ в Telegram",
+    "uk": "Нове замовлення в Telegram"
+  },
+  "about": {
+    "en": "Every new order with its items, contacts and town — or why there is no town (one click).",
+    "ru": "Каждый новый заказ: состав, контакты и город — или пояснение, почему города нет (1 клик).",
+    "uk": "Кожне нове замовлення: склад, контакти й місто — або пояснення, чому міста немає (1 клік)."
+  },
+  "event": "checkout.order_placed",
+  "delay_minutes": 0,
+  "conditions": [],
+  "actions": [
+    {
+      "type": "telegram",
+      "text": {
+        "en": "🛒 New order {{ order.number }} — {{ order.total_formatted }}\n{{ order.customer_name }}, {{ order.phone }}\n{{#order.city}}📍 {{ order.city }}, {{ order.address_line }}{{/order.city}}{{^order.city}}📍 No town given ({{ order.source_label }}){{/order.city}}\n{{#order.items}}• {{ item.name }} × {{ item.qty }}\n{{/order.items}}{{ order.admin_url }}{{#order.low_stock_count}}\n\n⚠️ Running low:\n{{#order.items}}{{#item.low_stock}}• {{ item.name }}{{#item.variation}} ({{ item.variation }}){{/item.variation}} — {{ item.stock }} pcs.\n{{ item.url }}\n{{/item.low_stock}}{{/order.items}}{{/order.low_stock_count}}",
+        "ru": "🛒 Новый заказ {{ order.number }} — {{ order.total_formatted }}\n{{ order.customer_name }}, {{ order.phone }}\n{{#order.city}}📍 {{ order.city }}, {{ order.address_line }}{{/order.city}}{{^order.city}}📍 Город не указан ({{ order.source_label }}){{/order.city}}\n{{#order.items}}• {{ item.name }} × {{ item.qty }}\n{{/order.items}}{{ order.admin_url }}{{#order.low_stock_count}}\n\n⚠️ Заканчивается на складе:\n{{#order.items}}{{#item.low_stock}}• {{ item.name }}{{#item.variation}} ({{ item.variation }}){{/item.variation}} — {{ item.stock }} шт.\n{{ item.url }}\n{{/item.low_stock}}{{/order.items}}{{/order.low_stock_count}}",
+        "uk": "🛒 Нове замовлення {{ order.number }} — {{ order.total_formatted }}\n{{ order.customer_name }}, {{ order.phone }}\n{{#order.city}}📍 {{ order.city }}, {{ order.address_line }}{{/order.city}}{{^order.city}}📍 Місто не вказано ({{ order.source_label }}){{/order.city}}\n{{#order.items}}• {{ item.name }} × {{ item.qty }}\n{{/order.items}}{{ order.admin_url }}{{#order.low_stock_count}}\n\n⚠️ На складі закінчується:\n{{#order.items}}{{#item.low_stock}}• {{ item.name }}{{#item.variation}} ({{ item.variation }}){{/item.variation}} — {{ item.stock }} шт.\n{{ item.url }}\n{{/item.low_stock}}{{/order.items}}{{/order.low_stock_count}}"
+      }
+    }
+  ]
+}

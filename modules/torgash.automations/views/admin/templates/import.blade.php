@@ -18,6 +18,34 @@
     @enderror
 
     @if (! $payload)
+        @if ($presets)
+            <div class="card bg-base-100 shadow-sm mb-4" id="ready">
+                <div class="card-body gap-3">
+                    <div>
+                        <h2 class="font-semibold">{{ __('Ready-made rules') }}</h2>
+                        <p class="text-xs opacity-60 mt-1">{{ __('The conditions and the message are written already: give the Telegram bot and chat, check the rule with "Test" and enable it.') }}</p>
+                    </div>
+                    <div class="grid gap-2 md:grid-cols-2">
+                        @foreach ($presets as $slug => $preset)
+                            <form method="POST" action="{{ route('admin.automations.import.review') }}"
+                                  class="flex items-start justify-between gap-3 rounded-box border border-base-300 p-3">
+                                @csrf
+                                <input type="hidden" name="preset" value="{{ $slug }}">
+                                <div class="min-w-0">
+                                    <div class="font-medium">{{ $preset['name'] }}</div>
+                                    <div class="text-xs opacity-60">{{ \Torgash\Automations\Triggers::label($preset['event']) }}</div>
+                                    @if ($preset['about'] !== '')
+                                        <p class="text-sm opacity-80 mt-1">{{ $preset['about'] }}</p>
+                                    @endif
+                                </div>
+                                <button class="btn btn-sm shrink-0">{{ __('Use') }}</button>
+                            </form>
+                        @endforeach
+                    </div>
+                </div>
+            </div>
+        @endif
+
         <div class="card bg-base-100 shadow-sm">
             <div class="card-body">
                 <form method="POST" action="{{ route('admin.automations.import.review') }}" enctype="multipart/form-data"
@@ -46,6 +74,9 @@
                 <div>
                     <div class="text-sm opacity-60">{{ __('Rule') }}</div>
                     <div class="text-lg font-medium">{{ $payload['name'] ?? __('Imported rule') }}</div>
+                    @if (! empty($payload['about']) && is_string($payload['about']))
+                        <p class="text-sm opacity-80">{{ $payload['about'] }}</p>
+                    @endif
                     <div class="text-xs opacity-60 mt-1">
                         {{ \Torgash\Automations\Triggers::label($payload['event'] ?? '') }}
                         @if (! empty($payload['delay_minutes']))
@@ -59,6 +90,10 @@
                     @csrf
                     <input type="hidden" name="json" value="{{ $json }}">
 
+                    @php $knownBot = \Torgash\Automations\RuleTemplate::knownBot(); @endphp
+                    @if ($knownBot && collect($needs)->contains(fn ($need) => str_ends_with($need['path'], '.token')))
+                        <p class="text-sm opacity-70">{{ __('Leave the bot token and the chat empty to use the ones your other Telegram rules use.') }}</p>
+                    @endif
                     @forelse ($needs as $need)
                         <fieldset class="fieldset p-0">
                             <legend class="fieldset-legend">
@@ -85,7 +120,9 @@
                 <details class="text-sm">
                     <summary class="cursor-pointer opacity-60 hover:opacity-100 w-fit">{{ __('What it will send') }}</summary>
                     @foreach ($payload['actions'] ?? [] as $action)
-                        <pre class="bg-base-200 p-2 rounded mt-2 text-xs whitespace-pre-wrap">{{ $action['body'] ?? '' }}</pre>
+                        @if (($action['body'] ?? $action['text'] ?? '') !== '')
+                            <pre class="bg-base-200 p-2 rounded mt-2 text-xs whitespace-pre-wrap">{{ $action['body'] ?? $action['text'] }}</pre>
+                        @endif
                     @endforeach
                 </details>
             </div>

@@ -45,6 +45,7 @@
                     <span class="badge badge-sm badge-error" title="{{ __('Failed in the last 24 hours') }}">{{ $failedToday }}</span>
                 @endif
             </a>
+            <a href="{{ route('admin.automations.import') }}#ready" class="btn btn-ghost gap-1.5"><x-icon name="sparkles" size="sm" /> {{ __('Ready-made rules') }}</a>
             <a href="{{ route('admin.automations.import') }}" class="btn btn-ghost gap-1.5"><x-icon name="upload" size="sm" /> {{ __('Import') }}</a>
             <a href="{{ route('admin.automations.create') }}" class="btn btn-primary">+ {{ __('New rule') }}</a>
         </div>

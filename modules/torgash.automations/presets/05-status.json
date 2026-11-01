@@ -1,0 +1,26 @@
+{
+  "torgash_automation": 1,
+  "name": {
+    "en": "Status changed",
+    "ru": "Сменился статус",
+    "uk": "Змінився статус"
+  },
+  "about": {
+    "en": "A short line for every status change: from what, to what, and who did it.",
+    "ru": "Короткая строка на каждую смену статуса: с какого, на какой и кто сменил.",
+    "uk": "Короткий рядок на кожну зміну статусу: з якого, на який і хто змінив."
+  },
+  "event": "checkout.order_status_changed",
+  "delay_minutes": 0,
+  "conditions": [],
+  "actions": [
+    {
+      "type": "telegram",
+      "text": {
+        "en": "Order {{ order.number }}: {{ before.status_label }} → {{ order.status_label }} ({{ actor.name }})",
+        "ru": "Заказ {{ order.number }}: {{ before.status_label }} → {{ order.status_label }} ({{ actor.name }})",
+        "uk": "Замовлення {{ order.number }}: {{ before.status_label }} → {{ order.status_label }} ({{ actor.name }})"
+      }
+    }
+  ]
+}

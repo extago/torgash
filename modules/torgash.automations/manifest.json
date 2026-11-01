@@ -42,6 +42,13 @@
             "help": "Between one attempt and the next."
         },
         {
+            "key": "low_stock_threshold",
+            "type": "number",
+            "default": 0,
+            "label": "Running low at, pieces",
+            "help": "A product an order leaves with this many or fewer is \"running low\" in a rule (item.low_stock, the Stock condition). 0 — the catalogue's \"Low stock threshold\"."
+        },
+        {
             "key": "allow_private_hosts",
             "type": "checkbox",
             "default": false,

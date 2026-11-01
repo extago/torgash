@@ -1,0 +1,29 @@
+{
+  "torgash_automation": 1,
+  "name": {
+    "en": "Order edited after it was placed",
+    "ru": "Заказ изменили после оформления",
+    "uk": "Замовлення змінили після оформлення"
+  },
+  "about": {
+    "en": "When the total of a placed order changes: who did it, what it was and what it is now.",
+    "ru": "Когда меняется сумма оформленного заказа: кто изменил, что было и что стало.",
+    "uk": "Коли змінюється сума оформленого замовлення: хто змінив, що було і що стало."
+  },
+  "event": "checkout.order.changed",
+  "fields": [
+    "total"
+  ],
+  "delay_minutes": 0,
+  "conditions": [],
+  "actions": [
+    {
+      "type": "telegram",
+      "text": {
+        "en": "✏️ Order {{ order.number }} edited ({{ actor.name }}): {{ changed_text }}\nWas: {{ before.items_text }} — {{ before.total_formatted }}\nNow: {{ order.items_text }} — {{ order.total_formatted }}\n{{ order.admin_url }}",
+        "ru": "✏️ Заказ {{ order.number }} изменён ({{ actor.name }}): {{ changed_text }}\nБыло: {{ before.items_text }} — {{ before.total_formatted }}\nСтало: {{ order.items_text }} — {{ order.total_formatted }}\n{{ order.admin_url }}",
+        "uk": "✏️ Замовлення {{ order.number }} змінено ({{ actor.name }}): {{ changed_text }}\nБуло: {{ before.items_text }} — {{ before.total_formatted }}\nСтало: {{ order.items_text }} — {{ order.total_formatted }}\n{{ order.admin_url }}"
+      }
+    }
+  ]
+}

@@ -1,0 +1,31 @@
+{
+  "torgash_automation": 1,
+  "name": {
+    "en": "One-click orders to a manager",
+    "ru": "Заказы в 1 клик — менеджеру",
+    "uk": "Замовлення в 1 клік — менеджеру"
+  },
+  "about": {
+    "en": "Every one-click order is assigned to the person who rings them back. Pick the manager in the rule.",
+    "ru": "Каждый заказ в 1 клик сразу назначается тому, кто обзванивает. Менеджера выберите в правиле.",
+    "uk": "Кожне замовлення в 1 клік одразу призначається тому, хто обдзвонює. Менеджера оберіть у правилі."
+  },
+  "event": "checkout.order_placed",
+  "delay_minutes": 0,
+  "conditions": [
+    {
+      "kind": "source",
+      "operator": "source_in",
+      "value": {
+        "list": [
+          "one_click"
+        ]
+      }
+    }
+  ],
+  "actions": [
+    {
+      "type": "set_manager"
+    }
+  ]
+}

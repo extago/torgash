@@ -33,7 +33,11 @@ interface Subject
 
     /**
      * Subscribe to this subject's events and call `$fire($event, $model,
-     * $changed)` for each. Called once, after every provider has booted.
+     * $changed, $before)` for each — `$before` the changed fields' values
+     * as they were (raw columns, plain data: it rides the queue), optional.
+     * A subject that also has `before(Model $model, array $raw): array`
+     * says them in its context's own words (`before.status_label`).
+     * Called once, after every provider has booted.
      */
     public function listen(Closure $fire): void;
 

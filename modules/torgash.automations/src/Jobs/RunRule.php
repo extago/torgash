@@ -9,6 +9,7 @@ use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
 use Torgash\Automations\Actions\Action;
+use Torgash\Automations\Actor;
 use Torgash\Automations\Models\Rule;
 use Torgash\Automations\Models\RuleAction;
 use Torgash\Automations\Models\RuleRun;
@@ -61,6 +62,15 @@ class RunRule implements ShouldQueue
         public ?int $onlyActionId = null,
         /** 1 on the first run; a retry carries the number it is. */
         public int $attempt = 1,
+        /**
+         * Taken when the change happened, since nothing can be asked about
+         * it later: `before` (the changed fields' raw values as they were —
+         * the subject's `before()` says them in its own words) and `actor`
+         * (Actor: who did it).
+         *
+         * @var array{before?: array<string, mixed>, actor?: array{kind: string, name: string}}
+         */
+        public array $moment = [],
     ) {}
 
     public function handle(): void
@@ -89,6 +99,15 @@ class RunRule implements ShouldQueue
         }
 
         $context = $subject->context($model, $this->event, $this->changed);
+        // "Was → now": a field that did not change was what it is now, so
+        // `{{ before.status_label }} → {{ order.status_label }}` reads right
+        // whichever fields moved — and on a test run, where none did.
+        $before = (array) ($this->moment['before'] ?? []);
+        if ($before !== [] && method_exists($subject, 'before')) {
+            $before = $subject->before($model, $before);
+        }
+        $context['before'] = $before + (array) ($context[$this->subject] ?? []);
+        $context['actor'] = (array) ($this->moment['actor'] ?? Actor::system());
         $registry = self::actions();
 
         app(RuleGuard::class)->while(function () use ($rule, $subject, $model, $context, $registry) {
@@ -154,7 +173,7 @@ class RunRule implements ShouldQueue
 
         dispatch((new self(
             $this->ruleId, $this->subjectId, $this->event, $this->changed, $this->idempotencyKey, $this->subject,
-            onlyActionId: (int) $action->id, attempt: $this->attempt + 1,
+            onlyActionId: (int) $action->id, attempt: $this->attempt + 1, moment: $this->moment,
         ))->delay(now()->addMinutes($minutes)));
     }
 
@@ -188,6 +207,8 @@ class RunRule implements ShouldQueue
             'telegram' => \Torgash\Automations\Actions\TelegramAction::class,
             'set_status' => \Torgash\Automations\Actions\SetStatusAction::class,
             'set_manager' => \Torgash\Automations\Actions\SetManagerAction::class,
+            'email' => \Torgash\Automations\Actions\EmailAction::class,
+            'note' => \Torgash\Automations\Actions\NoteAction::class,
         ]);
     }
 

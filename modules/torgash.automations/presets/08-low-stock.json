@@ -1,0 +1,32 @@
+{
+  "torgash_automation": 1,
+  "name": {
+    "en": "Running low",
+    "ru": "Заканчивается товар",
+    "uk": "Закінчується товар"
+  },
+  "about": {
+    "en": "When an order leaves a product with only a few pieces, none, or fewer than none: which, how many, and a link to it. The threshold is in the automations settings.",
+    "ru": "Когда после заказа товара остаётся мало, не остаётся совсем или продано больше, чем было: какой, сколько и ссылка на него. Порог — в настройках автоматизаций.",
+    "uk": "Коли після замовлення товару лишається мало, не лишається зовсім або продано більше, ніж було: який, скільки й посилання на нього. Поріг — у налаштуваннях автоматизацій."
+  },
+  "event": "checkout.order_placed",
+  "delay_minutes": 0,
+  "conditions": [
+    {
+      "kind": "stock",
+      "operator": "some_low",
+      "value": {}
+    }
+  ],
+  "actions": [
+    {
+      "type": "telegram",
+      "text": {
+        "en": "⚠️ Running low:\n{{#order.items}}{{#item.low_stock}}• {{ item.name }}{{#item.variation}} ({{ item.variation }}){{/item.variation}} — {{ item.stock }} pcs.\n{{ item.url }}\n{{/item.low_stock}}{{/order.items}}Order {{ order.number }}: {{ order.admin_url }}",
+        "ru": "⚠️ Заканчивается на складе:\n{{#order.items}}{{#item.low_stock}}• {{ item.name }}{{#item.variation}} ({{ item.variation }}){{/item.variation}} — {{ item.stock }} шт.\n{{ item.url }}\n{{/item.low_stock}}{{/order.items}}Заказ {{ order.number }}: {{ order.admin_url }}",
+        "uk": "⚠️ На складі закінчується:\n{{#order.items}}{{#item.low_stock}}• {{ item.name }}{{#item.variation}} ({{ item.variation }}){{/item.variation}} — {{ item.stock }} шт.\n{{ item.url }}\n{{/item.low_stock}}{{/order.items}}Замовлення {{ order.number }}: {{ order.admin_url }}"
+      }
+    }
+  ]
+}

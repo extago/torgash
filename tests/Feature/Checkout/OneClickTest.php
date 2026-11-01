@@ -92,6 +92,8 @@ class OneClickTest extends TestCase
         $this->assertSame(250_00, $order->total);
         $this->assertSame($this->payment->id, $order->payment_method_id);
         $this->assertSame('Arrange with manager', $order->shipping_method_name);
+        // Which door: what a rule asks with "How it was placed".
+        $this->assertSame(\Torgash\Checkout\Orders\OrderSource::ONE_CLICK, $order->source);
 
         // An ordinary order in every other way: stock moved, and the buyer is
         // the same counterparty a checkout order from that phone would be.

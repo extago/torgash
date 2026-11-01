@@ -86,6 +86,7 @@ class Exchange
                     'charge_currency' => $original->charge_currency,
                     'charge_rate' => $original->charge_rate,
                 ],
+                source: \Torgash\Checkout\Orders\OrderSource::EXCHANGE,
             );
         } finally {
             // The throwaway cart goes whether the order was placed or refused —

@@ -712,5 +712,8 @@
     "Everyone": "Все",
     "Private persons only": "Только частные лица",
     "Companies only": "Только компании",
-    "The answers to your own checkout fields, a line each": "Ответы на ваши поля оформления, по строке на каждый"
+    "The answers to your own checkout fields, a line each": "Ответы на ваши поля оформления, по строке на каждый",
+    "One click": "В 1 клик",
+    "By a manager": "Менеджером",
+    "Exchange for a return": "Обмен по возврату"
 }

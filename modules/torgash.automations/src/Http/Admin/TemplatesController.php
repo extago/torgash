@@ -5,6 +5,7 @@ namespace Torgash\Automations\Http\Admin;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use Torgash\Automations\Models\Rule;
+use Torgash\Automations\RulePresets;
 use Torgash\Automations\RuleTemplate;
 
 /**
@@ -31,7 +32,11 @@ class TemplatesController extends Controller
     /** Paste or upload; both end up as the same text. */
     public function form()
     {
-        return view('torgash.automations::admin.templates.import', ['payload' => null, 'json' => old('json', '')]);
+        return view('torgash.automations::admin.templates.import', [
+            'payload' => null,
+            'json' => old('json', ''),
+            'presets' => RulePresets::all(),
+        ]);
     }
 
     /**
@@ -40,7 +45,13 @@ class TemplatesController extends Controller
      */
     public function review(Request $request)
     {
-        $json = $this->json($request);
+        // A ready-made rule is a template the module ships: the same review.
+        if ($request->filled('preset') && ($preset = RulePresets::payload((string) $request->input('preset')))) {
+            $json = json_encode($preset, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+        } else {
+            $json = $this->json($request);
+        }
+
         $payload = json_decode((string) $json, true);
 
         if (! is_array($payload) || ! isset($payload['torgash_automation'])) {

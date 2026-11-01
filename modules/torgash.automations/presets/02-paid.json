@@ -1,0 +1,39 @@
+{
+  "torgash_automation": 1,
+  "name": {
+    "en": "Payment received",
+    "ru": "Оплата поступила",
+    "uk": "Оплата надійшла"
+  },
+  "about": {
+    "en": "When an order becomes paid — the moment it can be shipped. The main event for payment by bank transfer.",
+    "ru": "Когда заказ становится оплаченным — его можно отгружать. Главное событие при оплате по реквизитам.",
+    "uk": "Коли замовлення стає оплаченим — його можна відвантажувати. Головна подія при оплаті за реквізитами."
+  },
+  "event": "checkout.order.changed",
+  "fields": [
+    "payment_state"
+  ],
+  "delay_minutes": 0,
+  "conditions": [
+    {
+      "kind": "payment_state",
+      "operator": "payment_in",
+      "value": {
+        "list": [
+          "paid"
+        ]
+      }
+    }
+  ],
+  "actions": [
+    {
+      "type": "telegram",
+      "text": {
+        "en": "💸 Order {{ order.number }} is paid, {{ order.total_formatted }} — ready to ship\n{{ order.admin_url }}",
+        "ru": "💸 Заказ {{ order.number }} оплачен, {{ order.total_formatted }} — можно отгружать\n{{ order.admin_url }}",
+        "uk": "💸 Замовлення {{ order.number }} оплачено, {{ order.total_formatted }} — можна відвантажувати\n{{ order.admin_url }}"
+      }
+    }
+  ]
+}

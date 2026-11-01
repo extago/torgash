@@ -34,6 +34,9 @@ class Conditions
         'city' => 'City',
         'manager' => 'Manager',
         'coupon' => 'Coupon',
+        'source' => 'How it was placed',
+        'customer_orders' => 'The customer\'s orders',
+        'stock' => 'Stock',
     ];
 
     /** kind => operator => English source string, read as "the order …". */
@@ -85,6 +88,30 @@ class Conditions
             'coupon_is' => 'this coupon was used',
             'coupon_none' => 'no coupon was used',
         ],
+        // OrderSource: the checkout, one click, a manager, the API, an
+        // exchange. An order from before it was recorded is in none of them.
+        'source' => [
+            'source_in' => 'is in',
+            'source_not_in' => 'is not in',
+        ],
+        // By customer_ref — the account, or the phone/email a guest gave —
+        // counting every earlier order of theirs except a merged shell.
+        'customer_orders' => [
+            'first_order' => 'this is their first order',
+            'repeat_order' => 'they have ordered before',
+        ],
+        // Each line's product as it stands when the rule runs: short when it
+        // is gone, or its stock is below zero once the order took its units
+        // (sold past the shelf — a preorder), or below the line's quantity
+        // while the order holds none (awaiting payment).
+        'stock' => [
+            'all_in_stock' => 'every item is in stock',
+            'some_short' => 'an item is not in stock',
+            // After this order (LowStock): at or below the threshold, none
+            // left, or sold past the shelf — the shelf the next buyer finds.
+            'some_low' => 'an item runs low after this order',
+            'some_out' => 'an item is sold out after this order',
+        ],
     ];
 
     /**
@@ -126,10 +153,62 @@ class Conditions
             'coupon_any' => (string) $order->coupon_code !== '',
             'coupon_none' => (string) $order->coupon_code === '',
             'coupon_is' => mb_strtolower((string) $order->coupon_code) === $text,
+            'first_order' => ! self::orderedBefore($order),
+            'repeat_order' => self::orderedBefore($order),
+            'all_in_stock' => ! self::someShort($order),
+            'some_short' => self::someShort($order),
+            'some_low' => self::leaves($order, [LowStock::LOW, LowStock::OUT, LowStock::OVERSOLD]),
+            'some_out' => self::leaves($order, [LowStock::OUT, LowStock::OVERSOLD]),
+            'source_in' => in_array((string) $order->source, $list, true),
+            'source_not_in' => ! in_array((string) $order->source, $list, true),
             // An operator nobody implements must not silently pass: a rule that
             // fires on everything is worse than a rule that never fires.
             default => false,
         };
+    }
+
+    /** An earlier order by the same customer — not this one, not a merged shell. */
+    protected static function orderedBefore(Order $order): bool
+    {
+        if ((string) $order->customer_ref === '') {
+            return false;
+        }
+
+        return Order::where('customer_ref', $order->customer_ref)
+            ->where('id', '<', $order->id)
+            ->where('status', '!=', \Torgash\Checkout\Models\OrderStatus::MERGED)
+            ->exists();
+    }
+
+    /** @param  list<string>  $states  whether any product this order leaves in one of these */
+    protected static function leaves(Order $order, array $states): bool
+    {
+        $threshold = LowStock::threshold();
+
+        foreach (LowStock::left($order) as $left) {
+            if (in_array(LowStock::state($left, $threshold), $states, true)) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /** Whether a line's product is gone or has not got the units (see KINDS['stock']). */
+    protected static function someShort(Order $order): bool
+    {
+        $lines = array_filter((array) $order->items, fn ($item) => is_array($item) && ! empty($item['product_id']));
+        $stock = Product::whereIn('id', array_map(fn ($item) => (int) $item['product_id'], $lines))->pluck('stock', 'id');
+
+        foreach ($lines as $item) {
+            $left = $stock[(int) $item['product_id']] ?? null;
+
+            if ($left === null || ($order->stock_deducted ? (int) $left < 0 : (int) $left < (int) ($item['qty'] ?? 0))) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     /**
@@ -239,6 +318,7 @@ class Conditions
             'product_category' => self::nameList($condition->ids(), $categoryNames),
             'payment_method', 'shipping_method', 'city' => $condition->text(),
             'coupon' => $condition->operator === 'coupon_is' ? $condition->text() : '',
+            'source' => implode(', ', array_map(fn (string $source) => \Torgash\Checkout\Orders\OrderSource::label($source), $condition->list())),
             default => '',
         };
 

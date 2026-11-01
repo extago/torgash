@@ -136,6 +136,7 @@ class CheckoutController extends Controller
             $location,
             $quote,
             (array) ($answers['shipping_fields'] ?? []),
+            source: \Torgash\Checkout\Orders\OrderSource::API,
         );
 
         // Where a browser would be redirected: a gateway's own page. A client

@@ -4,6 +4,7 @@ namespace Torgash\Automations;
 
 use Torgash\Automations\Jobs\RunRule;
 use Torgash\Automations\Models\Rule;
+use Torgash\Automations\Models\RuleAction;
 use Torgash\Automations\Subjects\Subjects;
 
 /**
@@ -202,6 +203,7 @@ class RuleTemplate
         }
 
         $position = 0;
+        $bot = self::knownBot();
         foreach ((array) ($payload['actions'] ?? []) as $index => $row) {
             $type = (string) ($row['type'] ?? '');
 
@@ -213,8 +215,11 @@ class RuleTemplate
                 'type' => $type,
                 'config' => $type === 'telegram'
                     ? [
-                        'token' => trim((string) ($answers["actions.{$index}.token"] ?? '')),
-                        'chat_id' => trim((string) ($answers["actions.{$index}.chat_id"] ?? '')),
+                        // Left blank: the bot and the chat this shop's
+                        // Telegram rules already use — a second ready-made
+                        // rule should not ask for a token again.
+                        'token' => trim((string) ($answers["actions.{$index}.token"] ?? '')) ?: (string) ($bot['token'] ?? ''),
+                        'chat_id' => trim((string) ($answers["actions.{$index}.chat_id"] ?? '')) ?: (string) ($bot['chat_id'] ?? ''),
                         'text' => (string) ($row['text'] ?? ''),
                     ]
                     : ($type === 'webhook'
@@ -230,6 +235,20 @@ class RuleTemplate
         }
 
         return $rule->fresh(['conditions', 'actions']);
+    }
+
+    /**
+     * The bot and the chat of the newest Telegram action that has both, or
+     * nothing.
+     *
+     * @return array{token?: string, chat_id?: string}
+     */
+    public static function knownBot(): array
+    {
+        $action = RuleAction::where('type', 'telegram')->orderByDesc('id')->get()
+            ->first(fn (RuleAction $action) => trim((string) $action->config('token', '')) !== '' && trim((string) $action->config('chat_id', '')) !== '');
+
+        return $action ? ['token' => (string) $action->config('token'), 'chat_id' => (string) $action->config('chat_id')] : [];
     }
 
     /**

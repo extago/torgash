@@ -39,6 +39,35 @@ class Submit
         return 'enquiry.'.$kind;
     }
 
+    /**
+     * What the signed-in account can answer of this form's name, phone and
+     * email fields — key => value, only the ones it knows. Empty for a guest.
+     *
+     * @param  list<array<string, mixed>>  $fields
+     * @return array<string, string>
+     */
+    public static function accountContacts(array $fields): array
+    {
+        $user = auth()->user();
+
+        if (! $user) {
+            return [];
+        }
+
+        $known = [];
+
+        foreach ($fields as $field) {
+            $key = (string) ($field['key'] ?? '');
+
+            if (in_array($key, ['name', 'phone', 'email'], true) && ($value = trim((string) $user->{$key})) !== '') {
+                $known[$key] = $value;
+            }
+        }
+
+        // A name alone is no way to reply: then nothing folds.
+        return isset($known['phone']) || isset($known['email']) ? $known : [];
+    }
+
     public function handle(Request $request, string $kind, array $context = []): ?Enquiry
     {
         abort_unless(Kinds::exists($kind), 404);
@@ -202,6 +231,16 @@ class Submit
         // "When to call" sent as a bare choice ("evening" — an older form, an
         // API client) is the same answer as {when: evening}.
         $input = $request->all();
+
+        // A signed-in customer who kept "reply to my account's contacts":
+        // what the account knows stands in for the folded fields.
+        if ($request->boolean('contact_from_account')) {
+            foreach (self::accountContacts($fields) as $key => $known) {
+                if (trim((string) ($input[$key] ?? '')) === '') {
+                    $input[$key] = $known;
+                }
+            }
+        }
         foreach ($fields as $field) {
             if ($field['type'] === 'call_time' && is_string($input[$field['key']] ?? null) && $input[$field['key']] !== '') {
                 $input[$field['key']] = ['when' => $input[$field['key']]];

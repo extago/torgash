@@ -193,6 +193,7 @@ class RulesController extends Controller
                     ? collect($class::fields())->map(fn ($field) => [
                         'label' => __($field['label'] ?? ''),
                         'type' => $field['type'] ?? 'text',
+                        'help' => isset($field['help']) ? __($field['help']) : '',
                         'options' => collect($field['options'] ?? [])->map(fn ($label, $value) => ['value' => (string) $value, 'label' => (string) $label])->values()->all(),
                     ])->all()
                     : [],

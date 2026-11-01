@@ -11,6 +11,9 @@ this file is the reasoning. Read it before changing anything it covers.
   (`Rule::in($quote->offerIds())`), so a JSON client cannot buy a delivery option
   with no rate in the winning zone, and `shippingIsActive()` is the one answer to
   "is torgash.shipping here" — never re-tested by a caller.
+  Each door says which it is — `source:` (`OrderSource`: checkout,
+  one_click, admin, api, exchange) into `m_checkout_orders.source`, set once
+  and never changed by a later edit; rules and the API read it.
   The web form's only guard is a module's check — a CAPTCHA when the shop
   ticks "Placing an order" (`FormGuard::checkAdded()`, guard.md) — checked
   BEFORE the rules and kept across a refusal; never core's stamp, trap or

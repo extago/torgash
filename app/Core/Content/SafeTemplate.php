@@ -20,6 +20,14 @@ namespace App\Core\Content;
  *                                           (not empty, not 0), nothing when
  *                                           it has not — "Options: …" only
  *                                           where there are options
+ *   {{^order.city}} … {{/order.city}}       the other way round: the block
+ *                                           once when the value is NOT there
+ *                                           (or the list is empty) — "Town
+ *                                           not given (one click)"
+ *   {{ order.phone | digits }}              a value through a format (FILTERS):
+ *                                           lower, upper, trim, digits, phone,
+ *                                           int, url — one after another when
+ *                                           chained; an unknown name is left out
  *
  * A block inside a block is resolved with the row it is in, so a value's
  * block inside the lines' loop reads the line's own value.
@@ -54,6 +62,21 @@ class SafeTemplate
     public const RAW = 'raw';
 
     /**
+     * The formats a value can go through, name => English description (the
+     * editor's list). Applied BEFORE the escaping, so `| url` in a JSON body
+     * is still a safe JSON string.
+     */
+    public const FILTERS = [
+        'lower' => 'lower case',
+        'upper' => 'upper case',
+        'trim' => 'without spaces at the ends',
+        'digits' => 'only the digits: "+38 (067) 123" → "38067123"',
+        'phone' => 'a phone as one word: "+38 (067) 123" → "+38067123"',
+        'int' => 'a number without its fraction: "1042.25" → "1042"',
+        'url' => 'for a link\'s address: spaces and & encoded',
+    ];
+
+    /**
      * Expand every `{{#path}}…{{/path}}` block: over the list it names, a row
      * at a time — or, named after a value, once if the value is there and
      * not at all if it is empty. A block's body goes through this again with
@@ -68,15 +91,25 @@ class SafeTemplate
     protected static function loops(string $template, array $context, string $escape = self::JSON): string
     {
         return (string) preg_replace_callback(
-            '/\{\{#\s*([a-z0-9_.]+)\s*\}\}(.*?)\{\{\/\s*\1\s*\}\}/is',
+            '/\{\{([#^])\s*([a-z0-9_.]+)\s*\}\}(.*?)\{\{\/\s*\2\s*\}\}/is',
             function (array $match) use ($context, $escape) {
-                $rows = self::lookup($match[1], $context);
+                [, $kind, $path, $body] = $match;
+                $rows = self::lookup($path, $context);
+
+                // `^` — "when there is none": the block once for an empty
+                // value or an empty list (the same emptiness `#` skips),
+                // nothing otherwise.
+                if ($kind === '^') {
+                    return self::has(is_array($rows) ? count($rows) : $rows)
+                        ? ''
+                        : self::values(self::loops($body, $context, $escape), $context, null, $escape);
+                }
 
                 if (! is_array($rows)) {
                     // A value: the block once, or nothing. 0 and "0" count as
                     // nothing — "Discount: 0" is a line nobody wanted.
                     return self::has($rows)
-                        ? self::values(self::loops($match[2], $context, $escape), $context, null, $escape)
+                        ? self::values(self::loops($body, $context, $escape), $context, null, $escape)
                         : '';
                 }
 
@@ -84,7 +117,7 @@ class SafeTemplate
                 foreach ($rows as $row) {
                     if (is_array($row)) {
                         $rowContext = ['item' => $row] + $context;
-                        $out[] = self::values(self::loops($match[2], $rowContext, $escape), $rowContext, null, $escape);
+                        $out[] = self::values(self::loops($body, $rowContext, $escape), $rowContext, null, $escape);
                     }
                 }
 
@@ -107,9 +140,13 @@ class SafeTemplate
     protected static function values(string $template, array $context, ?string $strip = null, string $escape = self::JSON): string
     {
         return (string) preg_replace_callback(
-            '/\{\{\s*([a-z0-9_.]+)\s*\}\}/i',
+            '/\{\{\s*([a-z0-9_.]+)((?:\s*\|\s*[a-z]+)*)\s*\}\}/i',
             function (array $match) use ($context, $strip, $escape) {
                 $value = self::lookup($match[1], $context);
+
+                if ($match[2] !== '' && $value !== null && ! is_array($value)) {
+                    $value = self::format($value, $match[2]);
+                }
 
                 if (is_array($value)) {
                     return '';
@@ -131,6 +168,27 @@ class SafeTemplate
             },
             $template,
         );
+    }
+
+    /** Through every `| name` in turn; a name not in FILTERS is skipped. */
+    protected static function format(mixed $value, string $pipes): string
+    {
+        $text = is_bool($value) ? ($value ? 'true' : 'false') : (string) $value;
+
+        foreach (array_filter(array_map('trim', explode('|', $pipes))) as $name) {
+            $text = match (strtolower($name)) {
+                'lower' => mb_strtolower($text),
+                'upper' => mb_strtoupper($text),
+                'trim' => trim($text),
+                'digits' => (string) preg_replace('/\D+/', '', $text),
+                'phone' => (str_starts_with(ltrim($text), '+') ? '+' : '').preg_replace('/\D+/', '', $text),
+                'int' => is_numeric($text) ? (string) (int) floor((float) $text) : $text,
+                'url' => rawurlencode($text),
+                default => $text,
+            };
+        }
+
+        return $text;
     }
 
     /** Whether a value is there to show: not null, not false, not '', not 0. */

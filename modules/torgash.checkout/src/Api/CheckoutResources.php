@@ -130,6 +130,7 @@ class CheckoutResources
             'fields' => ['type' => 'array', 'description' => 'The shop’s own checkout questions as answered: `code`, the question as it read (`label`) and the answer (`value`), in the shop’s base language, in the order asked.', 'of' => [
                 'code' => 'string', 'label' => 'string', 'value' => 'string',
             ]],
+            'source' => ['type' => 'string|null', 'description' => 'How it was placed: checkout, one_click, admin, api, exchange; null on an order from before that was recorded.'],
             'locale' => ['type' => 'string|null', 'description' => 'The language the customer bought in — what a reprint and an email are written in.'],
             'ip_address' => ['type' => 'string|null', 'description' => 'The address the order was placed from. Null for an order nobody placed from a browser — a manager’s exchange, an import.'],
             'created_at' => ['type' => 'string|null', 'format' => 'date-time'],
@@ -189,6 +190,7 @@ class CheckoutResources
             'adjustments' => hook_filter('checkout.order.extra_totals', [], ['order' => $order]),
             'notes' => $order->notes,
             'fields' => $order->fields ?? [],
+            'source' => $order->source,
             'locale' => $order->locale,
             'ip_address' => $order->ip_address,
             'created_at' => $order->created_at?->toIso8601String(),

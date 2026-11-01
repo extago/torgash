@@ -1,0 +1,34 @@
+{
+  "torgash_automation": 1,
+  "name": {
+    "en": "Large order",
+    "ru": "Крупный заказ",
+    "uk": "Велике замовлення"
+  },
+  "about": {
+    "en": "A new order of 100 000 or more, in a message of its own. Change the amount in the condition.",
+    "ru": "Новый заказ от 100 000 — отдельным сообщением. Сумму поменяйте в условии.",
+    "uk": "Нове замовлення від 100 000 — окремим повідомленням. Суму змініть в умові."
+  },
+  "event": "checkout.order_placed",
+  "delay_minutes": 0,
+  "conditions": [
+    {
+      "kind": "total",
+      "operator": "total_min",
+      "value": {
+        "amount": 10000000
+      }
+    }
+  ],
+  "actions": [
+    {
+      "type": "telegram",
+      "text": {
+        "en": "🔥 Large order {{ order.number }}: {{ order.total_formatted }}\n{{ order.customer_name }}, {{ order.phone }}\n{{ order.items_text }}\n{{ order.admin_url }}",
+        "ru": "🔥 Крупный заказ {{ order.number }}: {{ order.total_formatted }}\n{{ order.customer_name }}, {{ order.phone }}\n{{ order.items_text }}\n{{ order.admin_url }}",
+        "uk": "🔥 Велике замовлення {{ order.number }}: {{ order.total_formatted }}\n{{ order.customer_name }}, {{ order.phone }}\n{{ order.items_text }}\n{{ order.admin_url }}"
+      }
+    }
+  ]
+}

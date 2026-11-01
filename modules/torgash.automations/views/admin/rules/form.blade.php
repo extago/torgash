@@ -283,7 +283,7 @@
 
                                     {{-- Whatever an action declares (HasFields): a status,
                                          a manager — drawn from its own description. --}}
-                                    <template x-for="(field, name) in (types[row.type]?.fields || {})" :key="name">
+                                    <template x-for="(field, name) in Object.fromEntries(Object.entries(types[row.type]?.fields || {}).filter(([, f]) => f.type === 'select'))" :key="name">
                                         <fieldset class="fieldset p-0 w-64">
                                             <legend class="fieldset-legend" x-text="field.label"></legend>
                                             <select class="select select-bordered w-full" form="rule-form"
@@ -329,6 +329,23 @@
                                     <textarea rows="8" class="textarea textarea-bordered w-full font-mono text-sm" form="rule-form"
                                               :name="`actions[${index}][body]`" x-model="row.body"></textarea>
                                 </fieldset>
+
+                                {{-- An action's own words (HasFields `text` / `textarea`):
+                                     a letter's subject and text, a note — full width. --}}
+                                <template x-for="(field, name) in Object.fromEntries(Object.entries(types[row.type]?.fields || {}).filter(([, f]) => f.type !== 'select'))" :key="name">
+                                    <fieldset class="fieldset p-0">
+                                        <legend class="fieldset-legend" x-text="field.label"></legend>
+                                        <template x-if="field.type === 'textarea'">
+                                            <textarea rows="7" class="textarea textarea-bordered w-full text-sm" form="rule-form"
+                                                      :name="`actions[${index}][config][${name}]`" x-model="row.config[name]"></textarea>
+                                        </template>
+                                        <template x-if="field.type !== 'textarea'">
+                                            <input class="input input-bordered w-full" form="rule-form"
+                                                   :name="`actions[${index}][config][${name}]`" x-model="row.config[name]">
+                                        </template>
+                                        <p class="text-xs opacity-60 mt-1" x-show="field.help" x-text="field.help"></p>
+                                    </fieldset>
+                                </template>
 
                                 {{-- Telegram: the token is a credential — never drawn
                                      back, kept when the box is left blank. --}}
@@ -396,6 +413,7 @@
                          x-data="{
                              last: null,
                              copied: '',
+                             ifMode: false,
                              open: String.fromCharCode(123, 123),
                              close: String.fromCharCode(125, 125),
                              token(path) { return this.open + ' ' + path + ' ' + this.close; },
@@ -411,6 +429,14 @@
                                  this.copied = text;
                                  setTimeout(() => this.copied = '', 1500);
                              },
+                             // If there is — this, if not — that: the value's
+                             // block (#) and its inverse (^), App\Core\Content\SafeTemplate.
+                             variable(path, label) {
+                                 if (! this.ifMode) { this.put(this.token(path)); return; }
+                                 const o = this.open, c = this.close;
+                                 this.put(o + '#' + path + c + label + ': ' + this.token(path) + o + '/' + path + c
+                                     + o + '^' + path + c + label + ': ' + @js(__('not given')) + o + '/' + path + c);
+                             },
                              loop() {
                                  const o = this.open, c = this.close;
                                  this.put(o + '#order.items' + c + '• ' + this.token('item.name') + ' × ' + this.token('item.qty') + '\n' + o + '/order.items' + c);
@@ -423,6 +449,10 @@
                         <div>
                             <h3 class="font-semibold flex items-center gap-2"><x-icon name="braces" class="opacity-60" /> {{ __('Variables') }}</h3>
                             <p class="text-xs opacity-60 mt-1">{{ __('Click one to put it where the cursor is in the message.') }}</p>
+                            <label class="label justify-start gap-2 p-0 mt-2 cursor-pointer whitespace-normal">
+                                <input type="checkbox" x-model="ifMode" class="toggle toggle-sm toggle-success">
+                                <span class="label-text text-xs">{{ __('With a condition: one line when the value is there, another when it is not') }}</span>
+                            </label>
                         </div>
                         @foreach ($variables as $subjectKey => $groups)
                             <div class="flex flex-col gap-3" x-show="subject === @js($subjectKey)" x-cloak>
@@ -430,7 +460,7 @@
                                     <div class="flex flex-col gap-0.5">
                                         <div class="text-xs font-medium opacity-60 mt-1">{{ __($group) }}</div>
                                         @foreach ($paths as $path => $label)
-                                            <button type="button" @click="put(token(@js($path)))"
+                                            <button type="button" @click="variable(@js($path), @js(__($label)))"
                                                     class="flex items-baseline justify-between gap-2 text-left rounded px-1.5 py-1 pointer-coarse:py-2.5 -mx-1.5 hover:bg-base-200 group">
                                                 <span class="text-sm">{{ __($label) }}</span>
                                                 <code class="text-xs font-mono opacity-50 group-hover:opacity-100 shrink-0">{{ $path }}</code>
@@ -446,6 +476,15 @@
                             </div>
                         @endforeach
                         <p class="text-xs opacity-60">{{ __('Amounts without _decimal are in minor units (cents).') }}</p>
+                        <details class="text-xs">
+                            <summary class="cursor-pointer opacity-60 hover:opacity-100 w-fit">{{ __('Formats: a value through | name') }}</summary>
+                            <div class="flex flex-col gap-1 mt-2">
+                                @foreach (\App\Core\Content\SafeTemplate::FILTERS as $filterName => $filterLabel)
+                                    <div><code class="font-mono">| {{ $filterName }}</code> <span class="opacity-60">— {{ __($filterLabel) }}</span></div>
+                                @endforeach
+                                <div class="opacity-60 mt-1">{{ __('For example') }}: <code class="font-mono">@{{ order.phone | phone }}</code></div>
+                            </div>
+                        </details>
                         <div x-show="copied" x-cloak class="toast toast-end toast-bottom z-50">
                             <div class="alert alert-success text-sm py-2">{{ __('Inserted') }}: <code class="font-mono" x-text="copied.length > 40 ? copied.slice(0, 40) + '…' : copied"></code></div>
                         </div>

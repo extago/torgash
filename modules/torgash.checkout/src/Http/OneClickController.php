@@ -158,6 +158,7 @@ class OneClickController extends Controller
                 new Location,
                 $quote,
                 minimum: app(\Torgash\Checkout\Orders\MinimumOrder::class)->coversOneClick(),
+                source: \Torgash\Checkout\Orders\OrderSource::ONE_CLICK,
             );
         } finally {
             if (! $forCart) {

@@ -42,6 +42,8 @@ class AutomationsServiceProvider extends ServiceProvider
         // when `torgash.guard` is absent.
         // The run log IS a log — see the guard's ignored tables.
         hook_listen('guard.audit.ignored_tables', fn (array $tables) => [...$tables, 'm_automations_runs']);
+        // The letter a rule writes to a customer (EmailAction).
+        hook_listen('core.mail.events', fn (array $events) => $events + Actions\EmailAction::event());
 
         hook_listen('guard.invariants', fn (array $all) => $all
             + (new Invariants\AutomationInvariants)->register());
@@ -73,8 +75,8 @@ class AutomationsServiceProvider extends ServiceProvider
     {
         $this->app->booted(function () {
             foreach (Subjects::all() as $key => $subject) {
-                $subject->listen(function (string $event, Model $model, array $changed = []) use ($key) {
-                    $this->fire($key, $event, $model, $changed);
+                $subject->listen(function (string $event, Model $model, array $changed = [], array $before = []) use ($key) {
+                    $this->fire($key, $event, $model, $changed, $before);
                 });
             }
         });
@@ -88,8 +90,9 @@ class AutomationsServiceProvider extends ServiceProvider
      * what stops a receiver creating a second deal when the queue redelivers.
      *
      * @param  list<string>  $changed
+     * @param  array<string, mixed>  $before  what the changed fields were, in the subject's words
      */
-    protected function fire(string $subject, string $event, Model $model, array $changed = []): void
+    protected function fire(string $subject, string $event, Model $model, array $changed = [], array $before = []): void
     {
         // A rule's own changes do not trigger rules — see RuleGuard for why
         // chaining is refused rather than depth-limited.
@@ -98,13 +101,14 @@ class AutomationsServiceProvider extends ServiceProvider
         }
 
         $rules = Rule::where('event', $event)->where('enabled', true)->orderBy('position')->get();
+        $moment = ['before' => $before, 'actor' => \Torgash\Automations\Actor::now()];
 
         foreach ($rules as $rule) {
             if (! $rule->wantsFields($changed)) {
                 continue;
             }
 
-            $job = new RunRule($rule->id, (int) $model->getKey(), $event, $changed, $rule->id.'-'.Str::uuid(), $subject);
+            $job = new RunRule($rule->id, (int) $model->getKey(), $event, $changed, $rule->id.'-'.Str::uuid(), $subject, moment: $moment);
 
             // "Wait N minutes, then look again" — the delay is the queue's, so
             // nothing here sleeps and the admin's click never waits on a rule.

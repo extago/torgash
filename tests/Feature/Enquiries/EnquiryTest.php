@@ -51,6 +51,45 @@ class EnquiryTest extends TestCase
         ], $overrides);
     }
 
+    /**
+     * A signed-in customer is not asked who they are: the account's contacts
+     * are said in one line, the fields fold away, and the server takes the
+     * account's — unless they chose to give other ones.
+     */
+    public function test_a_signed_in_customer_is_answered_on_the_accounts_contacts(): void
+    {
+        $me = User::create(['name' => 'Иван', 'email' => 'ivan@example.test', 'password' => 'secret123']);
+        $this->actingAs($me);
+
+        $html = view('torgash.enquiries::partials.form', ['enquiryKind' => 'message', 'errors' => new \Illuminate\Support\ViewErrorBag])->render();
+        $this->assertStringContainsString('Иван · ivan@example.test', $html);
+        $this->assertStringContainsString('name="contact_from_account" value="1"', $html);
+
+        $this->post('http://localhost/enquiry', [
+            'kind' => 'message',
+            'message' => 'Hello',
+            'contact_from_account' => '1',
+            FormGuard::STAMP => $this->stamp(),
+            FormGuard::TRAP => '',
+        ])->assertRedirect()->assertSessionHasNoErrors();
+
+        $enquiry = Enquiry::latest('id')->firstOrFail();
+        $this->assertSame('ivan@example.test', $enquiry->email);
+        $this->assertSame('Иван', $enquiry->name);
+        $this->assertSame($me->id, $enquiry->user_id);
+
+        // Other contacts typed: those, not the account's.
+        $this->post('http://localhost/enquiry', [
+            'kind' => 'message',
+            'message' => 'Hello again',
+            'phone' => '+380 (67) 123-45-67',
+            FormGuard::STAMP => $this->stamp(),
+            FormGuard::TRAP => '',
+        ])->assertRedirect();
+
+        $this->assertNull(Enquiry::latest('id')->firstOrFail()->email);
+    }
+
     public function test_a_callback_is_stored_with_its_answers_and_their_labels(): void
     {
         $this->post('http://localhost/enquiry', $this->payload())->assertRedirect();

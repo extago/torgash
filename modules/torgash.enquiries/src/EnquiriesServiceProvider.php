@@ -195,6 +195,20 @@ class EnquiriesServiceProvider extends ServiceProvider
             'set_enquiry_status' => Automations\SetEnquiryStatusAction::class,
             'set_enquiry_manager' => Automations\SetEnquiryManagerAction::class,
         ]);
+        // A rule's "Add a note to the history": a dated line in the
+        // enquiry's own notes, the ones staff write beside it.
+        hook_listen('automations.note', function (bool $written, array $context) {
+            $enquiry = $context['subject'] ?? null;
+
+            if ($written || ! $enquiry instanceof Models\Enquiry) {
+                return $written;
+            }
+
+            $line = '['.now()->format('d.m.Y H:i').'] '.trim(($context['rule'] ?? '') !== '' ? $context['rule'].': '.$context['text'] : (string) $context['text']);
+            $enquiry->forceFill(['notes' => trim(trim((string) $enquiry->notes)."\n".$line)])->save();
+
+            return true;
+        });
     }
 
     /**
