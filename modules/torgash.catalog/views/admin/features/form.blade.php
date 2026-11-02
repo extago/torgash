@@ -73,6 +73,22 @@
                 <section class="card bg-base-100 border border-base-300"><div class="card-body gap-4">
                     <h3 class="font-semibold">{{ __('Basics') }}</h3>
                     <x-admin.translatable-field name="name" label="{{ __('Name') }}" :value="$feature->name ?? []" required placeholder="{{ __('Name') }}" />
+                    <div>
+                        <x-admin.translatable-field name="description" label="{{ __('Explanation for customers') }}" :value="$feature->description ?? []" textarea rich :rows="4" placeholder="{{ __('Explanation for customers') }}" />
+                        <p class="text-xs opacity-60 mt-1">{{ __('Customers open it in a window from an “i” beside the characteristic. Leave empty for no icon.') }}</p>
+                        <div class="flex flex-wrap gap-x-6 gap-y-2 mt-2">
+                            <label class="label cursor-pointer gap-2 text-sm">
+                                <input type="hidden" name="explain_on_product" value="0">
+                                <input type="checkbox" name="explain_on_product" value="1" class="checkbox checkbox-sm" @checked(old('explain_on_product', $feature->explain_on_product ?? true))>
+                                {{ __('On the product page') }}
+                            </label>
+                            <label class="label cursor-pointer gap-2 text-sm">
+                                <input type="hidden" name="explain_in_filter" value="0">
+                                <input type="checkbox" name="explain_in_filter" value="1" class="checkbox checkbox-sm" @checked(old('explain_in_filter', $feature->explain_in_filter ?? true))>
+                                {{ __('In the filter') }}
+                            </label>
+                        </div>
+                    </div>
 
                     <div class="grid md:grid-cols-2 gap-4">
                         <fieldset class="fieldset p-0"><legend class="fieldset-legend">{{ __('Code') }}</legend>

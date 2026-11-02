@@ -73,7 +73,7 @@ class PlaceOrder
      *
      * @return array<string, mixed>
      */
-    public function rules(Quote $quote, ?string $shippingMethodId, bool $needsDelivery = true, ?string $currency = null): array
+    public function rules(Quote $quote, ?string $shippingMethodId, bool $needsDelivery = true, ?string $currency = null, ?string $buyer = null, bool $restricted = true): array
     {
         // An order that is collected has no street to be taken to. Asked of the
         // option actually chosen, never a shop-wide setting. An order of goods
@@ -124,7 +124,13 @@ class PlaceOrder
             'postal_code' => ($postal === 'required' && $needsDelivery ? 'required' : 'nullable').'|string|max:20',
             'notes' => 'nullable|string|max:1000',
             'shipping_method_id' => $shippingActive ? ['required', Rule::in($quote->offerIds())] : ['nullable'],
-            'payment_method_id' => ['required', Rule::in($this->paymentMethods($currency)->modelKeys())],
+            // Only a method offered to this order (PLAN §66: the buyer, the
+            // group, the delivery) — unless a manager is placing it, who is
+            // warned instead (`$restricted = false`).
+            'payment_method_id' => ['required', Rule::in($this->paymentMethods(
+                $currency,
+                $restricted ? $this->offeredTo($buyer, $shippingMethodId, $needsDelivery) : null,
+            )->modelKeys())],
         ];
     }
 
@@ -174,9 +180,14 @@ class PlaceOrder
      * visitor is shopping in — either directly, or by charging in one of their
      * own, which the checkout screen says out loud.
      *
+     * `$for` narrows them to the ones offered to THIS order (PLAN §66) —
+     * offeredTo() builds it; without it every method the currency allows,
+     * which is what a manager picks from (and is warned about).
+     *
+     * @param  array{buyer: ?string, customer: list<string>, offer: ?string, delivery: bool}|null  $for
      * @return Collection<int, PaymentMethod>
      */
-    public function paymentMethods(?string $currency = null): Collection
+    public function paymentMethods(?string $currency = null, ?array $for = null): Collection
     {
         // The currency the ORDER is quoted in: the visitor's own on the
         // storefront; the shop's books for a manager's order, whatever the
@@ -191,7 +202,60 @@ class PlaceOrder
                 return $charge !== null
                     && ($charge === $quoted || (float) ($currencies->find($charge)?->rate ?? 0) > 0);
             })
+            ->filter(fn (PaymentMethod $method) => $for === null
+                || $method->refusals($for['buyer'], $for['customer'], $for['offer'], $for['delivery']) === [])
             ->values();
+    }
+
+    /**
+     * Who this order is, for paymentMethods(): the buyer (a company only where
+     * the shop takes them), the signed-in customer's group, the delivery
+     * picked and whether anything is sent at all. `$customer` false = whoever
+     * is signed in; null = a guest; a User = that account (a manager's order).
+     *
+     * @return array{buyer: string, customer: list<string>, offer: ?string, delivery: bool}
+     */
+    public function offeredTo(?string $buyer, ?string $offerId, bool $needsDelivery = true, \App\Models\User|false|null $customer = false): array
+    {
+        return [
+            'buyer' => $this->takesCompanies() && $buyer === 'company' ? 'company' : 'person',
+            'customer' => PaymentMethod::customerTokens($customer === false ? auth()->user() : $customer),
+            'offer' => $offerId !== null && $offerId !== '' ? (string) $offerId : null,
+            'delivery' => $needsDelivery,
+        ];
+    }
+
+    /**
+     * What the checkout's payment step offers and ticks, for the answers the
+     * form holds now (a re-quote posts them all): the buyer, the delivery
+     * (or the one the quote picked), the method asked for.
+     *
+     * @return array{methods: Collection<int, PaymentMethod>, chosen: ?int}
+     */
+    public function checkoutChoice(\Illuminate\Http\Request $request, CartManager $cart, Quote $quote): array
+    {
+        $methods = $this->paymentMethods(null, $this->offeredTo(
+            $request->input('buyer_type', old('buyer_type')),
+            $request->input('shipping_method_id', old('shipping_method_id')) ?: $quote->selectedId(),
+            $cart->needsDelivery(),
+        ));
+
+        return [
+            'methods' => $methods,
+            'chosen' => $this->chosenMethod($methods, $request->input('payment_method_id', old('payment_method_id')))?->id,
+        ];
+    }
+
+    /**
+     * The method that counts as chosen: the one asked for while it is still
+     * offered, else the first that is — what the form ticks and the summary
+     * prices, so a choice the delivery just ruled out does not linger.
+     *
+     * @param  Collection<int, PaymentMethod>  $methods
+     */
+    public function chosenMethod(Collection $methods, int|string|null $asked): ?PaymentMethod
+    {
+        return ($asked !== null && $asked !== '' ? $methods->firstWhere('id', (int) $asked) : null) ?? $methods->first();
     }
 
     /**
@@ -298,7 +362,12 @@ class PlaceOrder
         ));
 
         $shippingCost = $option->cost ?? 0;
-        $extraTotal = $this->totals->added($this->totals->extra($cart, $quote, (string) $paymentMethod->id));
+        $extraLines = $this->totals->extra($cart, $quote, (string) $paymentMethod->id);
+        $extraTotal = $this->totals->added($extraLines);
+        // The method's surcharge (PLAN §66) is one of those lines; the order
+        // keeps it as a column of its own beside the delivery, with the terms
+        // it came from — an edit of the contents recomputes it (OrderTotals).
+        $surcharge = (int) (collect($extraLines)->firstWhere('code', PaymentSurcharge::CODE)['amount'] ?? 0);
         $total = max(0, $quote->subtotal - $quote->discount) + $shippingCost + $extraTotal;
 
         // What will be paid before any gateway is asked — a gift card on the
@@ -324,7 +393,7 @@ class PlaceOrder
             : $this->chargeCurrency();
 
         $order = DB::transaction(function () use (
-            $validated, $quote, $shippingCost, $option, $shippingDetails, $paymentMethod,
+            $validated, $quote, $shippingCost, $surcharge, $option, $shippingDetails, $paymentMethod,
             $items, $basketLines, $status, $deductsStock, $appliedCoupon, $total, $prepaid, $deposit, $location, $as, $userId, $charge, $coupons, $cart, $source,
         ) {
             // The shelf, asked again with its rows locked: the basket may have
@@ -379,6 +448,13 @@ class PlaceOrder
                     ? OrderDiscounts::termsOf($appliedCoupon, max(0, $quote->subtotal - $coupons->base()), $items)
                     : null,
                 'shipping_cost' => $shippingCost,
+                // Paid to the carrier on receipt (PLAN §66, stage 4): not the
+                // shop's money — `shipping_cost` is 0 — and what the carrier
+                // will ask, as it was estimated.
+                'shipping_to_carrier' => (bool) ($option->to_carrier ?? false),
+                'shipping_carrier_cost' => ($option->to_carrier ?? false) ? ($option->carrier_cost ?? null) : null,
+                'payment_surcharge' => $surcharge,
+                'payment_surcharge_terms' => $surcharge > 0 ? PaymentSurcharge::termsOf($paymentMethod) : null,
                 // The label carries the variant a provider resolved to ("Nova
                 // Poshta — to branch"); null when there is no delivery at all.
                 'shipping_method_name' => $option->label ?? null,

@@ -55,7 +55,7 @@
         foreach ($globalSpecs->groupBy(fn ($pf) => (int) $pf->feature->group_id) as $specGroupRows) {
             $specGroups[] = [
                 'title' => $specGroupRows->first()->feature->group?->t('name'),
-                'rows' => $specGroupRows->map(fn ($pf) => [$pf->feature->t('name'), $pf->display()])->all(),
+                'rows' => $specGroupRows->map(fn ($pf) => [$pf->feature->t('name'), $pf->display(), $pf->feature])->all(),
             ];
         }
 
@@ -75,6 +75,7 @@
             $specOwn['rows'][] = [
                 $specRow['label'] ?? $specRow['key'],
                 is_scalar($specRow['value']) ? $specRow['value'] : json_encode($specRow['value'], JSON_UNESCAPED_UNICODE),
+                null,
             ];
         }
 
@@ -105,12 +106,12 @@
                     <h3 class="text-sm font-semibold pb-2 mb-1 border-b border-base-300">{{ $specGroup['title'] }}</h3>
                 @endif
                 <dl class="flex flex-col">
-                    @foreach ($specGroup['rows'] as [$specLabel, $specValue])
+                    @foreach ($specGroup['rows'] as [$specLabel, $specValue, $specFeature])
                         {{-- The name and the value joined by a dotted line, so
                              the eye travels along the row rather than
                              guessing which value is whose across a wide gap. --}}
                         <div class="flex items-baseline gap-2 py-1.5 text-sm">
-                            <dt class="opacity-60 shrink min-w-0">{{ $specLabel }}</dt>
+                            <dt class="shrink min-w-0"><span class="opacity-60">{{ $specLabel }}</span>@if ($specFeature)@include('torgash.catalog::partials.feature-info', ['infoFeature' => $specFeature])@endif</dt>
                             <span class="grow min-w-4 border-b border-dotted border-base-content/25" aria-hidden="true"></span>
                             <dd class="font-medium text-right max-w-[60%]">{{ $specValue }}</dd>
                         </div>

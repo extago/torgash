@@ -74,7 +74,8 @@ class WayForPayGatewayTest extends TestCase
 
             $expected = hash_hmac('md5', implode(';', [
                 self::ACCOUNT, 'shop.example.test', $b['orderReference'], $b['orderDate'], '100', 'UAH',
-                'Order '.$order->order_number, '1', '100',
+                // The order's own lines (Payments\Receipt): 2 x 50.
+                'WayForPay widget', '2', '50',
             ]), self::SECRET);
 
             return $b['transactionType'] === 'CREATE_INVOICE'

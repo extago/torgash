@@ -168,5 +168,7 @@
     "1C exchange session": "Сеанс обмена с 1С",
     "1C match": "Сопоставление с 1С",
     "Order sent to 1C": "Заказ, отправленный в 1С",
-    "1C has already taken these orders as merged.": "1С уже приняла эти заказы как объединённые."
+    "1C has already taken these orders as merged.": "1С уже приняла эти заказы как объединённые.",
+    "Payment surcharge service identifier": "Идентификатор услуги «наценка за оплату»",
+    "A payment method's surcharge goes into the document as a service line too, under this 1C nomenclature id. Empty — under the engine's own id, which 1C is told about once.": "Наценка способа оплаты тоже попадает в документ строкой-услугой — с этим идентификатором номенклатуры 1С. Пусто — с собственным идентификатором движка, о котором 1С узнаёт один раз."
 }

@@ -52,3 +52,27 @@ refund, cancel. A gateway that cannot capture never shows a Capture button.
 
 Anything done from there goes through the same path a callback does, so a refund
 made by hand lands in the order exactly like one the gateway announces later.
+
+## The bank's receipt
+
+monobank, WayForPay and Stripe are sent the order's lines, and the lines
+always add up to the payment to the kopeck. A bank that issues fiscal
+receipts refuses a list that is off by even that much.
+
+- Delivery is a line of its own. A delivery for information is not on the
+  receipt, because the bank is not asked for it.
+- Discounts and a tax added on top are spread over the goods. If a line's
+  total then no longer divides by its quantity, the line is split in two,
+  for example 3 × 33.34 into 2 × 33.33 + 1 × 33.36.
+- A part payment (a deposit, a gift card) sends no lines, because a receipt
+  for part of the goods is a different document.
+
+The settings sit on the method's gateway block:
+
+- **Send the order's lines to the bank**: off means one line, the order.
+- **Payment surcharge in the bank's receipt**: a line of its own, or spread
+  over the goods.
+- **Name of the surcharge line**: empty means the title the customer saw.
+
+LiqPay sends no lines. Its receipts name goods by ids from its own PRRO
+catalogue, not by the shop's SKUs.

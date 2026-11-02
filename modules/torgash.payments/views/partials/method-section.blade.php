@@ -36,7 +36,7 @@
                 @endforeach
 
                 @foreach ($gatewayFields as $name => $field)
-                    @php $stored = $binding?->gateway === $key ? data_get($binding->config, $name) : null; @endphp
+                    @php $stored = $binding?->gateway === $key ? data_get($binding->config, $name, $field['default'] ?? null) : ($field['default'] ?? null); @endphp
                     <fieldset class="fieldset p-0 max-w-xl">
                         <legend class="fieldset-legend">{{ __($field['label'] ?? $name) }}</legend>
 
@@ -46,6 +46,12 @@
                                        class="toggle toggle-sm toggle-success" @checked($stored)>
                                 <span class="label-text">{{ __('On') }}</span>
                             </label>
+                        @elseif (($field['type'] ?? 'text') === 'select')
+                            <select name="gateway_config[{{ $key }}][{{ $name }}]" class="select select-bordered w-full">
+                                @foreach ($field['options'] ?? [] as $optionValue => $optionLabel)
+                                    <option value="{{ $optionValue }}" @selected((string) $stored === (string) $optionValue)>{{ __($optionLabel) }}</option>
+                                @endforeach
+                            </select>
                         @elseif (($field['type'] ?? 'text') === 'password')
                             {{-- Never shown back. The placeholder is there
                                  because an empty box otherwise reads as "it did

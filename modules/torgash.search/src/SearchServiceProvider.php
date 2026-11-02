@@ -187,7 +187,7 @@ class SearchServiceProvider extends ServiceProvider implements ModuleLifecycle
         });
 
         hook_listen('core.setting.changed', function (array $context) use ($pending) {
-            if ($context['module'] === 'torgash.search' && $context['key'] === 'search_descriptions') {
+            if ($context['module'] === 'torgash.search' && in_array($context['key'], ['search_descriptions', 'search_short_descriptions'], true)) {
                 $pending()->markEverything();
             }
         });

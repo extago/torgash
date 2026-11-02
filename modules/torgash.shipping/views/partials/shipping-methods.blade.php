@@ -48,9 +48,14 @@
                 @if ($option->pending_quote)
                     <span class="block text-xs opacity-60">{{ __('cost confirmed separately') }}</span>
                 @endif
+                {{-- Paid to the carrier (PLAN §66, stage 4): not in the total,
+                     and not "Free" either. --}}
+                @if ($carrierText = \Torgash\Checkout\Shipping\CarrierPaid::forOption($option, fn (int $a) => format_price($a, exact: true)))
+                    <span class="block text-xs opacity-60">{{ $carrierText }}</span>
+                @endif
             </span>
         </span>
-        @unless ($option->pending_quote)
+        @unless ($option->pending_quote || ($option->to_carrier ?? false))
             <span class="font-semibold whitespace-nowrap tabular-nums">{{ $option->cost > 0 ? format_price($option->cost, exact: true) : __('Free') }}</span>
         @endunless
     </label>

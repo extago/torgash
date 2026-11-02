@@ -5,6 +5,11 @@ namespace Torgash\Api;
 /**
  * The API describing itself.
  *
+ * Agents: the prose this cannot derive (money as decimal strings, rounding,
+ * tokens and permissions, recipes) is one Markdown file,
+ * https://extago.com/solutions/torgash/docs/api/index.md, and a running shop
+ * points to this description from its own /llms.txt (App\Core\Seo\LlmsMap).
+ *
  * Written from the REGISTRY rather than by hand, and that is the whole design:
  * a module that registers a resource is documented by the same act, in the same
  * place, and cannot drift from what the code actually serves. A hand-kept
@@ -449,6 +454,8 @@ class OpenApi
                     'id' => 'string',
                     'label' => 'string',
                     'cost' => ['type' => 'string|null', 'description' => __('Null when the carrier answered but named no price.')],
+                    'paid_to_carrier' => ['type' => 'boolean', 'description' => __('The recipient pays the carrier on receipt: `cost` is 0 and the delivery is not in the total.')],
+                    'carrier_cost' => ['type' => 'string|null', 'description' => __('What the carrier will ask, as estimated; null when nobody can say.')],
                     'delivery_time' => 'string|null',
                     'needs_address' => ['type' => 'boolean', 'description' => __('False for an option collected in person, which is what makes the street optional.')],
                     'needs_fields' => ['type' => 'boolean', 'description' => __('The option wants something more from the customer — send it in `shipping_fields`.')],
@@ -458,6 +465,7 @@ class OpenApi
                     'id' => 'integer',
                     'label' => 'string',
                     'charged_in' => ['type' => 'string', 'description' => __('The currency this method will ask the bank for, when it cannot take the one being shopped in.')],
+                    'surcharge' => ['type' => 'string', 'description' => __('What paying this way adds to this basket; only the methods offered to it are listed.')],
                 ]],
                 'currency' => 'string',
                 'subtotal' => 'string',

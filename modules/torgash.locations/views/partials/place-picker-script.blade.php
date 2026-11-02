@@ -113,6 +113,8 @@
                     },
 
                     pick(item) {
+                        // A town is in one country: the box above says so too.
+                        if (item.country) this.country = item.country;
                         this.placeId = item.id;
                         this.label = item.label;
                         this.name = item.name;

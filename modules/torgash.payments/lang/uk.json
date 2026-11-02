@@ -76,5 +76,12 @@
     "from order :number": "із замовлення :number",
     ":amount could not be returned through the gateway — see the payment log.": ":amount не вдалося повернути через шлюз — див. журнал платежів.",
     "Amount": "Сума",
-    "Payment methods": "Способи оплати"
+    "Payment methods": "Способи оплати",
+    "Send the order's lines to the bank": "Передавати банку позиції замовлення",
+    "Goods, delivery and the surcharge as lines adding up to the payment — what a fiscal receipt needs. Off: one line, the order. Never sent for a part payment (a deposit, a gift card).": "Товари, доставка і націнка — позиціями, які в сумі дають платіж; це потрібно для фіскального чека. Вимкнено — одна позиція, замовлення. При частковій оплаті (передоплата, подарункова картка) позиції не передаються.",
+    "Payment surcharge in the bank's receipt": "Націнка за оплату в чеку банку",
+    "A line of its own": "Окремим рядком",
+    "Spread over the goods": "Розподілити по товарах",
+    "Name of the surcharge line": "Назва позиції націнки",
+    "Empty — the surcharge's own title, as the customer saw it.": "Порожньо — назва націнки, як її бачив покупець."
 }

@@ -70,6 +70,18 @@ final class Quote
         return $this->options->keys()->map(fn ($key) => (string) $key)->all();
     }
 
+    /** The offer id of the option chosen, or null — what a payment method's delivery list is asked about. */
+    public function selectedId(): ?string
+    {
+        if (! $this->selected) {
+            return null;
+        }
+
+        $key = $this->options->search($this->selected, true);
+
+        return $key === false ? null : (string) $key;
+    }
+
     public function option(int|string|null $offerId): ?object
     {
         return $offerId === null ? null : $this->options->get((string) $offerId);

@@ -85,15 +85,24 @@ class OrderShippingController extends Controller
             return back()->withErrors(['shipping_method_name' => __('Unknown delivery method.')]);
         }
 
-        $cost = $this->minorUnits($validated['shipping_cost']);
+        $typed = $this->minorUnits($validated['shipping_cost']);
         $wasName = $order->shipping_method_name;
         $wasCost = $order->shipping_cost;
 
-        if ($wasName === $name && $wasCost === $cost) {
+        // Paid to the carrier (PLAN §66, stage 4): the same method keeps the
+        // order's answer, another one brings its own — and then the typed
+        // number is the carrier's estimate, the shop charging nothing.
+        $toCarrier = $wasName === $name
+            ? (bool) $order->shipping_to_carrier
+            : (bool) ShippingMethod::where('enabled', true)->get()
+                ->first(fn (ShippingMethod $method) => in_array($name, (array) $method->name, true))?->paid_to_carrier;
+        $cost = $toCarrier ? 0 : $typed;
+
+        if ($wasName === $name && $wasCost === $cost && (! $toCarrier || $order->shipping_carrier_cost === $typed)) {
             return back();
         }
 
-        DB::transaction(function () use ($order, $name, $cost, $wasName, $wasCost) {
+        DB::transaction(function () use ($order, $name, $cost, $typed, $toCarrier, $wasName, $wasCost) {
             $details = (array) ($order->shipping_details ?? []);
 
             if ($wasName !== $name) {
@@ -105,6 +114,8 @@ class OrderShippingController extends Controller
 
             $order->shipping_method_name = $name;
             $order->shipping_cost = $cost;
+            $order->shipping_to_carrier = $toCarrier;
+            $order->shipping_carrier_cost = $toCarrier ? $typed : null;
             $order->shipping_details = $details;
             $order->save();
 

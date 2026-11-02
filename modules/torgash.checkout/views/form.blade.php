@@ -175,7 +175,7 @@
                                   needsAddress = $event.target.dataset.address !== '0'"
                      @if ($hasShipping)
                      hx-post="{{ route('checkout.quote') }}"
-                     hx-trigger="destination-changed, coupon-changed from:body, change from:#checkout-postal, change from:#checkout-shipping, change from:[name='payment_method_id']"
+                     hx-trigger="destination-changed, coupon-changed from:body, change from:#checkout-postal, change from:#checkout-shipping, change[target.name==='payment_method_id'||target.name==='buyer_type'] from:body"
                      hx-include="closest form"
                      hx-target="#checkout-shipping" hx-swap="innerHTML"
                      @endif>
@@ -232,32 +232,17 @@
                 @endif
             </section>
 
-            <section class="bg-base-100 border border-base-300 rounded-box p-5 sm:p-6 flex flex-col gap-4">
+            {{-- Without a delivery step nothing re-quotes the bill when the
+                 method changes, and a method may add a surcharge (PLAN §66):
+                 the payment step asks for the summary itself. --}}
+            <section class="bg-base-100 border border-base-300 rounded-box p-5 sm:p-6 flex flex-col gap-4"
+                     @unless ($hasShipping)
+                     hx-post="{{ route('checkout.summary') }}"
+                     hx-trigger="change[target.name==='payment_method_id'||target.name==='buyer_type'] from:body, coupon-changed from:body"
+                     hx-include="closest form" hx-swap="none"
+                     @endunless>
                 {!! $checkoutStep(3, __('Payment')) !!}
-                <div class="flex flex-col gap-2">
-                    @foreach ($paymentMethods as $method)
-                        @php $charge = $method->chargeCurrencyFor(current_currency()); @endphp
-                        <label class="flex items-center gap-3 border border-base-300 rounded-lg px-4 py-3 cursor-pointer has-[:checked]:border-primary has-[:checked]:bg-primary/5">
-                            <input type="radio" name="payment_method_id" value="{{ $method->id }}" class="radio radio-primary"
-                                   @checked(old('payment_method_id', $paymentMethods->first()?->id) == $method->id) required>
-                            @if ($method->logoUrl())
-                                <img src="{{ $method->logoUrl() }}" alt="" class="h-6 w-10 object-contain shrink-0">
-                            @endif
-                            <span class="flex flex-col">
-                                <span>{{ $method->t('name') }}</span>
-                                {{-- Said before the order exists, not on the payment page: a
-                                     method that cannot take the currency on screen still
-                                     charges a real amount, and finding that out afterwards
-                                     is what makes a customer abandon a placed order. --}}
-                                @if ($charge !== current_currency())
-                                    <span class="text-xs opacity-60">
-                                        {{ __('The payment itself goes through in :currency, converted at the current rate.', ['currency' => $charge]) }}
-                                    </span>
-                                @endif
-                            </span>
-                        </label>
-                    @endforeach
-                </div>
+                @include('torgash.checkout::partials.payment-methods', ['checkoutPayment' => $checkoutPayment])
             </section>
 
             {{-- Not a step: most orders have nothing to add. --}}
@@ -283,7 +268,7 @@
              stay outside it, so a re-quote never wipes a problem just shown. --}}
         <div class="card bg-base-100 border border-base-300 h-fit lg:sticky lg:top-6">
             <div class="card-body">
-                @include('torgash.checkout::partials.summary', ['cart' => $cart, 'quote' => $quote, 'summaryDefaultMethod' => old('payment_method_id', $paymentMethods->first()?->id)])
+                @include('torgash.checkout::partials.summary', ['cart' => $cart, 'quote' => $quote, 'summaryMethodChosen' => $checkoutPayment['chosen']])
                 <x-form-problems form="checkout-form" class="mt-3" />
                 <button form="checkout-form" class="btn btn-primary btn-lg w-full mt-3">{{ __('Place order') }}</button>
             </div>

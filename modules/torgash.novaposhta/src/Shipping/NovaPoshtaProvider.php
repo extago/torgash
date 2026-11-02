@@ -140,6 +140,9 @@ class NovaPoshtaProvider implements ShippingProvider
             fieldsView: $fields['view'],
             fieldsData: $fields['data'],
             meta: ['settlement_ref' => $map->settlement_ref, 'city_ref' => $map->city_ref],
+            // To a branch or a locker the parcel goes to the point picked
+            // above, not to a street; only "to the door" needs one.
+            needsAddress: $serviceType === ServiceType::COURIER,
         )];
     }
 

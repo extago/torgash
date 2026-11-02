@@ -202,6 +202,9 @@ class FeaturesController extends Controller
 
         $validated = $request->validate([
             'name' => [Rule::requiredIf($isBaseLocale), 'nullable', 'string'],
+            'description' => 'nullable|string|max:20000',
+            'explain_on_product' => 'nullable|boolean',
+            'explain_in_filter' => 'nullable|boolean',
             'code' => ['nullable', 'string', 'max:191', 'regex:/^[A-Z0-9_-]+$/i', Rule::unique('m_catalog_features', 'code')->ignore($feature?->id)],
             'group_name' => 'nullable|string',
             // What the characteristic IS. Where it is SHOWN is `shown_in`
@@ -231,8 +234,15 @@ class FeaturesController extends Controller
         // rows that nothing could match on. Typed-and-taken is still a hard
         // validation error above — the trait would quietly rename it, which is
         // right for an import and wrong for somebody typing.
+        // What it means, for the "i" beside it on the product page: one
+        // language at a time, an empty editor removes that language only.
+        $description = put_translation($feature?->description, trim(strip_tags((string) ($validated['description'] ?? ''))) === '' ? '' : $validated['description']);
+
         return [
             'name' => $name,
+            'description' => $description ?: null,
+            'explain_on_product' => $request->boolean('explain_on_product'),
+            'explain_in_filter' => $request->boolean('explain_in_filter'),
             'code' => trim($validated['code'] ?? '') ?: null,
             'group_id' => $this->resolveGroupId($validated['group_name'] ?? null),
             'purpose' => $validated['purpose'],

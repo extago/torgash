@@ -60,7 +60,7 @@
 @endphp
 <details class="group bg-base-100 border border-base-300 rounded-box" data-filter-block="price"
          @if ($filterBlockOpen($priceTypedMin !== '' || $priceTypedMax !== '')) open @endif>
-    @include('torgash.catalog::partials.filter-block-heading', ['filterHeading' => __('Price'), 'filterCount' => 0])
+    @include('torgash.catalog::partials.filter-block-heading', ['filterHeading' => __('Price'), 'filterCount' => 0, 'filterHeadingFeature' => null])
     <div class="px-4 pb-4">
     {{-- ONE field to the eye, two controls to the form: `price_min` and
          `price_max` are still the only things that submit. --}}
@@ -131,7 +131,12 @@
         @include('torgash.catalog::partials.filter-block-heading', [
             'filterHeading' => $feature->t('name'),
             'filterCount' => count($filterTicked),
+            // The "i" sits in the heading; its window cannot stand inside a
+            // <summary>, so it is drawn right after, under the same name.
+            'filterHeadingFeature' => $feature,
+            'filterInfoName' => $filterInfoName = 'filter-info-'.$feature->id.'-'.\Illuminate\Support\Str::lower(\Illuminate\Support\Str::random(5)),
         ])
+        @include('torgash.catalog::partials.feature-info', ['infoFeature' => $feature, 'infoWhere' => 'filter', 'infoPart' => 'dialog', 'infoName' => $filterInfoName])
         <div class="px-4 pb-4 flex flex-col gap-2">
             @if ($filterLong)
                 {{-- Narrows the list under it, in the browser: every value is

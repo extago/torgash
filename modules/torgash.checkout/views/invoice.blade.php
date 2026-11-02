@@ -140,9 +140,9 @@
                         </div>
                     @endforeach
                     @if ($order->hasDelivery())
-                        <div class="flex justify-between w-56"><span class="opacity-60">{{ __('Shipping') }}</span><span>{{ $order->deliveryPending() ? __('to be confirmed') : ($order->shipping_cost > 0 ? $order->money($order->shipping_cost) : __('Free')) }}</span></div>
+                        <div class="flex justify-between gap-3 w-56"><span class="opacity-60">{{ __('Shipping') }}</span><span class="text-end">{{ \Torgash\Checkout\Shipping\CarrierPaid::forOrder($order, fn (int $a) => $order->money($a)) ?? ($order->deliveryPending() ? __('to be confirmed') : ($order->shipping_cost > 0 ? $order->money($order->shipping_cost) : __('Free'))) }}</span></div>
                     @endif
-                    @foreach (hook_filter('checkout.order.extra_totals', [], ['order' => $order]) as $line)
+                    @foreach (array_filter(hook_filter('checkout.order.extra_totals', [], ['order' => $order]), fn ($line) => empty($line['hidden'])) as $line)
                         <div class="flex justify-between w-56 {{ $line['included'] ? 'opacity-60' : '' }}">
                             <span class="opacity-60">{{ $line['label'] }}</span><span>{{ $order->money($line['amount']) }}</span>
                         </div>

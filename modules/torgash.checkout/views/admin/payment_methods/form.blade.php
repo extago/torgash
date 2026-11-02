@@ -142,6 +142,120 @@
                         </p>
                     </div>
                 </section>
+
+                {{-- Whom it is offered to (PLAN §66, stage 3): the buyer, the
+                     customer's group, the delivery. Nothing narrowed is
+                     everybody. A manager's order is only warned. --}}
+                @php
+                    $offeredGroups = (array) old('customer_groups', $method->customer_groups ?? []);
+                    $offeredDeliveries = array_map('strval', (array) old('shipping_methods', $method->shipping_methods ?? []));
+                    $deliveryChoices = (array) hook_filter('checkout.shipping_methods.choices', []);
+                @endphp
+                <section class="card bg-base-100 border border-base-300">
+                    <div class="card-body gap-4">
+                        <h3 class="font-semibold">{{ __('Who it is offered to') }}</h3>
+                        <input type="hidden" name="availability_set" value="1">
+                        <fieldset class="fieldset p-0 max-w-sm"><legend class="fieldset-legend">{{ __('Buyer') }}</legend>
+                            <select name="buyers" class="select select-bordered w-full">
+                                @foreach (\Torgash\Checkout\Models\PaymentMethod::BUYERS as $buyerKey => $buyerLabel)
+                                    <option value="{{ $buyerKey }}" @selected(old('buyers', $method->buyers ?? 'all') === $buyerKey)>{{ __($buyerLabel) }}</option>
+                                @endforeach
+                            </select>
+                            <p class="label whitespace-normal">{{ __('Private person or company — when the shop takes orders from companies (checkout settings).') }}</p>
+                        </fieldset>
+                        <div class="grid md:grid-cols-2 gap-4 max-w-3xl">
+                            <fieldset class="fieldset p-0"><legend class="fieldset-legend">{{ __('Customer groups') }}</legend>
+                                <div class="flex flex-col gap-1.5">
+                                    @foreach (\Torgash\Catalog\Support\Assortment::choices() as $groupToken => $groupLabel)
+                                        <label class="label justify-start gap-2 p-0 cursor-pointer">
+                                            <input type="checkbox" name="customer_groups[]" value="{{ $groupToken }}" class="checkbox checkbox-sm" @checked(in_array($groupToken, $offeredGroups, true))>
+                                            <span class="label-text whitespace-normal">{{ $groupLabel }}</span>
+                                        </label>
+                                    @endforeach
+                                </div>
+                                <p class="label whitespace-normal">{{ __('None ticked — everybody.') }}</p>
+                            </fieldset>
+                            @if ($deliveryChoices)
+                                <fieldset class="fieldset p-0"><legend class="fieldset-legend">{{ __('Only for these deliveries') }}</legend>
+                                    <div class="flex flex-col gap-1.5">
+                                        @foreach ($deliveryChoices as $deliveryId => $deliveryName)
+                                            <label class="label justify-start gap-2 p-0 cursor-pointer">
+                                                <input type="checkbox" name="shipping_methods[]" value="{{ $deliveryId }}" class="checkbox checkbox-sm" @checked(in_array((string) $deliveryId, $offeredDeliveries, true))>
+                                                <span class="label-text whitespace-normal">{{ $deliveryName }}</span>
+                                            </label>
+                                        @endforeach
+                                    </div>
+                                    <p class="label whitespace-normal">{{ __('None ticked — whatever the delivery.') }}</p>
+                                </fieldset>
+                            @endif
+                        </div>
+                        <p class="text-xs opacity-60 max-w-3xl">
+                            {{ __('A method narrowed here is left out of the checkout for everybody else, and the list changes as the customer picks a delivery or ticks a company. A manager placing an order sees every method and is warned about this one.') }}
+                        </p>
+                    </div>
+                </section>
+
+                {{-- What paying this way adds to the bill (PLAN §66) — a company
+                     paying by invoice, a card fee. A percent and an amount at
+                     once; a discount for paying a certain way is
+                     a cart promotion with the "Payment method" condition. --}}
+                <section class="card bg-base-100 border border-base-300">
+                    <div class="card-body gap-4">
+                        <h3 class="font-semibold">{{ __('Payment surcharge') }}</h3>
+                        <div class="grid md:grid-cols-2 gap-4 max-w-2xl">
+                            <fieldset class="fieldset p-0"><legend class="fieldset-legend">{{ __('Percent') }}</legend>
+                                <label class="input input-bordered w-full">
+                                    <input name="surcharge_percent" type="number" step="0.01" min="0" max="100" class="grow"
+                                           value="{{ old('surcharge_percent', $method->surcharge_percent ? $method->surcharge_percent / 100 : '') }}">
+                                    <span class="opacity-50">%</span>
+                                </label>
+                            </fieldset>
+                            <fieldset class="fieldset p-0"><legend class="fieldset-legend">{{ __('Plus a fixed amount') }}</legend>
+                                <label class="input input-bordered w-full">
+                                    <input name="surcharge_fixed" type="number" step="0.01" min="0" class="grow"
+                                           value="{{ old('surcharge_fixed', $method->surcharge_fixed ? $method->surcharge_fixed / 100 : '') }}">
+                                    <span class="opacity-50">{{ shop_currency() }}</span>
+                                </label>
+                            </fieldset>
+                            <fieldset class="fieldset p-0"><legend class="fieldset-legend">{{ __('The percent is of') }}</legend>
+                                <select name="surcharge_base" class="select select-bordered w-full">
+                                    @foreach (\Torgash\Checkout\Orders\PaymentSurcharge::BASES as $surchargeBase => $surchargeBaseLabel)
+                                        <option value="{{ $surchargeBase }}" @selected(old('surcharge_base', $method->surcharge_base ?? 'goods') === $surchargeBase)>{{ __($surchargeBaseLabel) }}</option>
+                                    @endforeach
+                                </select>
+                            </fieldset>
+                        </div>
+
+                        {{-- Two places, two answers: a shop may keep the list of
+                             methods quiet and name the line in the bill, or the
+                             other way round. --}}
+                        <h4 class="text-sm font-semibold mt-1">{{ __('Where the customer sees it') }}</h4>
+                        <div class="grid md:grid-cols-2 gap-4 max-w-2xl">
+                            <fieldset class="fieldset p-0"><legend class="fieldset-legend">{{ __('In the list of payment methods') }}</legend>
+                                <select name="surcharge_display" class="select select-bordered w-full">
+                                    @foreach (\Torgash\Checkout\Orders\PaymentSurcharge::DISPLAYS as $surchargeDisplay => $surchargeDisplayLabel)
+                                        <option value="{{ $surchargeDisplay }}" @selected(old('surcharge_display', $method->surcharge_display ?? 'percent') === $surchargeDisplay)>{{ __($surchargeDisplayLabel) }}</option>
+                                    @endforeach
+                                </select>
+                            </fieldset>
+                            <fieldset class="fieldset p-0"><legend class="fieldset-legend">{{ __('In the order total') }}</legend>
+                                <select name="surcharge_in_totals" class="select select-bordered w-full">
+                                    @foreach (\Torgash\Checkout\Orders\PaymentSurcharge::IN_TOTALS as $surchargeInTotals => $surchargeInTotalsLabel)
+                                        <option value="{{ $surchargeInTotals }}" @selected(old('surcharge_in_totals', $method->surcharge_in_totals ?? 'line') === $surchargeInTotals)>{{ __($surchargeInTotalsLabel) }}</option>
+                                    @endforeach
+                                </select>
+                                <p class="label text-xs opacity-60 whitespace-normal">{{ __('Without a line the surcharge is still in the total — the checkout, the confirmation and the invoice just do not name it. The order screen, the API and 1C always show it.') }}</p>
+                            </fieldset>
+                        </div>
+                        <div class="max-w-2xl">
+                            <x-admin.translatable-field name="surcharge_title" :label="__('Surcharge title')" :value="$method->surcharge_title ?? []" autocomplete="off"
+                                                        :placeholder="__('Payment surcharge')" />
+                        </div>
+                        <p class="text-xs opacity-60 max-w-3xl">
+                            {{ __('Added to the order as a line of its own. Taxes are not part of the base. Measured after every discount; an edit of a placed order recomputes it by the terms the order was placed under, and changing them here does not touch placed orders. For a discount for paying this way, make a cart promotion with the "Payment method" condition.') }}
+                        </p>
+                    </div>
+                </section>
             </div>
 
             <div class="flex flex-col gap-4">

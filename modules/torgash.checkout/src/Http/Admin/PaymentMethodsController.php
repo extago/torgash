@@ -9,6 +9,7 @@ use Illuminate\Validation\Rule;
 use Torgash\Checkout\Models\Order;
 use Torgash\Checkout\Models\PaymentMethod;
 use Torgash\Checkout\Orders\OneClick;
+use Torgash\Checkout\Orders\PaymentSurcharge;
 use Torgash\Media\ImageProcessor;
 
 class PaymentMethodsController extends Controller
@@ -219,6 +220,20 @@ class PaymentMethodsController extends Controller
             // error, not the processor's exception.
             'deposit_type' => ['nullable', Rule::in(['', 'fixed', 'percent'])],
             'deposit_value' => ['nullable', 'numeric', 'min:0', $request->input('deposit_type') === 'percent' ? 'max:99' : 'max:100000000'],
+            // The surcharge (PLAN §66): a percent with up to two places and a
+            // fixed amount in the books' currency, both at once.
+            'surcharge_percent' => ['nullable', 'numeric', 'min:0', 'max:100'],
+            'surcharge_fixed' => ['nullable', 'numeric', 'min:0', 'max:100000000'],
+            'surcharge_base' => ['nullable', Rule::in(array_keys(PaymentSurcharge::BASES))],
+            'surcharge_title' => ['nullable', 'string', 'max:190'],
+            'surcharge_display' => ['nullable', Rule::in(array_keys(PaymentSurcharge::DISPLAYS))],
+            'surcharge_in_totals' => ['nullable', Rule::in(array_keys(PaymentSurcharge::IN_TOTALS))],
+            // Whom it is offered to (PLAN §66, stage 3).
+            'buyers' => ['nullable', Rule::in(array_keys(PaymentMethod::BUYERS))],
+            'customer_groups' => 'nullable|array',
+            'customer_groups.*' => ['string', Rule::in(array_keys(\Torgash\Catalog\Support\Assortment::choices()))],
+            'shipping_methods' => 'nullable|array',
+            'shipping_methods.*' => ['string', Rule::in(array_map('strval', array_keys((array) hook_filter('checkout.shipping_methods.choices', []))))],
             'logo' => ['nullable', 'image', 'mimetypes:'.implode(',', array_keys(ImageProcessor::ALLOWED_MIME))],
         ]);
 
@@ -240,6 +255,18 @@ class PaymentMethodsController extends Controller
             // in the books' minor units, or a whole percent. Nothing typed is
             // "the whole order online", which is every method until now.
             ...$this->deposit($validated),
+            'surcharge_percent' => (int) round((float) ($validated['surcharge_percent'] ?? 0) * 100),
+            'surcharge_fixed' => (int) round((float) ($validated['surcharge_fixed'] ?? 0) * 100),
+            'surcharge_base' => $validated['surcharge_base'] ?? 'goods',
+            'surcharge_title' => put_translation($method->surcharge_title, $validated['surcharge_title'] ?? null) ?: null,
+            'surcharge_display' => $validated['surcharge_display'] ?? 'percent',
+            'surcharge_in_totals' => $validated['surcharge_in_totals'] ?? 'line',
+            // A form without the card (the list's switch) keeps what is there.
+            ...($request->boolean('availability_set') ? [
+                'buyers' => $validated['buyers'] ?? 'all',
+                'customer_groups' => array_values(array_unique($validated['customer_groups'] ?? [])) ?: null,
+                'shipping_methods' => array_values(array_unique($validated['shipping_methods'] ?? [])) ?: null,
+            ] : []),
         ];
     }
 

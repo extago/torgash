@@ -8,7 +8,7 @@
                 <button type="button" class="btn btn-sm" x-on:click="pick({{ $popularPlace->id }})">{{ $popularPlace->t('name') }}</button>
             @else
                 <button type="button" class="btn btn-sm"
-                        x-on:click="$dispatch('choose-place', @js(['id' => $popularPlace->id, 'label' => $popularPlace->label(), 'name' => (string) $popularPlace->t('name')]))">{{ $popularPlace->t('name') }}</button>
+                        x-on:click="$dispatch('choose-place', @js(['id' => $popularPlace->id, 'label' => $popularPlace->label(), 'name' => (string) $popularPlace->t('name'), 'country' => $popularPlace->country]))">{{ $popularPlace->t('name') }}</button>
             @endif
         @endforeach
     </div>

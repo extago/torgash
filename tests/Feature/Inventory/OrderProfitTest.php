@@ -54,7 +54,7 @@ class OrderProfitTest extends TestCase
             ->assertSee('Assembly');
 
         $line = app(Profit::class)->forOrders([$order->id])[$order->id];
-        $this->assertSame(['goods' => 1000_00, 'delivery' => 50_00, 'cost' => 600_00, 'unknown' => 0, 'expenses' => 200_50, 'income' => 30_00], array_diff_key($line, ['profit' => 1]));
+        $this->assertSame(['goods' => 1000_00, 'delivery' => 50_00, 'surcharge' => 0, 'cost' => 600_00, 'unknown' => 0, 'expenses' => 200_50, 'income' => 30_00], array_diff_key($line, ['profit' => 1]));
         $this->assertSame(1000_00 + 50_00 - 600_00 - 200_50 + 30_00, $line['profit']);
 
         // What the customer pays is untouched.
@@ -87,6 +87,19 @@ class OrderProfitTest extends TestCase
         $line = app(Profit::class)->forOrders([$a->id])[$a->id];
         $this->assertSame(1200_00, $line['cost']);
         $this->assertSame(10_00, $line['expenses']);
+    }
+
+    public function test_a_payment_surcharge_is_the_shops_income_and_a_carrier_paid_delivery_is_not(): void
+    {
+        $order = $this->sale(1);
+        $order->update(['payment_surcharge' => 100_00, 'shipping_to_carrier' => true, 'shipping_carrier_cost' => 80_00, 'total' => 1100_00]);
+
+        $line = app(Profit::class)->forOrders([$order->id])[$order->id];
+        $this->assertSame([0, 100_00, 1000_00 + 100_00 - 600_00], [$line['delivery'], $line['surcharge'], $line['profit']]);
+
+        $this->get('http://localhost/admin/orders/'.$order->order_number)->assertOk()->assertSee(__('Payment surcharge'));
+        $this->get('http://localhost/admin/inventory/profit?from='.now()->toDateString().'&to='.now()->toDateString())
+            ->assertOk()->assertSee(admin_price(1100_00));
     }
 
     public function test_the_period_adds_up_its_sales(): void

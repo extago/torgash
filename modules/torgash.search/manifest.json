@@ -16,11 +16,18 @@
     },
     "settings": [
         {
+            "key": "search_short_descriptions",
+            "type": "checkbox",
+            "default": true,
+            "label": "Search in short descriptions",
+            "help": "The short description written under the product's name counts after the name and the characteristics. Off: a word that is only there finds nothing. Changing this rebuilds the index."
+        },
+        {
             "key": "search_descriptions",
             "type": "checkbox",
             "default": true,
-            "label": "Search in descriptions too",
-            "help": "The description counts least of all fields, but it does count: a word that is only in the description still finds the product, after everything that has it in the name. Off: only names, SKUs, brands and marked characteristics. Changing this rebuilds the index."
+            "label": "Search in full descriptions",
+            "help": "The full description counts least of all fields, but it does count: a word that is only there still finds the product, after everything that has it in the name. Changing this rebuilds the index."
         },
         {
             "key": "min_chars",

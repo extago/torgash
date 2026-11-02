@@ -26,6 +26,9 @@ class TaxResolver
     /** @var array<int, list<Tax>> product_id => taxes, once answered */
     protected array $memo = [];
 
+    /** @var array<int, list<Tax>> payment method id => the taxes its surcharge carries */
+    protected array $methods = [];
+
     /** @var array<int, true> ids announced by prime() but not looked up yet */
     protected array $pending = [];
 
@@ -44,6 +47,24 @@ class TaxResolver
         $this->load($ids);
 
         return $this->memo[$productId];
+    }
+
+    /**
+     * The taxes a payment method's surcharge carries (PLAN §66) — only the
+     * ones named on the method; none named is none charged.
+     *
+     * @return list<Tax>
+     */
+    public function forPaymentMethod(?int $methodId): array
+    {
+        if (! $methodId) {
+            return [];
+        }
+
+        return $this->methods[$methodId] ??= array_values(array_filter(array_map(
+            fn ($taxId) => $this->all()[(int) $taxId] ?? null,
+            DB::table('m_taxes_payment_method_tax')->where('payment_method_id', $methodId)->pluck('tax_id')->all(),
+        )));
     }
 
     /** @return list<Tax> */

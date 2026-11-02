@@ -49,6 +49,9 @@
 
         const opener = target.closest('[data-open-dialog]');
         if (opener) {
+            // An opener inside a <summary> (a filter block's "i") must not
+            // also fold the block it heads.
+            if (opener.closest('summary')) event.preventDefault();
             document.getElementById(opener.dataset.openDialog)?.showModal();
             return;
         }

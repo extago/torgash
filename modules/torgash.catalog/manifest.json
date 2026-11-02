@@ -239,6 +239,13 @@
             "help": "The picture, the name, the price and the buy button at the end of the right column, staying on screen once the buy panel has scrolled away. On a computer; a phone has its own bar. Its button sends the panel's own form — a product with options still to choose is scrolled to instead."
         },
         {
+            "key": "sticky_buy_card_top",
+            "type": "checkbox",
+            "default": false,
+            "label": "A \"Back to the top\" button under the small buy card",
+            "help": "Takes the customer back to the photos and the buy panel from far down the page, in one click."
+        },
+        {
             "key": "variation_image_hover",
             "type": "checkbox",
             "default": true,

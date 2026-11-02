@@ -42,9 +42,21 @@ class LocationStore
         return session($this->sessionKey)['postal'] ?? null;
     }
 
+    /**
+     * The country asked, or — when a town was picked with none (the "your
+     * town" window, an older session) — the one that town is in: the form's
+     * country box otherwise read "Select a country" over a chosen Dnipro.
+     */
     public function country(): ?string
     {
-        return session($this->sessionKey)['country'] ?? null;
+        $stored = session($this->sessionKey)['country'] ?? null;
+        if ($stored) {
+            return $stored;
+        }
+
+        $placeId = $this->placeId();
+
+        return $placeId ? Location::forPlace($placeId)->country : null;
     }
 
     /**
@@ -63,11 +75,15 @@ class LocationStore
         $town = trim((string) $request->input('city', '')) ?: null;
         $country = strtoupper(trim((string) $request->input('country', ''))) ?: null;
 
+        $location = $this->build($placeId, $postal, $country);
+
+        // The town settles the country (build()), and the session keeps THAT
+        // answer, so the next page's box shows it.
         session([$this->sessionKey => [
             'place_id' => $placeId,
             'postal' => $postal,
             'town' => $town,
-            'country' => $country,
+            'country' => $location->country ?? $country,
         ]]);
 
         // "The customer has named a town" — the same announcement a geo page
@@ -86,7 +102,7 @@ class LocationStore
             ]);
         }
 
-        return $this->build($placeId, $postal, $country);
+        return $location;
     }
 
     /**

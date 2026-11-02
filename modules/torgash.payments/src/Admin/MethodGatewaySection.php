@@ -88,9 +88,12 @@ class MethodGatewaySection
                 continue;
             }
 
-            $config[$name] = $type === 'checkbox'
-                ? $request->boolean("gateway_config.{$key}.{$name}")
-                : $value;
+            $config[$name] = match ($type) {
+                'checkbox' => $request->boolean("gateway_config.{$key}.{$name}"),
+                // Only a value the field offers; anything else is its default.
+                'select' => array_key_exists((string) $value, $field['options'] ?? []) ? (string) $value : ($field['default'] ?? null),
+                default => $value,
+            };
         }
 
         $binding->fill([

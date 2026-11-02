@@ -113,6 +113,7 @@ class ExchangeScreenController extends Controller
             'shipped' => (string) setting('torgash.commerceml', 'sale_status_shipped', 'shipped'),
             'guestDomain' => (string) setting('torgash.commerceml', 'sale_guest_domain', ''),
             'deliveryGuid' => (string) setting('torgash.commerceml', 'sale_delivery_guid', ''),
+            'surchargeGuid' => (string) setting('torgash.commerceml', 'sale_surcharge_guid', ''),
             // What has actually passed, newest first: the answer to "has 1C
             // taken this one", which no setting can give.
             'recent' => OrderSync::with('order')->latest('id')->limit(20)->get(),
@@ -129,6 +130,7 @@ class ExchangeScreenController extends Controller
             'sale_status_shipped' => 'nullable|string',
             'sale_guest_domain' => 'nullable|string|max:190',
             'sale_delivery_guid' => 'nullable|string|max:190',
+            'sale_surcharge_guid' => 'nullable|string|max:190',
         ]);
 
         $settings->set('torgash.commerceml', 'sale_enabled', $request->boolean('sale_enabled'));
@@ -139,6 +141,7 @@ class ExchangeScreenController extends Controller
         $settings->set('torgash.commerceml', 'sale_status_shipped', $validated['sale_status_shipped'] ?? '');
         $settings->set('torgash.commerceml', 'sale_guest_domain', trim($validated['sale_guest_domain'] ?? ''));
         $settings->set('torgash.commerceml', 'sale_delivery_guid', trim($validated['sale_delivery_guid'] ?? ''));
+        $settings->set('torgash.commerceml', 'sale_surcharge_guid', trim($validated['sale_surcharge_guid'] ?? ''));
 
         return back()->with('status', __('Saved.'));
     }

@@ -7,7 +7,7 @@ use Illuminate\Support\Facades\DB;
 
 /**
  * What an order earned (PLAN §42): the goods after their discounts plus the
- * delivery charged, minus what the goods cost (their batches, FIFO), minus the
+ * delivery and the payment surcharge charged, minus what the goods cost (their batches, FIFO), minus the
  * order's own expenses, plus its extra income. Taxes are not taken off — the
  * report says so — and units nobody priced are COUNTED, never costed at zero.
  *
@@ -18,7 +18,7 @@ class Profit
 {
     /**
      * @param  list<int>  $orderIds
-     * @return array<int, array{goods: int, delivery: int, cost: int, unknown: int, expenses: int, income: int, profit: int}>
+     * @return array<int, array{goods: int, delivery: int, surcharge: int, cost: int, unknown: int, expenses: int, income: int, profit: int}>
      */
     public function forOrders(array $orderIds): array
     {
@@ -27,7 +27,7 @@ class Profit
         }
 
         $orders = DB::table('m_checkout_orders')->whereIn('id', $orderIds)
-            ->get(['id', 'subtotal', 'discount_amount', 'shipping_cost'])->keyBy('id');
+            ->get(['id', 'subtotal', 'discount_amount', 'shipping_cost', 'payment_surcharge'])->keyBy('id');
         $costs = $this->costs(fn (Builder $q) => $q->whereIn(DB::raw(self::OWNER), $orderIds))->keyBy('order_id');
         $own = $this->own(fn (Builder $q) => $q->whereIn('order_id', $orderIds))->keyBy('order_id');
 
@@ -41,6 +41,7 @@ class Profit
             $out[$id] = $this->line(
                 (int) $order->subtotal - (int) $order->discount_amount,
                 (int) $order->shipping_cost,
+                (int) $order->payment_surcharge,
                 $costs->get($id),
                 $own->get($id),
             );
@@ -52,17 +53,17 @@ class Profit
     /**
      * The same numbers summed over every order a query selects.
      *
-     * @return array{goods: int, delivery: int, cost: int, unknown: int, expenses: int, income: int, profit: int, orders: int}
+     * @return array{goods: int, delivery: int, surcharge: int, cost: int, unknown: int, expenses: int, income: int, profit: int, orders: int}
      */
     public function totals(Builder $orders): array
     {
         $ids = (clone $orders)->select('m_checkout_orders.id');
 
-        $sums = (clone $orders)->selectRaw('count(*) as n, coalesce(sum(subtotal - discount_amount), 0) as goods, coalesce(sum(shipping_cost), 0) as delivery')->first();
+        $sums = (clone $orders)->selectRaw('count(*) as n, coalesce(sum(subtotal - discount_amount), 0) as goods, coalesce(sum(shipping_cost), 0) as delivery, coalesce(sum(payment_surcharge), 0) as surcharge')->first();
         $cost = $this->costs(fn (Builder $q) => $q->whereIn(DB::raw(self::OWNER), $ids), grouped: false)->first();
         $own = $this->own(fn (Builder $q) => $q->whereIn('order_id', $ids), grouped: false)->first();
 
-        return $this->line((int) $sums->goods, (int) $sums->delivery, $cost, $own) + ['orders' => (int) $sums->n];
+        return $this->line((int) $sums->goods, (int) $sums->delivery, (int) $sums->surcharge, $cost, $own) + ['orders' => (int) $sums->n];
     }
 
     /** What an order's labels have been, most used first — the form's suggestions. */
@@ -72,11 +73,14 @@ class Profit
             ->groupBy('label')->orderByDesc('n')->limit(30)->pluck('label')->all();
     }
 
-    protected function line(int $goods, int $delivery, ?object $cost, ?object $own): array
+    protected function line(int $goods, int $delivery, int $surcharge, ?object $cost, ?object $own): array
     {
         $line = [
             'goods' => $goods,
             'delivery' => $delivery,
+            // A payment method's surcharge (PLAN §66) is the shop's money too;
+            // a delivery paid to the carrier is 0 here and stays out.
+            'surcharge' => $surcharge,
             // Unit costs are price units (PLAN §65); the order's cost is an amount.
             'cost' => price_scale()->amount((int) ($cost->cost ?? 0)),
             'unknown' => (int) ($cost->unknown ?? 0),
@@ -84,7 +88,7 @@ class Profit
             'income' => (int) ($own->income ?? 0),
         ];
 
-        return $line + ['profit' => $goods + $delivery - $line['cost'] - $line['expenses'] + $line['income']];
+        return $line + ['profit' => $goods + $delivery + $surcharge - $line['cost'] - $line['expenses'] + $line['income']];
     }
 
     /**

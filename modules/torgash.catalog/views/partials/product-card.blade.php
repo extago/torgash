@@ -124,7 +124,7 @@
     @if (($cardShortDescription ?? '') !== '')
         {{-- Two lines, clamped: past that a card stops being a card.
              How many characteristics reach it is a setting. --}}
-        <div @class(['text-xs opacity-50 leading-snug line-clamp-2', 'torgash-card-inline' => $cardPanel])>{{ $cardShortDescription }}</div>
+        <div @class(['text-xs opacity-50 leading-snug line-clamp-2 text-balance', 'torgash-card-inline' => $cardPanel])>{{ $cardShortDescription }}</div>
     @endif
     {{-- "In stock" is the shop's simplest possible answer, and a
          module that knows more may give a better one — "at the shop

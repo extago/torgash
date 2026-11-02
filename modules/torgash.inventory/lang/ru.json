@@ -124,5 +124,6 @@
     "pcs": "шт",
     "Stock document costs": "Цены в складских документах",
     "Batch costs": "Себестоимость партий",
-    "Movement costs": "Себестоимость движений"
+    "Movement costs": "Себестоимость движений",
+    "Payment surcharge": "Наценка за способ оплаты"
 }

@@ -26,6 +26,8 @@
         <span class="whitespace-nowrap {{ $option->pending_quote ? 'text-xs opacity-70' : 'font-semibold' }}">
             @if ($option->pending_quote)
                 {{ __('priced by hand') }}
+            @elseif ($carrierText = \Torgash\Checkout\Shipping\CarrierPaid::forOption($option, fn (int $a) => admin_price($a, $order->currency_code)))
+                <span class="text-xs opacity-70">{{ $carrierText }}</span>
             @else
                 {{ $option->cost > 0 ? admin_price($option->cost, $order->currency_code) : __('Free') }}
             @endif

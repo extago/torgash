@@ -1247,5 +1247,12 @@
     "Product prices": "Цены товаров",
     "Quantity prices": "Цены за количество",
     "Price type prices": "Цены по типам цен",
-    "Price history": "История цен"
+    "Price history": "История цен",
+    "Explanation for customers": "Пояснение для покупателей",
+    "Customers open it in a window from an “i” beside the characteristic. Leave empty for no icon.": "Покупатель откроет его в окне по значку «i» рядом с характеристикой. Пусто — значка нет.",
+    "In the filter": "В фильтре",
+    "What is it": "Что это",
+    "Back to the top": "Наверх",
+    "A \"Back to the top\" button under the small buy card": "Кнопка «Наверх» под маленькой карточкой покупки",
+    "Takes the customer back to the photos and the buy panel from far down the page, in one click.": "Одним нажатием возвращает покупателя из глубины страницы к фото и панели покупки."
 }

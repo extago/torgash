@@ -155,6 +155,7 @@ class BranchPickerTest extends TestCase
 
         $this->assertCount(1, $offers);
         $this->assertSame('branch', $offers[0]->key);
+        $this->assertFalse($offers[0]->needsAddress, 'a branch is the address — no street asked');
         $this->assertSame('torgash.novaposhta::checkout.warehouses', $offers[0]->fieldsView);
         // Nothing ticked means every kind of pickup point, locker included —
         // which kind is a tick on the method, not a variant of it.

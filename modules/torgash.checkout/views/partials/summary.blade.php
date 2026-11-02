@@ -6,7 +6,13 @@
      one that also writes the order — is the point. --}}
 @php
     $totals = app(\Torgash\Checkout\Totals::class);
-    $extraLines = $totals->extra($cart, $quote, request()->input('payment_method_id') ?: old('payment_method_id'));
+    // The method the customer has picked — or, on the first drawing, the one
+    // the form has ticked for them: its surcharge (PLAN §66) is in the bill
+    // from the start, not after the first click.
+    // A re-quote passes the method that counts as chosen NOW (PLAN §66:
+    // the one asked for may have just stopped being offered).
+    $summaryMethodId = $summaryMethodChosen ?? (request()->input('payment_method_id') ?: old('payment_method_id') ?: null);
+    $extraLines = $totals->extra($cart, $quote, $summaryMethodId ? (string) $summaryMethodId : null);
     $couponManager = app(\Torgash\Checkout\CouponManager::class);
     $coupon = $couponManager->current();
 @endphp
@@ -54,6 +60,8 @@
                 —
             @elseif ($quote->shippingPending())
                 {{ __('cost confirmed separately') }}
+            @elseif ($carrierText = \Torgash\Checkout\Shipping\CarrierPaid::forOption($quote->selected, fn (int $a) => format_price($a, exact: true)))
+                <span class="text-xs opacity-70">{{ $carrierText }}</span>
             @else
                 {{ $quote->shippingCost() > 0 ? format_price($quote->shippingCost(), exact: true) : __('Free') }}
             @endif
@@ -61,7 +69,9 @@
     </div>
     @endif
 
-    @foreach ($extraLines as $line)
+    {{-- A line the shop chose not to name (a payment surcharge kept inside
+         the total, PLAN §66) is summed below, just not drawn. --}}
+    @foreach (array_filter($extraLines, fn ($line) => empty($line['hidden'])) as $line)
         <div class="flex justify-between text-sm">
             <span class="opacity-70">{{ $line['label'] }}</span>
             <span>{{ format_price($line['amount'], exact: true) }}</span>
@@ -86,7 +96,6 @@
         // Part online now, the rest on delivery — when the method picked
         // takes it that way (PLAN §40.10/1); the same question PlaceOrder
         // asks, so the summary promises what the order will hold.
-        $summaryMethodId = request()->input('payment_method_id') ?: old('payment_method_id') ?: ($summaryDefaultMethod ?? null);
         $summaryMethod = $summaryMethodId ? \Torgash\Checkout\Models\PaymentMethod::find($summaryMethodId) : null;
         $summaryDeposit = $summaryMethod && hook_filter('checkout.payment_method.online', false, ['method' => $summaryMethod])
             ? $summaryMethod->depositFor($leftToPay)

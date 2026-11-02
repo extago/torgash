@@ -12,6 +12,7 @@ use Torgash\Payments\Gateway;
 use Torgash\Payments\Models\Transaction;
 use Torgash\Payments\PaymentEvent;
 use Torgash\Payments\PaymentFailed;
+use Torgash\Payments\Receipt;
 
 /**
  * WayForPay, through its invoice API (`CREATE_INVOICE`).
@@ -73,7 +74,7 @@ class WayForPayGateway implements AnswersCallback, Gateway
                 'type' => 'number',
                 'help' => 'After this the invoice expires and the customer needs a new one — which the Pay link on their order gives them. Default 24.',
             ],
-        ];
+        ] + Receipt::fields();
     }
 
     public function currencies(): ?array
@@ -110,14 +111,18 @@ class WayForPayGateway implements AnswersCallback, Gateway
         $domain = $this->domain($config);
         $date = now()->timestamp;
 
-        // One line — the order itself. WayForPay signs the product list and
-        // checks it against the amount; the order's own lines are in the shop's
-        // books, the invoice is in the charge currency, and a list that misses
-        // the total by a kopeck of conversion rounding is a refused invoice.
-        $products = [
+        // WayForPay signs the product list and checks it against the amount,
+        // so the lines are `Receipt`'s — built to add up to the charge in its
+        // own currency — or, when there are none, one line: the order itself.
+        $lines = Receipt::lines($order, $charge, $config);
+        $products = $lines === null ? [
             'productName' => [__('Order :number', ['number' => $order->order_number])],
             'productCount' => [1],
             'productPrice' => [$amount],
+        ] : [
+            'productName' => array_column($lines, 'name'),
+            'productCount' => array_column($lines, 'qty'),
+            'productPrice' => array_map(fn (array $line) => Client::amount($line['price']), $lines),
         ];
 
         $payload = [

@@ -87,7 +87,19 @@ class Feature extends Model
 
     protected function casts(): array
     {
-        return ['name' => 'array', 'shown_in' => 'array', 'is_color' => 'bool', 'in_short_description' => 'bool', 'hide_single_in_stock' => 'bool'];
+        return ['name' => 'array', 'description' => 'array', 'explain_on_product' => 'bool', 'explain_in_filter' => 'bool', 'shown_in' => 'array', 'is_color' => 'bool', 'in_short_description' => 'bool', 'hide_single_in_stock' => 'bool'];
+    }
+
+    /**
+     * What the shop wrote to explain this characteristic, if it is offered in
+     * that place ('product' or 'filter'); '' = no "i" there.
+     */
+    public function explanation(string $where): string
+    {
+        $offered = $where === 'filter' ? ($this->explain_in_filter ?? true) : ($this->explain_on_product ?? true);
+        $text = (string) $this->t('description');
+
+        return $offered && trim(strip_tags($text, '<img>')) !== '' ? $text : '';
     }
 
     public function group(): BelongsTo

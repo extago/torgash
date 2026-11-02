@@ -2,6 +2,7 @@
 
 namespace Tests\Feature\Shipping;
 
+use App\Models\User;
 use Tests\TestCase;
 use Torgash\Checkout\Shipping\Location;
 use Torgash\Checkout\Shipping\Package;
@@ -25,6 +26,23 @@ class MethodNeedsAddressTest extends TestCase
 
         $this->assertFalse($options->firstWhere('method.id', $collect->id)->needs_address);
         $this->assertTrue($options->firstWhere('method.id', $courier->id)->needs_address);
+    }
+
+    /** It used to be forced on for a carrier's method: the box un-ticked itself on save. */
+    public function test_a_carrier_method_keeps_the_box_as_saved(): void
+    {
+        $method = ShippingMethod::create([
+            'name' => ['en' => 'Nova Poshta'], 'provider' => 'nova_poshta', 'price_mode' => 'carrier',
+            'position' => 91, 'enabled' => true, 'needs_address' => true,
+        ]);
+        $admin = User::factory()->create();
+        $admin->assignRole('admin');
+
+        $this->actingAs($admin)->put('http://localhost/admin/shipping/methods/'.$method->id, [
+            'name' => 'Nova Poshta', 'enabled' => '1', 'needs_address' => '0',
+        ]);
+
+        $this->assertFalse($method->fresh()->needs_address);
     }
 
     public function test_the_seeded_pickup_needs_no_address(): void

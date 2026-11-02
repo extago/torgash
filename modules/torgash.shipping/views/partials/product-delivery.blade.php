@@ -54,9 +54,11 @@
                             <span class="text-xs">{!! $deliveryNote !!}</span>
                         @endif
                     </span>
-                    <span @class(['whitespace-nowrap text-end shrink-0', 'text-xs opacity-70' => $deliveryOption->pending_quote, 'text-success font-medium' => ! $deliveryOption->pending_quote && $deliveryOption->cost <= 0])>
+                    <span @class(['whitespace-nowrap text-end shrink-0', 'text-xs opacity-70' => $deliveryOption->pending_quote, 'text-success font-medium' => ! $deliveryOption->pending_quote && ! ($deliveryOption->to_carrier ?? false) && $deliveryOption->cost <= 0])>
                         @if ($deliveryOption->pending_quote)
                             {{ __('cost confirmed separately') }}
+                        @elseif ($carrierText = \Torgash\Checkout\Shipping\CarrierPaid::forOption($deliveryOption, fn (int $a) => format_price($a)))
+                            <span class="text-xs opacity-70">{{ $carrierText }}</span>
                         @else
                             {{ $deliveryOption->cost > 0 ? format_price($deliveryOption->cost) : __('Free') }}
                         @endif

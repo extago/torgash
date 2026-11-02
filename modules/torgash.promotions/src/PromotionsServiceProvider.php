@@ -355,9 +355,10 @@ class PromotionsServiceProvider extends ServiceProvider
         hook_listen('checkout.extra_totals', function (array $lines, array $context) {
             $cartLines = $this->basketLines($context['cart']->items());
 
-            // Only the printed shape: `target`/`scope` are for laying a cut over
-            // a placed order's lines and mean nothing to a basket's summary.
-            return array_merge($lines, array_map(fn (array $line) => array_intersect_key($line, array_flip(['code', 'label', 'amount', 'included'])), app(CartPricing::class)->lines(
+            // The printed shape and what the cut was taken from (`target`: a
+            // payment surcharge measured with the delivery reads it); `scope`
+            // is for laying a cut over a placed order's lines.
+            return array_merge($lines, array_map(fn (array $line) => array_intersect_key($line, array_flip(['code', 'label', 'amount', 'included', 'target'])), app(CartPricing::class)->lines(
                 $cartLines,
                 (int) $context['subtotal'],
                 (int) $context['shipping_cost'],
@@ -523,6 +524,9 @@ class PromotionsServiceProvider extends ServiceProvider
                     'label' => $row->name,
                     'amount' => (int) $row->amount,
                     'included' => false,
+                    // What it cut — a payment surcharge measured "with the
+                    // delivery" must not count a free delivery twice.
+                    'target' => ($row->target ?? null) === 'shipping' ? 'shipping' : 'goods',
                 ];
             }
 

@@ -103,15 +103,16 @@
 
                         {{-- Collection, "we will call you": nothing is driven
                              anywhere, and demanding a street only gets a
-                             made-up one. A carrier answers this per variant
-                             itself, so the box is for methods without one. --}}
+                             made-up one. On a carrier's method the carrier
+                             still answers per variant, the box can only take
+                             the question away. --}}
                         <label class="label cursor-pointer justify-start gap-2 p-0">
                             <input type="hidden" name="needs_address" value="0">
                             <input type="checkbox" name="needs_address" value="1" class="checkbox checkbox-sm"
                                    @checked(old('needs_address', $method->needs_address ?? true))>
                             <span class="label-text">{{ __('The customer gives a delivery address') }}</span>
                         </label>
-                        <div class="text-xs opacity-60 -mt-2">{{ __('Off for collection from the shop: checkout then asks only for a name and a phone. A method priced by a carrier ignores it — the carrier says it per variant.') }}</div>
+                        <div class="text-xs opacity-60 -mt-2">{{ __('Off for collection from the shop: checkout then asks only for a name and a phone. On a carrier\'s method, on means "when the variant needs one": delivery to a branch or a pickup point asks for no street, a courier does.') }}</div>
 
                         {{-- The product page's "Delivery" block (ProductEstimate);
                              checkout offers the method either way. --}}
@@ -122,6 +123,18 @@
                             <span class="label-text">{{ __('Show on the product page') }}</span>
                         </label>
                         <div class="text-xs opacity-60 -mt-2">{{ __('In the "Delivery" block under the buy button. Off for a method like "Decide with the manager": the customer still chooses it at checkout.') }}</div>
+
+                        {{-- PLAN §66, stage 4: a cost the shop CHARGES, or one
+                             it only tells — the carrier's money, not in the
+                             total, the statistics or what a bank is asked for. --}}
+                        <fieldset class="fieldset p-0 max-w-md">
+                            <legend class="fieldset-legend">{{ __('Delivery cost') }}</legend>
+                            <select name="paid_to_carrier" class="select select-bordered w-full">
+                                <option value="0" @selected(! old('paid_to_carrier', $method->paid_to_carrier ?? false))>{{ __('Charged — in the order total') }}</option>
+                                <option value="1" @selected((bool) old('paid_to_carrier', $method->paid_to_carrier ?? false))>{{ __('For information — paid to the carrier on receipt') }}</option>
+                            </select>
+                        </fieldset>
+                        <div class="text-xs opacity-60 -mt-2">{{ __('A cost for information is not in the order total, the shop\'s statistics or the online payment: the rates only work out an estimate for the customer ("≈ 80, paid on receipt"). A free rate stays free — the shop pays.') }}</div>
 
                         {{-- A method being created has no zones tab yet (rates
                              need an id), so the pricing choice lives here until

@@ -100,6 +100,12 @@ class Order extends Model
             'paid_total' => 'int',
             'prepaid_total' => 'int',
             'deposit_amount' => 'int',
+            // The payment method's surcharge (PLAN §66, Orders\PaymentSurcharge).
+            'payment_surcharge' => 'int',
+            // The recipient pays the carrier (PLAN §66, stage 4; Shipping\CarrierPaid).
+            'shipping_to_carrier' => 'bool',
+            'shipping_carrier_cost' => 'int',
+            'payment_surcharge_terms' => 'array',
             'charge_rate' => 'float',
             'payment_rate' => 'float',
             'paid_at' => 'datetime',

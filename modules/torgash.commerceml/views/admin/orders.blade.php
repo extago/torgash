@@ -118,6 +118,14 @@
                         {{ __('Delivery goes into the document as a service line, or the lines do not add up to the total. This is the fallback identifier; a delivery method can carry its own on its own page, which is what a shop with courier delivery in 1C and a parcel carrier outside it needs.') }}
                     </div>
                 </fieldset>
+
+                <fieldset class="fieldset p-0 max-w-sm">
+                    <legend class="fieldset-legend">{{ __('Payment surcharge service identifier') }}</legend>
+                    <input name="sale_surcharge_guid" value="{{ $surchargeGuid }}" class="input input-bordered w-full">
+                    <div class="text-xs opacity-50">
+                        {{ __("A payment method's surcharge goes into the document as a service line too, under this 1C nomenclature id. Empty — under the engine's own id, which 1C is told about once.") }}
+                    </div>
+                </fieldset>
             </div>
         </div>
 

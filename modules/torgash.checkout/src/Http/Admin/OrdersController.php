@@ -303,6 +303,25 @@ class OrdersController extends Controller
 
         OrderLog::record($order, 'Payment method: :from → :to', ['from' => $was ?? '—', 'to' => $order->payment_method_name]);
 
+        // Another method, another surcharge (PLAN §66): the order takes the
+        // NEW method's terms, and its total moves with them — the page is
+        // drawn again, since the bill is not inside this little form.
+        $terms = \Torgash\Checkout\Orders\PaymentSurcharge::termsOf($method);
+        if ($terms || $order->payment_surcharge_terms) {
+            $before = (int) $order->payment_surcharge;
+            $order->payment_surcharge_terms = $terms;
+            app(\Torgash\Checkout\Orders\OrderTotals::class)->recalculate($order);
+
+            if ((int) $order->payment_surcharge !== $before) {
+                OrderLog::record($order, 'Payment surcharge: :from → :to', [
+                    'from' => $order->money($before),
+                    'to' => $order->money((int) $order->payment_surcharge),
+                ]);
+            }
+
+            return response('')->header('HX-Refresh', 'true');
+        }
+
         return view('torgash.checkout::admin.orders._payment', [
             'order' => $order,
             'paymentMethods' => PaymentMethod::where('enabled', true)->orderBy('position')->get(),

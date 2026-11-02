@@ -85,12 +85,17 @@ class OrderDeliveryController extends Controller
         $wasMethod = $order->shipping_method_name;
 
         // An admin may still overrule the quoted price; leaving the field empty
-        // keeps whatever the quote said.
-        $cost = ($validated['shipping_cost'] ?? '') === ''
-            ? ($option->cost ?? 0)
+        // keeps whatever the quote said. For a delivery the recipient pays
+        // the carrier for (PLAN §66, stage 4) the typed number is the
+        // carrier's estimate, and the shop charges nothing.
+        $typed = ($validated['shipping_cost'] ?? '') === ''
+            ? null
             : (int) round((float) str_replace(',', '.', (string) $validated['shipping_cost']) * 100);
+        $toCarrier = (bool) ($option->to_carrier ?? false);
+        $cost = $toCarrier ? 0 : ($typed ?? ($option->cost ?? 0));
+        $carrierCost = $toCarrier ? ($typed ?? ($option->carrier_cost ?? null)) : null;
 
-        DB::transaction(function () use ($order, $validated, $option, $details, $cost, $quote, $wasMethod) {
+        DB::transaction(function () use ($order, $validated, $option, $details, $cost, $toCarrier, $carrierCost, $quote, $wasMethod) {
             // Address parts are written only when the screen sent them, so a
             // partial request can never blank an address it was not editing.
             foreach (['address_line', 'city', 'country'] as $field) {
@@ -103,6 +108,8 @@ class OrderDeliveryController extends Controller
             $order->place_id = $quote->location->placeId;
             $order->shipping_method_name = $option->label;
             $order->shipping_cost = $cost;
+            $order->shipping_to_carrier = $toCarrier;
+            $order->shipping_carrier_cost = $carrierCost;
             $order->shipping_details = $details ?? [];
             $order->save();
 

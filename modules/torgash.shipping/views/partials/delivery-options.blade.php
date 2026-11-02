@@ -16,6 +16,8 @@
         <span class="whitespace-nowrap {{ $option->pending_quote ? 'text-xs opacity-70' : '' }}">
             @if ($option->pending_quote)
                 {{ __('cost confirmed separately') }}
+            @elseif ($carrierText = \Torgash\Checkout\Shipping\CarrierPaid::forOption($option, fn (int $a) => format_price($a)))
+                <span class="text-xs opacity-70">{{ $carrierText }}</span>
             @else
                 {{ $option->cost > 0 ? format_price($option->cost) : __('Free') }}
             @endif

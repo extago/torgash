@@ -188,6 +188,28 @@ class SaleTest extends TestCase
      * A shop with courier delivery in 1C and a parcel carrier outside it needs
      * the identifier per method, not per shop.
      */
+    /** PLAN §66: the surcharge is a service under 1C's own id; a carrier-paid delivery is said, not billed. */
+    public function test_the_surcharge_goes_as_a_service_and_a_delivery_paid_to_the_carrier_as_a_note(): void
+    {
+        $this->set(['sale_surcharge_guid' => 'svc-surcharge']);
+
+        $this->order([
+            'status' => 'processing', 'total' => 220_00,
+            'payment_surcharge' => 20_00, 'payment_surcharge_terms' => ['percent' => 10_00, 'fixed' => 0, 'base' => 'goods', 'title' => ['en' => 'Invoice fee'], 'shown' => true],
+            'shipping_method_name' => 'Nova Poshta', 'shipping_to_carrier' => true, 'shipping_carrier_cost' => 80_00,
+        ]);
+
+        $raw = $this->askForOrders();
+        $document = simplexml_load_string($raw)->{'Документ'};
+        $lines = iterator_to_array($document->{'Товары'}->{'Товар'}, false);
+
+        $this->assertSame(['p-drill', 'svc-surcharge'], array_map(fn ($line) => (string) $line->{'Ид'}, $lines), 'no delivery line');
+        $this->assertSame('20.00', (string) $lines[1]->{'Сумма'});
+        $this->assertSame('220.00', (string) $document->{'Сумма'});
+        $this->assertStringContainsString('Доставка оплачивается получателем', $raw);
+        $this->assertStringContainsString('80.00', $raw);
+    }
+
     public function test_a_delivery_method_can_carry_its_own_1c_service(): void
     {
         $this->set(['sale_service_guids' => ['7' => 'svc-courier']]);

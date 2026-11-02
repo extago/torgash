@@ -240,6 +240,32 @@ class SearchEngineTest extends TestCase
     // ---------------------------------------------------------------- helpers
 
     /** @return list<int> */
+    /** Short and full descriptions are each the shop's own tick. */
+    public function test_short_and_full_descriptions_are_searched_by_their_own_settings(): void
+    {
+        $product = $this->product('SRCH-DESC', ['en' => 'Plain kettle'], [
+            'short_description' => ['en' => 'Quiet boiling'],
+            'description' => ['en' => '<p>Borosilicate glass</p>'],
+        ]);
+
+        $this->assertSame([$product->id], $this->search('quiet'));
+        $this->assertSame([$product->id], $this->search('borosilicate'));
+
+        app(SettingsManager::class)->set('torgash.search', 'search_short_descriptions', false);
+        app(SettingsManager::class)->set('torgash.search', 'search_descriptions', false);
+        app(Pending::class)->flush();
+
+        $this->assertSame([], $this->search('quiet'));
+        $this->assertSame([], $this->search('borosilicate'));
+        $this->assertSame([$product->id], $this->search('kettle'), 'the name still finds it');
+
+        app(SettingsManager::class)->set('torgash.search', 'search_short_descriptions', true);
+        app(Pending::class)->flush();
+
+        $this->assertSame([$product->id], $this->search('quiet'));
+        $this->assertSame([], $this->search('borosilicate'));
+    }
+
     protected function search(string $q): array
     {
         return app(Engine::class)->search($q)->ids;

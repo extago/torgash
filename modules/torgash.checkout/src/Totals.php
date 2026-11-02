@@ -3,6 +3,8 @@
 namespace Torgash\Checkout;
 
 use Torgash\Cart\CartManager;
+use Torgash\Checkout\Models\PaymentMethod;
+use Torgash\Checkout\Orders\PaymentSurcharge;
 use Torgash\Checkout\Shipping\Quote;
 
 /**
@@ -35,6 +37,49 @@ class Totals
      * @return list<array{code: string, label: string, amount: int, included: bool}>
      */
     public function extra(CartManager $cart, Quote $quote, ?string $paymentMethodId = null): array
+    {
+        $lines = $this->otherLines($cart, $quote, $paymentMethodId);
+        $method = $paymentMethodId ? PaymentMethod::find($paymentMethodId) : null;
+        $surcharge = $this->surchargeOf($method, $quote, $lines);
+
+        if ($surcharge <= 0) {
+            return $lines;
+        }
+
+        // The payment method's own surcharge (PLAN §66) first: it is part of
+        // what is bought. Whatever it owes on top of itself — its taxes — is
+        // asked for apart, once its amount is known: the lines above were
+        // worked out before it could be.
+        return hook_filter('checkout.surcharge.extra_totals', [PaymentSurcharge::line($surcharge, PaymentSurcharge::termsOf($method)), ...$lines], [
+            'cart' => $cart,
+            'method' => $method,
+            'amount' => $surcharge,
+            'location' => $quote->location,
+        ]);
+    }
+
+    /**
+     * What `$method` would add to this basket — measured after every other
+     * line has said what it cuts (a promotion's discount, of the goods or of
+     * the delivery). `$lines` is extra()'s own, when the caller has them.
+     *
+     * @param  list<array<string, mixed>>|null  $lines
+     */
+    public function surchargeOf(?PaymentMethod $method, Quote $quote, ?array $lines = null, ?CartManager $cart = null): int
+    {
+        $terms = PaymentSurcharge::termsOf($method);
+
+        if (! $terms) {
+            return 0;
+        }
+
+        $lines ??= $cart ? $this->otherLines($cart, $quote, (string) $method->id) : [];
+
+        return PaymentSurcharge::amount($terms, $quote->payable(), $quote->shippingCost(), $lines);
+    }
+
+    /** @return list<array<string, mixed>> */
+    protected function otherLines(CartManager $cart, Quote $quote, ?string $paymentMethodId): array
     {
         return hook_filter('checkout.extra_totals', [], [
             'cart' => $cart,

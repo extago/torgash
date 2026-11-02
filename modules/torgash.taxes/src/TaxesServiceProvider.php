@@ -37,6 +37,7 @@ class TaxesServiceProvider extends ServiceProvider
     public function boot(): void
     {
         $this->productForm();
+        $this->paymentMethodForm();
         $this->prices();
         $this->totals();
 
@@ -102,6 +103,46 @@ class TaxesServiceProvider extends ServiceProvider
                     'product_id' => $product->id,
                     'tax_id' => (int) $taxId,
                 ]);
+            }
+        });
+    }
+
+    /**
+     * Which taxes a payment method's surcharge carries (PLAN §66) — chosen on
+     * the method's own form, the way a gateway is configured there.
+     */
+    protected function paymentMethodForm(): void
+    {
+        hook_listen('checkout.payment_method.extra', function (string $value, array $context) {
+            if (! app(TaxResolver::class)->active()) {
+                return $value;
+            }
+
+            $method = $context['method'];
+
+            return $value.view('torgash.taxes::partials.payment-method-field', [
+                'taxes' => app(TaxResolver::class)->all(),
+                'selected' => $method->exists
+                    ? DB::table('m_taxes_payment_method_tax')->where('payment_method_id', $method->id)->pluck('tax_id')->map(fn ($id) => (int) $id)->all()
+                    : [],
+            ])->render();
+        });
+
+        hook_listen('checkout.payment_method.saved', function (array $context) {
+            $request = $context['request'];
+
+            // Absent field (another form, the list's switch) must not wipe them.
+            if (! $request->has('surcharge_taxes_shown')) {
+                return;
+            }
+
+            $methodId = $context['method']->id;
+            DB::table('m_taxes_payment_method_tax')->where('payment_method_id', $methodId)->delete();
+
+            foreach (array_unique(array_map('intval', (array) $request->input('surcharge_taxes', []))) as $taxId) {
+                if (isset(app(TaxResolver::class)->all()[$taxId])) {
+                    DB::table('m_taxes_payment_method_tax')->insert(['payment_method_id' => $methodId, 'tax_id' => $taxId]);
+                }
             }
         });
     }
@@ -212,6 +253,52 @@ class TaxesServiceProvider extends ServiceProvider
             return $lines;
         });
 
+        // The surcharge's own taxes (PLAN §66), once checkout knows what it
+        // came to — folded into the line of the same tax, so the bill says
+        // "VAT 20%" once.
+        hook_listen('checkout.surcharge.extra_totals', function (array $lines, array $context) {
+            if (! app(TaxResolver::class)->active()) {
+                return $lines;
+            }
+
+            $charged = app(TaxCalculator::class)->withSurcharge(
+                [],
+                (int) $context['amount'],
+                $context['method']?->id,
+                $context['location'] ?? app(Destinations::class)->visitor(),
+            );
+
+            foreach ($charged as $line) {
+                $code = 'tax:'.$line->tax->code;
+                $at = array_search($code, array_column($lines, 'code'), true);
+
+                if ($at !== false) {
+                    $lines[$at]['amount'] += $line->amount;
+
+                    continue;
+                }
+
+                $lines[] = [
+                    'code' => $code,
+                    'label' => $line->included() ? __('incl. :tax', ['tax' => $line->label()]) : $line->label(),
+                    'amount' => $line->amount,
+                    'included' => $line->included(),
+                ];
+            }
+
+            return $lines;
+        });
+
+        // The surcharge of a placed order came to a new amount (an edit, a
+        // changed method): its taxes are part of the snapshot, written again.
+        hook_listen('checkout.order.surcharge_recalculated', function (array $context) {
+            $order = $context['order'];
+
+            DB::table('m_taxes_order_taxes')->where('order_id', $order->id)->delete();
+            $this->snapshot($order);
+            app(\Torgash\Checkout\Support\OrderRows::class)->forget((int) $order->id);
+        });
+
         // Written from the ORDER's own lines, not from the cart: by the time
         // this runs the cart may already be gone, and an order has to be able
         // to explain itself years later from what it stored.
@@ -299,13 +386,22 @@ class TaxesServiceProvider extends ServiceProvider
             return;
         }
 
-        $lines = app(TaxCalculator::class)->forCart(
-            $this->orderLines($order),
-            (int) $order->discount_amount,
-            (int) $order->shipping_cost,
-            // Where the order WENT, read from the order — an edit in the
-            // admin re-snapshots at the customer's address, not the admin's.
-            Destinations::forOrder($order),
+        $where = Destinations::forOrder($order);
+        $calculator = app(TaxCalculator::class);
+        $lines = $calculator->withSurcharge(
+            $calculator->forCart(
+                $this->orderLines($order),
+                (int) $order->discount_amount,
+                (int) $order->shipping_cost,
+                // Where the order WENT, read from the order — an edit in the
+                // admin re-snapshots at the customer's address, not the admin's.
+                $where,
+            ),
+            // The payment method's surcharge carries the method's own taxes
+            // (PLAN §66) — the method the order is sold under now.
+            (int) $order->payment_surcharge,
+            $order->payment_method_id ? (int) $order->payment_method_id : null,
+            $where,
         );
 
         foreach ($lines as $line) {

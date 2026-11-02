@@ -248,7 +248,13 @@
                         <label class="label cursor-pointer justify-start gap-3 p-0">
                             <input type="radio" name="payment_method_id" value="{{ $createMethod->id }}" class="radio radio-sm"
                                    @checked((string) old('payment_method_id', $paymentMethods->first()?->id) === (string) $createMethod->id)>
-                            <span>{{ $createMethod->t('name') }}</span>
+                            <span class="flex flex-col">
+                                <span>{{ $createMethod->t('name') }}</span>
+                                {{-- Narrowed at the checkout (PLAN §66) — a manager may still pick it. --}}
+                                @if ($createNote = $createMethod->restrictionNote())
+                                    <span class="text-xs text-warning">{{ $createNote }}</span>
+                                @endif
+                            </span>
                         </label>
                     @empty
                         <p class="text-sm text-error">{{ __('There is no enabled payment method to place an order with.') }}</p>

@@ -19,4 +19,9 @@
             <option value="{{ $method->id }}" @selected($current && $current->id === $method->id)>{{ $method->t('name') }}</option>
         @endforeach
     </select>
+    {{-- A method this order would not have been offered at the checkout
+         (PLAN §66): said, not refused — the manager decides. --}}
+    @foreach ($current ? $current->refusalsForOrder($order) : [] as $paymentRefusal)
+        <p class="text-xs text-warning">{{ $paymentRefusal }}</p>
+    @endforeach
 </form>

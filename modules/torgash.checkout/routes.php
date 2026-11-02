@@ -32,6 +32,9 @@ Route::get('/checkout/minimum', [CheckoutController::class, 'minimum'])->name('c
 Route::get('/checkout', [CheckoutController::class, 'create'])->name('checkout.create');
 Route::post('/checkout', [CheckoutController::class, 'store'])->name('checkout.store');
 Route::post('/checkout/quote', [DeliveryController::class, 'quote'])->name('checkout.quote');
+// The bill again when the payment method changes and there is no delivery
+// step to re-quote it (a shop without torgash.shipping) — PLAN §66.
+Route::post('/checkout/summary', [CheckoutController::class, 'summary'])->name('checkout.summary');
 Route::get('/checkout/{order:order_number}/confirmation', [CheckoutController::class, 'confirmation'])->name('checkout.confirmation');
 Route::get('/checkout/{order:order_number}/invoice', [CheckoutController::class, 'invoice'])->name('checkout.invoice');
 

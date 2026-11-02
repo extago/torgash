@@ -11,6 +11,7 @@ use Torgash\Payments\Gateway;
 use Torgash\Payments\Models\Transaction;
 use Torgash\Payments\PaymentEvent;
 use Torgash\Payments\PaymentFailed;
+use Torgash\Payments\Receipt;
 
 /**
  * Stripe, through a hosted Checkout Session.
@@ -60,6 +61,22 @@ class StripeGateway implements Gateway
         return 'Stripe';
     }
 
+    /** @return list<array<string, mixed>> */
+    protected function lineItems(Order $order, Charge $charge, array $config, string $currency): array
+    {
+        $lines = Receipt::lines($order, $charge, $config)
+            ?? [['name' => __('Order :number', ['number' => $order->order_number]), 'qty' => 1, 'price' => $charge->amount]];
+
+        return array_map(fn (array $line) => [
+            'quantity' => $line['qty'],
+            'price_data' => [
+                'currency' => $currency,
+                'unit_amount' => $line['price'],
+                'product_data' => ['name' => $line['name'] !== '' ? $line['name'] : __('Order :number', ['number' => $order->order_number])],
+            ],
+        ], $lines);
+    }
+
     public function fields(): array
     {
         return [
@@ -78,7 +95,7 @@ class StripeGateway implements Gateway
                 'type' => 'checkbox',
                 'help' => 'The card is held and nothing is taken until you press Capture on the order. Stripe lets a hold stand for about seven days.',
             ],
-        ];
+        ] + Receipt::fields();
     }
 
     /** Stripe takes well over a hundred currencies; the ones it cannot are refused in start(). */
@@ -135,17 +152,10 @@ class StripeGateway implements Gateway
                 'capture_method' => ! empty($config['hold']) ? 'manual' : null,
                 'description' => __('Order :number', ['number' => $order->order_number]),
             ]),
-            // One line, the order: its own lines are in the shop's books and
-            // the charge may be in another currency, and Stripe's total is the
-            // sum of its lines.
-            'line_items' => [[
-                'quantity' => 1,
-                'price_data' => [
-                    'currency' => strtolower($currency),
-                    'unit_amount' => $charge->amount,
-                    'product_data' => ['name' => __('Order :number', ['number' => $order->order_number])],
-                ],
-            ]],
+            // Stripe's total is the sum of its lines, so they are `Receipt`'s —
+            // built to add up to the charge in its own currency — or, when
+            // there are none, one line: the order.
+            'line_items' => $this->lineItems($order, $charge, $config, strtolower($currency)),
             'customer_email' => $order->email ?: null,
             'locale' => in_array($order->locale, self::CHECKOUT_LOCALES, true) ? $order->locale : 'auto',
             'success_url' => $back,

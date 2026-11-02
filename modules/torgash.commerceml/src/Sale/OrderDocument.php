@@ -286,7 +286,7 @@ class OrderDocument
             }
 
             $xml->open('product');
-            $xml->el('id', 'torgash:'.($line['code'] ?? 'extra'));
+            $xml->el('id', $this->extraId((string) ($line['code'] ?? 'extra')));
             $xml->el('name', $line['label'] ?? $line['code'] ?? '');
             $this->unit($xml);
             $xml->el('price_per_unit', $this->money($order, $amount));
@@ -295,6 +295,20 @@ class OrderDocument
             $xml->open('attributes')->attribute(Tags::of('item_type'), Tags::of('service'))->close();
             $xml->close();
         }
+    }
+
+    /**
+     * 1C's own nomenclature id for an extra line, where the shop gave one —
+     * the payment surcharge (PLAN §66) is the service an accountant most
+     * often has a card for — else ours, which 1C is told about once.
+     */
+    protected function extraId(string $code): string
+    {
+        $own = $code === \Torgash\Checkout\Orders\PaymentSurcharge::CODE
+            ? trim((string) setting('torgash.commerceml', 'sale_surcharge_guid', ''))
+            : '';
+
+        return $own !== '' ? $own : 'torgash:'.$code;
     }
 
     /** Pieces. The shop sells no fractional units, and 796 is what OKEI calls one. */
@@ -383,6 +397,16 @@ class OrderDocument
         if ($order->merged_into_id) {
             $xml->attribute(Tags::of('cancelled'), 'true');
             $xml->attribute('Объединен с заказом', (string) \Torgash\Checkout\Models\Order::withTrashed()->whereKey($order->merged_into_id)->value('order_number'));
+        }
+
+        // A delivery the recipient pays the carrier for (PLAN §66): not on the
+        // document — it is not the shop's money — but said, with the estimate,
+        // so a manager in 1C knows why the line is missing.
+        if ($order->shipping_to_carrier) {
+            $xml->attribute('Доставка оплачивается получателем', 'true');
+            if ($order->shipping_carrier_cost !== null) {
+                $xml->attribute('Стоимость доставки справочно', $this->money($order, (int) $order->shipping_carrier_cost));
+            }
         }
 
         // What the customer was actually quoted and charged, when it was not the

@@ -37,7 +37,7 @@
             <fieldset class="fieldset p-0">
                 <legend class="fieldset-legend">{{ __('Cost') }}</legend>
                 <input name="shipping_cost" type="number" step="0.01" min="0" required
-                       value="{{ number_format($order->shipping_cost / 100, 2, '.', '') }}"
+                       value="{{ number_format(($order->shipping_to_carrier ? (int) $order->shipping_carrier_cost : $order->shipping_cost) / 100, 2, '.', '') }}"
                        class="input input-bordered w-full" placeholder="0.00">
             </fieldset>
             <button class="btn btn-primary">{{ __('Save') }}</button>

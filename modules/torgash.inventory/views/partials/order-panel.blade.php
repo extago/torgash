@@ -12,6 +12,9 @@
                 @if ($profit['delivery'])
                     <span class="opacity-70">{{ __('Delivery charged') }}</span><span class="tabular-nums text-end">{{ $order->adminMoney($profit['delivery']) }}</span>
                 @endif
+                @if ($profit['surcharge'] ?? 0)
+                    <span class="opacity-70">{{ __('Payment surcharge') }}</span><span class="tabular-nums text-end">{{ $order->adminMoney($profit['surcharge']) }}</span>
+                @endif
                 <span class="opacity-70">{{ __('Cost of the goods') }}</span><span class="tabular-nums text-end">−{{ $order->adminMoney($profit['cost']) }}</span>
                 @foreach ($rows as $row)
                     <span class="opacity-70 flex items-center gap-1 min-w-0">

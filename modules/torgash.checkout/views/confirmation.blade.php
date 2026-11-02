@@ -131,13 +131,17 @@
                             @if ($order->hasDelivery())
                                 <div class="flex justify-between gap-4">
                                     <span class="opacity-70">{{ __('Shipping') }}</span>
-                                    <span @class(['text-success' => $order->shipping_cost <= 0])>{{ $order->shipping_cost > 0 ? $order->money($order->shipping_cost) : __('Free') }}</span>
+                                    @if ($carrierText = \Torgash\Checkout\Shipping\CarrierPaid::forOrder($order, fn (int $a) => $order->money($a)))
+                                        <span class="text-end text-sm opacity-80">{{ $carrierText }}</span>
+                                    @else
+                                        <span @class(['text-success' => $order->shipping_cost <= 0])>{{ $order->shipping_cost > 0 ? $order->money($order->shipping_cost) : __('Free') }}</span>
+                                    @endif
                                 </div>
                             @endif
                             {{-- Lines other modules charged, read back from what this order
                                  was actually charged rather than recalculated at today's
                                  rates. An "included" line is already inside Total. --}}
-                            @foreach (hook_filter('checkout.order.extra_totals', [], ['order' => $order]) as $line)
+                            @foreach (array_filter(hook_filter('checkout.order.extra_totals', [], ['order' => $order]), fn ($line) => empty($line['hidden'])) as $line)
                                 <div class="flex justify-between gap-4 {{ $line['included'] ? 'opacity-60' : '' }}">
                                     <span class="opacity-70">{{ $line['label'] }}</span>
                                     <span>{{ $order->money($line['amount']) }}</span>

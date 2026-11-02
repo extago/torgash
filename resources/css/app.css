@@ -726,6 +726,20 @@ input[type="search"]::-webkit-search-cancel-button:hover {
     .torgash-card-grid[data-cols="6"] > :nth-child(6n):last-child { border-bottom-right-radius: var(--card-radius); }
 }
 
+/* A window (<x-modal>) darkens the page the way the menus do: one fade of
+   200ms, the shade and the window together. daisyUI fades the shade over
+   300ms while the window itself appears in 100ms, so the box was there
+   before the page had finished darkening and the opening looked like a
+   stutter beside the catalogue menu's single fade. */
+.modal[open], .modal.modal-open {
+    background-color: oklch(0% 0 0 / .4);
+    transition: visibility 0s allow-discrete, background-color 0s, opacity .2s ease-out;
+}
+.modal {
+    transition: overlay .15s allow-discrete, visibility .15s allow-discrete, background-color .15s ease-in, opacity .15s ease-in;
+}
+.modal > .modal-box { transition-duration: .2s; }
+
 /* The frosted buttons in the photograph's corner (catalog.product.card_corner).
    Any module's .btn put there looks the same without knowing it. */
 .torgash-card-corner .btn {
@@ -2256,6 +2270,14 @@ html { overflow-x: clip; }
    and the same 170 bytes on each were a third of the home page's HTML.
    In the base layer, so `fill-current` & co. on an icon still win — as
    they did over the presentation attributes this replaces. */
+/* A heading is balanced: its lines come out about equal instead of a full
+   line and one word left hanging on the next ("…алюминий, / фиолетовый").
+   In the base layer, so a `text-wrap` utility on one heading still wins.
+   Short descriptions under a name carry `text-balance` themselves. */
+@layer base {
+    h1, h2, h3, h4 { text-wrap: balance; }
+}
+
 @layer base {
     svg.lucide { fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
 }

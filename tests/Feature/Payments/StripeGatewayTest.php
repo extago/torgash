@@ -82,7 +82,9 @@ class StripeGatewayTest extends TestCase
                 && $b['payment_intent_data']['metadata']['order_id'] === (string) $order->id
                 && $b['payment_intent_data']['capture_method'] === 'manual'
                 && $b['line_items'][0]['price_data']['currency'] === 'uah'
-                && (int) $b['line_items'][0]['price_data']['unit_amount'] === 100_00;
+                // The order's own lines (Payments\Receipt): 2 x 50.
+                && (int) $b['line_items'][0]['quantity'] === 2
+                && (int) $b['line_items'][0]['price_data']['unit_amount'] === 50_00;
         });
 
         $this->assertSame('cs_test_1', Transaction::latest('id')->value('external_id'));

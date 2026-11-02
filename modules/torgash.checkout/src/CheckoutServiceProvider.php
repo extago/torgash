@@ -303,6 +303,18 @@ class CheckoutServiceProvider extends ServiceProvider
         });
         hook_listen('checkout.order.recalculated', fn (array $context) => app(Support\OrderRows::class)->forget((int) $context['order']->id));
 
+        // A placed order's payment surcharge (PLAN §66), from its own column —
+        // one line among its totals, so the total, the letters, the invoice,
+        // the admin and the API all print and sum it without knowing of it.
+        // Before the taxes and promotions: part of what is bought.
+        hook_listen('checkout.order.extra_totals', function (array $lines, array $context) {
+            $order = $context['order'];
+
+            return (int) $order->payment_surcharge > 0
+                ? [Orders\PaymentSurcharge::line((int) $order->payment_surcharge, $order->payment_surcharge_terms), ...$lines]
+                : $lines;
+        }, 5);
+
         // What must be true about an order, for whoever is watching. A filter
         // nobody fires when `torgash.guard` is not installed, so this is a
         // statement about our own data rather than a dependency on theirs.
@@ -640,6 +652,11 @@ class CheckoutServiceProvider extends ServiceProvider
             ['key' => 'subtotal', 'label' => 'Subtotal', 'get' => fn (Order $o) => $o->subtotal, 'set' => fn (Order $o, $v) => $o->subtotal = (int) $v],
             ['key' => 'discount_amount', 'label' => 'Discount', 'get' => fn (Order $o) => (int) $o->discount_amount, 'set' => fn (Order $o, $v) => $o->discount_amount = (int) $v],
             ['key' => 'shipping_cost', 'label' => 'Shipping', 'get' => fn (Order $o) => $o->shipping_cost, 'set' => fn (Order $o, $v) => $o->shipping_cost = (int) $v],
+            // PLAN §66: a delivery paid to the carrier (`shipping_cost` 0, the
+            // estimate beside it) and the payment method's surcharge.
+            ['key' => 'shipping_to_carrier', 'label' => 'Delivery paid to the carrier', 'get' => fn (Order $o) => $o->shipping_to_carrier ? 1 : 0, 'set' => fn (Order $o, $v) => $o->shipping_to_carrier = filter_var($v, FILTER_VALIDATE_BOOLEAN)],
+            ['key' => 'shipping_carrier_cost', 'label' => 'Delivery estimate', 'get' => fn (Order $o) => $o->shipping_carrier_cost, 'set' => fn (Order $o, $v) => $o->shipping_carrier_cost = ($v === null || $v === '') ? null : (int) $v],
+            ['key' => 'payment_surcharge', 'label' => 'Payment surcharge', 'get' => fn (Order $o) => (int) $o->payment_surcharge, 'set' => fn (Order $o, $v) => $o->payment_surcharge = (int) $v],
             ['key' => 'total', 'label' => 'Total', 'get' => fn (Order $o) => $o->total, 'set' => fn (Order $o, $v) => $o->total = (int) $v],
             ['key' => 'placed_at', 'label' => 'Placed at', 'get' => fn (Order $o) => $o->created_at?->toDateTimeString(), 'set' => null],
             [

@@ -137,6 +137,8 @@ class CdekProvider implements ShippingProvider
             fieldsView: $fields['view'],
             fieldsData: $fields['data'],
             meta: ['city_code' => $map->city_code, 'tariff_code' => $tariff],
+            // A pickup point is the address; only the courier needs a street.
+            needsAddress: $variant['delivery'] === 'door',
         )];
     }
 

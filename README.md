@@ -14,6 +14,12 @@ a phone, and a demo shop to look at while your own goods are not in yet.
 `INSTALL.md` inside it (`INSTALL.ru.md` по-русски). The documentation lives
 at [extago.com](https://extago.com/solutions/torgash/docs/).
 
+**For an AI agent writing an integration:** the whole API guide is one
+Markdown file, <https://extago.com/solutions/torgash/docs/api/index.md>
+(money, rounding, tokens, every resource, recipes). A running shop also
+describes itself: `/llms.txt` lists what it publishes and links its
+`/api/v2/openapi.json`, written from what that shop actually serves.
+
 ## What it is like to run
 
 - **The admin is one place, and it reads the same everywhere.** Every list

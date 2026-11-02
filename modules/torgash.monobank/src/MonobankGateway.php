@@ -9,6 +9,7 @@ use Torgash\Checkout\Orders\PaymentState;
 use Torgash\Payments\Gateway;
 use Torgash\Payments\Models\Transaction;
 use Torgash\Payments\Charge;
+use Torgash\Payments\Receipt;
 use Torgash\Payments\PaymentEvent;
 use Torgash\Payments\PaymentFailed;
 
@@ -65,7 +66,7 @@ class MonobankGateway implements Gateway
                 'type' => 'number',
                 'help' => 'After this the invoice expires and the customer needs a new one — which the Pay link on their order gives them. Default 24, maximum 720.',
             ],
-        ];
+        ] + Receipt::fields();
     }
 
     /**
@@ -134,7 +135,7 @@ class MonobankGateway implements Gateway
                 // Our order id, and the only place the callback may learn it.
                 'reference' => (string) $order->id,
                 'destination' => __('Order :number', ['number' => $order->order_number]),
-                'basketOrder' => $this->basket($order, $charge),
+                'basketOrder' => $this->basket($order, $charge, $config),
             ]),
             'redirectUrl' => route('checkout.confirmation', $order->order_number),
             'webHookUrl' => url('/payment/'.self::key().'/callback'),
@@ -173,48 +174,25 @@ class MonobankGateway implements Gateway
     }
 
     /**
-     * The lines, but only when they add up to what is being charged.
-     *
-     * The bank rejects a basket whose sum is not the invoice amount when
-     * fiscalisation is on, and our total is goods − discount + delivery + taxes.
-     * Delivery is a line we can add honestly; a discount spread across lines is
-     * arithmetic with a rounding argument in it, and getting it wrong means
-     * refused payments. So when it does not reconcile we send no basket at all,
-     * which is valid for every shop that is not fiscalising.
-     *
-     * Each line is converted into the charge currency the same way the total
-     * was, and the reconciliation is done AFTER converting: rounding every line
-     * separately can miss the total by a kopeck, and a basket that misses is
-     * worse than no basket.
+     * The basket — `Payments\Receipt`'s lines, which add up to the charge to
+     * the kopeck (the bank refuses one that does not when it fiscalises), or
+     * none at all. `sum` is the price of ONE unit and `total` the line's, as
+     * the bank documents it (qty=2, sum=2100, total=4200).
      *
      * @return list<array<string, mixed>>|null
      */
-    protected function basket(Order $order, Charge $charge): ?array
+    protected function basket(Order $order, Charge $charge, array $config = []): ?array
     {
-        $lines = [];
+        $lines = Receipt::lines($order, $charge, $config);
 
-        foreach ($order->items ?? [] as $item) {
-            $lines[] = array_filter([
-                'name' => (string) ($item['name'] ?? ''),
-                'qty' => (int) ($item['qty'] ?? 1),
-                'sum' => $order->chargeMinor((int) ($item['line_total'] ?? 0)),
-                'unit' => __('pcs'),
-                'code' => (string) ($item['sku'] ?? ''),
-            ]);
-        }
-
-        if ($order->shipping_cost > 0) {
-            $lines[] = [
-                'name' => $order->shipping_method_name ?: __('Delivery'),
-                'qty' => 1,
-                'sum' => $order->chargeMinor($order->shipping_cost),
-                'code' => 'delivery',
-            ];
-        }
-
-        $sum = array_sum(array_column($lines, 'sum'));
-
-        return $lines !== [] && $sum === $charge->amount ? $lines : null;
+        return $lines === null ? null : array_map(fn (array $line) => array_filter([
+            'name' => $line['name'],
+            'qty' => $line['qty'],
+            'sum' => $line['price'],
+            'total' => $line['total'],
+            'unit' => $line['kind'] === 'goods' ? __('pcs') : null,
+            'code' => $line['code'],
+        ], fn ($value) => $value !== null && $value !== ''), $lines);
     }
 
     // --------------------------------------------------------------- callback

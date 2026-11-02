@@ -229,6 +229,9 @@ class CheckoutController extends Controller
                 // Null when a carrier answered but named no price — the shop
                 // will quote it by hand, and a client must not print "free".
                 'cost' => $option->cost === null ? null : api_money((int) $option->cost),
+                // The recipient pays the carrier (PLAN §66): `cost` is 0, this is the estimate.
+                'paid_to_carrier' => (bool) ($option->to_carrier ?? false),
+                'carrier_cost' => ($option->to_carrier ?? false) && ($option->carrier_cost ?? null) !== null ? api_money((int) $option->carrier_cost) : null,
                 'delivery_time' => $option->delivery_time ?? null,
                 'needs_address' => $option->needs_address ?? true,
                 // A provider option that needs more from the customer (a branch
@@ -237,9 +240,13 @@ class CheckoutController extends Controller
                 'needs_fields' => (bool) ($option->fields_view ?? null),
                 'meta' => $option->meta ?? [],
             ])->values(),
-            'payment' => $placer->paymentMethods()->map(fn ($method) => [
+            // Only the ones offered to this order (PLAN §66) — the account's
+            // group and the delivery chosen so far; the API buys as a person.
+            'payment' => $placer->paymentMethods(null, $placer->offeredTo(null, $answers['shipping_method_id'] ?? null, $cart->needsDelivery()))->map(fn ($method) => [
                 'id' => $method->id,
                 'label' => $method->t('name'),
+                // What the method adds for this basket (PLAN §66), in `subtotal`'s units.
+                'surcharge' => api_money(app(\Torgash\Checkout\Totals::class)->surchargeOf($method, $quote, null, $cart)),
                 // What the bank will be asked in, when the method cannot take
                 // what the customer is shopping in.
                 'charged_in' => $method->chargeCurrencyFor(current_currency()),

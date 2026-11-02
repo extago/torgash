@@ -219,17 +219,18 @@
         @foreach ($order->discountLines() as $discountLine)
             <div class="flex justify-between w-56 text-success"><span>{{ $discountLine['label'] }}</span><span>&minus;{{ $order->adminMoney($discountLine['amount']) }}</span></div>
         @endforeach
-        <div class="flex justify-between w-56">
+        <div class="flex justify-between gap-3 w-56">
             <span class="opacity-60">{{ __('Shipping') }}</span>
-            <span class="{{ $order->deliveryPending() ? 'text-warning text-xs' : '' }}">
-                {{ $order->deliveryPending()
+            <span @class(['text-end', 'text-warning text-xs' => $order->deliveryPending(), 'text-xs opacity-80' => $order->shipping_to_carrier])>
+                {{ \Torgash\Checkout\Shipping\CarrierPaid::forOrder($order, fn (int $a) => $order->adminMoney($a)) ?? ($order->deliveryPending()
                     ? __('to be priced')
-                    : ($order->shipping_cost > 0 ? $order->adminMoney($order->shipping_cost) : __('Free')) }}
+                    : ($order->shipping_cost > 0 ? $order->adminMoney($order->shipping_cost) : __('Free'))) }}
             </span>
         </div>
         @foreach (hook_filter('checkout.order.extra_totals', [], ['order' => $order]) as $line)
             <div class="flex justify-between w-56 {{ $line['included'] ? 'opacity-60' : '' }}">
-                <span class="opacity-60">{{ $line['label'] }}</span><span>{{ $order->adminMoney($line['amount']) }}</span>
+                {{-- The staff see every line, and are told which the customer does not. --}}
+                <span class="opacity-60">{{ $line['label'] }}@if (! empty($line['hidden'])) <span class="text-xs" title="{{ __('Not shown to the customer: inside the total without a line of its own.') }}">({{ __('not shown to the customer') }})</span>@endif</span><span>{{ $order->adminMoney($line['amount']) }}</span>
             </div>
         @endforeach
         <div class="flex justify-between w-56 font-bold text-base"><span>{{ __('Total') }}</span><span>{{ $order->adminMoney($order->total) }}</span></div>

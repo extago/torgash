@@ -148,7 +148,9 @@ final class ManagerOrder
     {
         // Paid in the shop's own currency: the methods that can take it,
         // not the ones for whatever the admin was last browsing in.
-        return $this->orders->rules($quote, $shippingMethodId === null ? null : (string) $shippingMethodId, $cart->needsDelivery(), shop_currency());
+        // Whom a method is offered to (PLAN §66) is not held against the
+        // manager: the order screen warns, the manager decides.
+        return $this->orders->rules($quote, $shippingMethodId === null ? null : (string) $shippingMethodId, $cart->needsDelivery(), shop_currency(), restricted: false);
     }
 
     /**

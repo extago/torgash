@@ -89,5 +89,7 @@
     "Change status": "Сменить статус",
     "Clear selection": "Снять выделение",
     "Select all on this page": "Выбрать все на странице",
-    "selected": "выбрано"
+    "selected": "выбрано",
+    "Taxes on the surcharge": "Налоги на наценку",
+    "Charged on the surcharge alone, at the rate that applies where the goods go. A tax included in the price is inside the surcharge (the bill discloses it); one added on top is added to it. Only matters when the method has a surcharge.": "Начисляются только на наценку, по ставке места доставки. Налог «в цене» уже внутри наценки (в итоге он показан справочно), налог «сверху» добавляется к ней. Действует, только если у способа есть наценка."
 }

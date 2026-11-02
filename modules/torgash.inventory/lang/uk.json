@@ -124,5 +124,6 @@
     "pcs": "шт",
     "Stock document costs": "Ціни у складських документах",
     "Batch costs": "Собівартість партій",
-    "Movement costs": "Собівартість рухів"
+    "Movement costs": "Собівартість рухів",
+    "Payment surcharge": "Націнка за спосіб оплати"
 }

@@ -294,7 +294,19 @@ class ShippingOptions
     ): object {
         $method = $rate->method;
 
+        // The recipient pays the carrier (PLAN §66, stage 4): the shop charges
+        // nothing, the rate is the ESTIMATE of what the carrier will ask,
+        // and an unknown one waits for nobody — the carrier names it at the
+        // counter. A free rate stays free: the shop is paying it.
+        $toCarrier = (bool) ($method->paid_to_carrier ?? false) && ($pending !== null || $cost > 0);
+        $carrierCost = $toCarrier ? ($pending !== null ? null : $cost) : null;
+        if ($toCarrier) {
+            [$cost, $pending] = [0, null];
+        }
+
         return (object) [
+            'to_carrier' => $toCarrier,
+            'carrier_cost' => $carrierCost,
             'id' => $offer ? $method->id.':'.$offer->key : (string) $method->id,
             'offer_key' => $offer?->key,
             'provider' => $offer ? $method->provider : null,
@@ -313,7 +325,9 @@ class ShippingOptions
             // variant is not — or, for a method with no carrier, the method
             // itself says so (a plain "Pickup"). Checkout reads this to stop
             // demanding a street the order will never be taken to.
-            'needs_address' => $offer?->needsAddress ?? (bool) ($method->needs_address ?? true),
+            // The method's box can only take the question away: a carrier's
+            // variant that needs no street (a branch) needs none either way.
+            'needs_address' => (bool) ($method->needs_address ?? true) && ($offer?->needsAddress ?? true),
             'zone' => $zone,
             'pending_quote' => $pending !== null,
             'quote_reason' => $pending,

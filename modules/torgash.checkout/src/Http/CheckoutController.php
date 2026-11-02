@@ -50,11 +50,13 @@ class CheckoutController extends Controller
             ];
         }
 
+        $quote = $this->quote($cart, $coupons, $store->current(), old('shipping_method_id'));
+
         return view('torgash.checkout::form', [
             'cart' => $cart,
             // A basket of things that are not sent anywhere skips the step.
             'needsDelivery' => $cart->needsDelivery(),
-            'quote' => $this->quote($cart, $coupons, $store->current(), old('shipping_method_id')),
+            'quote' => $quote,
             'appliedCoupon' => $coupons->current(),
             'prefill' => $prefill,
             // The town picked on the cart page outranks the saved address: it
@@ -69,7 +71,9 @@ class CheckoutController extends Controller
             // their own (which the form says out loud). A method that can do
             // neither is not a choice, and offering it is offering a Pay button
             // that fails at the last step.
-            'paymentMethods' => $this->paymentMethods(),
+            // ...and offered to THIS order (PLAN §66): the buyer, the group,
+            // the delivery — drawn again by every re-quote.
+            'checkoutPayment' => app(PlaceOrder::class)->checkoutChoice(request(), $cart, $quote),
         ]);
     }
 
@@ -81,6 +85,22 @@ class CheckoutController extends Controller
         return view('torgash.checkout::partials.minimum', [
             'minimumPlace' => in_array($place, ['price', 'buy_box', 'after_buy_box'], true) ? $place : 'buy_box',
         ]);
+    }
+
+    /**
+     * The summary and the payment methods' surcharges, out of band — what the
+     * delivery step's re-quote draws, for a checkout that has no delivery
+     * step (PLAN §66).
+     */
+    public function summary(Request $request, CartManager $cart, CouponManager $coupons, LocationStore $store)
+    {
+        $quote = $this->quote($cart, $coupons, $store->fromRequest($request), $request->input('shipping_method_id'));
+        $choice = app(PlaceOrder::class)->checkoutChoice($request, $cart, $quote);
+
+        return response(
+            view('torgash.checkout::partials.summary', ['cart' => $cart, 'quote' => $quote, 'oob' => true, 'summaryMethodChosen' => $choice['chosen']])->render()
+            .view('torgash.checkout::partials.payment-methods', ['cart' => $cart, 'quote' => $quote, 'oob' => true, 'checkoutPayment' => $choice])->render()
+        );
     }
 
     public function store(Request $request, CartManager $cart, CouponManager $coupons, LocationStore $store, PlaceOrder $placer, FormGuard $guard)
@@ -118,7 +138,7 @@ class CheckoutController extends Controller
         $customFields = app(\Torgash\Checkout\Orders\CheckoutFields::class);
         $buyer = $request->input('buyer_type');
         $validated = $request->validate([
-            ...$placer->rules($quote, $request->input('shipping_method_id'), $cart->needsDelivery()),
+            ...$placer->rules($quote, $request->input('shipping_method_id'), $cart->needsDelivery(), buyer: $buyer),
             ...$customFields->rules($buyer, $request->input('shipping_method_id'), $cart->needsDelivery()),
         ]);
         $validated['fields'] = $customFields->answers((array) ($validated['fields'] ?? []), $buyer, $request->input('shipping_method_id'), $cart->needsDelivery());
@@ -287,17 +307,6 @@ class CheckoutController extends Controller
         );
     }
 
-    /**
-     * Which methods may be offered here — asked of PlaceOrder, which is also
-     * what validates the choice on submit. One list, one rule: a method shown
-     * on the screen is exactly a method the placement will accept.
-     *
-     * @return Collection<int, PaymentMethod>
-     */
-    protected function paymentMethods(): Collection
-    {
-        return app(PlaceOrder::class)->paymentMethods();
-    }
 
     /**
      * Three ways to be allowed to look at an order, and a signature is the

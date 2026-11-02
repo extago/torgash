@@ -23,6 +23,11 @@ class PaymentMethod extends Model implements HasMedia
             'currencies' => 'array',
             'enabled' => 'bool',
             'deposit_value' => 'int',
+            'surcharge_percent' => 'int',
+            'surcharge_fixed' => 'int',
+            'surcharge_title' => 'array',
+            'customer_groups' => 'array',
+            'shipping_methods' => 'array',
         ];
     }
 
@@ -105,6 +110,104 @@ class PaymentMethod extends Model implements HasMedia
     public function availableFor(string $code): bool
     {
         return $this->chargeCurrencyFor($code) !== null;
+    }
+
+    public const BUYERS = [
+        'all' => 'Anybody',
+        'person' => 'Private persons only',
+        'company' => 'Companies only',
+    ];
+
+    /**
+     * Why this method is not offered to such an order — an empty list when it
+     * is (PLAN §66). The checkout leaves it out; a manager placing an order
+     * is told, and decides.
+     *
+     * `$buyer` person | company (null = a person, as the form starts);
+     * `$customer` the catalogue's words for who is buying (guest,
+     * registered, group:<id> — customerTokens()); `$offerId` the delivery
+     * chosen ("method" or "method:offer"); `$needsDelivery` false for goods
+     * nobody sends.
+     *
+     * @param  list<string>  $customer
+     * @return list<string>
+     */
+    public function refusals(?string $buyer, array $customer, ?string $offerId, bool $needsDelivery = true): array
+    {
+        $reasons = [];
+
+        if (($this->buyers ?? 'all') !== 'all' && $this->buyers !== ($buyer ?: 'person')) {
+            $reasons[] = $this->buyers === 'company'
+                ? __('This payment method is for companies only.')
+                : __('This payment method is for private persons only.');
+        }
+
+        $groups = array_values(array_filter((array) ($this->customer_groups ?? [])));
+        if ($groups !== [] && array_intersect($customer, array_map('strval', $groups)) === []) {
+            $reasons[] = __('This payment method is not offered to this customer group.');
+        }
+
+        $methods = array_map('strval', array_filter((array) ($this->shipping_methods ?? [])));
+        if ($methods !== [] && ! ($needsDelivery && $offerId !== null && $offerId !== ''
+            && in_array(explode(':', $offerId, 2)[0], $methods, true))) {
+            $reasons[] = __('This payment method is not offered with this delivery.');
+        }
+
+        return $reasons;
+    }
+
+    /**
+     * Why this method would not be offered to that placed order — what the
+     * order screen warns a manager about (PLAN §66). The order's own answers:
+     * a company if it carries one, its customer's group, its delivery.
+     *
+     * @return list<string>
+     */
+    public function refusalsForOrder(Order $order): array
+    {
+        $offer = ((array) ($order->shipping_details ?? []))['shipping_method_id'] ?? null;
+
+        return $this->refusals(
+            filled($order->company_name) ? 'company' : 'person',
+            self::customerTokens($order->user_id ? \App\Models\User::find($order->user_id) : null),
+            $offer !== null ? (string) $offer : null,
+            $order->hasDelivery(),
+        );
+    }
+
+    /**
+     * What this method is narrowed to, in words — for a list a manager picks
+     * from before the order exists (the admin's new order).
+     */
+    public function restrictionNote(): ?string
+    {
+        $parts = [];
+
+        if (($this->buyers ?? 'all') !== 'all') {
+            $parts[] = __(self::BUYERS[$this->buyers] ?? $this->buyers);
+        }
+        if (array_filter((array) ($this->customer_groups ?? []))) {
+            $parts[] = __('some customer groups');
+        }
+        if (array_filter((array) ($this->shipping_methods ?? []))) {
+            $parts[] = __('some deliveries');
+        }
+
+        return $parts ? __('At the checkout: :what', ['what' => implode(', ', $parts)]) : null;
+    }
+
+    /**
+     * Who is buying, in the catalogue's words (Assortment): a guest, or an
+     * account and its group. No staff exception: a manager trying the
+     * checkout sees what a customer of their group would.
+     *
+     * @return list<string>
+     */
+    public static function customerTokens(?\App\Models\User $user): array
+    {
+        return $user
+            ? array_values(array_filter(['registered', $user->customer_group_id ? 'group:'.$user->customer_group_id : null]))
+            : ['guest'];
     }
 
     /**

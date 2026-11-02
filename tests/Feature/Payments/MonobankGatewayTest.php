@@ -149,16 +149,28 @@ class MonobankGatewayTest extends TestCase
         }
     }
 
-    public function test_a_basket_that_does_not_add_up_to_the_charge_is_not_sent(): void
+    public function test_a_discount_is_spread_over_the_goods_and_the_basket_still_adds_up(): void
     {
         Http::fake(['*' => Http::response(['invoiceId' => 'inv-3', 'pageUrl' => 'https://x'])]);
 
-        // Goods 100.00, delivery 7.50, but a 10.00 discount: the lines cannot
-        // reconcile without spreading it, so no basket goes at all rather than
-        // one the bank would refuse.
+        // Goods 100.00 (2 × 50), delivery 7.50, a 10.00 discount: the goods
+        // carry 90.00 — 45.00 each — and the basket is the charge to the kopeck.
         $order = $this->order(['shipping_cost' => 7_50, 'discount_amount' => 10_00, 'total' => 97_50]);
 
         app(MonobankGateway::class)->start($o = $order, Charge::for($o), ['token' => 't']);
+
+        Http::assertSent(function ($request) {
+            $basket = $request->data()['merchantPaymInfo']['basketOrder'];
+
+            return [[2, 45_00, 90_00], [1, 7_50, 7_50]] === array_map(fn ($l) => [$l['qty'], $l['sum'], $l['total']], $basket);
+        });
+    }
+
+    public function test_switched_off_on_the_binding_no_basket_goes(): void
+    {
+        Http::fake(['*' => Http::response(['invoiceId' => 'inv-5', 'pageUrl' => 'https://x'])]);
+
+        app(MonobankGateway::class)->start($o = $this->order(), Charge::for($o), ['token' => 't', 'receipt_items' => false]);
 
         Http::assertSent(fn ($request) => ! isset($request->data()['merchantPaymInfo']['basketOrder']));
     }
@@ -174,8 +186,9 @@ class MonobankGatewayTest extends TestCase
         Http::assertSent(function ($request) {
             $basket = $request->data()['merchantPaymInfo']['basketOrder'];
 
+            // `sum` is ONE unit's price, as the bank documents it.
             return count($basket) === 2
-                && $basket[0]['sum'] === 100_00
+                && [$basket[0]['qty'], $basket[0]['sum'], $basket[0]['total']] === [2, 50_00, 100_00]
                 && $basket[1]['sum'] === 7_50;
         });
     }

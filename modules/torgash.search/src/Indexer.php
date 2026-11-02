@@ -149,8 +149,10 @@ class Indexer
             }
         }
 
-        foreach ((array) ($product->short_description ?? []) as $locale => $text) {
-            $add('C', (string) $locale, $text);
+        if (setting('torgash.search', 'search_short_descriptions', true)) {
+            foreach ((array) ($product->short_description ?? []) as $locale => $text) {
+                $add('C', (string) $locale, $text);
+            }
         }
 
         foreach ((array) ($product->meta_title ?? []) as $locale => $text) {

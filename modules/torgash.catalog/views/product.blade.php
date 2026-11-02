@@ -34,7 +34,7 @@
         </div>
         @include('torgash.catalog::partials.label-row', ['labels' => $productLabels, 'labelRow' => 'above-description', 'labelRowClass' => 'mt-2'])
         @if ($shortDescription !== '')
-            <p class="mt-1.5 text-sm opacity-70 max-w-3xl">{{ $shortDescription }}</p>
+            <p class="mt-1.5 text-sm opacity-70 max-w-3xl text-balance">{{ $shortDescription }}</p>
         @endif
     </div>
 
@@ -380,7 +380,7 @@
                 <div class="pt-4 border-t border-base-300 flex flex-col divide-y divide-base-300">
                     @foreach ($buyBoxSpecs as $pf)
                         <div class="flex justify-between gap-3 py-2 text-sm">
-                            <span class="opacity-60">{{ $pf->feature->t('name') }}</span>
+                            <span><span class="opacity-60">{{ $pf->feature->t('name') }}</span>@include('torgash.catalog::partials.feature-info', ['infoFeature' => $pf->feature])</span>
                             <span class="font-medium text-right">{{ $pf->display() }}</span>
                         </div>
                     @endforeach
@@ -446,6 +446,15 @@
                         <span class="text-sm torgash-out-of-stock">{{ $product->stockLabel() }}</span>
                     @endif
                 </div>
+                {{-- Back to the gallery and the buy panel from far down the
+                     page, where the card is the one thing still in sight. --}}
+                @if (setting('torgash.catalog', 'sticky_buy_card_top', false))
+                    <button type="button" x-show="shown" x-cloak x-transition.opacity.duration.200ms
+                            class="btn btn-ghost w-full mt-2 gap-1.5 opacity-70 hover:opacity-100"
+                            x-on:click="window.scrollTo({ top: 0, behavior: 'smooth' })">
+                        <x-icon name="arrow-up" size="sm" /> {{ __('Back to the top') }}
+                    </button>
+                @endif
             </div>
         @endif
 

@@ -198,6 +198,84 @@ Pay button and every gateway's log use it — and the deposit arriving is
 `partially_paid` and sends the order to work. Everything printed about how an
 order is paid is `Order::paymentSplit()`.
 
+**A payment method may add a SURCHARGE** (PLAN §66, `Orders\PaymentSurcharge`,
+the one place its arithmetic lives): `surcharge_percent` (hundredths of a
+percent) of the goods after EVERY discount — the coupon, bonus points, a cart
+promotion's cut (its `target` says whether it cut the goods or the delivery)
+— plus the delivery when `surcharge_base = goods_shipping`, plus
+`surcharge_fixed`; taxes are never in the base (that would be a tax on a tax). In a
+basket it is the FIRST line of `Totals::extra()`, worked out after the
+modules' lines; on an order it is a column of its own beside `shipping_cost`
+(`payment_surcharge`, never a line of `items`) with its TERMS
+(`payment_surcharge_terms`), printed through `checkout.order.extra_totals`
+at priority 5 so every total, letter, invoice and the API carry it unasked.
+`OrderTotals` recomputes it from the terms after `checkout.order.recalculated`
+(the promotions have laid their cuts by then); a manager changing the method
+gives the order the NEW method's terms. No negative surcharge: a discount for
+paying a certain way is a cart promotion with the "Payment method" condition.
+The checkout's methods carry their hint (`surcharge_display`) in
+`#checkout-surcharge-<id>`, swapped out of band with each re-quote (and by
+`checkout.summary` where no delivery step re-quotes) — never the radios.
+Where it is SHOWN is two settings: beside the method in the list
+(`surcharge_display`) and in the bill (`surcharge_in_totals`: a line, or
+`hidden` — frozen into the terms as `shown`, the line carries `hidden` and
+is still summed; the customer's pages skip it, the admin marks it, the API
+and 1C always carry it). The order of operations answers "what first": the
+cart promotions (their thresholds read the goods, never the surcharge), then
+the surcharge from what they left, then its tax: `torgash.taxes` keeps
+which taxes a method's surcharge carries (`m_taxes_payment_method_tax`, none =
+none; chosen on the method's form) and charges them on the surcharge alone,
+folded into the same tax's line — in the basket through
+`checkout.surcharge.extra_totals` (asked once the amount is known), on the
+order inside its snapshot, written again on
+`checkout.order.surcharge_recalculated`, which `OrderTotals` fires after it
+has recomputed the surcharge (the `recalculated` snapshot ran before).
+**Whom a method is offered to** is the method's own (`buyers` all | person
+| company, `customer_groups` in the catalogue's words — guest, registered,
+group:<id> — and `shipping_methods`, like a checkout field's;
+`PaymentMethod::refusals()` says why not). `PlaceOrder::paymentMethods($currency,
+$for)` narrows by `offeredTo()`, and `rules()` validates against exactly that
+list — the form, the API (which buys as a person) and a stale tab alike; a
+manager's order passes `restricted: false` and the order screen warns
+(`refusalsForOrder()`). The form's list is `#checkout-payments`, drawn by
+`checkoutChoice()` and swapped out of band with each re-quote (a delivery
+picked, a company ticked); the method that counts as chosen is the asked one
+while offered, else the first, and the summary prices THAT one
+(`summaryMethodChosen`). Its triggers listen on `body` with a filter on the
+field's name — a `from:` bound to the swapped list would go deaf after the
+first swap. One click ignores the narrowing: the shop nominated the method.
+
+**A delivery the recipient pays the CARRIER for** (`paid_to_carrier` on the
+shipping method, PLAN §66 stage 4 — Nova Poshta "from 80") is not the shop's
+money. The option the shipping module quotes carries `cost = 0`, `to_carrier`
+and `carrier_cost` (the rate's ESTIMATE, null when a carrier or a human would
+have to name it); the order keeps `shipping_cost = 0`, `shipping_to_carrier`
+and `shipping_carrier_cost`. So the total, taxes, promotions, a surcharge
+"with the delivery", gift cards, the bank, 1C and profit need not know of it.
+Only what PRINTS a delivery asks `Shipping\CarrierPaid` ("≈ 80, paid to the
+carrier on receipt", never "Free"). A free rate stays free — the shop pays
+it. A manager typing the cost of such an order types the estimate.
+
+**What a bank is told an order consists of** is `Payments\Receipt::lines($order,
+$charge, $config)` — one answer for monobank's basket, WayForPay's product
+list and Stripe's line items. The lines add up to the CHARGE to the kopeck in
+its currency (a fiscalising bank refuses a list that misses): delivery and
+the surcharge are lines of their own (the surcharge named by the binding, or
+spread over the goods — `receipt_surcharge`), whatever else lies between the
+goods and the charge (discounts, an added tax) is spread over the goods by
+the largest remainder, and a line whose total no longer divides by its
+quantity is split in two. A part payment (deposit, gift card) gets no lines;
+null = one line, the order. The binding's receipt fields are
+`Receipt::fields()`, merged into a gateway's own; a gateway field may be a
+`select` with `options` and a `default`. monobank's `sum` is ONE unit's
+price, `total` the line's (their docs: qty=2, sum=2100, total=4200). LiqPay
+sends no lines: its `rro_info` names goods by ids in its own PRRO catalogue.
+Downstream: 1C gets the surcharge as the service line every positive extra
+total is (its own nomenclature id `sale_surcharge_guid`), a carrier-paid
+delivery as requisites with the estimate; the exim order columns
+`payment_surcharge`, `shipping_to_carrier`, `shipping_carrier_cost`;
+`torgash.inventory`'s `Profit` counts `surcharge` as the shop's income.
+
 **Discounts after the coupon from other modules** — bonus points — reach
 checkout through `checkout.cart.discounts` (asked by `CouponManager::otherDiscounts()`
 against the goods the coupon left; `discount()` is the coupon PLUS them, so

@@ -89,5 +89,7 @@
     "Change status": "Змінити статус",
     "Clear selection": "Зняти виділення",
     "Select all on this page": "Вибрати всі на сторінці",
-    "selected": "вибрано"
+    "selected": "вибрано",
+    "Taxes on the surcharge": "Податки на націнку",
+    "Charged on the surcharge alone, at the rate that applies where the goods go. A tax included in the price is inside the surcharge (the bill discloses it); one added on top is added to it. Only matters when the method has a surcharge.": "Нараховуються лише на націнку, за ставкою місця доставки. Податок «у ціні» вже всередині націнки (у підсумку він показаний довідково), податок «зверху» додається до неї. Діє, лише якщо у способу є націнка."
 }

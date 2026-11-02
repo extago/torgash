@@ -261,8 +261,11 @@
     "and :count more": "и ещё :count",
     "selected": "выбрано",
     "The customer gives a delivery address": "Покупатель указывает адрес доставки",
-    "Off for collection from the shop: checkout then asks only for a name and a phone. A method priced by a carrier ignores it — the carrier says it per variant.": "Выключите для самовывоза: тогда при оформлении спрашиваются только имя и телефон. Способ, который считает перевозчик, эту галку не читает — перевозчик решает это сам для каждого варианта.",
     "Show on the product page": "Показывать на странице товара",
     "In the \"Delivery\" block under the buy button. Off for a method like \"Decide with the manager\": the customer still chooses it at checkout.": "В блоке «Доставка» под кнопкой покупки. Выключите для способа вроде «Решить с менеджером»: при оформлении заказа покупатель всё равно может его выбрать.",
-    "Clear": "Очистить"
+    "Clear": "Очистить",
+    "Charged — in the order total": "Действительная — входит в итог заказа",
+    "For information — paid to the carrier on receipt": "Справочная — оплата перевозчику при получении",
+    "A cost for information is not in the order total, the shop's statistics or the online payment: the rates only work out an estimate for the customer (\"≈ 80, paid on receipt\"). A free rate stays free — the shop pays.": "Справочная стоимость не входит в итог заказа, статистику магазина и онлайн-оплату: тарифы лишь считают ориентир для покупателя («≈ 80, оплата при получении»). Бесплатный тариф остаётся бесплатным — платит магазин.",
+    "Off for collection from the shop: checkout then asks only for a name and a phone. On a carrier's method, on means \"when the variant needs one\": delivery to a branch or a pickup point asks for no street, a courier does.": "Выключите для самовывоза: тогда при оформлении спрашиваются только имя и телефон. У способа с перевозчиком включённая галка значит «когда варианту нужен адрес»: для доставки в отделение или пункт выдачи улица не спрашивается, для курьера — спрашивается."
 }

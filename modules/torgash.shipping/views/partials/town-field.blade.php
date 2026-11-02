@@ -45,7 +45,7 @@
 
         @if (count($countries) > 1)
             <select name="country" class="select select-bordered w-full {{ $size ?? '' }}"
-                    @change="setCountry($event.target.value)">
+                    :value="country" @change="setCountry($event.target.value)">
                 <option value="">{{ __('Select a country') }}</option>
                 @foreach ($countries as $option)
                     <option value="{{ $option['code'] }}" @selected($country === $option['code'])>{{ $option['name'] }}</option>

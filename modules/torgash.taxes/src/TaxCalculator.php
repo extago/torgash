@@ -77,6 +77,30 @@ class TaxCalculator
     }
 
     /**
+     * `$result` (forCart()'s) with the taxes of a payment method's surcharge
+     * added — on the surcharge alone, apart from the
+     * goods and the delivery, and folded into the same tax's line: one "VAT
+     * 20%" on the bill, not two.
+     *
+     * @param  array<int, TaxLine>  $result
+     * @return array<int, TaxLine>
+     */
+    public function withSurcharge(array $result, int $surcharge, ?int $paymentMethodId, ?Location $where = null): array
+    {
+        if ($surcharge <= 0) {
+            return $result;
+        }
+
+        $taxes = $this->destinations->apply($this->taxes->forPaymentMethod($paymentMethodId), $where);
+
+        if ($taxes !== []) {
+            $this->accumulate($result, $taxes, $surcharge, 1);
+        }
+
+        return $result;
+    }
+
+    /**
      * What a single price becomes once the taxes that are ADDED to it are
      * applied — the storefront's "show prices with tax" view. Included taxes
      * are already in the number and leave it alone. The taxes are expected

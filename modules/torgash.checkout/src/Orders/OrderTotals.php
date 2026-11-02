@@ -50,6 +50,18 @@ class OrderTotals
         // checkout.order_placed: that one also sends mail and touches counters.
         hook_action('checkout.order.recalculated', ['order' => $order]);
 
+        // The payment method's surcharge (PLAN §66), from the terms the order
+        // was placed under — measured after the promotions above have laid
+        // their cuts over what the order holds now.
+        $order->payment_surcharge = PaymentSurcharge::forOrder($order);
+
+        // ...and whoever froze something about the surcharge (its taxes)
+        // writes it again for the amount it has now come to.
+        if ($order->payment_surcharge_terms || $order->isDirty('payment_surcharge')) {
+            $order->save();
+            hook_action('checkout.order.surcharge_recalculated', ['order' => $order]);
+        }
+
         $order->total = $this->total($order);
         $order->save();
 

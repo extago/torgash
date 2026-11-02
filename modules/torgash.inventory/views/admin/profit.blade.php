@@ -16,7 +16,7 @@
             <div class="stats stats-vertical sm:stats-horizontal border border-base-300">
                 <div class="stat">
                     <div class="stat-title">{{ __('Sales') }}</div>
-                    <div class="stat-value text-2xl tabular-nums">{{ admin_price($totals['goods'] + $totals['delivery']) }}</div>
+                    <div class="stat-value text-2xl tabular-nums">{{ admin_price($totals['goods'] + $totals['delivery'] + $totals['surcharge']) }}</div>
                     <div class="stat-desc">{{ trans_choice(':count order|:count orders', $totals['orders'], ['count' => $totals['orders']]) }}</div>
                 </div>
                 <div class="stat">
@@ -57,6 +57,7 @@
                                 <th>{{ __('Date') }}</th>
                                 <th class="text-end">{{ __('Goods') }}</th>
                                 <th class="text-end">{{ __('Delivery') }}</th>
+                                <th class="text-end">{{ __('Payment surcharge') }}</th>
                                 <th class="text-end">{{ __('Cost of the goods') }}</th>
                                 <th class="text-end">{{ __('Expenses') }}</th>
                                 <th class="text-end">{{ __('Income') }}</th>
@@ -72,6 +73,7 @@
                                     <td class="whitespace-nowrap opacity-60">{{ \Illuminate\Support\Carbon::parse($order->created_at)->format('d.m.Y') }}</td>
                                     <td class="text-end tabular-nums">{{ admin_price($line['goods']) }}</td>
                                     <td class="text-end tabular-nums">{{ admin_price($line['delivery']) }}</td>
+                                    <td class="text-end tabular-nums">{{ admin_price($line['surcharge']) }}</td>
                                     <td class="text-end tabular-nums">
                                         {{ admin_price($line['cost']) }}
                                         @if ($line['unknown'] > 0)

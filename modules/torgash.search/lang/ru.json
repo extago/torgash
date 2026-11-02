@@ -108,8 +108,6 @@
     "Popular searches": "Часто ищут",
     "Typing one of its values finds the product. A brand is always searched.": "Набранное значение находит товар. Бренд ищется всегда.",
     "Product search that finds what is being typed: by the start of a word, by a word's other forms, in every language a product is named in, by SKU, brand and the characteristics a shop marks as searchable — and by the keyboard layout a customer forgot to switch. Built as a registry of sources, so a meaning-based (vector) source can join later without changing the rest.": "Поиск товаров, который находит то, что набирают: по началу слова, по другим формам слова, на всех языках, на которых назван товар, по артикулу, бренду и характеристикам, отмеченным для поиска, — и в раскладке, которую покупатель забыл переключить. Устроен как реестр источников, так что поиск по смыслу (векторный) сможет присоединиться позже, ничего не меняя в остальном.",
-    "Search in descriptions too": "Искать и в описаниях",
-    "The description counts least of all fields, but it does count: a word that is only in the description still finds the product, after everything that has it in the name. Off: only names, SKUs, brands and marked characteristics. Changing this rebuilds the index.": "Описание весит меньше всех полей, но учитывается: слово, которое есть только в описании, всё равно найдёт товар — после всех, у кого оно в названии. Выключено: только названия, артикулы, бренды и отмеченные характеристики. Изменение пересобирает индекс.",
     "Suggest from this many letters": "Подсказывать с такого числа букв",
     "Fewer letters show the visitor's recent searches instead.": "Пока букв меньше, показываются недавние запросы посетителя.",
     "Wait after the last keystroke, ms": "Ждать после последнего нажатия, мс",
@@ -193,5 +191,9 @@
     "Select all on this page": "Выбрать все на странице",
     "selected": "выбрано",
     "The index the storefront searches and a trial box: type what a customer would and see the answer in the same order — and why.": "Индекс, по которому ищет витрина, и проба: наберите то, что набрал бы покупатель, и увидите ответ в том же порядке — и почему.",
-    "What customers searched for in the period, how often, and what they clicked. A search that found nothing is a synonym or a phrase waiting to be written.": "Что покупатели искали за период, как часто и на что нажимали. Поиск, который ничего не нашёл, — это синоним или фраза, которую пора написать."
+    "What customers searched for in the period, how often, and what they clicked. A search that found nothing is a synonym or a phrase waiting to be written.": "Что покупатели искали за период, как часто и на что нажимали. Поиск, который ничего не нашёл, — это синоним или фраза, которую пора написать.",
+    "Search in full descriptions": "Искать в полных описаниях",
+    "The full description counts least of all fields, but it does count: a word that is only there still finds the product, after everything that has it in the name. Changing this rebuilds the index.": "Полное описание весит меньше всех полей, но учитывается: слово, которое есть только там, всё равно найдёт товар — после всех, у кого оно в названии. При смене индекс пересобирается.",
+    "Search in short descriptions": "Искать в коротких описаниях",
+    "The short description written under the product's name counts after the name and the characteristics. Off: a word that is only there finds nothing. Changing this rebuilds the index.": "Короткое описание под названием товара весит после названия и характеристик. Выключено — слово, которое есть только там, ничего не найдёт. При смене индекс пересобирается."
 }

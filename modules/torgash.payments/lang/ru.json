@@ -76,5 +76,12 @@
     "from order :number": "из заказа :number",
     ":amount could not be returned through the gateway — see the payment log.": ":amount не удалось вернуть через шлюз — см. журнал платежей.",
     "Amount": "Сумма",
-    "Payment methods": "Способы оплаты"
+    "Payment methods": "Способы оплаты",
+    "Send the order's lines to the bank": "Передавать банку позиции заказа",
+    "Goods, delivery and the surcharge as lines adding up to the payment — what a fiscal receipt needs. Off: one line, the order. Never sent for a part payment (a deposit, a gift card).": "Товары, доставка и наценка — позициями, которые в сумме дают платёж; это нужно для фискального чека. Выключено — одна позиция, заказ. При частичной оплате (предоплата, подарочная карта) позиции не передаются.",
+    "Payment surcharge in the bank's receipt": "Наценка за оплату в чеке банка",
+    "A line of its own": "Отдельной строкой",
+    "Spread over the goods": "Распределить по товарам",
+    "Name of the surcharge line": "Название позиции наценки",
+    "Empty — the surcharge's own title, as the customer saw it.": "Пусто — название наценки, как его видел покупатель."
 }

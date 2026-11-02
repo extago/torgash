@@ -101,6 +101,7 @@ class CheckoutResources
                 'paid_total' => ['type' => 'string|null', 'description' => 'Decimal string in major units of `currency`, two places. Not derivable from the state: an underpayment and a partial refund are both “some, not all”.'],
                 'prepaid_total' => ['type' => 'string', 'description' => 'The part of `paid_total` paid before any gateway was asked — a gift card. A refund gives it back first.'],
                 'deposit' => ['type' => 'string|null', 'description' => 'Set when the order was sold with only part paid online and the rest on delivery: that part, frozen at placement.'],
+                'surcharge' => ['type' => 'string', 'description' => 'What the payment method added to the bill (a percent of the goods after discounts, with or without the delivery, plus a fixed amount). Inside `total`, and a line of `adjustments` with code `payment_surcharge`.'],
                 'paid_at' => ['type' => 'string|null', 'format' => 'date-time'],
                 'method' => ['type' => 'string|null', 'description' => 'The name as the customer was sold it, printed for ever after.'],
                 'method_id' => ['type' => 'integer|null', 'description' => 'The link — which gateway, which currencies. Renaming a method does not detach it.'],
@@ -116,6 +117,8 @@ class CheckoutResources
                 'address' => 'string|null', 'city' => 'string|null',
                 'country' => 'string|null', 'postal_code' => 'string|null',
                 'cost' => 'string|null',
+                'paid_to_carrier' => ['type' => 'boolean', 'description' => 'The recipient pays the carrier on receipt: `cost` is 0 and the delivery is not in `total`.'],
+                'carrier_cost' => ['type' => 'string|null', 'description' => 'What the carrier was expected to ask when the order was placed; null when nobody could say.'],
                 'details' => ['type' => 'object|null', 'description' => 'What the chosen option asked for on top of the address — a branch to collect from, a carrier’s own tracking.'],
             ]],
             'currency' => ['type' => 'string', 'description' => 'The shop’s books — the units every amount on this order is stored in, and what its reports are in.'],
@@ -179,6 +182,8 @@ class CheckoutResources
                 'prepaid_total' => api_money($order->prepaid_total),
                 // Part online, the rest on delivery: what the bank is asked for.
                 'deposit' => api_money($order->deposit_amount),
+                // What the method added to the bill (PLAN §66) — also a line of `adjustments`.
+                'surcharge' => api_money((int) $order->payment_surcharge),
                 'paid_at' => $order->paid_at?->toIso8601String(),
                 'method' => $order->payment_method_name,
                 'method_id' => $order->payment_method_id,
@@ -200,6 +205,10 @@ class CheckoutResources
                 'country' => $order->country,
                 'postal_code' => $order->postal_code,
                 'cost' => api_money($order->shipping_cost),
+                // Paid by the recipient to the carrier (PLAN §66): `cost` is 0
+                // and this is the estimate, null when nobody could say.
+                'paid_to_carrier' => (bool) $order->shipping_to_carrier,
+                'carrier_cost' => $order->shipping_to_carrier && $order->shipping_carrier_cost !== null ? api_money((int) $order->shipping_carrier_cost) : null,
                 'details' => $order->shipping_details,
             ],
             // Decimal strings in major units of `currency`, the shop's books

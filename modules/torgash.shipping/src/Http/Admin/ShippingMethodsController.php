@@ -303,10 +303,13 @@ class ShippingMethodsController extends Controller
             'provider_config' => $provider
                 ? ($provider->normalizeConfig((array) $request->input('provider_config', [])) ?: null)
                 : null,
-            // Only a method with no carrier says it itself; a carrier answers
-            // per variant (ProviderOffer::needsAddress).
-            'needs_address' => $provider ? true : $request->boolean('needs_address', true),
+            // The shop's word, for a carrier's method too: off = never ask for
+            // a street; on = ask, unless the carrier's variant says it needs
+            // none (ProviderOffer::needsAddress — a branch, a pickup point).
+            // It used to be forced on for a carrier, so the box un-ticked itself.
+            'needs_address' => $request->boolean('needs_address', true),
             'on_product_page' => $request->boolean('on_product_page', true),
+            'paid_to_carrier' => $request->boolean('paid_to_carrier'),
             'enabled' => $request->boolean('enabled'),
         ];
     }
