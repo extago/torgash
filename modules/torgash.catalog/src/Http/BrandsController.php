@@ -25,7 +25,8 @@ class BrandsController extends Controller
             ->get()
             ->sortBy(fn (FeatureValue $v) => $v->display());
 
-        page_meta()->set('title', __('Brands'));
+        page_meta()->set(['title' => __('Brands'),
+            'description' => __('The brands sold at :shop.', ['shop' => current_storefront()?->name])]);
         breadcrumbs()->add(__('Brands'));
 
         return view('torgash.catalog::brands.index', ['brands' => $brands]);

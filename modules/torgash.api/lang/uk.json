@@ -129,5 +129,15 @@
     "An amount: a decimal string with two places.": "Сума: десятковий рядок із двома знаками.",
     "What paying this way adds to this basket; only the methods offered to it are listed.": "Скільки цей спосіб оплати додасть до цього кошика; перелічено лише способи, доступні для нього.",
     "The recipient pays the carrier on receipt: `cost` is 0 and the delivery is not in the total.": "Отримувач платить перевізнику при отриманні: `cost` дорівнює 0, і доставка не входить у підсумок.",
-    "What the carrier will ask, as estimated; null when nobody can say.": "Скільки попросить перевізник, за оцінкою; null, якщо ніхто не може сказати."
+    "What the carrier will ask, as estimated; null when nobody can say.": "Скільки попросить перевізник, за оцінкою; null, якщо ніхто не може сказати.",
+    "This token may not read :resource.": "Цей токен не може читати :resource.",
+    "This token may not write :resource.": "Цей токен не може писати :resource.",
+    "Tick what the token may do, or let it do whatever you may.": "Позначте, що може токен, або дозвольте йому все, що можете ви.",
+    "Only what is ticked below": "Лише позначене нижче",
+    "Everything my account may": "Усе, що може мій акаунт",
+    "A key for one integration should open one room: the price feed reads products, the CRM reads orders.": "Ключ однієї інтеграції має відкривати одну кімнату: прайс-вивантаження читає товари, CRM читає замовлення.",
+    "read and write everything": "читати й писати все",
+    "read everything": "читати все",
+    "read and write": "читати й писати",
+    "A token may be narrowed to one resource (“read products”, “read and write orders”): a call outside it is 403.": "Токен можна звузити до одного ресурсу («читати товари», «читати й писати замовлення»): виклик поза ним — 403."
 }

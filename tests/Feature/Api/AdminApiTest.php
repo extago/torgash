@@ -76,6 +76,27 @@ class AdminApiTest extends TestCase
         $this->call_('PATCH', '/api/v2/admin/products/'.$product->sku, ['stock' => 5], $readOnly)->assertStatus(403);
     }
 
+    /** One key, one room: narrowed to a resource, it sees nothing of the others. */
+    public function test_a_token_narrowed_to_one_resource_opens_that_room_alone(): void
+    {
+        [, $feed] = ApiToken::issue($this->admin, 'Feed', ['admin.products:read']);
+        [, $crm] = ApiToken::issue($this->admin, 'CRM', ['admin.orders:write']);
+        [, $editor] = ApiToken::issue($this->admin, 'Editor', ['admin.products:write']);
+        $product = $this->product();
+
+        $this->call_('GET', '/api/v2/admin/products/'.$product->sku, [], $feed)->assertOk();
+        $this->call_('PATCH', '/api/v2/admin/products/'.$product->sku, ['stock' => 5], $feed)->assertStatus(403)
+            ->assertJsonFragment(['message' => __('This token may not write :resource.', ['resource' => 'Products'])]);
+        $this->call_('GET', '/api/v2/admin/orders', [], $feed)->assertStatus(403)
+            ->assertJsonFragment(['message' => __('This token may not read :resource.', ['resource' => 'Orders'])]);
+
+        // Write carries read of the same resource, and nothing of another.
+        $this->call_('GET', '/api/v2/admin/orders', [], $crm)->assertOk();
+        $this->call_('GET', '/api/v2/admin/products', [], $crm)->assertStatus(403);
+        $this->call_('PATCH', '/api/v2/admin/products/'.$product->sku, ['stock' => 5], $editor)->assertOk();
+        $this->call_('GET', '/api/v2/admin/products/'.$product->sku, [], $editor)->assertOk();
+    }
+
     /** And a token can never do more than the account behind it. */
     public function test_the_owners_permissions_still_apply(): void
     {

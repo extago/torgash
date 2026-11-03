@@ -3,6 +3,9 @@
 namespace App\Core\Updates;
 
 use App\Core\Backups\Backups;
+use App\Core\Modules\ModuleManager;
+use App\Core\Support\Php;
+use App\Core\System\CodeChanged;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Process;
@@ -74,7 +77,7 @@ class Updater
         $backup = null;
         if ($this->steps['backup']) {
             ($this->say)('Backing up the database');
-            $backup = app(Backups::class)->create(null, false, false);
+            $backup = app(Backups::class)->forUpdate();
         }
 
         // Each run keeps a whole previous version; only the last one is still
@@ -111,7 +114,7 @@ class Updater
         $owned = array_values(array_unique([...(new Distribution($this->root))->paths(), ...$package->paths()]));
         $plan = [
             'from' => $current, 'to' => $to, 'root' => $this->root, 'run' => $run,
-            'paths' => $owned, 'swapped' => [], 'backup' => $backup, 'php' => \App\Core\Support\Php::command(),
+            'paths' => $owned, 'swapped' => [], 'backup' => $backup, 'php' => Php::command(),
             'state' => 'swapping', 'started_at' => gmdate('c'),
         ];
         $planFile = $run.'/plan.json';
@@ -136,10 +139,18 @@ class Updater
             $plan['state'] = 'swapped';
             $this->writePlan($planFile, $plan);
 
+            // The caches of discovered packages, services, config and routes
+            // describe the vendor that has just been moved away: the new
+            // code must not boot with them (the new `artisan` clears them too,
+            // for an updater older than this line).
+            foreach (glob($this->root.'/bootstrap/cache/*.php') ?: [] as $cache) {
+                @unlink($cache);
+            }
+
             if ($this->steps['finish']) {
                 ($this->say)('Finishing on the new code');
                 $finish = Process::path($this->root)->timeout(3000)
-                    ->run([...\App\Core\Support\Php::command(), $this->root.'/artisan', 'torgash:update-finish', $planFile]);
+                    ->run([...Php::command(), $this->root.'/artisan', 'torgash:update-finish', $planFile]);
                 if (! $finish->successful()) {
                     throw new RuntimeException(trim($finish->errorOutput() ?: $finish->output()) ?: 'The new version did not finish.');
                 }
@@ -172,7 +183,7 @@ class Updater
         Artisan::call('package:discover');
         Artisan::call('migrate', ['--force' => true]);
 
-        $modules = app(\App\Core\Modules\ModuleManager::class);
+        $modules = app(ModuleManager::class);
         $modules->forget();
         foreach ($plan['paths'] ?? [] as $path) {
             if (! str_starts_with($path, 'modules/')) {
@@ -186,7 +197,7 @@ class Updater
         }
 
         config(['torgash.refresh_on_change' => true]);
-        app(\App\Core\System\CodeChanged::class)->refresh();
+        app(CodeChanged::class)->refresh();
 
         $plan['state'] = 'done';
         $plan['finished_at'] = gmdate('c');
@@ -201,7 +212,7 @@ class Updater
         $this->say = $say ?? $this->say;
 
         $result = Process::path($this->root)->timeout(3000)
-            ->run(array_values(array_filter([...\App\Core\Support\Php::command(), $this->rollbackScript(), $planFile, $codeOnly ? '--code-only' : null])));
+            ->run(array_values(array_filter([...Php::command(), $this->rollbackScript(), $planFile, $codeOnly ? '--code-only' : null])));
 
         ($this->say ?? fn () => null)(trim($result->output().$result->errorOutput()));
 

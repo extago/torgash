@@ -4,19 +4,16 @@ namespace App\Http\Controllers\Admin;
 
 use App\Core\Assets\BuildStyles;
 use App\Core\Assets\StyleBuilder;
-use App\Core\Backups\Backups;
-use App\Core\Backups\CreateBackup;
 use App\Core\Settings\CoreSettings;
-use App\Core\Settings\SettingsManager;
 use App\Core\System\AuditDependencies;
 use App\Core\System\SystemFacts;
 use App\Http\Controllers\Controller;
 use App\Models\BackgroundTask;
 use Illuminate\Http\Request;
-use Illuminate\Validation\Rule;
 
 /**
- * Admin → System (PLAN §45): what the server is, and the backups.
+ * Admin → System (PLAN §45): what the server is. The backups have their own
+ * screens (`BackupsController`, PLAN §67).
  *
  * Updates from an update server are not here yet — there is no server to ask;
  * the version is shown so that, when there is, the question has its answer.
@@ -164,62 +161,6 @@ class SystemController extends Controller
         \App\Core\Demo\RemoveDemo::startIfIdle();
 
         return back()->with('status', __('The demo data is being removed — it needs a queue worker and takes a minute or so.'));
-    }
-
-    public function backups(Backups $backups)
-    {
-        return view('admin.system.backups', [
-            'backups' => $backups->all(),
-            'disk' => $backups->diskName(),
-            'settings' => [
-                'disk' => Backups::setting('disk', 'local'),
-                'files' => (bool) Backups::setting('files', true),
-                'code' => (bool) Backups::setting('code', false),
-                'schedule' => Backups::setting('schedule', 'off'),
-                'keep' => (int) Backups::setting('keep', 7),
-            ],
-            'pgDump' => Backups::toolVersion('pg_dump'),
-            'running' => $this->running('Make a backup'),
-            'onS3' => app(\App\Core\Files\FileStorage::class)->onS3(),
-        ]);
-    }
-
-    public function saveBackupSettings(Request $request, SettingsManager $settings)
-    {
-        $validated = $request->validate([
-            'disk' => ['required', Rule::in(['local', 'private'])],
-            'schedule' => ['required', Rule::in(['off', 'daily', 'weekly'])],
-            'keep' => ['required', 'integer', 'min:0', 'max:365'],
-        ]);
-
-        $settings->set(CoreSettings::ID, 'backup_disk', $validated['disk']);
-        $settings->set(CoreSettings::ID, 'backup_schedule', $validated['schedule']);
-        $settings->set(CoreSettings::ID, 'backup_keep', (int) $validated['keep']);
-        $settings->set(CoreSettings::ID, 'backup_files', $request->boolean('files'));
-        $settings->set(CoreSettings::ID, 'backup_code', $request->boolean('code'));
-
-        return back()->with('status', __('Settings saved.'));
-    }
-
-    public function backup()
-    {
-        CreateBackup::startIfIdle();
-
-        return back()->with('status', __('The backup has started. It appears in the list when it is done — it needs a queue worker.'));
-    }
-
-    public function download(Backups $backups, string $name)
-    {
-        abort_unless($backups->exists($name), 404);
-
-        return $backups->disk()->download(Backups::DIR.'/'.$name, $name);
-    }
-
-    public function destroy(Backups $backups, string $name)
-    {
-        $backups->delete($name);
-
-        return back()->with('status', __('Backup deleted.'));
     }
 
     protected function running(string $label): bool

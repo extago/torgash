@@ -165,7 +165,11 @@ class ResourceController extends Controller
 
         $token = $request->attributes->get('api_token');
 
-        abort_unless($token && $token->allows($mode), 403, __('This token may not :mode.', ['mode' => $mode]));
+        // The resource's registry name is the scope ("admin.products"): a
+        // token narrowed to products reads nothing of orders.
+        abort_unless($token && $token->allows($mode, $definition['name']), 403, $mode === 'read'
+            ? __('This token may not read :resource.', ['resource' => label_text($definition['label'], null, $definition['name'])])
+            : __('This token may not write :resource.', ['resource' => label_text($definition['label'], null, $definition['name'])]));
 
         if ($definition['permission']) {
             abort_unless(auth()->user()?->can($definition['permission']), 403, __('Not allowed.'));

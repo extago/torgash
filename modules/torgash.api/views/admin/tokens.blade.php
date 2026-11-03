@@ -116,7 +116,11 @@
                                     </td>
                                     <td class="text-sm">
                                         @if ($token->abilities)
-                                            {{ collect($token->abilities)->map(fn ($ability) => $ability === 'read' ? __('read') : __('write'))->implode(', ') }}
+                                            {{-- One line per room: what an issued key may is read here, and
+                                                 only here — a key's rights are never changed, a new key is issued. --}}
+                                            @foreach (explode(' · ', \Torgash\Api\TokenScopes::describe($token->abilities)) as $room)
+                                                <div>{{ $room }}</div>
+                                            @endforeach
                                         @else
                                             <span class="opacity-60">{{ __('everything its owner may') }}</span>
                                         @endif
@@ -144,8 +148,9 @@
         </div>
     </div>
 
-    <x-modal name="token-new" :title="__('Issue a token')" icon="key-round">
-        <form method="POST" action="{{ route('admin.api.tokens.store') }}" class="flex flex-col gap-4">
+    <x-modal name="token-new" :title="__('Issue a token')" icon="key-round" size="lg">
+        <form method="POST" action="{{ route('admin.api.tokens.store') }}" class="flex flex-col gap-4"
+              x-data="{ narrow: 'chosen', write: {} }">
             @csrf
             <fieldset class="fieldset p-0">
                 <legend class="fieldset-legend">{{ __('What is it for') }}</legend>
@@ -153,14 +158,63 @@
             </fieldset>
             <fieldset class="fieldset p-0">
                 <legend class="fieldset-legend">{{ __('May') }}</legend>
-                <div class="flex gap-6">
-                    @foreach (['read' => __('read'), 'write' => __('write')] as $value => $label)
-                        <label class="label cursor-pointer gap-2 p-0">
-                            <input type="checkbox" name="abilities[]" value="{{ $value }}" class="checkbox checkbox-sm" checked>
-                            <span class="label-text">{{ $label }}</span>
-                        </label>
-                    @endforeach
+                <div class="flex flex-wrap gap-x-6 gap-y-1">
+                    <label class="label cursor-pointer gap-2 p-0">
+                        <input type="radio" name="narrow" value="chosen" class="radio radio-sm" x-model="narrow">
+                        <span class="label-text">{{ __('Only what is ticked below') }}</span>
+                    </label>
+                    <label class="label cursor-pointer gap-2 p-0">
+                        <input type="radio" name="narrow" value="all" class="radio radio-sm" x-model="narrow">
+                        <span class="label-text">{{ __('Everything my account may') }}</span>
+                    </label>
                 </div>
+                {{-- One row per resource and per module door. A write carries
+                     the read (TokenScopes), so a ticked "write" shows "read"
+                     ticked and held. --}}
+                <div class="overflow-x-auto mt-2" x-show="narrow === 'chosen'">
+                    <table class="table table-sm">
+                        <thead>
+                            <tr>
+                                <th>{{ __('Resource') }}</th>
+                                <th class="w-24 text-center">{{ __('read') }}</th>
+                                <th class="w-24 text-center">{{ __('write') }}</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach ($scopes as $scopeKey => $scope)
+                                <tr>
+                                    <td>
+                                        <div>{{ __($scope['label']) }}</div>
+                                        <div class="text-xs opacity-50 font-mono">{{ $scopeKey }}</div>
+                                        @if ($scope['description'])
+                                            <div class="text-xs opacity-60">{{ $scope['description'] }}</div>
+                                        @endif
+                                    </td>
+                                    <td class="text-center">
+                                        @if ($scope['readable'])
+                                            <input type="checkbox" name="abilities[]" value="{{ $scopeKey }}:read" class="checkbox checkbox-sm"
+                                                   aria-label="{{ __($scope['label']) }}: {{ __('read') }}"
+                                                   x-bind:checked="write[@js($scopeKey)] ? true : $el.checked" x-bind:disabled="narrow !== 'chosen' || !! write[@js($scopeKey)]">
+                                        @else
+                                            <span class="opacity-40">—</span>
+                                        @endif
+                                    </td>
+                                    <td class="text-center">
+                                        @if ($scope['writable'])
+                                            <input type="checkbox" name="abilities[]" value="{{ $scopeKey }}:write" class="checkbox checkbox-sm"
+                                                   aria-label="{{ __($scope['label']) }}: {{ __('write') }}"
+                                                   x-model="write[@js($scopeKey)]" x-bind:disabled="narrow !== 'chosen'">
+                                        @else
+                                            <span class="opacity-40" title="{{ __('This resource is read-only.') }}">—</span>
+                                        @endif
+                                    </td>
+                                </tr>
+                            @endforeach
+                        </tbody>
+                    </table>
+                </div>
+                <p class="label whitespace-normal" x-show="narrow === 'chosen'">{{ __('A key for one integration should open one room: the price feed reads products, the CRM reads orders.') }}</p>
+                @error('abilities')<p class="text-xs text-error">{{ $message }}</p>@enderror
             </fieldset>
             <fieldset class="fieldset p-0">
                 <legend class="fieldset-legend">{{ __('Expires in, days') }}</legend>

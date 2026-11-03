@@ -3,9 +3,11 @@
 namespace Tests\Feature\Core;
 
 use App\Core\Backups\Backups;
-use App\Core\Settings\CoreSettings;
-use App\Core\Settings\SettingsManager;
+use App\Core\Backups\Names;
 use App\Core\System\SystemFacts;
+use App\Models\BackupDestination;
+use App\Models\BackupPlan;
+use App\Models\BackupRun;
 use App\Models\User;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Cache;
@@ -15,9 +17,9 @@ use ZipArchive;
 
 /**
  * Admin → System (PLAN §45): what the server is, said honestly — including
- * that the scheduler or the queue is not running — and backups that hold the
- * database and a manifest, are pruned to the shop's number, and are only ever
- * reachable by their own name.
+ * that the scheduler or the queue is not running — and backups made by plans
+ * (PLAN §67) that hold the database and a manifest, are pruned to each
+ * storage's number, and survive a storage that fails.
  */
 class SystemPageTest extends TestCase
 {
@@ -48,46 +50,96 @@ class SystemPageTest extends TestCase
         );
     }
 
-    public function test_a_backup_holds_the_database_and_is_pruned_to_the_shops_number(): void
+    public function test_a_plan_makes_a_backup_with_the_database_and_keeps_its_number(): void
     {
         if (! Backups::toolVersion('pg_dump')) {
             $this->markTestSkipped('pg_dump is not available on this machine.');
         }
 
         Storage::fake('local');
-        app(SettingsManager::class)->set(CoreSettings::ID, 'backup_disk', 'local');
-        app(SettingsManager::class)->set(CoreSettings::ID, 'backup_keep', 1);
-
         $backups = app(Backups::class);
+        $server = $backups->systemDestination();
+        $plan = BackupPlan::create(['name' => 'Database', 'code' => 'db', 'contents' => ['database'], 'schedule' => [], 'name_template' => '{shop}-{plan}-{date}-{time}']);
+        $plan->destinations()->attach($server->id, ['keep' => json_encode(['last' => 1])]);
 
         Carbon::setTestNow('2026-10-01 03:40:00');
-        $first = $backups->create(withFiles: false);
+        $first = $backups->runNow($plan);
         Carbon::setTestNow('2026-10-02 03:40:00');
-        $second = $backups->create(withFiles: false);
+        $second = $backups->runNow($plan);
         Carbon::setTestNow();
 
-        // Only the newest is kept.
-        $this->assertSame([$second], $backups->all()->pluck('name')->all());
-        $this->assertFalse($backups->exists($first));
+        $this->assertSame(BackupRun::DONE, $second->status, (string) $second->error);
+        $this->assertSame(Names::shop().'-db-2026-10-02-034000.zip', $second->name);
 
-        $zipPath = Storage::disk('local')->path(Backups::DIR.'/'.$second);
+        // Only the newest is kept — the older one is gone from the disk and the journal.
+        $this->assertFalse(BackupRun::whereKey($first->id)->exists());
+        $this->assertFalse(Storage::disk('local')->exists(Backups::DIR.'/'.$first->name));
+
         $zip = new ZipArchive;
-        $this->assertTrue($zip->open($zipPath));
+        $this->assertTrue($zip->open(Storage::disk('local')->path(Backups::DIR.'/'.$second->name)));
         $this->assertNotFalse($zip->locateName('database.dump'));
         $manifest = json_decode($zip->getFromName('manifest.json'), true);
         $zip->close();
 
         $this->assertSame(['database'], $manifest['contents']);
         $this->assertSame(config('torgash.version'), $manifest['engine']);
+        $this->assertSame([$second->name], $backups->available()->where('name', $second->name)->pluck('name')->all());
 
-        // The screen lists it; it downloads and deletes by its own name only.
-        $this->actingAs($this->admin)->get('http://localhost/admin/system/backups')->assertOk()->assertSee($second);
-        $this->get('http://localhost/admin/system/backups/'.$second)->assertOk()->assertDownload($second);
-        $this->get('http://localhost/admin/system/backups/..%2F..%2F.env')->assertNotFound();
-        $this->get('http://localhost/admin/system/backups/secrets.zip')->assertNotFound();
+        // The screen lists it; it downloads by its copy and deletes everywhere.
+        $copy = $second->storedCopies()->firstOrFail();
+        $this->actingAs($this->admin)->get('http://localhost/admin/system/backups')->assertOk()->assertSee($second->name);
+        $this->get('http://localhost/admin/system/backups/copies/'.$copy->id)->assertOk()->assertDownload($second->name);
+        $this->get('http://localhost/admin/system/backups/copies/999999')->assertNotFound();
 
-        $this->delete('http://localhost/admin/system/backups/'.$second)->assertRedirect();
-        $this->assertTrue($backups->all()->isEmpty());
+        $this->delete('http://localhost/admin/system/backups/runs/'.$second->id)->assertRedirect();
+        $this->assertFalse(BackupRun::whereKey($second->id)->exists());
+        $this->assertFalse(Storage::disk('local')->exists(Backups::DIR.'/'.$second->name));
+    }
+
+    /** A storage that does not take the file: the run says where, the other copy is kept. */
+    public function test_a_storage_that_fails_makes_the_run_partial_not_lost(): void
+    {
+        if (! Backups::toolVersion('pg_dump')) {
+            $this->markTestSkipped('pg_dump is not available on this machine.');
+        }
+
+        Storage::fake('local');
+        $backups = app(Backups::class);
+        // A FILE where the folder should be: nothing can be written under it.
+        $notAFolder = tempnam(sys_get_temp_dir(), 'bk');
+        $broken = new BackupDestination(['name' => 'Broken folder', 'driver' => 'folder', 'settings' => ['path' => $notAFolder]]);
+        $broken->save();
+
+        $plan = BackupPlan::create(['name' => 'Twice', 'code' => 'twice', 'contents' => ['database'], 'schedule' => [], 'name_template' => '{plan}-{date}-{time}']);
+        $plan->destinations()->attach([$backups->systemDestination()->id => ['keep' => '{}'], $broken->id => ['keep' => '{}']]);
+
+        $run = $backups->runNow($plan);
+
+        $this->assertSame(BackupRun::PARTIAL, $run->status, (string) $run->error);
+        $this->assertStringContainsString('Broken folder', (string) $run->error);
+        $this->assertSame(1, $run->storedCopies()->count());
+        $this->assertTrue(Storage::disk('local')->exists(Backups::DIR.'/'.$run->name));
+    }
+
+    public function test_the_button_queues_a_run_of_the_plan_and_not_a_second_one(): void
+    {
+        $plan = BackupPlan::create(['name' => 'Queued', 'code' => 'queued', 'contents' => ['database'], 'schedule' => [], 'name_template' => '{plan}-{date}-{time}']);
+        // A run already waiting: the button adds none.
+        $plan->runs()->create(['reason' => 'schedule', 'status' => BackupRun::QUEUED]);
+
+        $this->actingAs($this->admin)->post('http://localhost/admin/system/backups', ['plan' => $plan->id])->assertRedirect();
+
+        $this->assertSame(1, $plan->runs()->count());
+    }
+
+    /** The settings of §45 became the plan "Main" on the server's folder. */
+    public function test_the_old_settings_are_a_plan(): void
+    {
+        $main = BackupPlan::where('code', 'main')->firstOrFail();
+
+        $this->assertSame('torgash-{date}-{time}', $main->name_template);
+        $this->assertTrue($main->has('database'));
+        $this->assertTrue($main->destinations()->where('system', true)->exists());
     }
 
     /**
@@ -109,18 +161,6 @@ class SystemPageTest extends TestCase
         $this->get('http://localhost/admin/system/backups')->assertOk()
             ->assertDontSee('hx-trigger="every 3s"', false)
             ->assertSee('id="backups-list"', false);
-    }
-
-    public function test_the_backup_settings_are_saved(): void
-    {
-        $this->actingAs($this->admin)->post('http://localhost/admin/system/backups/settings', [
-            'disk' => 'private', 'schedule' => 'weekly', 'keep' => 3, 'files' => 1,
-        ])->assertRedirect();
-
-        $this->assertSame('private', setting('core', 'backup_disk'));
-        $this->assertSame('weekly', setting('core', 'backup_schedule'));
-        $this->assertSame(3, setting('core', 'backup_keep'));
-        $this->assertFalse((bool) setting('core', 'backup_code'));
     }
 
     public function test_a_customer_cannot_reach_it(): void

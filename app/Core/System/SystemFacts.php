@@ -215,6 +215,10 @@ class SystemFacts
             $warnings[] = __('Less than a tenth of the disk is free.');
         }
 
+        foreach (app(\App\Core\Backups\BackupHealth::class)->attention() as $item) {
+            $warnings[] = $item['reason'];
+        }
+
         return $warnings;
     }
 }

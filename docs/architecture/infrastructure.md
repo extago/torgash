@@ -126,16 +126,148 @@ update server yet.
 (`pg_dump -Fc`), `files/public|private/…` while files are a local folder (a
 bucket is not copied; scratch folders in `Backups::SKIP` never are), optionally
 `code/modules|themes/…`, and `manifest.json`. Never in it: `.env` (secrets —
-the screen says keep it apart) and `vendor/`. Kept on `local` (the server) or
-`private` (the bucket under S3) — never `public`. Named
-`torgash-YYYY-MM-DD-HHMMSS.zip` and reachable ONLY by a name matching that
-pattern. Made by the button or the schedule (`CreateBackup`, `startIfIdle`),
-pruned to `backup_keep`. pg_dump/pg_restore come from `TORGASH_PG_BIN` (.env;
-empty = PATH). **The way back is the console**, `torgash:backup-restore` (no
+the screen says keep it apart) and `vendor/`. pg_dump/pg_restore come from
+`TORGASH_PG_BIN` (.env; empty = PATH).
+
+**Backups are made by PLANS and kept in STORAGES** (PLAN §67, tables
+`backup_plans`, `backup_destinations`, pivot `backup_plan_destination` with
+the per-storage `keep`, journal `backup_runs` + `backup_copies`). A plan says
+what goes in, a LIST of moments (`PlanSchedule`: hourly / daily / weekly /
+monthly / cron, each its own scheduler event in the shop's clock), a name
+template (`Names`: must hold `{date}` and `{time}`), and its storages. One run
+packs ONCE and uploads the file to every storage; a storage that refuses makes
+the run `partial`, never costs the others. Runs are QUEUED and made one at a
+time by the single task `CreateBackup` (oldest first, one `continueWith` part
+per run; `core:backup-queue` picks up a run left waiting). Keeping
+(`Retention`): last N, daily/weekly/monthly/yearly, days, GB — applied only
+after a run that stored something, never to the newest or a pinned copy, and
+only to files the JOURNAL says are the plan's: someone else's file in the
+same folder is never touched. Storage kinds (`Destinations`): the shop's
+`local`/`private` disk with a folder, a folder on the server (never inside
+`public/` or the site), an S3 bucket of its own, an SFTP, FTP(S) or WebDAV
+server. **An SFTP server's key is confirmed by the owner, never trusted on
+first sight** (`SftpConnection`): with none stored the connection refuses
+with the key it saw (`HostKeyNotConfirmed`), the screen shows it beside
+"trust", and trusting stores it only if the server shows it NOW; any other
+key afterwards refuses in words and sends nothing. A proxy (HTTP CONNECT or
+SOCKS5, with a login) is for S3, WebDAV and SFTP only (`Destinations::PROXIED`)
+— curl/Guzzle speak it, for SFTP `Proxy::open()` makes the tunnel and hands
+phpseclib the socket; FTP never (passive mode opens a second connection).
+WebDAV sends Basic with the first request: offered "any", curl asks without
+a login, gets 401 and cannot send a file stream again. A storage's error is
+reported with its first cause (`Destinations::reason()`). Secrets encrypted with
+APP_KEY (`BackupDestination::putSecrets`), a blank field keeps them, another
+APP_KEY shows "type it again". The `system` storage (the server's
+`backups/` folder) cannot be deleted: an update's backup goes there by
+`Backups::forUpdate()`, still named `torgash-YYYY-MM-DD-HHMMSS.zip` for the
+rollback, the last `KEEP_UPDATES` kept. The restore finds a name through the
+journal, then — with no database to ask — in the disks' `backups/` folders
+(`locate()`); names are only ever `SAFE_NAME`, downloads go by copy id.
+
+**A module adds a storage KIND, never a driver inside core** (PLAN §67.1,
+`App\Core\Backups\Destination`): it answers the filter
+`core.backup.destinations` with `[driver => Destination]` — the object made
+anew on every call, nothing captured — and core's `Destinations` merges it
+into `drivers()`, opens it through `open()` (a `Store` over whatever
+flysystem adapter the module brings), checks its fields through
+`fromInput()` and draws them from `form()` inside a card of the SAME storage
+screen (`$destination`, `$value`, `$kept` handed in); `where()` is the
+list's column, `proxied()` lets the proxy fields in. A module's driver name
+can neither shadow a core kind nor be anything but `[a-z0-9_]`. The first
+one is `torgash.google-drive` (`google_drive`): Google Drive v3 by hand
+over the HTTP client (`DriveClient`, no google/apiclient — a module carries
+no composer dependencies), a `DriveAdapter` that walks paths over a store
+that knows only ids (first child of each name, folder ids memoised per
+instance, a write to a name that exists replaces the file), resumable
+upload in 16 MiB chunks resumed from the byte Google says it has, a
+download into a temporary file (pg_restore reads a file, a network stream
+cannot be sought in). The Google Cloud CLIENT (ID + secret) is the shop's
+one application, in the module's settings; the Google ACCOUNT is connected
+per storage (`ConnectController`: POST to Google with a `state` kept in the
+session, `access_type=offline` + `prompt=consent` so a refresh token comes
+every time, the callback swaps the code and keeps the refresh token in the
+row's encrypted secrets, then runs the storage's check). Scope is
+`drive.file` alone: the shop sees only what it created, Google verifies
+nothing — but an application left in "Testing" loses its tokens after seven
+days, which the module's docs say. The connect buttons sit inside the
+storage's own form and leave it with `formaction`, so the routes take PUT
+as well as POST (the form's `_method` rides along).
+
+**A backup's FORM is the plan's** (§67.3, `backup_plans.format/options/secret`,
+`backup_runs.format/encrypted`): zip, tar, tar.gz, or `folder` ("without an
+archive"). `stage()` lays the entries out once in ONE order — manifest,
+`env/.env`, the database (`database.dump` or `database.sql`), files, code —
+and every writer and every `Archive\Reader` keeps it, so a restore reads the
+head and stops (`each()` → false) before the pictures. A folder's manifest
+is uploaded LAST: a folder without one never finished. Encryption: zip is
+AES-256 per entry (names stay visible), a tar is encrypted whole exactly as
+`openssl enc -aes-256-cbc -pbkdf2 -iter 200000` (`Archive\Cipher`) — never
+a format of our own that only the engine can open. `.env` goes only into an
+encrypted backup; a folder is never encrypted. The plan's password is
+`Crypt`-encrypted in its row — the screen says to keep it elsewhere too.
+
+**Raising a shop on a new server** (drilled 2026-11-03, docs/LESSONS.md):
+fresh code of the same version, the OLD `.env` (its `APP_KEY` above all),
+an empty database created with the ICU locale, then
+`torgash:backup-restore --file=<zip> --code --force`, `migrate`,
+`optimize:clear`, `torgash:styles`. Restoring into the shop's own database
+also: creates the dump's extensions first (an empty database has no
+pg_trgm), drops the runs the dump caught "running", checks the locale
+(`cyrillic_ok`) and `APP_KEY` (`key_matches`, from the manifest's
+`key_check`), writes the install lock (`Installer::lockAfterRestore()`) and
+links `public/storage`. `--code` writes `code/modules|themes` over the
+folders (never deletes what the backup lacks). The tools run with
+`LC_MESSAGES=C` and UTF-8, so their error is a sentence and not an empty
+line. **The way back is the console**, `torgash:backup-restore` (no
 name lists them; `--database=` restores into another, existing database to
 check a backup without touching the shop) — an update that broke the admin
 shuts the door a button would be behind. Verified by restoring a real backup
 into a scratch database and comparing row counts.
+
+**A backup gone wrong is SAID, and so is silence** (PLAN §67, stage 4,
+`App\Core\Backups\BackupHealth`): a plan needs attention when its last
+backup failed or was not stored everywhere, its last check by restoring
+failed, or it runs by a schedule and has no good backup within the longest
+gap between two of its moments plus three hours (a stopped scheduler or
+worker writes no error anywhere). The bell (`backups`, `system.manage`) and
+the System page's warnings read that list; nothing is stored as "seen", a
+good backup clears it. The letter `backup.problem` (core's registry, to the
+staff with `system.manage` unless the letters' screen names others) goes
+on every failed/partial run and failed check, and once a day (09:10) for
+each overdue plan. **A check by restoring** (`Backups::verify()`, job
+`VerifyBackup`, a plan's `verify` weekly/monthly or the shield button on a
+row): the backup is restored into `<db>_check_<run>` made with the shop
+database's own locale, every table's rows are compared with `rows` in the
+manifest — counted inside the very snapshot pg_dump was handed
+(`--snapshot`), so the numbers are exact on a shop taking orders — and the
+database is dropped, whatever happened. It needs CREATEDB for the shop's
+database user, and says so. **The console reads a storage itself**:
+`torgash:backup-restore --destination=<id|name>` lists the backups found
+in it (a file the engine names, or a folder with `manifest.json`) and
+restores one — the journal of a restored or new database does not know
+them. The option that puts the backup's .env in place is `--with-env`:
+`--env` is Laravel's own global option, and a command declaring it does
+not even start (tests calling the command directly never noticed).
+
+**The installer's other door: a shop from a backup** (PLAN §67.8, stage 6,
+`Installer::beginRestore()`, `torgash:install --restore=`, the wizard's
+"Restore from a backup" tab). `begin()` writes NOTHING until it has read the
+backup's head (`Backups::inspect()` — manifest and, asked, the .env, without
+unpacking the rest), refused a backup of a newer engine, a key that does not
+open `key_check` (`Backups::keyFits()`), a database with tables in it
+(except this very restore's, stopped half way — running it again finishes
+it), and found pg_restore/psql (the wizard's field, then this server's
+`TORGASH_PG_BIN`, then the backup .env's, then PATH). A refusal deletes the
+staged .env (the old shop's passwords) and an uploaded file. Its steps:
+`.env` (the backup's own or the example; this server's DB, address, key and
+tool folder over it), the database, the restore (`Backups::restore(…,
+lock: false)` — a lock in the middle would end the wizard), `upgrade`
+(core `migrate` + `ModuleManager::upgrade()` for every module the restored
+shop had; one not in this code is named, not fatal), `settle` (name,
+language and clock from the restored settings into .env when it is not the
+backup's; the new host added to the default storefront), styles, the lock
+`restored`. No owner step: the staff are the backup's. Drilled on a fresh
+copy of the code, by the console and by the wizard (path, upload, new key).
 
 **The stylesheet is built on the shop's own server** (PLAN §45.2,
 `App\Core\Assets\StyleBuilder`, `php artisan torgash:styles [--fetch]`, the
@@ -217,10 +349,17 @@ counted on the System page and cleared by its button or
   and PHP fits → DB backup → unpack, every file against its sum → copy
   `rollback.php.stub` to `storage/app/update/rollback.php` → `down --secret`
   → swap path by path, each written into `plan.json` BEFORE it moves (old →
-  `update/<v>/previous/`) → `torgash:update-finish` in a NEW process on the
-  new code (drop bootstrap caches, `package:discover`, migrate, `upgrade()` of
-  installed bundled modules, `CodeChanged::refresh()`, `up`). Anything failing
-  after the first move runs the rollback script itself.
+  `update/<v>/previous/`) → bootstrap caches dropped → `torgash:update-finish`
+  in a NEW process on the new code (`package:discover`, migrate, `upgrade()`
+  of installed bundled modules, `CodeChanged::refresh()`, `up`). Anything
+  failing after the first move runs the rollback script itself. **The caches
+  are dropped BEFORE the new process, and the new `artisan` drops them again
+  at its own door** (2026-11-03): `bootstrap/cache/packages.php` names the
+  providers of the vendor just moved away, and one the new vendor lacks
+  ("Laravel\Pail\PailServiceProvider not found" on a test copy whose vendor
+  had the dev packages) stops the boot before the command could clear it —
+  the updater that launches the process is the OLD version's, so the new
+  code's front door is the only line that can protect every update to it.
 - **The way back is a plain-PHP file**: `php storage/app/update/rollback.php
   <plan.json>` puts back exactly the paths the plan says were started, then
   lets the OLD code `torgash:backup-restore <backup> --no-files --force` and

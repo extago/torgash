@@ -3,13 +3,29 @@
 @section('title', __('System'))
 
 {{--
-    Backups (PLAN §45): the list, a button, the schedule — and the way back,
-    which is a console command on purpose: an update that broke the admin
-    closes the door a "Restore" button would be behind.
+    Backups (PLAN §45, §67): the journal of backups made by the plans, a
+    button — and the way back, which is a console command on purpose: an
+    update that broke the admin closes the door a "Restore" button would be
+    behind.
 --}}
 @section('content')
     @php
-        $mb = fn (int $bytes) => number_format($bytes / 1048576, 1, ',', ' ').' MB';
+        $mb = fn (?int $bytes) => $bytes === null ? '—' : number_format($bytes / 1048576, 1, ',', ' ').' MB';
+        $statusBadge = [
+            'queued' => ['badge-neutral', __('In the queue')],
+            'running' => ['badge-info', __('Being made')],
+            'done' => ['badge-success', __('Made')],
+            'partial' => ['badge-warning', __('Not everywhere')],
+            'failed' => ['badge-error', __('Failed')],
+        ];
+        $reasons = [
+            'schedule' => __('by the schedule'),
+            'manual' => __('by the button'),
+            'console' => __('from the console'),
+            'update' => __('before an update'),
+            'found' => __('made earlier'),
+        ];
+        $newest = $runs->first(fn ($r) => in_array($r->status, ['done', 'partial'], true))?->name;
     @endphp
 
     <div class="flex flex-col gap-4">
@@ -29,99 +45,130 @@
             <div class="alert alert-error text-sm">{{ __('pg_dump cannot be run on this server, so the database cannot be backed up. Install the PostgreSQL client tools, or name their folder in .env as TORGASH_PG_BIN.') }}</div>
         @endunless
 
-        <div class="grid gap-4 xl:grid-cols-[minmax(0,1fr)_24rem] items-start">
-            {{-- While a backup is being made the list asks for itself every few
-                 seconds and swaps in; the answer that no longer says "running"
-                 has no trigger, so the asking stops on its own. Only this card:
-                 the settings beside it may be half edited. --}}
-            <section id="backups-list" class="card bg-base-100 border border-base-300"
-                     @if ($running) hx-get="{{ route('admin.system.backups') }}" hx-trigger="every 3s"
-                     hx-select="#backups-list" hx-select-oob="#backups-status" hx-swap="outerHTML" @endif>
-                <div class="card-body gap-4">
-                    <div class="flex flex-wrap items-center justify-between gap-3">
-                        <p class="text-sm opacity-70 max-w-xl">{{ __('One file with the database, the uploaded files and, if chosen, the modules and themes. Download one now and then and keep it somewhere other than this server.') }}</p>
-                        <form method="POST" action="{{ route('admin.system.backups.create') }}">
-                            @csrf
-                            <button class="btn btn-primary btn-sm gap-1.5" @disabled($running || ! $pgDump)>
-                                @if ($running) <span class="loading loading-spinner loading-xs"></span> {{ __('Making a backup…') }}
-                                @else <x-icon name="archive" size="sm" /> {{ __('Make a backup now') }} @endif
-                            </button>
-                        </form>
-                    </div>
-
-                    @if ($backups->isEmpty())
-                        <div class="text-center py-10 opacity-60">{{ __('No backups yet.') }}</div>
-                    @else
-                        <table class="table">
-                            <tbody>
-                                @foreach ($backups as $backup)
-                                    <tr>
-                                        <td class="font-mono text-sm">{{ $backup['name'] }}</td>
-                                        <td class="text-sm whitespace-nowrap">{{ \Illuminate\Support\Carbon::createFromTimestamp($backup['at'])->timezone(config('app.timezone'))->translatedFormat('j M Y, H:i') }}</td>
-                                        <td class="text-sm text-end tabular-nums">{{ $mb($backup['bytes']) }}</td>
-                                        <td class="text-end whitespace-nowrap w-px">
-                                            <a href="{{ route('admin.system.backups.download', $backup['name']) }}" class="btn btn-ghost btn-sm btn-square" title="{{ __('Download') }}" aria-label="{{ __('Download') }}"><x-icon name="download" size="sm" /></a>
-                                            <span class="inline-block w-px h-5 bg-base-300 mx-1 align-middle" aria-hidden="true"></span>
-                                            <form method="POST" action="{{ route('admin.system.backups.destroy', $backup['name']) }}" class="inline"
-                                                  data-confirm="{{ __('Delete this backup?') }}">
-                                                @csrf @method('DELETE')
-                                                <button class="btn btn-ghost btn-sm btn-square text-error" title="{{ __('Delete') }}" aria-label="{{ __('Delete') }}"><x-icon name="trash-2" size="sm" /></button>
-                                            </form>
-                                        </td>
-                                    </tr>
+        {{-- While a backup is waiting or being made the list asks for itself
+             every few seconds and swaps in; the answer that no longer says so
+             has no trigger, so the asking stops on its own. --}}
+        <section id="backups-list" class="card bg-base-100 border border-base-300"
+                 @if ($running) hx-get="{{ route('admin.system.backups') }}" hx-trigger="every 3s"
+                 hx-select="#backups-list" hx-select-oob="#backups-status" hx-swap="outerHTML" @endif>
+            <div class="card-body gap-4">
+                <div class="flex flex-wrap items-center justify-between gap-3">
+                    <p class="text-sm opacity-70 max-w-2xl">{{ __('Backups are made by the plans: what goes in, when, and the storages that keep them. Keep at least one somewhere other than this server.') }}</p>
+                    <form method="POST" action="{{ route('admin.system.backups.create') }}" class="flex items-center gap-2">
+                        @csrf
+                        @if ($plans->count() > 1)
+                            <select name="plan" class="select select-bordered select-sm w-48" aria-label="{{ __('Backup plan') }}">
+                                @foreach ($plans as $plan)
+                                    <option value="{{ $plan->id }}">{{ $plan->name }}</option>
                                 @endforeach
-                            </tbody>
-                        </table>
-                    @endif
-
-                    <div class="rounded-box bg-base-200/60 p-4 text-sm flex flex-col gap-2">
-                        <div class="font-semibold">{{ __('Restoring') }}</div>
-                        <p class="opacity-80">{{ __('From the server\'s console, so it works even when the admin does not:') }}</p>
-                        <code class="font-mono text-xs bg-base-100 rounded px-2 py-1 block overflow-x-auto">php artisan torgash:backup-restore {{ $backups->first()['name'] ?? 'torgash-YYYY-MM-DD-HHMMSS.zip' }}</code>
-                        <p class="opacity-80">{{ __('Without a name it lists the backups. With --database=other_db it restores into another database, to check a backup without touching the shop.') }}</p>
-                        <p class="opacity-80">{{ __('The .env file — passwords and keys — is not in a backup on purpose. Keep a copy of it apart.') }}</p>
-                    </div>
+                            </select>
+                        @elseif ($plans->count() === 1)
+                            <input type="hidden" name="plan" value="{{ $plans->first()->id }}">
+                        @endif
+                        <button class="btn btn-primary btn-sm gap-1.5" @disabled($running || ! $pgDump || $plans->isEmpty())>
+                            @if ($running) <span class="loading loading-spinner loading-xs"></span> {{ __('Making a backup…') }}
+                            @else <x-icon name="archive" size="sm" /> {{ __('Make a backup now') }} @endif
+                        </button>
+                    </form>
                 </div>
-            </section>
 
-            <form method="POST" action="{{ route('admin.system.backups.settings') }}" class="card bg-base-100 border border-base-300">
-                @csrf
-                <div class="card-body gap-3">
-                    <h3 class="font-semibold">{{ __('Settings') }}</h3>
-                    <fieldset class="fieldset p-0">
-                        <legend class="fieldset-legend">{{ __('Make one') }}</legend>
-                        <select name="schedule" class="select select-bordered w-full">
-                            <option value="off" @selected($settings['schedule'] === 'off')>{{ __('Only by the button') }}</option>
-                            <option value="daily" @selected($settings['schedule'] === 'daily')>{{ __('Every night') }}</option>
-                            <option value="weekly" @selected($settings['schedule'] === 'weekly')>{{ __('Every week') }}</option>
-                        </select>
-                        <p class="label text-xs opacity-60 whitespace-normal">{{ __('By the schedule — it needs the scheduler and a queue worker.') }}</p>
-                    </fieldset>
-                    <fieldset class="fieldset p-0">
-                        <legend class="fieldset-legend">{{ __('Keep the newest') }}</legend>
-                        <input type="number" name="keep" min="0" value="{{ $settings['keep'] }}" class="input input-bordered w-32">
-                        <p class="label text-xs opacity-60 whitespace-normal">{{ __('Older ones are deleted. 0 keeps every one.') }}</p>
-                    </fieldset>
-                    <fieldset class="fieldset p-0">
-                        <legend class="fieldset-legend">{{ __('Where') }}</legend>
-                        <select name="disk" class="select select-bordered w-full">
-                            <option value="local" @selected($settings['disk'] === 'local')>{{ __('A folder on this server') }}</option>
-                            <option value="private" @selected($settings['disk'] === 'private')>{{ $onS3 ? __('The private bucket') : __('The private files folder') }}</option>
-                        </select>
-                        <p class="label text-xs opacity-60 whitespace-normal">{{ $onS3 ? __('The bucket keeps a copy away from the server it protects.') : __('Both are on this server while files are a local folder — download the backups now and then.') }}</p>
-                    </fieldset>
-                    <label class="label cursor-pointer justify-start gap-3">
-                        <input type="checkbox" name="files" value="1" class="toggle toggle-sm toggle-success" @checked($settings['files'])>
-                        <span class="label-text whitespace-normal">{{ $onS3 ? __('Uploaded files (they are in the bucket — not copied)') : __('Uploaded files') }}</span>
-                    </label>
-                    <label class="label cursor-pointer justify-start gap-3">
-                        <input type="checkbox" name="code" value="1" class="toggle toggle-sm toggle-success" @checked($settings['code'])>
-                        <span class="label-text whitespace-normal">{{ __('Modules and themes') }}</span>
-                    </label>
-                    <p class="text-xs opacity-60">{{ $pgDump ?: '' }}</p>
-                    <button class="btn btn-sm btn-primary">{{ __('Save') }}</button>
+                @if ($runs->isEmpty())
+                    <div class="text-center py-10 opacity-60">{{ __('No backups yet.') }}</div>
+                @else
+                    <table class="table admin-cards">
+                        <thead>
+                            <tr>
+                                <th>{{ __('Backup') }}</th>
+                                <th>{{ __('Made') }}</th>
+                                <th>{{ __('Status') }}</th>
+                                <th>{{ __('Kept in') }}</th>
+                                <th class="text-end">{{ __('Size') }}</th>
+                                <th></th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach ($runs as $run)
+                                @php
+                                    [$badgeClass, $badgeText] = $statusBadge[$run->status] ?? ['badge-ghost', $run->status];
+                                    $stored = $run->copies->where('status', 'stored');
+                                    $busy = in_array($run->status, ['queued', 'running'], true);
+                                @endphp
+                                <tr>
+                                    <td data-cell="title">
+                                        <div class="font-mono text-sm break-all">{{ $run->name ?? '—' }}</div>
+                                        <div class="text-xs opacity-60">
+                                            {{ $run->plan?->name ?? '' }}@if ($run->plan) · @endif{{ $reasons[$run->reason] ?? $run->reason }}
+                                            @if ($run->pinned) · <span class="inline-flex items-center gap-0.5"><x-icon name="pin" size="sm" /> {{ __('pinned') }}</span> @endif
+                                            @if ($run->isFolder()) · {{ __('a folder, no archive') }} @endif
+                                            @if ($run->encrypted) · <span class="inline-flex items-center gap-0.5" title="{{ __('Encrypted with the password of its plan') }}"><x-icon name="lock" size="sm" /> {{ __('encrypted') }}</span> @endif
+                                        </div>
+                                    </td>
+                                    <td data-cell="field" data-label="{{ __('Made') }}" class="text-sm whitespace-nowrap">
+                                        {{ ($run->started_at ?? $run->created_at)?->timezone(config('app.timezone'))->translatedFormat('j M Y, H:i') }}
+                                    </td>
+                                    <td data-cell="field" data-label="{{ __('Status') }}">
+                                        <span class="badge badge-sm {{ $badgeClass }}">{{ $badgeText }}</span>
+                                        @if ($run->verify_status === 'passed')
+                                            <div class="text-xs text-success mt-1 inline-flex items-center gap-1"><x-icon name="shield-check" size="sm" /> {{ __('restores — checked :when', ['when' => $run->verified_at?->timezone(config('app.timezone'))->translatedFormat('j M, H:i')]) }}</div>
+                                        @elseif ($run->verify_status === 'failed')
+                                            <div class="text-xs text-error mt-1 whitespace-pre-line max-w-md"><x-icon name="shield-x" size="sm" /> {{ __('did not restore when checked:') }} {{ \Illuminate\Support\Str::limit((string) $run->verify_error, 300) }}</div>
+                                        @endif
+                                        @if ($run->error)
+                                            <div class="text-xs text-error mt-1 whitespace-pre-line max-w-md">{{ \Illuminate\Support\Str::limit($run->error, 400) }}</div>
+                                        @endif
+                                    </td>
+                                    <td data-cell="field" data-label="{{ __('Kept in') }}" class="text-sm">
+                                        @foreach ($run->copies as $copy)
+                                            <div @class(['text-error' => $copy->status === 'failed'])>
+                                                {{ $copy->destination?->name ?? __('a deleted storage') }}@if ($copy->status === 'failed') — {{ __('not stored') }}@endif
+                                            </div>
+                                        @endforeach
+                                    </td>
+                                    <td data-cell="field" data-label="{{ __('Size') }}" class="text-sm text-end tabular-nums whitespace-nowrap">{{ $mb($run->bytes) }}</td>
+                                    <td data-cell="actions" class="text-end whitespace-nowrap w-px">
+                                        <div class="inline-flex items-center gap-1">
+                                            @foreach ($stored as $copy)
+                                                @if ($copy->destination && ! $run->isFolder())
+                                                    <a href="{{ route('admin.system.backups.download', $copy) }}" class="btn btn-ghost btn-sm btn-square"
+                                                       title="{{ __('Download from :storage', ['storage' => $copy->destination->name]) }}" aria-label="{{ __('Download from :storage', ['storage' => $copy->destination->name]) }}"><x-icon name="download" size="sm" /></a>
+                                                @endif
+                                            @endforeach
+                                            @if (! $busy && $stored->isNotEmpty())
+                                                <form method="POST" action="{{ route('admin.system.backups.verify', $run) }}" class="inline">
+                                                    @csrf
+                                                    <button class="btn btn-ghost btn-sm btn-square" title="{{ __('Check by restoring') }}" aria-label="{{ __('Check by restoring') }}"><x-icon name="shield-check" size="sm" /></button>
+                                                </form>
+                                            @endif
+                                            @unless ($busy)
+                                                <form method="POST" action="{{ route('admin.system.backups.pin', $run) }}" class="inline">
+                                                    @csrf
+                                                    <button @class(['btn btn-ghost btn-sm btn-square', 'text-primary' => $run->pinned])
+                                                            title="{{ $run->pinned ? __('Unpin') : __('Pin: never deleted by keeping N') }}" aria-label="{{ $run->pinned ? __('Unpin') : __('Pin: never deleted by keeping N') }}"><x-icon name="pin" size="sm" /></button>
+                                                </form>
+                                                <span class="inline-block w-px h-5 bg-base-300 mx-1 align-middle" aria-hidden="true"></span>
+                                                <form method="POST" action="{{ route('admin.system.backups.destroy', $run) }}" class="inline"
+                                                      data-confirm="{{ $stored->count() > 1 ? __('Delete this backup from every storage that keeps it?') : __('Delete this backup?') }}">
+                                                    @csrf @method('DELETE')
+                                                    <button class="btn btn-ghost btn-sm btn-square text-error" title="{{ __('Delete') }}" aria-label="{{ __('Delete') }}"><x-icon name="trash-2" size="sm" /></button>
+                                                </form>
+                                            @endunless
+                                        </div>
+                                    </td>
+                                </tr>
+                            @endforeach
+                        </tbody>
+                    </table>
+                    {{ $runs->links() }}
+                @endif
+
+                <div class="rounded-box bg-base-200/60 p-4 text-sm flex flex-col gap-2">
+                    <div class="font-semibold">{{ __('Restoring') }}</div>
+                    <p class="opacity-80">{{ __('From the server\'s console, so it works even when the admin does not:') }}</p>
+                    <code class="font-mono text-xs bg-base-100 rounded px-2 py-1 block overflow-x-auto">php artisan torgash:backup-restore {{ $newest ?? 'torgash-local-main-YYYY-MM-DD-HHMMSS.zip' }}</code>
+                    <p class="opacity-80">{{ __('Without a name it lists the backups. With --database=other_db it restores into another database, to check a backup without touching the shop.') }}</p>
+                    <p class="opacity-80">{{ __('The .env file — passwords and keys — is not in a backup on purpose. Keep a copy of it apart.') }}</p>
                 </div>
-            </form>
-        </div>
+            </div>
+        </section>
     </div>
 @endsection

@@ -128,11 +128,20 @@ Route::middleware(['auth', 'can:admin.access'])->group(function () {
         Route::post('updates/upload', [\App\Http\Controllers\Admin\SystemController::class, 'uploadUpdate'])->name('system.updates.upload');
         Route::post('updates/install-file', [\App\Http\Controllers\Admin\SystemController::class, 'installUpdateFile'])->name('system.updates.install_file');
         Route::delete('updates/file', [\App\Http\Controllers\Admin\SystemController::class, 'deleteUpdateFile'])->name('system.updates.delete_file');
-        Route::get('backups', [\App\Http\Controllers\Admin\SystemController::class, 'backups'])->name('system.backups');
-        Route::post('backups', [\App\Http\Controllers\Admin\SystemController::class, 'backup'])->name('system.backups.create');
-        Route::post('backups/settings', [\App\Http\Controllers\Admin\SystemController::class, 'saveBackupSettings'])->name('system.backups.settings');
-        Route::get('backups/{name}', [\App\Http\Controllers\Admin\SystemController::class, 'download'])->where('name', '[A-Za-z0-9._-]+')->name('system.backups.download');
-        Route::delete('backups/{name}', [\App\Http\Controllers\Admin\SystemController::class, 'destroy'])->where('name', '[A-Za-z0-9._-]+')->name('system.backups.destroy');
+        // Backups (PLAN §45, §67): the journal, plans, storages.
+        Route::get('backups', [\App\Http\Controllers\Admin\BackupsController::class, 'index'])->name('system.backups');
+        Route::post('backups', [\App\Http\Controllers\Admin\BackupsController::class, 'store'])->name('system.backups.create');
+        Route::get('backups/copies/{copy}', [\App\Http\Controllers\Admin\BackupsController::class, 'download'])->name('system.backups.download');
+        Route::post('backups/runs/{run}/verify', [\App\Http\Controllers\Admin\BackupsController::class, 'verify'])->name('system.backups.verify');
+        Route::post('backups/runs/{run}/pin', [\App\Http\Controllers\Admin\BackupsController::class, 'pin'])->name('system.backups.pin');
+        Route::delete('backups/runs/{run}', [\App\Http\Controllers\Admin\BackupsController::class, 'destroy'])->name('system.backups.destroy');
+        Route::post('backup-plans/{plan}/run', [\App\Http\Controllers\Admin\BackupPlansController::class, 'run'])->name('system.backup-plans.run');
+        Route::resource('backup-plans', \App\Http\Controllers\Admin\BackupPlansController::class)
+            ->except(['show'])->parameters(['backup-plans' => 'plan'])->names('system.backup-plans');
+        Route::post('backup-destinations/{destination}/test', [\App\Http\Controllers\Admin\BackupDestinationsController::class, 'test'])->name('system.backup-destinations.test');
+        Route::post('backup-destinations/{destination}/trust', [\App\Http\Controllers\Admin\BackupDestinationsController::class, 'trust'])->name('system.backup-destinations.trust');
+        Route::resource('backup-destinations', \App\Http\Controllers\Admin\BackupDestinationsController::class)
+            ->except(['show'])->parameters(['backup-destinations' => 'destination'])->names('system.backup-destinations');
     });
 
     // Where the cache and the sessions live — written to .env.

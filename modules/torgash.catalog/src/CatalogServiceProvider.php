@@ -3,10 +3,15 @@
 namespace Torgash\Catalog;
 
 use App\Core\Content\Placeholders;
+use App\Core\Demo\DemoPack;
 use App\Core\Display\RuleKinds;
 use App\Core\Storefronts\StorefrontRoutes;
+use App\Core\Support\PerRequest;
+use Illuminate\Cookie\Middleware\EncryptCookies;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Route;
@@ -21,10 +26,10 @@ use Torgash\Catalog\Models\FilterPage;
 use Torgash\Catalog\Models\FilterRule;
 use Torgash\Catalog\Models\Label;
 use Torgash\Catalog\Models\PriceType;
-use Torgash\Catalog\Models\ProductPriceTypeOverride;
 use Torgash\Catalog\Models\Product;
-use Torgash\Catalog\Pricing\Prices;
+use Torgash\Catalog\Models\ProductPriceTypeOverride;
 use Torgash\Catalog\Pricing\PriceHistory;
+use Torgash\Catalog\Pricing\Prices;
 use Torgash\Catalog\Sorting\Sorts;
 use Torgash\Catalog\Stock\AvailabilityStatuses;
 use Torgash\Catalog\Support\CategoryTree;
@@ -32,6 +37,8 @@ use Torgash\Catalog\Support\Labels;
 use Torgash\Catalog\Support\Measurements;
 use Torgash\Catalog\Support\PriceTypes;
 use Torgash\Catalog\Support\ShortDescription;
+use Torgash\Catalog\Support\Variations;
+use Torgash\Exim\SchemaRegistry;
 use Torgash\Media\MediaOwners;
 
 class CatalogServiceProvider extends ServiceProvider
@@ -60,14 +67,14 @@ class CatalogServiceProvider extends ServiceProvider
         $this->app->singleton(Stock\StockMoves::class);
         // Who the visitor is and what is closed to them (PLAN §46).
         $this->app->singleton(Support\Assortment::class);
-        \App\Core\Support\PerRequest::forget($this->app, Support\Assortment::class);
+        PerRequest::forget($this->app, Support\Assortment::class);
         // The active labels and which products their rules matched: one
         // request's answer — a stock that moved changes the next page's.
-        \App\Core\Support\PerRequest::forget($this->app, Support\Labels::class);
-        \App\Core\Support\PerRequest::forget($this->app, Stock\StockMoves::class);
+        PerRequest::forget($this->app, Labels::class);
+        PerRequest::forget($this->app, Stock\StockMoves::class);
         // Rows a queue job reads too (an export, a feed, a letter): emptied
         // before each job, or a long-running worker serves what it booted with.
-        \App\Core\Support\PerRequest::flushPerJob($this->app, PriceTypes::class, CategoryTree::class, AvailabilityStatuses::class, Sorts::class, Filters\Flags::class);
+        PerRequest::flushPerJob($this->app, PriceTypes::class, CategoryTree::class, AvailabilityStatuses::class, Sorts::class, Filters\Flags::class);
     }
 
     public function boot(MediaOwners $mediaOwners): void
@@ -78,13 +85,13 @@ class CatalogServiceProvider extends ServiceProvider
         // Its part of the demo shop (PLAN §55): categories, characteristics,
         // products, labels — the first part, the others hang off it.
         hook_listen('core.demo.parts', fn (array $parts) => $parts + [
-            'catalog' => ['label' => 'Catalogue', 'install' => fn (\App\Core\Demo\DemoPack $pack) => app(Demo\CatalogDemo::class)->install($pack)],
+            'catalog' => ['label' => 'Catalogue', 'install' => fn (DemoPack $pack) => app(Demo\CatalogDemo::class)->install($pack)],
         ]);
 
         // A category's own picture lives in a folder of its own, not a media row.
         hook_listen('core.files.directories', fn (array $directories) => [...$directories, [
             'disk' => 'public',
-            'directory' => Models\Category::ICON_DIR,
+            'directory' => Category::ICON_DIR,
             'label' => 'Category pictures',
         ]]);
 
@@ -101,7 +108,7 @@ class CatalogServiceProvider extends ServiceProvider
 
         // Written by the listing's own script, in plain text — see
         // Support\ListingView for why the server never sets them.
-        \Illuminate\Cookie\Middleware\EncryptCookies::except([
+        EncryptCookies::except([
             Support\ListingView::PER_PAGE_COOKIE,
             Support\ListingView::LAYOUT_COOKIE,
         ]);
@@ -155,7 +162,7 @@ class CatalogServiceProvider extends ServiceProvider
 
             // One with subcategories when there is one: the theme's
             // "Category page" settings are about those.
-            $listed = app(\Torgash\Catalog\Support\CategoryTree::class)->ordered(listedOnly: true);
+            $listed = app(CategoryTree::class)->ordered(listedOnly: true);
             $parents = $listed->pluck('parent_id')->filter()->map(fn ($id) => (int) $id)->flip();
             $category = $listed->first(fn (Category $c) => $parents->has((int) $c->id))
                 ?? Category::query()->listed()->orderBy('id')->first();
@@ -175,7 +182,7 @@ class CatalogServiceProvider extends ServiceProvider
             $products = collect($context['products'] ?? [])->filter(fn ($p) => $p instanceof Product)->values();
 
             if ($products->isNotEmpty()) {
-                (new \Illuminate\Database\Eloquent\Collection($products->all()))->loadMissing('categories');
+                (new Collection($products->all()))->loadMissing('categories');
             }
         }, 1);
 
@@ -267,7 +274,7 @@ class CatalogServiceProvider extends ServiceProvider
             // default is the default's copy.
             ->vary(
                 'listing',
-                fn (\Illuminate\Http\Request $request) => app(Support\ListingView::class)->perPage($request).'/'.app(Support\ListingView::class)->layout($request),
+                fn (Request $request) => app(Support\ListingView::class)->perPage($request).'/'.app(Support\ListingView::class)->layout($request),
                 cookies: [Support\ListingView::PER_PAGE_COOKIE, Support\ListingView::LAYOUT_COOKIE],
             )
             // Counted in the product's own row on every view and sale; a label
@@ -299,7 +306,7 @@ class CatalogServiceProvider extends ServiceProvider
             })
             // One view per product per session, never a crawler's points —
             // for the visits served from a copy as for the drawn ones.
-            ->onVisit('catalog.product_viewed', function (array $data, \Illuminate\Http\Request $request) {
+            ->onVisit('catalog.product_viewed', function (array $data, Request $request) {
                 $id = (int) ($data['product'] ?? 0);
                 $seen = (array) session('viewed_products', []);
 
@@ -488,7 +495,7 @@ class CatalogServiceProvider extends ServiceProvider
      *
      * Four, which is what the storefront can state from its own columns. Each
      * `apply` ORDERS a query and narrows nothing, and none of them closes the
-     * ordering with `id` — {@see Sorting\Sorts::apply()} does that once, for
+     * ordering with `id` — {@see Sorts::apply()} does that once, for
      * every sort in the registry including a module's own, because a page
      * boundary falling inside a tie is a product shown twice or never.
      *
@@ -565,7 +572,7 @@ class CatalogServiceProvider extends ServiceProvider
                 return $html;
             }
 
-            $variations = app(\Torgash\Catalog\Support\Variations::class)->for($product);
+            $variations = app(Variations::class)->for($product);
             $ids = $variations['offered']->pluck('id')->all();
 
             if (count($ids) < 2) {
@@ -1038,16 +1045,16 @@ class CatalogServiceProvider extends ServiceProvider
             ['name' => 'Filter pages', 'table' => 'm_catalog_filter_pages', 'example' => 'slug', 'columns' => ['price_min', 'price_max']],
             [
                 'name' => 'Filter page rules',
-                'lossy' => fn (int $divisor) => \Illuminate\Support\Facades\DB::table('m_catalog_filter_rules')->whereNotNull('price_bounds')
+                'lossy' => fn (int $divisor) => DB::table('m_catalog_filter_rules')->whereNotNull('price_bounds')
                     ->pluck('price_bounds')
                     ->filter(fn ($bounds) => collect(json_decode((string) $bounds, true) ?: [])
                         ->contains(fn ($b) => (($b['min'] ?? null) !== null && $b['min'] % $divisor !== 0) || (($b['max'] ?? null) !== null && $b['max'] % $divisor !== 0)))
                     ->count(),
                 'rescale' => function (int $multiply, int $divide) {
-                    foreach (\Illuminate\Support\Facades\DB::table('m_catalog_filter_rules')->whereNotNull('price_bounds')->get(['id', 'price_bounds']) as $row) {
+                    foreach (DB::table('m_catalog_filter_rules')->whereNotNull('price_bounds')->get(['id', 'price_bounds']) as $row) {
                         $move = fn ($v) => $v === null ? null : intdiv((int) $v * $multiply, $divide);
                         $bounds = array_map(fn ($b) => ['min' => $move($b['min'] ?? null), 'max' => $move($b['max'] ?? null)] + $b, json_decode((string) $row->price_bounds, true) ?: []);
-                        \Illuminate\Support\Facades\DB::table('m_catalog_filter_rules')->where('id', $row->id)->update(['price_bounds' => json_encode($bounds)]);
+                        DB::table('m_catalog_filter_rules')->where('id', $row->id)->update(['price_bounds' => json_encode($bounds)]);
                     }
                 },
             ],
@@ -1055,7 +1062,7 @@ class CatalogServiceProvider extends ServiceProvider
 
         hook_listen('core.currency.precision_changed', function () {
             $prices = app(Prices::class);
-            foreach (\Torgash\Catalog\Models\Product::query()->whereNotNull('price_currency')->distinct()->pluck('price_currency') as $code) {
+            foreach (Product::query()->whereNotNull('price_currency')->distinct()->pluck('price_currency') as $code) {
                 $prices->rebase((string) $code);
             }
         });
@@ -1157,17 +1164,32 @@ class CatalogServiceProvider extends ServiceProvider
 
         hook_listen('exim.resolve_price_type', fn ($v, array $ctx) => $v ?? PriceType::find($ctx['id']));
 
-        hook_listen('exim.query.product', function ($v, array $ctx) {
-            $query = Product::query()->with(['priceTiers', 'priceTypeOverrides']);
-            // Filter key stays "enabled_only" so existing export profiles keep
-            // working; it now means "listed", so hidden products drop out of
-            // feeds exactly like they drop out of the catalogue.
-            if ($ctx['filters']['enabled_only'] ?? false) {
-                $query->visible();
-            }
+        // WHICH products a profile takes is the selection's (Exim\ProductSelection):
+        // statuses, price, stock, photos, stop words, categories, labels,
+        // characteristics, SKUs. The old `enabled_only` is still read.
+        hook_listen('exim.query.product', fn ($v, array $ctx) => Exim\ProductSelection::apply(
+            Product::query()->with(['priceTiers', 'priceTypeOverrides']),
+            (array) ($ctx['filters'] ?? []),
+        ));
 
-            return $query;
+        // The profile form's own card for products, and what it saves.
+        hook_listen('exim.profile.form_parts', function (array $parts, array $ctx) {
+            $filters = (array) ($ctx['filters'] ?? []);
+            $stored = $ctx['profile']?->exists && $ctx['profile']->entity === 'product' ? (array) ($ctx['profile']->filters ?? []) : [];
+
+            return [...$parts, [
+                'entity' => 'product',
+                'view' => 'torgash.catalog::admin.exim.product-selection',
+                'data' => [
+                    'selectionFilters' => $filters,
+                    'selectionChoices' => Exim\ProductSelection::choices(),
+                    'selectionCount' => $stored !== [] ? Exim\ProductSelection::count($stored) : null,
+                ],
+            ]];
         });
+        hook_listen('exim.profile.filters', fn (array $filters, array $ctx) => ($ctx['entity'] ?? null) === 'product'
+            ? Exim\ProductSelection::fromInput((array) ($ctx['input'] ?? []))
+            : $filters);
 
         hook_listen('exim.query.category', function ($v, array $ctx) {
             $query = Category::query();
@@ -1253,7 +1275,7 @@ class CatalogServiceProvider extends ServiceProvider
             // storefront prints a description as HTML, and a supplier's line
             // breaks would otherwise run together into one block.
             ['key' => 'description', 'label' => 'Description', 'translatable' => true, 'group' => 'texts', 'aliases' => ['Description', 'Описание'],
-                'set' => fn (Product $p, $v, string $locale) => \Torgash\Exim\SchemaRegistry::writeTranslation($p, 'description', $locale, Exim\ProductImport::asHtml((string) $v))],
+                'set' => fn (Product $p, $v, string $locale) => SchemaRegistry::writeTranslation($p, 'description', $locale, Exim\ProductImport::asHtml((string) $v))],
             // The price WITH whatever a customer would get automatically —
             // a sale, a quantity break — and export-only, so a file that goes
             // out and comes back can never bake a promotion into the shop's

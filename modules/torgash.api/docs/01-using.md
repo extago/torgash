@@ -25,9 +25,12 @@ Issue a token in the admin panel and send it on every call:
     Authorization: Bearer tg_...
 
 The token belongs to the account that issued it and can never do more than that
-account may. Narrowing it to `read` is what keeps a price feed from being able
-to change an order. The plaintext is shown once, at issue: the database keeps
-only a hash, so a stolen dump cannot be replayed.
+account may. It is also narrowed when issued: **one resource at a time**, read
+or write — the price feed's key reads products and nothing else, the CRM's key
+reads orders and cannot touch the catalogue, the 1C exchange has a door of its
+own. A call outside the key's rooms is a 403 that names the resource. "Write"
+carries "read" of the same resource. The plaintext is shown once, at issue:
+the database keeps only a hash, so a stolen dump cannot be replayed.
 
 ## Addressing a row
 

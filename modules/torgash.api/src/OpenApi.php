@@ -50,7 +50,7 @@ class OpenApi
                     'bearerAuth' => [
                         'type' => 'http',
                         'scheme' => 'bearer',
-                        'description' => __('A token from Admin → API. It names a user, and every permission check is the admin panel’s own.'),
+                        'description' => __('A token from Admin → API. It names a user, and every permission check is the admin panel’s own.').' '.__('A token may be narrowed to one resource (“read products”, “read and write orders”): a call outside it is 403.'),
                     ],
                 ],
                 'parameters' => $this->contextParameters(),

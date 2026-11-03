@@ -6,6 +6,18 @@ use Symfony\Component\Console\Input\ArgvInput;
 
 define('LARAVEL_START', microtime(true));
 
+// An update's second half (`torgash:update-finish`) is the NEW code booting
+// beside the OLD cache of discovered packages in bootstrap/cache: a package
+// the old vendor had and the new one has not ("Laravel\Pail\PailServiceProvider
+// not found") stops the boot before the command can clear that cache — and
+// the updater of the version being left behind cannot be taught otherwise.
+// So the door clears it; a missing manifest is built again on boot.
+if (($argv[1] ?? null) === 'torgash:update-finish') {
+    foreach (glob(__DIR__.'/bootstrap/cache/*.php') ?: [] as $cache) {
+        @unlink($cache);
+    }
+}
+
 // Register the Composer autoloader...
 require __DIR__.'/vendor/autoload.php';
 

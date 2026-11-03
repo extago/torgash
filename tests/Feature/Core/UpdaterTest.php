@@ -3,8 +3,8 @@
 namespace Tests\Feature\Core;
 
 use App\Core\Updates\Release;
-use App\Core\Updates\Updater;
 use App\Core\Updates\UpdatePackage;
+use App\Core\Updates\Updater;
 use Illuminate\Support\Facades\File;
 use RuntimeException;
 use Tests\TestCase;
@@ -87,10 +87,16 @@ class UpdaterTest extends TestCase
 
     public function test_a_release_replaces_the_owned_paths_and_nothing_else(): void
     {
+        // The cache of discovered packages describes the vendor being left
+        // behind; a provider it names that the new vendor lacks stops the
+        // new code's boot ("PailServiceProvider not found", 2026-11-03).
+        $this->write('shop/bootstrap/cache/packages.php', '<?php return ["Laravel\Pail\PailServiceProvider"];');
+
         $done = $this->updater()->apply($this->release020(), null, '0.1.0');
 
         $shop = $this->dir.'/shop';
         $this->assertSame(['from' => '0.1.0', 'to' => '0.2.0', 'secret' => null], $done);
+        $this->assertFileDoesNotExist("$shop/bootstrap/cache/packages.php", 'the old cache of packages is cleared before the new code boots');
         $this->assertFileExists("$shop/app/New.php");
         $this->assertFileDoesNotExist("$shop/app/Old.php", 'a file the new version does not have is gone from core');
         $this->assertStringEqualsFile("$shop/config/torgash.php", 'version 0.2.0');

@@ -33,6 +33,15 @@ use Throwable;
  *
  * The console (`torgash:install`) and the web wizard drive the same steps;
  * neither has an install of its own.
+ *
+ * **Or a shop brought back from a backup** (PLAN §67.8, stage 6): the
+ * answers carry `restore` — the backup's file, its password, the old
+ * APP_KEY (or the .env an encrypted backup carries) — and the steps are
+ * .env, the database, the restore, the migrations of this version, the
+ * shop fitted to this server, the stylesheet and the lock `restored`.
+ * Everything is checked BEFORE anything is written: the backup's head is
+ * read (`Backups::inspect()`), a key that is not the old one is refused,
+ * so is a backup of a newer engine and a database that already has tables.
  */
 class Installer
 {
@@ -42,6 +51,12 @@ class Installer
     public const INSTALLING = 'app/installing';
 
     public const LOCALES = ['en', 'ru', 'uk'];
+
+    /** Where the .env a backup carries waits between reading it and writing it. */
+    public const RESTORE_ENV = 'app/installing-backup.env';
+
+    /** Where the web wizard keeps a backup uploaded to it, until the install is done. */
+    public const UPLOADS = 'app/restore';
 
     /**
      * The country a books currency belongs to, for a shop that named none.
@@ -142,7 +157,12 @@ class Installer
             $this->step($answers, $index);
         }
 
-        return ['owner_password' => ($answers['owner']['made_up'] ?? false) ? $answers['owner']['password'] : null, 'modules' => $answers['module_list']];
+        return [
+            'owner_password' => ($answers['owner']['made_up'] ?? false) ? $answers['owner']['password'] : null,
+            'modules' => $answers['module_list'],
+            'answers' => $answers,
+            'notes' => $this->notes,
+        ];
     }
 
     /**
@@ -156,6 +176,10 @@ class Installer
      */
     public function begin(array $answers): array
     {
+        if (! empty($answers['restore'])) {
+            return $this->remember($this->beginRestore($answers));
+        }
+
         $this->validate($answers);
 
         $answers['country'] = strtoupper(trim((string) ($answers['country'] ?? '')))
@@ -173,12 +197,151 @@ class Installer
             $answers['owner']['made_up'] = true;
         }
 
+        return $this->remember($answers);
+    }
+
+    /** The answers written into the in-progress marker (and handed back): what the next step reads. */
+    protected function remember(array $answers): array
+    {
         $marker = storage_path(self::INSTALLING);
         @mkdir(dirname($marker), 0755, true);
-        file_put_contents($marker, json_encode(['started_at' => now()->toIso8601String(), 'answers' => $answers], JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE));
+        $started = json_decode((string) @file_get_contents($marker), true)['started_at'] ?? now()->toIso8601String();
+        file_put_contents($marker, json_encode(['started_at' => $started, 'answers' => $answers], JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE));
         @chmod($marker, 0600);
 
         return $answers;
+    }
+
+    /**
+     * Everything a restore is refused for, before anything is written.
+     *
+     * @param  array{restore: array{file: string, password?: ?string, app_key?: ?string, new_key?: bool, with_env?: bool, files?: bool, code?: bool, uploaded?: bool}, db: array, url?: ?string}  $answers
+     */
+    protected function beginRestore(array $answers): array
+    {
+        try {
+            return $this->checkRestore($answers);
+        } catch (Throwable $e) {
+            // The .env read out of the backup holds the old shop's passwords:
+            // a refused restore leaves none of it behind.
+            @unlink(storage_path(self::RESTORE_ENV));
+
+            throw $e;
+        }
+    }
+
+    protected function checkRestore(array $answers): array
+    {
+        $r = $answers['restore'];
+        $file = (string) ($r['file'] ?? '');
+        $password = ($r['password'] ?? '') !== '' ? (string) $r['password'] : null;
+
+        if (! preg_match('/^[A-Za-z0-9_]+$/', (string) ($answers['db']['database'] ?? ''))) {
+            throw new RuntimeException(__('The database name may hold Latin letters, digits and underscores only.'));
+        }
+        if ($file === '' || ! file_exists($file)) {
+            throw new RuntimeException(__('There is no backup at :path on this server.', ['path' => $file]));
+        }
+
+        $envTo = ! empty($r['with_env']) ? storage_path(self::RESTORE_ENV) : null;
+        @mkdir(storage_path('app'), 0755, true);
+        $head = app(\App\Core\Backups\Backups::class)->inspect($file, $password, $envTo);
+        $manifest = $head['manifest'];
+
+        $engine = (string) ($manifest['engine'] ?? '0');
+        if (version_compare($engine, (string) config('torgash.version'), '>')) {
+            throw new RuntimeException(__('The backup was made by Torgash :backup, this code is :code: put the code of :backup or newer here first.', ['backup' => $engine, 'code' => config('torgash.version')]));
+        }
+
+        // The application key: from the backup's own .env, typed, or — said
+        // out loud — a new one, and what it encrypted is lost.
+        $backups = app(\App\Core\Backups\Backups::class);
+        $key = null;
+        if ($envTo !== null) {
+            if (! $head['env']) {
+                throw new RuntimeException(__('This backup carries no .env — only an encrypted one does. Type the old shop\'s APP_KEY instead.'));
+            }
+            preg_match('/^APP_KEY=(.*)$/m', (string) file_get_contents($envTo), $m);
+            $key = trim($m[1] ?? '', " \t\"'\r");
+        } elseif (trim((string) ($r['app_key'] ?? '')) !== '') {
+            $key = trim((string) $r['app_key'], " \t\"'\r\n");
+            $key = str_starts_with($key, 'base64:') ? $key : 'base64:'.$key;
+            $raw = base64_decode(substr($key, 7), true);
+            if ($raw === false || strlen($raw) !== 32) {
+                throw new RuntimeException(__('That is not an application key: it looks like base64:… with 44 characters after the colon, from APP_KEY in the old .env.'));
+            }
+        } elseif (! empty($r['new_key'])) {
+            $key = 'base64:'.base64_encode(random_bytes(32));
+        } else {
+            throw new RuntimeException(__('Give the old shop\'s APP_KEY (from its .env), take the .env from an encrypted backup, or choose to start with a new key.'));
+        }
+
+        $fits = $backups->keyFits($manifest, $key);
+        if (empty($r['new_key']) && $fits === false) {
+            throw new RuntimeException(__('This APP_KEY is not the one the backup was made with: what it encrypted (gift card codes, the mail password, storage passwords, second factors) would not open.'));
+        }
+
+        // Into an EMPTY database: pg_restore --clean over somebody's tables
+        // is not a restore, it is a loss.
+        try {
+            $pdo = ServerCheck::connect($answers['db'], (string) $answers['db']['database']);
+            $tables = (int) $pdo->query("select count(*) from pg_tables where schemaname = 'public'")->fetchColumn();
+        } catch (Throwable) {
+            $tables = 0; // not there yet: created by the next step
+        }
+        // ...unless it is this very restore's, stopped half way: running it
+        // again is how it is finished (pg_restore --clean over its own rows).
+        $pending = self::pending();
+        $ours = ! empty($pending['restore'])
+            && ($pending['db']['host'] ?? null) === $answers['db']['host']
+            && (string) ($pending['db']['port'] ?? '') === (string) $answers['db']['port']
+            && ($pending['db']['database'] ?? null) === $answers['db']['database'];
+        if ($tables > 0 && ! $ours) {
+            throw new RuntimeException(__('The database ":db" already has :n tables. A shop is restored into an empty database: give another name, or drop this one.', ['db' => $answers['db']['database'], 'n' => $tables]));
+        }
+
+        // The tool that reads the dump, found NOW — not after .env and the
+        // database are written: this server's setting first, then the one
+        // the backup's own .env names.
+        $tool = ($manifest['database_format'] ?? 'custom') === 'plain' ? 'psql' : 'pg_restore';
+        $pgBin = null;
+        $tried = [];
+        $candidates = array_filter([trim((string) ($r['pg_bin'] ?? '')), (string) config('torgash.pg_bin', ''), $envTo ? $this->envValue($envTo, 'TORGASH_PG_BIN') : ''], fn ($d) => $d !== '');
+        foreach (array_unique([...$candidates, '']) as $dir) {
+            config(['torgash.pg_bin' => $dir]);
+            if (\App\Core\Backups\Backups::toolVersion($tool)) {
+                $pgBin = $dir;
+                break;
+            }
+            $tried[] = $dir === '' ? 'PATH' : $dir;
+        }
+        if ($pgBin === null) {
+            throw new RuntimeException(__(':tool is not found (looked in :where): install the PostgreSQL client tools, or name the folder they are in (the field "Folder of the PostgreSQL tools", --pg-bin).', ['tool' => $tool, 'where' => implode(', ', $tried)]));
+        }
+
+        $url = rtrim(trim((string) ($answers['url'] ?? '')), '/') ?: rtrim((string) ($manifest['app_url'] ?? ''), '/');
+        if (! filter_var($url, FILTER_VALIDATE_URL) || ! in_array(parse_url($url, PHP_URL_SCHEME), ['http', 'https'], true)) {
+            throw new RuntimeException(__("The shop's address must be a full URL, like https://shop.example.com."));
+        }
+
+        return [
+            'url' => $url,
+            'db' => $answers['db'],
+            'module_list' => [],
+            'styles' => $answers['styles'] ?? true,
+            'pg_bin' => $pgBin,
+            'restore' => [
+                'file' => $file,
+                'password' => $password,
+                'app_key' => $key,
+                'new_key' => ! empty($r['new_key']) && $fits !== true,
+                'env_file' => $envTo,
+                'files' => $r['files'] ?? true,
+                'code' => ! empty($r['code']),
+                'uploaded' => ! empty($r['uploaded']),
+                'manifest' => array_intersect_key($manifest, array_flip(['engine', 'created_at', 'app_url', 'contents', 'database_format', 'files_in_bucket'])),
+            ],
+        ];
     }
 
     /** The answers of the install in progress, or null when there is none. */
@@ -197,6 +360,18 @@ class Installer
      */
     public function steps(array $answers): array
     {
+        if (! empty($answers['restore'])) {
+            return [
+                ['key' => 'env', 'label' => 'Writing .env'],
+                ['key' => 'database', 'label' => 'Preparing the database'],
+                ['key' => 'restore', 'label' => 'Restoring the backup'],
+                ['key' => 'upgrade', 'label' => 'Bringing the database up to this version'],
+                ['key' => 'settle', 'label' => 'Fitting the shop to this server'],
+                ...(($answers['styles'] ?? true) ? [['key' => 'styles', 'label' => 'Building the stylesheet']] : []),
+                ['key' => 'lock', 'label' => 'Finishing'],
+            ];
+        }
+
         $steps = [
             ['key' => 'env', 'label' => 'Writing .env'],
             ['key' => 'database', 'label' => 'Preparing the database'],
@@ -233,7 +408,17 @@ class Installer
             $this->useDatabase($answers['db']);
         }
 
+        $restore = ! empty($answers['restore']);
+        if ($restore) {
+            config(['torgash.pg_bin' => (string) ($answers['pg_bin'] ?? '')]);
+        }
+
         match (true) {
+            $restore && $key === 'env' => $this->writeRestoreEnv($answers),
+            $restore && $key === 'restore' => $this->restoreBackup($answers),
+            $restore && $key === 'upgrade' => $this->upgradeRestored(),
+            $restore && $key === 'settle' => $this->settle($answers),
+            $restore && $key === 'lock' => $this->finishRestore($answers),
             $key === 'env' => $this->writeEnv($answers),
             $key === 'database' => $this->prepareDatabase($answers['db']),
             $key === 'migrate' => $this->artisan('migrate', ['--force' => true]),
@@ -250,6 +435,9 @@ class Installer
     }
 
     protected bool $connected = false;
+
+    /** What a restore found on the way (the modules not in this code), for the console's last words. */
+    protected array $notes = [];
 
     protected function prepareDatabase(array $db): void
     {
@@ -664,8 +852,177 @@ class Installer
     }
 
     /**
+     * The backup's own .env when it carried one, else the shipped example —
+     * then this server's database and address over it, and the old key.
+     */
+    protected function writeRestoreEnv(array $answers): void
+    {
+        $r = $answers['restore'];
+        $fromBackup = $r['env_file'] && is_file($r['env_file']);
+
+        if ($fromBackup) {
+            if (is_file($this->envPath) && ! is_file($this->envPath.'.before-restore')) {
+                copy($this->envPath, $this->envPath.'.before-restore');
+            }
+            copy($r['env_file'], $this->envPath);
+        } elseif (! is_file($this->envPath) && ! @copy(base_path('.env.example'), $this->envPath)) {
+            throw new RuntimeException('Cannot create '.$this->envPath.' — is the folder writable?');
+        }
+
+        $db = $answers['db'];
+        $env = new EnvFile($this->envPath);
+        $env->set([
+            ...($fromBackup ? [] : ['APP_ENV' => 'production', 'APP_DEBUG' => 'false']),
+            'APP_KEY' => $r['app_key'],
+            'APP_URL' => $answers['url'],
+            'TORGASH_PG_BIN' => (string) ($answers['pg_bin'] ?? ''),
+            'DB_CONNECTION' => 'pgsql',
+            'DB_HOST' => $db['host'],
+            'DB_PORT' => (string) $db['port'],
+            'DB_DATABASE' => $db['database'],
+            'DB_USERNAME' => $db['username'],
+            'DB_PASSWORD' => (string) ($db['password'] ?? ''),
+        ]);
+
+        config(['app.key' => $r['app_key'], 'app.url' => $answers['url']]);
+        // Resolved with the key this process booted with (none, on a new server).
+        app()->forgetInstance('encrypter');
+        \Illuminate\Support\Facades\Crypt::clearResolvedInstance('encrypter');
+    }
+
+    protected function envValue(string $file, string $key): string
+    {
+        return preg_match('/^'.preg_quote($key, '/').'=(.*)$/m', (string) @file_get_contents($file), $m) ? trim($m[1], " 	\"'
+") : '';
+    }
+
+    protected function restoreBackup(array $answers): void
+    {
+        @set_time_limit(0);
+        $r = $answers['restore'];
+
+        $result = app(\App\Core\Backups\Backups::class)->restore(
+            '', null, (bool) $r['files'], fn (string $line) => ($this->say)('  '.$line), (bool) $r['code'],
+            $r['file'], $r['password'], false, null, lock: false,
+        );
+
+        $answers['restore']['result'] = array_intersect_key($result, array_flip(['key_matches', 'cyrillic_ok', 'storage_linked', 'engine', 'created_at']));
+        if (is_file(storage_path(self::INSTALLING))) {
+            $this->remember($answers);
+        }
+    }
+
+    /**
+     * The backup's schema brought to this version: core's migrations, then
+     * every module the restored shop had — what `torgash:update` does after
+     * new code. A module whose code is not here (a paid one, without
+     * `--code`) is named, not fatal: the shop runs without it.
+     */
+    protected function upgradeRestored(): void
+    {
+        $this->artisan('migrate', ['--force' => true]);
+
+        $manager = $this->modules();
+        $applied = DB::table('migrations')->pluck('migration')->all();
+        $missing = [];
+
+        foreach (DB::table('modules')->orderBy('id')->pluck('module_id') as $id) {
+            if (! $manager->find($id)) {
+                $missing[] = $id;
+
+                continue;
+            }
+
+            $manager->upgrade($id, $applied);
+        }
+
+        if ($missing !== []) {
+            $this->notes['missing_modules'] = $missing;
+            ($this->say)('  not in this code, so not working until it is put back: '.implode(', ', $missing));
+            $answers = self::pending();
+            if ($answers !== null) {
+                $answers['restore']['missing_modules'] = $missing;
+                $this->remember($answers);
+            }
+        }
+    }
+
+    /**
+     * What .env says that the database knows better — the shop's name,
+     * language and clock, when the .env is not the backup's own — and this
+     * server's address among the storefront's domains, or the shop answers
+     * its new address with no storefront at all.
+     */
+    protected function settle(array $answers): void
+    {
+        $r = $answers['restore'];
+        $default = DB::table('storefronts')->orderByDesc('is_default')->orderBy('id')->first();
+        $setting = fn (string $key) => json_decode((string) DB::table('settings')->where('module', 'core')->where('key', $key)->whereNull('storefront_id')->value('value'), true);
+
+        if (! ($r['env_file'] && is_file($r['env_file']))) {
+            $locale = (string) ($setting('content_locale') ?: ($default->default_locale ?? 'en'));
+            $timezone = (string) ($setting('timezone') ?: 'UTC');
+            $names = $default ? json_decode((string) $default->name, true) : null;
+            $name = is_array($names) ? (string) (pick_translation($names) ?? 'Torgash') : (string) ($default->name ?? 'Torgash');
+
+            (new EnvFile($this->envPath))->set([
+                'APP_NAME' => $name,
+                'APP_LOCALE' => in_array($locale, self::LOCALES, true) ? $locale : 'en',
+                'TORGASH_CONTENT_LOCALE' => $locale,
+                'APP_TIMEZONE' => in_array($timezone, \DateTimeZone::listIdentifiers(), true) ? $timezone : 'UTC',
+            ]);
+        }
+
+        $host = strtolower((string) parse_url($answers['url'], PHP_URL_HOST));
+        $port = parse_url($answers['url'], PHP_URL_PORT);
+        $domain = $host.($port ? ':'.$port : '');
+        $known = DB::table('storefronts')->pluck('domains')
+            ->flatMap(fn ($d) => (array) json_decode((string) $d, true))
+            ->map(fn ($d) => strtolower((string) $d));
+
+        if ($default && ! $known->contains($domain)) {
+            $domains = (array) json_decode((string) $default->domains, true);
+            DB::table('storefronts')->where('id', $default->id)->update(['domains' => json_encode(array_values(array_unique([$domain, ...$domains])))]);
+            ($this->say)('  the address '.$domain.' added to the default storefront');
+        }
+
+        if (! file_exists(public_path('storage'))) {
+            $this->storageLink();
+        }
+    }
+
+    protected function finishRestore(array $answers): void
+    {
+        $this->searchWorks();
+        $this->lock(DB::table('modules')->orderBy('id')->pluck('module_id')->all(), 'restored');
+
+        @unlink(storage_path(self::RESTORE_ENV));
+        // A backup uploaded through the wizard is the whole shop in a file:
+        // it does not stay on the server once it has done its job.
+        if (! empty($answers['restore']['uploaded']) && str_starts_with(realpath($answers['restore']['file']) ?: '', realpath(storage_path(self::UPLOADS)) ?: "\0")) {
+            is_dir($answers['restore']['file']) ? \Illuminate\Support\Facades\File::deleteDirectory($answers['restore']['file']) : @unlink($answers['restore']['file']);
+        }
+    }
+
+    /**
+     * A shop brought back from a backup onto a fresh copy of the code is a
+     * shop: without the lock the web wizard would exist on it again. Written
+     * only when missing; true when it was.
+     */
+    public function lockAfterRestore(): bool
+    {
+        if (is_file(storage_path(self::LOCK))) {
+            return false;
+        }
+
+        $this->lock(DB::table('modules')->orderBy('id')->pluck('module_id')->all(), 'restored');
+
+        return true;
+    }
+
+    /**
      * @param  list<string>  $modules
-     * @param  string  $how  `installed` by this installer, or `found` already in place
+     * @param  string  $how  `installed` by this installer, `found` already in place, `restored` from a backup
      */
     protected function lock(array $modules, string $how = 'installed'): void
     {

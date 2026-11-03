@@ -4,6 +4,7 @@ namespace Torgash\CommerceMl;
 
 use App\Core\Modules\ModuleLifecycle;
 use App\Core\Settings\SettingsManager;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\ServiceProvider;
 use Torgash\CommerceMl\Import\Matching;
@@ -43,11 +44,20 @@ class CommerceMlServiceProvider extends ServiceProvider implements ModuleLifecyc
         // The exchange's own bookkeeping is on no guest's page (PLAN §61).
         page_cache()->unseen(['m_commerceml_exchanges', 'm_commerceml_links', 'm_commerceml_order_sync']);
 
+        // The exchange is a door of its own for an API token (TokenScopes):
+        // 1C's key opens it and no resource, a feed's key the other way round.
+        hook_listen('api.token.scopes', fn (array $scopes) => $scopes + ['commerceml' => [
+            'label' => '1C exchange',
+            'description' => 'The CommerceML door 1C knocks on: the catalogue in, orders out. Write only.',
+            'readable' => false,
+            'writable' => true,
+        ]]);
+
         // A merge 1C has already taken — either order handed over and
         // confirmed after it — is 1C's fact too, and undoing it here would
         // leave the two systems telling different stories (PLAN §40.10/4).
         hook_listen('checkout.order.unmerge_refusals', function (array $refusals, array $context) {
-            $taken = \Illuminate\Support\Facades\DB::table('m_commerceml_order_sync')
+            $taken = DB::table('m_commerceml_order_sync')
                 ->whereIn('order_id', [$context['into']->id, $context['from']->id])
                 ->where('confirmed_at', '>=', $context['merge']->created_at)
                 ->exists();

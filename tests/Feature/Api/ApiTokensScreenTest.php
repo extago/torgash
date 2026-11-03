@@ -22,6 +22,27 @@ class ApiTokensScreenTest extends TestCase
         $this->actingAs($this->admin);
     }
 
+    public function test_a_token_is_narrowed_to_resources_when_issued(): void
+    {
+        $this->get('http://localhost/admin/api/tokens')->assertOk()
+            ->assertSee('admin.products:read')->assertSee('admin.orders:write')->assertSee('commerceml:write')
+            ->assertDontSee('commerceml:read', false)->assertDontSee('shop.products');
+
+        $this->post('http://localhost/admin/api/tokens', ['name' => 'CRM', 'narrow' => 'chosen', 'abilities' => ['admin.orders:read', 'admin.products:write', 'admin.products:write']])
+            ->assertRedirect()->assertSessionHas('new_token');
+        $this->assertSame(['admin.orders:read', 'admin.products:write'], ApiToken::where('name', 'CRM')->firstOrFail()->abilities);
+
+        $this->post('http://localhost/admin/api/tokens', ['name' => 'Everything', 'narrow' => 'all', 'abilities' => ['admin.orders:read']])->assertRedirect();
+        $this->assertNull(ApiToken::where('name', 'Everything')->firstOrFail()->abilities);
+
+        $this->post('http://localhost/admin/api/tokens', ['name' => 'Nothing', 'narrow' => 'chosen'])->assertSessionHasErrors('abilities');
+        $this->post('http://localhost/admin/api/tokens', ['name' => 'Made up', 'narrow' => 'chosen', 'abilities' => ['admin.secrets:read']])->assertSessionHasErrors('abilities.0');
+        $this->post('http://localhost/admin/api/tokens', ['name' => '1C reads', 'narrow' => 'chosen', 'abilities' => ['commerceml:read']])->assertSessionHasErrors('abilities.0');
+
+        $this->get('http://localhost/admin/api/tokens')->assertOk()
+            ->assertSee('Orders: read')->assertSee('Products: read and write')->assertSee(__('everything its owner may'));
+    }
+
     public function test_issued_once_listed_by_state_and_revoked_in_bulk(): void
     {
         $this->post('http://localhost/admin/api/tokens', ['name' => 'Quokka CRM', 'abilities' => ['read']])

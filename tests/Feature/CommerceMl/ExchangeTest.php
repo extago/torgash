@@ -2,6 +2,7 @@
 
 namespace Tests\Feature\CommerceMl;
 
+use App\Core\Settings\SettingsManager;
 use App\Models\User;
 use Illuminate\Support\Facades\File;
 use Tests\TestCase;
@@ -59,7 +60,7 @@ class ExchangeTest extends TestCase
     /** @param array<string, mixed> $values */
     protected function set(array $values): void
     {
-        $settings = app(\App\Core\Settings\SettingsManager::class);
+        $settings = app(SettingsManager::class);
 
         foreach ($values as $key => $value) {
             $settings->set('torgash.commerceml', $key, $value);
@@ -118,6 +119,13 @@ class ExchangeTest extends TestCase
 
         $this->exchange('type=catalog&mode=checkauth', null, $readOnly)->assertStatus(401);
         $this->exchange('type=catalog&mode=checkauth', null, 'tg_nonsense')->assertStatus(401);
+
+        // The exchange is a door of its own: a key to the products resource
+        // does not open it, a key narrowed to the door does.
+        [, $products] = ApiToken::issue(User::role('admin')->firstOrFail(), 'Products', ['admin.products:write']);
+        [, $door] = ApiToken::issue(User::role('admin')->firstOrFail(), '1C only', ['commerceml:write']);
+        $this->exchange('type=catalog&mode=checkauth', null, $products)->assertStatus(401);
+        $this->exchange('type=catalog&mode=checkauth', null, $door)->assertOk();
     }
 
     public function test_the_handshake_answers_what_the_protocol_asks_for(): void

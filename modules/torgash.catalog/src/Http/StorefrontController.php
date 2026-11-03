@@ -226,7 +226,8 @@ class StorefrontController extends Controller
 
         // The heading and the title differ here on purpose, which is the
         // smallest example of why H1 lives in PageMeta at all.
-        page_meta()->set(['title' => __('Catalog'), 'h1' => __('All products')]);
+        page_meta()->set(['title' => __('Catalog'), 'h1' => __('All products'),
+            'description' => __('All products of :shop: prices, availability and delivery.', ['shop' => current_storefront()?->name])]);
         breadcrumbs()->add(__('Catalog'));
 
         return view('torgash.catalog::index', [

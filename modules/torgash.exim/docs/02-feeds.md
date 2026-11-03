@@ -23,6 +23,43 @@ To send the shop's characteristics only, put the line inside `{{^own}}`:
 {{#item.params}}{{^own}}<param name="{{ name }}">{{ value }}</param>{{/own}}{{/item.params}}
 ```
 
+## Which products go in
+
+The **Which products** card of a product profile. Every field left empty
+takes everything; together the fields narrow, so a product must pass all of
+them.
+
+- **Statuses** — active alone by default, which is what the catalogue lists;
+  tick hidden or disabled to take them too.
+- **Availability** — the shop's availability statuses (in stock, preorder, out of stock, its own): the product's is one of the ticked ones.
+- **Price from / to** in the shop's currency, **stock from / to**, and the
+  three switches: only what can be ordered now (the availability status
+  allows it and, where it tracks stock, there is some), only with a
+  description (in any language), only with a photo (its own, or by address
+  while the shop allows pictures by address).
+- **In categories / not in categories** — lists of ticks with a search by
+  name, each with or without the subcategories. Nothing ticked on the first
+  means every category.
+- **Wearing a label** — at least one of the ticked ones.
+- **Characteristics** — any number of conditions on the shop's
+  characteristics: *equals*, *is not*, *is one of* (comma-separated), *is
+  none of*, *contains*, *does not contain*, *is greater than*, *is at
+  least*, *is less than*, *is at most*, *is empty*, *is set*. A value is
+  compared as text in every language and case; the number comparisons read
+  the value's leading number, so "128 GB" is 128. *Is not*, *is none of*,
+  *does not contain* and *is empty* also pass a product that has no such
+  characteristic at all. With two or more conditions you choose whether a
+  product must pass all of them or any of them.
+- **Also take these SKUs** — products named by SKU, either *as well as* the
+  categories and characteristics above (the default) or *only those of them
+  that also pass* the above. **Never take these SKUs** wins over everything.
+- **Stop words** — a product mentioning any of the words in a ticked field
+  (name, short description, description, SEO title and description), in any
+  language, is left out: `refurbished`, `display sample`.
+
+The card says how many products match right now; the number is counted
+when the form opens, so it is of the last save.
+
 ## Keeping the file current
 
 Two ways, on the **Updating the file** card. Either, both, or neither.

@@ -51,6 +51,24 @@ this file is the reasoning. Read it before changing anything it covers.
   rebuilds itself and builds only for one that does not. Build bookkeeping
   is saved quietly — a line in the audit trail per build buried real edits;
   the builds are on record as background tasks.
+- **Which products a profile takes is the catalogue's say, not exim's**
+  (2026-11-03, `Torgash\Catalog\Exim\ProductSelection`, PLAN §59.4): the
+  profile's `filters` for the `product` entity, applied by
+  `exim.query.product`. Exim offers two seams and knows no field: a module
+  answers `exim.profile.form_parts` with `{entity, view, data}` and the form
+  @includes the view for the entity chosen (never through `hook_render` —
+  form fields are not optional parts, an isolated card that failed would
+  save a profile with its filters wiped), and `exim.profile.filters` turns
+  the request's input into the stored filters (the module normalises; a
+  bad feature id is dropped, never refused). The legacy `enabled_only` is
+  still read as "active only" by `apply()`. Conditions on characteristics
+  are EXISTS subqueries over `m_catalog_product_features` joined to the
+  value row, every spelling read (`jsonb_each_text` of the value's names
+  plus `value_text`); the negative operators are NOT EXISTS, so a product
+  without the characteristic passes "is not". Numbers are the value's
+  leading number — `substring(… from '^-?[0-9]+(?:\.[0-9]+)?')`, the group
+  NON-capturing: with a capturing group Postgres's `substring()` returns
+  that group, which for "128 GB" is nothing.
 - **A CSV cell never reaches a spreadsheet as a formula**: `CsvRenderer::guard()`
   puts an apostrophe before a value starting with `= + - @ TAB CR` (a number
   stays a number — `-5` is a quantity), and `ImportRunner::unguard()` takes it

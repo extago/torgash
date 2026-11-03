@@ -362,6 +362,7 @@ class CoreServiceProvider extends ServiceProvider
         $this->announceCurrencyChanges();
         $this->watchRates();
         $this->watchTasks();
+        $this->watchBackups();
         $this->watchUpdates();
         $this->tinkerWithoutFork();
         \App\Core\Admin\CoreWidgets::register();
@@ -439,6 +440,8 @@ class CoreServiceProvider extends ServiceProvider
                 // Letters, and the redirect table — read only for an address
                 // that is not a page, which is never kept.
                 'mail_texts', 'redirects',
+                // Backups: plans, storages and their journal (PLAN §67).
+                'backup_destinations', 'backup_plans', 'backup_plan_destination', 'backup_runs', 'backup_copies',
             ]);
     }
 
@@ -514,6 +517,28 @@ class CoreServiceProvider extends ServiceProvider
      * queue with no worker at all is said on the tasks screen, not here —
      * on a dev box that is every day.
      */
+    /**
+     * The bell counts the backup plans that need attention (PLAN §67, stage
+     * 4): the last backup failed or was not stored everywhere, a check by
+     * restoring failed, or the schedule has gone without one.
+     */
+    protected function watchBackups(): void
+    {
+        hook_listen('core.admin.notifications', function (array $rows, array $context) {
+            if (! ($context['user'] ?? null)?->can('system.manage')) {
+                return $rows;
+            }
+
+            return [...$rows, [
+                'key' => 'backups',
+                'label' => __('Backup plans that need attention'),
+                'count' => app(\App\Core\Backups\BackupHealth::class)->attention()->count(),
+                'url' => route('admin.system.backups'),
+                'icon' => 'archive-x',
+            ]];
+        });
+    }
+
     protected function watchTasks(): void
     {
         hook_listen('core.admin.notifications', function (array $rows, array $context) {
@@ -711,7 +736,7 @@ class CoreServiceProvider extends ServiceProvider
                     ->everyMinute()->withoutOverlapping()->runInBackground()->name('core:queue');
             }
 
-            // Backups by the shop's own schedule (PLAN §45).
+            // Backups by the shop's own plans (PLAN §45, §67).
             \App\Core\Backups\Backups::schedule($schedule);
 
             $this->scheduleRates($schedule);

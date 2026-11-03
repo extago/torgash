@@ -94,6 +94,9 @@ class ApiResources
 
         $definition['filters'] = array_map(static::callable(...), $definition['filters']);
         $definition['actions'] = array_map(static::callable(...), $definition['actions']);
+        // Its own name, so whoever holds a definition can say which it is —
+        // a token's scope is this name (TokenScopes).
+        $definition['name'] = $name;
 
         static::$resources[$name] = $definition;
     }

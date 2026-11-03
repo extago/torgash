@@ -49,46 +49,21 @@
                     </form>
                 </section>
             @else
+                {{-- A new shop, or one brought back from a backup (PLAN §67.8, 6):
+                     two forms, not one with half of it hidden — a hidden
+                     required field would stop the other from being sent. --}}
+                <div role="tablist" class="tabs tabs-box w-fit">
+                    <a role="tab" href="{{ route('install.show', ['lang' => $installLang]) }}" @class(['tab gap-2', 'tab-active' => $mode === 'new'])><x-icon name="store" size="sm" /> {{ __('A new shop') }}</a>
+                    <a role="tab" href="{{ route('install.show', ['lang' => $installLang, 'mode' => 'restore']) }}" @class(['tab gap-2', 'tab-active' => $mode === 'restore'])><x-icon name="archive-restore" size="sm" /> {{ __('Restore from a backup') }}</a>
+                </div>
+
+                @if ($mode === 'restore')
+                    @include('install.restore')
+                @else
                 <form id="install-form" class="flex flex-col gap-6" hx-post="{{ route('install.start') }}" hx-target="#install-main">
                     <input type="hidden" name="lang" value="{{ $installLang }}">
 
-                    <section class="card bg-base-100 border border-base-300">
-                        <div class="card-body gap-3">
-                            <h2 class="font-semibold text-lg flex items-center gap-2"><x-icon name="key-round" /> {{ __('Install code') }}</h2>
-                            <p class="text-sm opacity-70">{{ __('So that only the owner of this server can install the shop, open the file :path — over SSH, in the hosting\'s file manager or by FTP — and type the code from it.', ['path' => $keyPath]) }}</p>
-                            <input name="key" required class="input input-bordered w-full max-w-xs font-mono uppercase" autocomplete="off" aria-label="{{ __('Install code') }}">
-                        </div>
-                    </section>
-
-                    <section class="card bg-base-100 border border-base-300">
-                        <div class="card-body gap-3">
-                            <h2 class="font-semibold text-lg flex items-center gap-2"><x-icon name="database" /> {{ __('Database') }}</h2>
-                            <p class="text-sm opacity-70">{{ __('PostgreSQL. The database is created by the installer when the user may do it; otherwise create it first (INSTALL.md says how).') }}</p>
-                            <div class="grid sm:grid-cols-[minmax(0,1fr)_8rem] gap-3">
-                                <fieldset class="fieldset p-0"><legend class="fieldset-legend">{{ __('Server') }}</legend>
-                                    <input name="db_host" value="127.0.0.1" class="input input-bordered w-full font-mono">
-                                </fieldset>
-                                <fieldset class="fieldset p-0"><legend class="fieldset-legend">{{ __('Port') }}</legend>
-                                    <input name="db_port" value="5432" inputmode="numeric" class="input input-bordered w-full font-mono">
-                                </fieldset>
-                            </div>
-                            <div class="grid sm:grid-cols-3 gap-3">
-                                <fieldset class="fieldset p-0"><legend class="fieldset-legend">{{ __('Database name') }}</legend>
-                                    <input name="db_database" value="torgash" class="input input-bordered w-full font-mono">
-                                </fieldset>
-                                <fieldset class="fieldset p-0"><legend class="fieldset-legend">{{ __('User') }}</legend>
-                                    <input name="db_username" class="input input-bordered w-full font-mono" autocomplete="off">
-                                </fieldset>
-                                <fieldset class="fieldset p-0"><legend class="fieldset-legend">{{ __('Password') }}</legend>
-                                    <input name="db_password" type="password" class="input input-bordered w-full" autocomplete="new-password">
-                                </fieldset>
-                            </div>
-                            <button type="button" class="btn btn-sm w-fit gap-2" hx-post="{{ route('install.check') }}" hx-include="#install-form" hx-target="#install-checks">
-                                <x-icon name="stethoscope" size="sm" /> {{ __('Check the server and the database') }}
-                            </button>
-                            <div id="install-checks">@include('install.checks', ['rows' => $server])</div>
-                        </div>
-                    </section>
+                    @include('install.basics')
 
                     <section class="card bg-base-100 border border-base-300">
                         <div class="card-body gap-3">
@@ -144,7 +119,7 @@
                                     <input type="checkbox" name="demo" value="1" class="checkbox mt-0.5">
                                     <span class="flex flex-col">
                                         <span class="font-medium">{{ __('Fill it with the demo data') }}</span>
-                                        <span class="text-sm opacity-70">{{ __('About sixty products with prices, sales, a coupon, reviews, pages, a blog and the home page's slider — to see the shop working before your own catalogue is in. System → Remove the demo data takes it all out in one go; what you add yourself stays.') }}</span>
+                                        <span class="text-sm opacity-70">{{ __('About sixty products with prices, sales, a coupon, reviews, pages, a blog and the home page\'s slider — to see the shop working before your own catalogue is in. System → Remove the demo data takes it all out in one go; what you add yourself stays.') }}</span>
                                     </span>
                                 </label>
                             </div>
@@ -172,6 +147,7 @@
                     <div id="install-problem"></div>
                     <button class="btn btn-primary btn-lg w-fit gap-2"><x-icon name="download" /> {{ __('Install') }}</button>
                 </form>
+                @endif
             @endif
         </main>
     </div>

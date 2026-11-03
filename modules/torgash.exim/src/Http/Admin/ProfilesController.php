@@ -86,6 +86,7 @@ class ProfilesController extends Controller
         return view('torgash.exim::admin.profiles.form', [
             'profile' => new EximProfile(['mode' => 'schema', 'format' => 'csv']),
             'entities' => $this->entityOptions($schema),
+            'formParts' => $this->formParts(null),
             'priceTypes' => hook_filter('exim.price_types', [], []),
             'presets' => Presets::all(),
         ]);
@@ -106,6 +107,7 @@ class ProfilesController extends Controller
         return view('torgash.exim::admin.profiles.form', [
             'profile' => $profile,
             'entities' => $this->entityOptions($schema),
+            'formParts' => $this->formParts($profile),
             'fieldDefs' => $schema->exportable($profile->entity),
             'groups' => SchemaRegistry::GROUPS,
             'languages' => Language::query()->where('enabled', true)->orderBy('sort')->orderBy('id')->pluck('native_name', 'code')->all(),
@@ -223,7 +225,11 @@ class ProfilesController extends Controller
             'schedule' => EximProfile::cron($validated['schedule'] ?? null),
             'rebuild_on_change' => $request->boolean('rebuild_on_change'),
             'rebuild_every' => (int) ($validated['rebuild_every'] ?? $profile?->rebuild_every ?? 30),
-            'filters' => ['enabled_only' => $request->boolean('enabled_only')],
+            // A module narrows its own entity (catalog: which products); the
+            // rest keep the one switch every entity has.
+            'filters' => hook_filter('exim.profile.filters', ['enabled_only' => $request->boolean('enabled_only')], [
+                'entity' => $validated['entity'], 'input' => $request->all(), 'profile' => $profile,
+            ]),
             'basic_auth_user' => ($validated['basic_auth_user'] ?? null) ?: null,
             'enabled' => $request->boolean('enabled'),
         ];
@@ -233,6 +239,24 @@ class ProfilesController extends Controller
         }
 
         return $attrs;
+    }
+
+    /**
+     * The cards modules add to the form for their own entity
+     * (`exim.profile.form_parts`): [{entity, view, data}], each drawn by
+     * the form for the entity chosen. The filters shown are what was typed
+     * (a refused save) or what the profile keeps.
+     *
+     * @return list<array{entity: string, view: string, data: array}>
+     */
+    protected function formParts(?EximProfile $profile): array
+    {
+        $filters = old('entity') !== null ? request()->old() : (array) ($profile?->filters ?? []);
+
+        return array_values(array_filter(
+            (array) hook_filter('exim.profile.form_parts', [], ['profile' => $profile, 'filters' => $filters]),
+            fn ($part) => is_array($part) && isset($part['entity'], $part['view']),
+        ));
     }
 
     /** @return list<string>|null  null = every language the shop has */

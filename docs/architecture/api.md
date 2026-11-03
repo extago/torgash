@@ -49,3 +49,17 @@ this file is the reasoning. Read it before changing anything it covers.
   `features` alone was served until 2026-10-27, and an agent reading it took
   the own rows for the characteristics. Eager-loaded in the resource's
   `query`, never per row.
+- **A token is narrowed to ROOMS** (`Torgash\Api\TokenScopes`, 2026-11-03):
+  `abilities` is null (whatever its owner may), the old `read` / `write`
+  (every resource), or `<scope>:read` / `<scope>:write` for one scope — a
+  registered admin resource by its registry name (`admin.products`) or a
+  door a module keeps of its own, announced on `api.token.scopes`
+  (`commerceml`, the 1C exchange, `readable: false`). `write` carries `read`
+  of the same scope. `ResourceController` asks `allows($mode,
+  $definition['name'])` and refuses naming the resource; a module door asks
+  `allows('write', 'commerceml')` itself. A bare `allows('write')` with no
+  scope answers only the global words — so nothing narrowed to one room
+  passes a check written before rooms existed. The issue window lists the
+  scopes from `TokenScopes::all()` (read fresh — the registry is lazy and a
+  module may come later); a write-ticked read is held, and since a disabled
+  box is not submitted, the stored list may say `write` alone.

@@ -11,6 +11,8 @@ use App\Core\Verification\Verifier;
  */
 class CoreLetters
 {
+    public const BACKUP_PROBLEM = 'backup.problem';
+
     /** @return array<string, array<string, mixed>> */
     public static function events(): array
     {
@@ -102,6 +104,41 @@ class CoreLetters
                     'new_email' => Verifier::mask('email', (string) ($c['new_email'] ?? '')),
                 ],
                 'sample' => fn () => ['name' => 'Olena', 'new_email' => 'olena.new@example.com'],
+            ],
+
+            // PLAN §67, stage 4: a backup that failed, was not kept
+            // everywhere, did not restore when checked, or is overdue.
+            // To the staff who manage the system unless the letters' screen
+            // names other addresses.
+            self::BACKUP_PROBLEM => [
+                'label' => 'Backups: something is wrong',
+                'group' => 'Staff',
+                'audience' => 'shop',
+                'subject' => 'Backups of {shop_name}: {problem_short}',
+                'heading' => '{problem_short}',
+                'body' => "{problem}\n\nUntil it is put right, the shop may have no backup to come back to.",
+                'button' => ['label' => 'Open the backups', 'url' => '{backups_url}'],
+                'help' => [
+                    'plan' => 'The backup plan',
+                    'problem' => 'What is wrong, in a sentence',
+                    'problem_short' => 'The same in a few words',
+                    'backups_url' => 'The backups in the admin panel',
+                ],
+                'tokens' => fn (array $c) => [
+                    'plan' => (string) ($c['plan'] ?? ''),
+                    'problem' => (string) ($c['problem'] ?? ''),
+                    'problem_short' => match ($c['kind'] ?? '') {
+                        'partial' => __('a backup not stored everywhere'),
+                        'verify' => __('a backup did not restore'),
+                        'stale' => __('no fresh backup'),
+                        default => __('a backup failed'),
+                    },
+                    'backups_url' => route('admin.system.backups'),
+                ],
+                'recipients' => fn () => \App\Models\User::staff()->get()
+                    ->filter(fn ($user) => $user->can('system.manage'))
+                    ->pluck('email')->filter()->values()->all(),
+                'sample' => fn () => ['plan' => 'Main backup plan', 'kind' => 'failed', 'problem' => 'The last backup by "Main backup plan" failed: pg_dump: connection refused.'],
             ],
         ];
     }

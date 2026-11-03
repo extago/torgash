@@ -855,3 +855,50 @@ Same day, the sidebar's strip: a `<summary>` cannot carry `popovertarget`
 (only a button can), so the strip toggles the section's popover from the
 summary's `click`; and an inline script that looks up an element written
 further down the page finds nothing — look it up when it is needed.
+
+## A backup that restores over the shop is not one that raises a shop
+
+The restore drill of 2026-11-03 (PLAN §67): the test shop's folder and
+database were renamed away, a fresh copy of the code got the saved `.env`,
+an empty database and `torgash:backup-restore --file=… --code`. Every row
+came back; four things did not, and none of them shows when a backup is
+restored over a shop that is still there:
+
+- **pg_trgm.** The restore created the dump's extensions only in ANOTHER
+  database; the shop's own was assumed to have them. A new server's is
+  empty, the search indexes failed and the single transaction took the whole
+  restore with it. Now created first in any target (`if not exists`).
+- **The error said nothing.** pg_restore on a Russian Windows answers in
+  cp1251; a console line that is not UTF-8 is printed as nothing — exit 1,
+  no word. The tools now run with `LC_MESSAGES=C`, `PGCLIENTENCODING=UTF8`,
+  and the message is converted when it is still not UTF-8.
+- **`public/storage`.** A link the installer makes, in neither the code nor
+  a backup: every picture a 404. The restore links it.
+- **The backup's own run.** The dump is taken WHILE its run is being made,
+  so the restored journal held it as "running" for ever — the plan refused
+  to start again and the list polled every three seconds. An update's
+  rollback restores the same kind of dump. The restore drops such rows.
+
+What a backup cannot bring is `APP_KEY`: gift card codes, the mail
+password, second factors and storage passwords are encrypted with it. The
+manifest carries a short string encrypted under it (`key_check`), and the
+restore says out loud when this server's key is another one.
+
+## A page only a fresh server shows is a page no test opens
+
+The web installer's page answered 500 from 2026-10-27 to 2026-11-03 — every
+release in between — and nothing noticed: an apostrophe in
+`__('… the home page's slider …')` (the demo checkbox) broke the compiled
+view. The suite runs on an INSTALLED shop, where `/install` is a 404 by
+design, and the console installer, which the drills used, never draws the
+page. Found only because the restore drill drove the wizard on a fresh copy
+of the code. A page that exists only before the install (or only on a
+broken shop, or only to a role no test signs in as) is rendered directly —
+`view('install.page', [...])->render()` in `InstallRestoreTest` — so that
+compiling it is at least checked.
+
+Two smaller ones from the same drill: a restore that reads pg_restore's
+folder from the backup's `.env` must apply it to the RUNNING process too
+(it booted without that file), and a command line run from Git Bash rewrites
+an argument that starts with `/` into a Windows path (`/install/start` →
+`AI/Git/install/start`) — `MSYS_NO_PATHCONV=1`, or the "bug" is the shell.

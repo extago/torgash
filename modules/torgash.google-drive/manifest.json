@@ -1,0 +1,39 @@
+{
+    "id": "torgash.google-drive",
+    "name": "Google Drive",
+    "version": "1.0.0",
+    "icon": "cloud-upload",
+    "section": "system",
+    "description": "Keeps backups in a Google Drive: a kind of backup storage signed in with the owner's Google account. The shop sees only the files it has put there itself.",
+    "provider": "Torgash\\GoogleDrive\\GoogleDriveServiceProvider",
+    "autoload": {
+        "Torgash\\GoogleDrive\\": "src/"
+    },
+    "requires": {
+        "core": ">=0.1",
+        "modules": []
+    },
+    "settings": [
+        {
+            "key": "_g_app",
+            "type": "group",
+            "label": "Google Cloud application"
+        },
+        {
+            "key": "client_id",
+            "type": "text",
+            "default": "",
+            "label": "Client ID",
+            "help": "From Google Cloud Console → APIs & Services → Credentials: an OAuth client of the kind \"Web application\", with the address below among its authorised redirect URIs. Ends with .apps.googleusercontent.com."
+        },
+        {
+            "key": "client_secret",
+            "type": "text",
+            "default": "",
+            "label": "Client secret",
+            "help": "Shown once when the client is made. Needed with the Client ID; the Google account itself is connected on each storage's own screen."
+        }
+    ],
+    "permissions": [],
+    "admin_menu": []
+}

@@ -12,7 +12,7 @@
 @endphp
 <section class="card bg-base-100 border border-base-300">
     <div class="card-body gap-4">
-        <h2 class="font-semibold text-lg">{{ $error ? __('The install stopped') : __('Installing…') }}</h2>
+        <h2 class="font-semibold text-lg">{{ $error ? __('The install stopped') : ($restoring ?? false ? __('Restoring…') : __('Installing…')) }}</h2>
         <progress class="progress progress-primary w-full" value="{{ $index }}" max="{{ $progressTotal }}"></progress>
         <p class="text-sm flex items-center gap-2">
             @unless ($error)<span class="loading loading-spinner loading-sm text-primary"></span>@endunless
@@ -27,7 +27,7 @@
                 <x-icon name="rotate-cw" size="sm" /> {{ __('Try again') }}
             </button>
         @else
-            <p class="text-xs opacity-60">{{ __('Keep this page open. A shop with every module takes a minute or two.') }}</p>
+            <p class="text-xs opacity-60">{{ ($restoring ?? false) ? __('Keep this page open. A big backup takes a while; one of many gigabytes is better restored from the console: php artisan torgash:install --restore=…') : __('Keep this page open. A shop with every module takes a minute or two.') }}</p>
             <div hx-post="{{ route('install.step') }}" hx-vals='@json($progressVals)' hx-trigger="load" hx-target="#install-main"></div>
         @endif
     </div>

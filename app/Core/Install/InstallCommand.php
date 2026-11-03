@@ -11,6 +11,11 @@ use Throwable;
  * run it unattended; whatever is left out is asked when somebody is there to
  * answer, and refused when nobody is.
  *
+ * `--restore=<backup>` raises a shop from a backup instead (PLAN §67.8, 6):
+ * the old APP_KEY (`--app-key`, or `--with-env` from an encrypted backup, or
+ * `--new-key` knowing what it costs), the database, nothing about the shop —
+ * the backup knows its name, language, modules and owner.
+ *
  * The server is checked first and nothing is written while a requirement
  * fails. Running it again after a failure finishes the install (Installer
  * says why that is safe); running it over a finished one is refused.
@@ -32,7 +37,15 @@ class InstallCommand extends Command
         {--owner-password= : The owner\'s password; left out, one is made up and shown once}
         {--no-styles : Keep the shipped stylesheet instead of building one}
         {--demo : Fill the shop with the demo data — products, sales, pages, a blog; System removes it in one go}
-        {--check : Only check the server and the database, write nothing}';
+        {--check : Only check the server and the database, write nothing}
+        {--restore= : Raise the shop from this backup (a file, or the folder of one made without an archive) instead of installing a new one}
+        {--password= : The password of an encrypted backup}
+        {--app-key= : The old shop\'s APP_KEY (from its .env): what it encrypted opens again}
+        {--with-env : Take the .env an encrypted backup carries (its key, mail, storage) — this server\'s database and address are written over it}
+        {--new-key : Start with a new key: gift card codes, the mail password, storage passwords and second factors of the old shop are lost}
+        {--pg-bin= : With --restore: the folder of pg_restore / psql when they are not on the PATH}
+        {--no-files : With --restore: leave the uploaded files out}
+        {--code : With --restore: put the backup\'s modules and themes back too (paid modules, the shop\'s own theme)}';
 
     protected $description = 'Install Torgash: check the server, write .env, create the database, install the modules and the owner';
 
@@ -73,6 +86,10 @@ class InstallCommand extends Command
             $this->info('The server is ready for Torgash.');
 
             return self::SUCCESS;
+        }
+
+        if ($this->option('restore')) {
+            return $this->restore($db);
         }
 
         $answers = [
@@ -119,6 +136,80 @@ class InstallCommand extends Command
         $this->line('<fg=gray>A queue worker of its own (systemd, supervisor) is faster for a busy shop — then set QUEUE_WORKER=external. See INSTALL.md.</>');
 
         return self::SUCCESS;
+    }
+
+    protected function restore(array $db): int
+    {
+        $file = (string) $this->option('restore');
+        $password = $this->option('password');
+        $answers = [
+            'url' => (string) ($this->option('url') ?? ''),
+            'db' => $db,
+            'styles' => ! $this->option('no-styles'),
+            'restore' => [
+                'file' => $file,
+                'password' => $password,
+                'app_key' => $this->option('app-key'),
+                'with_env' => (bool) $this->option('with-env'),
+                'new_key' => (bool) $this->option('new-key'),
+                'files' => ! $this->option('no-files'),
+                'code' => (bool) $this->option('code'),
+                'pg_bin' => (string) $this->option('pg-bin'),
+            ],
+        ];
+
+        $this->newLine();
+
+        try {
+            // An encrypted backup and no password: asked, when somebody is there.
+            if (($password === null || $password === '') && $this->input->isInteractive() && $this->encrypted($file)) {
+                $answers['restore']['password'] = (string) $this->secret('The backup is encrypted. Its password');
+            }
+
+            $result = (new Installer)->run($answers, fn (string $line) => $this->line(str_starts_with($line, '  ') ? '<fg=gray>'.$line.'</>' : '→ '.$line));
+        } catch (Throwable $e) {
+            $this->newLine();
+            $this->error($e->getMessage());
+            $this->line(Installer::pending() ? 'Fix it and run the same command again: the restore goes on from where it stopped.' : 'Nothing was written.');
+
+            return self::FAILURE;
+        }
+
+        $answers = $result['answers'];
+        $done = $answers['restore'];
+        $this->newLine();
+        $this->info('The shop is back from the backup of '.($done['manifest']['created_at'] ?? '?').' (Torgash '.($done['manifest']['engine'] ?? '?').'): '.rtrim($answers['url'], '/').'/admin — sign in with the account you had.');
+        if ($done['new_key']) {
+            $this->warn('A NEW key: gift card codes, the mail password, storage passwords and second factors of the old shop do not open — type them again.');
+        }
+        if ($missing = ($result['notes']['missing_modules'] ?? [])) {
+            $this->warn('Not in this code: '.implode(', ', $missing).'. Put them into modules/ (or restore with --code).');
+        }
+        $this->line('<options=bold>One line for cron</>:  * * * * * cd '.base_path().' && php artisan schedule:run >> /dev/null 2>&1');
+
+        return self::SUCCESS;
+    }
+
+    protected function encrypted(string $file): bool
+    {
+        if (! is_file($file)) {
+            return false;
+        }
+
+        if ((string) file_get_contents($file, false, null, 0, 8) === 'Salted__') {
+            return true;
+        }
+
+        $zip = new \ZipArchive;
+        if ($zip->open($file, \ZipArchive::RDONLY) !== true) {
+            return false;
+        }
+
+        try {
+            return (($zip->statIndex(0, \ZipArchive::FL_ENC_RAW)['encryption_method'] ?? 0) !== \ZipArchive::EM_NONE);
+        } finally {
+            $zip->close();
+        }
     }
 
     /** @param  list<array{label: string, ok: bool, required: bool, detail: string}>  $checks */

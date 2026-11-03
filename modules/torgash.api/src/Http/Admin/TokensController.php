@@ -4,7 +4,10 @@ namespace Torgash\Api\Http\Admin;
 
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
+use Illuminate\Validation\Rule;
+use Illuminate\Validation\ValidationException;
 use Torgash\Api\Models\ApiToken;
+use Torgash\Api\TokenScopes;
 
 class TokensController extends Controller
 {
@@ -27,6 +30,7 @@ class TokensController extends Controller
         ];
 
         return view('torgash.api::admin.tokens', [
+            'scopes' => TokenScopes::all(),
             'tokens' => ($filters['status'] !== '' ? $found->filter($by[$filters['status']]) : $found)->values(),
             'filters' => $filters,
             'statusCounts' => ['' => $found->count()] + array_map(fn ($test) => $found->filter($test)->count(), $by),
@@ -48,10 +52,18 @@ class TokensController extends Controller
     {
         $validated = $request->validate([
             'name' => 'required|string|max:190',
+            // "all" — whatever the owner may; "chosen" — the ticked scopes.
+            'narrow' => 'nullable|in:all,chosen',
             'abilities' => 'nullable|array',
-            'abilities.*' => 'in:read,write',
+            'abilities.*' => [Rule::in(TokenScopes::words())],
             'expires_in_days' => 'nullable|integer|min:1|max:3650',
         ]);
+
+        $abilities = $request->input('narrow', 'chosen') === 'all' ? null : array_values(array_unique($validated['abilities'] ?? []));
+
+        if ($abilities === []) {
+            throw ValidationException::withMessages(['abilities' => __('Tick what the token may do, or let it do whatever you may.')]);
+        }
 
         // Issued to the person pressing the button: a token can never do more
         // than its owner may, so "who is this integration" has an answer that
@@ -59,7 +71,7 @@ class TokensController extends Controller
         [, $plaintext] = ApiToken::issue(
             $request->user(),
             $validated['name'],
-            $validated['abilities'] ?? null,
+            $abilities,
             isset($validated['expires_in_days']) ? now()->addDays((int) $validated['expires_in_days']) : null,
         );
 

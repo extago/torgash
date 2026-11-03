@@ -8,6 +8,7 @@ use Illuminate\Http\Response;
 use Illuminate\Support\Facades\File;
 use Throwable;
 use Torgash\Api\Models\ApiToken;
+use Torgash\Catalog\Stock\StockMoves;
 use Torgash\CommerceMl\Import\Runner;
 use Torgash\CommerceMl\Models\Exchange;
 use Torgash\CommerceMl\Sale\Export;
@@ -161,7 +162,7 @@ class ExchangeController extends Controller
         }
 
         // Every stock number this batch writes is 1C's doing (PLAN §42).
-        $result = app(\Torgash\Catalog\Stock\StockMoves::class)->because(['type' => '1c'], fn () => $runner->slice($exchange, $name));
+        $result = app(StockMoves::class)->because(['type' => '1c'], fn () => $runner->slice($exchange, $name));
 
         return $this->answer($result['done']
             ? "success\n".$result['message']
@@ -248,7 +249,9 @@ class ExchangeController extends Controller
 
         $token = ApiToken::with('user')->where('token_hash', ApiToken::hash($password))->first();
 
-        if (! $token || ! $token->user || $token->isExpired() || ! $token->allows('write')) {
+        // The exchange is a door of its own, not a resource: a token narrowed
+        // to it (`commerceml:write`, TokenScopes) opens it and nothing else.
+        if (! $token || ! $token->user || $token->isExpired() || ! $token->allows('write', 'commerceml')) {
             return null;
         }
 
@@ -301,7 +304,7 @@ class ExchangeController extends Controller
 
     protected function unzip(string $archive, string $into): void
     {
-        $zip = new \ZipArchive();
+        $zip = new \ZipArchive;
 
         if ($zip->open($archive) !== true) {
             return;

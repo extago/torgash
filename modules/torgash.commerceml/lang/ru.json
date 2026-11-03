@@ -170,5 +170,6 @@
     "Order sent to 1C": "Заказ, отправленный в 1С",
     "1C has already taken these orders as merged.": "1С уже приняла эти заказы как объединённые.",
     "Payment surcharge service identifier": "Идентификатор услуги «наценка за оплату»",
-    "A payment method's surcharge goes into the document as a service line too, under this 1C nomenclature id. Empty — under the engine's own id, which 1C is told about once.": "Наценка способа оплаты тоже попадает в документ строкой-услугой — с этим идентификатором номенклатуры 1С. Пусто — с собственным идентификатором движка, о котором 1С узнаёт один раз."
+    "A payment method's surcharge goes into the document as a service line too, under this 1C nomenclature id. Empty — under the engine's own id, which 1C is told about once.": "Наценка способа оплаты тоже попадает в документ строкой-услугой — с этим идентификатором номенклатуры 1С. Пусто — с собственным идентификатором движка, о котором 1С узнаёт один раз.",
+    "The CommerceML door 1C knocks on: the catalogue in, orders out. Write only.": "Дверь CommerceML, в которую стучится 1С: каталог внутрь, заказы наружу. Только запись."
 }

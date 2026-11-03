@@ -8,7 +8,7 @@
 
     <form method="POST" class="flex flex-col gap-4"
           action="{{ $profile->exists ? route('admin.exim.profiles.update', $profile) : route('admin.exim.profiles.store') }}"
-          x-data="{ mode: @js(old('mode', $profile->mode ?? 'schema')) }">
+          x-data="{ mode: @js(old('mode', $profile->mode ?? 'schema')), entity: @js(old('entity', $profile->entity ?? array_key_first($entities) ?? '')) }">
         @csrf
         @if ($profile->exists) @method('PUT') @endif
 
@@ -59,7 +59,7 @@
 
                         <div class="grid md:grid-cols-3 gap-4">
                             <fieldset class="fieldset p-0"><legend class="fieldset-legend">{{ __('Data') }} *</legend>
-                                <select name="entity" class="select select-bordered w-full" @disabled($profile->exists)>
+                                <select name="entity" class="select select-bordered w-full" @disabled($profile->exists) x-model="entity">
                                     @foreach ($entities as $key => $label)
                                         <option value="{{ $key }}" @selected(old('entity', $profile->entity ?? '') === $key)>{{ __($label) }}</option>
                                     @endforeach
@@ -240,7 +240,10 @@
                                     @endforeach
                                 </select>
                             </fieldset>
-                            <label class="label cursor-pointer justify-start gap-3 pb-2">
+                            {{-- An entity with a card of its own below (products) chooses
+                                 its statuses there; the one switch is for the rest. --}}
+                            <label class="label cursor-pointer justify-start gap-3 pb-2"
+                                   x-show="! @js(array_column($formParts, 'entity')).includes(entity)">
                                 <input type="checkbox" name="enabled_only" value="1" class="toggle toggle-sm toggle-success"
                                        @checked(old('enabled_only', $profile->filters['enabled_only'] ?? true))>
                                 <span class="label-text">{{ __('Only what is switched on') }}</span>
@@ -248,6 +251,12 @@
                         </div>
                     </div>
                 </section>
+
+                {{-- What a module says about its own entity: which products, for
+                     one. Included, never isolated — these are form fields. --}}
+                @foreach ($formParts as $formPart)
+                    @include($formPart['view'], $formPart['data'] ?? [])
+                @endforeach
             </div>
 
             <div class="flex flex-col gap-4">

@@ -6,6 +6,7 @@ use App\Models\User;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Support\Str;
+use Torgash\Api\TokenScopes;
 
 class ApiToken extends Model
 {
@@ -79,9 +80,15 @@ class ApiToken extends Model
         return $this->expires_at !== null && $this->expires_at->isPast();
     }
 
-    /** Null abilities means "whatever its owner may do" — narrowing is opt-in. */
-    public function allows(string $ability): bool
+    /**
+     * Null abilities means "whatever its owner may do" — narrowing is opt-in.
+     * Narrowed, the token holds `read` / `write` for everything or
+     * `<scope>:read` / `<scope>:write` for one resource or one module's
+     * door; `write` carries `read` (TokenScopes). A caller that names no
+     * scope asks "may it do this ANYWHERE" — the old global words only.
+     */
+    public function allows(string $mode, ?string $scope = null): bool
     {
-        return $this->abilities === null || in_array($ability, $this->abilities, true);
+        return TokenScopes::allows($this->abilities, $mode, $scope);
     }
 }

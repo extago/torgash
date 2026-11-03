@@ -85,6 +85,36 @@ CREATE DATABASE torgash TEMPLATE template0 ENCODING 'UTF8'
 `LC_COLLATE`/`LC_CTYPE` are the operating system's locale names (`locale -a`
 lists them): `C.UTF-8` on Linux, or `en_US.UTF-8`. Never plain `C`.
 
+### Or bring a shop back from a backup
+
+The same distribution raises a shop that is gone — a dead server, a move —
+from one of its backups instead of installing an empty one. The wizard's
+second tab, **Restore from a backup**, or the console:
+
+```bash
+sudo -u www-data php artisan torgash:install --restore=/home/shop/torgash-2026-11-02.zip \
+  --app-key='base64:…' \
+  --db-host=127.0.0.1 --db-username=torgash --db-password='…' --db-database=torgash
+```
+
+- **The old APP_KEY** (from the old `.env`): gift card codes, the mail
+  password, storage passwords and second factors are encrypted with it. An
+  encrypted backup made with ".env inside" carries it — `--with-env`
+  instead. Lost for good: `--new-key`, and those have to be typed again.
+- An encrypted backup: `--password=` (asked when left out).
+- The database must be EMPTY; the installer creates it with the right locale
+  when it may.
+- `--url=` when the shop answers at a new address (it is added to its
+  storefront); left out, the address it had. `--no-files` leaves the pictures
+  out, `--code` puts the backup's own modules and themes back (paid modules).
+  `--pg-bin=` when pg_restore is not on the PATH.
+- Nothing is asked about the shop: its name, language, modules and staff are
+  the backup's. Sign in with the account you had.
+
+Everything is checked before anything is written: a wrong key or password,
+a backup of a newer engine, a database with tables in it are refused in
+words. A big backup is better restored from the console than the browser.
+
 ### The web server (Caddy)
 
 `/etc/caddy/Caddyfile`:

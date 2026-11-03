@@ -129,5 +129,15 @@
     "An amount: a decimal string with two places.": "Сумма: десятичная строка с двумя знаками.",
     "What paying this way adds to this basket; only the methods offered to it are listed.": "Сколько этот способ оплаты добавит к этой корзине; перечислены только способы, доступные для неё.",
     "The recipient pays the carrier on receipt: `cost` is 0 and the delivery is not in the total.": "Получатель платит перевозчику при получении: `cost` равен 0, и доставка не входит в итог.",
-    "What the carrier will ask, as estimated; null when nobody can say.": "Сколько попросит перевозчик, по оценке; null, если никто не может сказать."
+    "What the carrier will ask, as estimated; null when nobody can say.": "Сколько попросит перевозчик, по оценке; null, если никто не может сказать.",
+    "This token may not read :resource.": "Этот токен не может читать :resource.",
+    "This token may not write :resource.": "Этот токен не может писать :resource.",
+    "Tick what the token may do, or let it do whatever you may.": "Отметьте, что может токен, или разрешите ему всё, что можете вы.",
+    "Only what is ticked below": "Только отмеченное ниже",
+    "Everything my account may": "Всё, что может мой аккаунт",
+    "A key for one integration should open one room: the price feed reads products, the CRM reads orders.": "Ключ одной интеграции должен открывать одну комнату: прайс-выгрузка читает товары, CRM читает заказы.",
+    "read and write everything": "читать и писать всё",
+    "read everything": "читать всё",
+    "read and write": "читать и писать",
+    "A token may be narrowed to one resource (“read products”, “read and write orders”): a call outside it is 403.": "Токен можно сузить до одного ресурса («читать товары», «читать и писать заказы»): вызов за его пределами — 403."
 }
