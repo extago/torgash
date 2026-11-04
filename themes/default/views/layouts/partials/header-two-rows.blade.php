@@ -14,7 +14,6 @@
     $hdDark = theme_setting('header_palette') !== 'light';
     // One colour scheme per row, literal class names (Tailwind reads them).
     $hdBar = $hdDark ? 'torgash-bar bg-neutral text-neutral-content' : 'bg-base-100 text-base-content';
-    $hdMuted = $hdDark ? 'text-neutral-content/80' : 'text-base-content/70';
     // The shop's contacts (zone storefront.header.after_search): beside the
     // search, or up in the strip beside the language (`header_contacts`).
     $hdContactsUp = theme_setting('header_contacts') === 'strip';
@@ -27,23 +26,25 @@
          logo/search/cart get uncontested room. Above the main row (z-40), so
          its drop-downs open over it. --}}
     <div @class([$hdBar, 'torgash-header-bar relative z-40 border-b', 'border-white/10' => $hdDark, 'border-base-300' => ! $hdDark, 'sticky top-0' => $headerStick === 'all'])>
-        <div class="container mx-auto max-w-(--torgash-container) flex items-center justify-end gap-1 px-(--torgash-gutter) h-10">
+        {{-- torgash-header-strip: ONE look for everything in the strip,
+             whoever drew it (app.css) — no colour classes per piece here. --}}
+        <div class="torgash-header-strip container mx-auto max-w-(--torgash-container) flex items-center justify-end gap-1 px-(--torgash-gutter) h-10">
             {{-- The strip's far LEFT is where a shop says where the customer is
                  (the town, the shop they collect from) — a module draws it
                  through storefront.header.start. --}}
-            <div class="mr-auto flex items-center gap-5 min-w-0 text-sm {{ $hdMuted }}">
+            <div class="mr-auto flex items-center gap-5 min-w-0 text-sm">
                 <div class="flex items-center shrink-0">{!! hook_render('storefront.header.start', ['storefront' => $storefront, 'header' => $hdDark ? 'dark' : 'light']) !!}</div>
                 {{-- Two zones of the strip (PLAN §39): after the town, and
                      before the language and currency. --}}
                 <div class="hidden md:flex items-center gap-5 min-w-0">{!! zone('storefront.header.top_start', ['storefront' => $storefront]) !!}</div>
             </div>
-            <div class="flex items-center gap-5 shrink-0 text-sm {{ $hdMuted }} mr-2">{!! zone('storefront.header.top_end', ['storefront' => $storefront]) !!}</div>
+            <div class="flex items-center gap-5 shrink-0 text-sm mr-2">{!! zone('storefront.header.top_end', ['storefront' => $storefront]) !!}</div>
             @if ($hdContactsUp)
                 <div class="flex items-center shrink-0">{!! zone('storefront.header.after_search', ['storefront' => $storefront]) !!}</div>
             @endif
-            @include('layouts.partials.header-switchers', ['switcherTrigger' => $hdDark ? 'btn btn-ghost btn-sm gap-1 normal-case text-neutral-content/70 hover:text-neutral-content' : 'btn btn-ghost btn-sm gap-1 normal-case font-normal text-base-content/70 hover:text-base-content'])
+            @include('layouts.partials.header-switchers', ['switcherTrigger' => 'btn btn-ghost btn-sm gap-1 normal-case font-normal'])
 
-            @include('layouts.partials.mode-switch', ['modeSwitchClass' => $hdDark ? 'text-neutral-content/70 hover:text-neutral-content' : 'btn-touch text-base-content/70 hover:text-base-content'])
+            @include('layouts.partials.mode-switch', ['modeSwitchClass' => 'btn-touch'])
         </div>
     </div>
 

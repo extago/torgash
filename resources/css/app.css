@@ -1248,6 +1248,36 @@ html:has([data-sections-nav]) .torgash-buy-mini { top: calc(var(--torgash-header
    inside the search box, whose controls are the box's own size. */
 .torgash-header-main .btn-ghost:not(form *, .torgash-bar-panel *) > svg:first-child { width: 1.5rem; height: 1.5rem; }
 
+/* The header's thin strip (both headers, either palette): ONE look for
+   everything standing in it. Its pieces have different owners — the town
+   (torgash.locations), the menu's links (torgash.menus), a block the shop
+   typed (the phone), the theme's own language, currency and light/dark
+   switches — and each came with its own idea of a strip item: a daisyUI
+   button in the full text colour with a grey fill under the pointer, a link
+   in a muted colour turning primary. So the look is the STRIP's, not the
+   piece's: quiet text at rest, the brand colour under the pointer, never a
+   fill — a ghost button here is a hit target of the row's height, not a
+   button (a real button, btn-primary, stays one). Written against the base
+   token, which .torgash-bar remaps, so the dark bar needs no colour classes
+   of its own; a highlighted menu entry is primary already and does not
+   change. Not the panels that open from the strip (torgash-bar-panel). */
+.torgash-header-strip { color: color-mix(in oklab, var(--color-base-content) 75%, transparent); }
+.torgash-header-strip :is(a, [role="button"]):not(.btn, .torgash-bar-panel *) { transition: color 0.2s; }
+.torgash-header-strip .btn-ghost:not(.torgash-bar-panel *) {
+    color: inherit;
+    --btn-bg: transparent;
+    --btn-border: transparent;
+    --btn-shadow: 0 0 0 0 transparent;
+    --btn-inset: 0 0 0 0 transparent;
+    --btn-noise: none;
+    background-color: transparent;
+    border-color: transparent;
+    box-shadow: none;
+}
+.torgash-header-strip :is(a, .btn-ghost, [role="button"]):not(.torgash-bar-panel *):is(:hover, :focus-visible) {
+    color: var(--color-primary);
+}
+
 /* A header counter (basket, wishlist, comparison — each module draws its own)
    is a number, not a label: tight sides, never narrower than it is tall. */
 .torgash-bar .btn > .badge,

@@ -181,6 +181,7 @@ class ProfilesController extends Controller
             'locales' => 'nullable|array',
             'locales.*' => 'string|max:5',
             'template_body' => 'nullable|string',
+            'vars_lines' => 'nullable|string|max:20000',
             'price_type_id' => 'nullable|integer',
             'schedule' => ['nullable', 'string', 'max:120', function (string $attribute, mixed $value, \Closure $fail) {
                 if (! EximProfile::readable((string) $value)) {
@@ -204,6 +205,20 @@ class ProfilesController extends Controller
             }
         }
 
+        // The profile's variables (PLAN §68, stage 2): lines `name = value`;
+        // a name is what a template can say — a word.
+        $vars = [];
+        foreach (preg_split('/\r\n|\r|\n/', (string) ($validated['vars_lines'] ?? '')) ?: [] as $line) {
+            if (trim($line) === '') {
+                continue;
+            }
+            [$name, $value] = array_pad(array_map('trim', explode('=', $line, 2)), 2, '');
+            if (! preg_match('/^[A-Za-z_][A-Za-z0-9_]*$/', $name)) {
+                throw ValidationException::withMessages(['vars_lines' => __('":name" cannot be a variable\'s name: Latin letters, digits and _, starting with a letter.', ['name' => $name])]);
+            }
+            $vars[$name] = $value;
+        }
+
         $name = $profile?->name ?? [];
         if (trim($validated['name'] ?? '') !== '') {
             $name[$locale] = $validated['name'];
@@ -221,6 +236,7 @@ class ProfilesController extends Controller
             // includes a language the shop adds next year.
             'locales' => $this->locales($validated['locales'] ?? []),
             'template_body' => $validated['mode'] === 'template' ? ($validated['template_body'] ?? null) : null,
+            'vars' => $vars ?: null,
             'price_type_id' => ($validated['price_type_id'] ?? null) ?: null,
             'schedule' => EximProfile::cron($validated['schedule'] ?? null),
             'rebuild_on_change' => $request->boolean('rebuild_on_change'),

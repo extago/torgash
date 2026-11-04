@@ -157,6 +157,10 @@ class BackupPlansController extends Controller
             'encrypt' => $format !== 'folder' && ! empty($input['encrypt']),
             'env' => false,
             'verify' => in_array($input['verify'] ?? '', ['weekly', 'monthly'], true) ? $input['verify'] : '',
+            // The files (PLAN §67.10): only those changed since the last full
+            // backup, and without the pictures' thumbnails.
+            'changed_only' => in_array('files', $contents, true) && ! empty($input['changed_only']),
+            'without_thumbnails' => in_array('files', $contents, true) && ! empty($input['without_thumbnails']),
         ];
         $options['env'] = $options['encrypt'] && ! empty($input['env']);
 

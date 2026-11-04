@@ -2,13 +2,16 @@
 
 namespace App\Http\Controllers\Admin;
 
+use App\Core\Access\AccessGuard;
 use App\Core\Access\Handoff;
+use App\Core\Themes\ThemeArchive;
 use App\Core\Themes\ThemeManager;
 use App\Core\Themes\ThemeSettings;
 use App\Http\Controllers\Controller;
 use App\Models\Storefront;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
+use Throwable;
 
 /**
  * Appearance → Themes (PLAN §37): every theme on disk and which storefronts
@@ -49,7 +52,55 @@ class ThemesController extends Controller
             ];
         }
 
-        return view('admin.themes.index', ['cards' => $cards, 'storefronts' => $storefronts]);
+        // Putting code on the server, or taking it off, is the built-in
+        // group's alone (upload/destroy); the cards say why a theme stays.
+        $super = app(AccessGuard::class)->isSuper(auth()->user());
+        $archive = app(ThemeArchive::class);
+        foreach ($cards as &$card) {
+            $card['bundled'] = ThemeManager::isBundledMeta($card['meta']);
+            $card['undeletable'] = $super ? $archive->undeletable($card['dir']) : __('Only the built-in Administrator group may delete a theme.');
+        }
+        unset($card);
+
+        return view('admin.themes.index', ['cards' => $cards, 'storefronts' => $storefronts, 'canUpload' => $super]);
+    }
+
+    /**
+     * A theme as a .zip: put into themes/ (or replacing an older version of
+     * itself), where "Put on" is the next step. The built-in Administrator
+     * group only — this writes templates, which are PHP, onto the server.
+     */
+    public function upload(Request $request, ThemeArchive $archive)
+    {
+        abort_unless(app(AccessGuard::class)->isSuper($request->user()), 403);
+
+        $request->validate([
+            'archive' => ['required', 'file', 'max:20480', 'mimes:zip'],
+        ]);
+
+        try {
+            $result = $archive->put($request->file('archive')->getRealPath());
+        } catch (Throwable $e) {
+            return back()->withErrors(['archive' => $e->getMessage()]);
+        }
+
+        return redirect()->route('admin.themes.index')->with('status', $result['replaced']
+            ? __(':theme updated from :from to :to.', ['theme' => $result['name'], 'from' => $result['replaced'], 'to' => $result['version']])
+            : __(':theme :version is in place — put it on a storefront below.', ['theme' => $result['name'], 'version' => $result['version']]));
+    }
+
+    /** Moves the folder to storage/app/theme-backups/; ThemeArchive says what may not go. */
+    public function destroy(Request $request, ThemeArchive $archive, string $theme)
+    {
+        abort_unless(app(AccessGuard::class)->isSuper($request->user()), 403);
+
+        try {
+            $archive->remove($theme);
+        } catch (Throwable $e) {
+            return back()->withErrors(['theme' => $e->getMessage()]);
+        }
+
+        return redirect()->route('admin.themes.index')->with('status', __('The theme ":theme" is deleted; its folder is kept in storage/app/theme-backups/.', ['theme' => $theme]));
     }
 
     public function apply(Request $request, ThemeManager $themes)

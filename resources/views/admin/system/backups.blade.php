@@ -102,6 +102,16 @@
                                             @if ($run->isFolder()) · {{ __('a folder, no archive') }} @endif
                                             @if ($run->encrypted) · <span class="inline-flex items-center gap-0.5" title="{{ __('Encrypted with the password of its plan') }}"><x-icon name="lock" size="sm" /> {{ __('encrypted') }}</span> @endif
                                         </div>
+                                        {{-- Changed files only (PLAN §67.10): which full backup it leans
+                                             on — and, in red, that it is gone. --}}
+                                        @if ($run->isDifferential())
+                                            @php $base = $run->base; @endphp
+                                            <div @class(['text-xs mt-0.5', 'opacity-60' => $base && $run->baseKept(), 'text-error' => ! ($base && $run->baseKept())])>
+                                                {{ __('files changed since :when, leaning on :base', ['when' => $run->files_since->timezone(config('app.timezone'))->translatedFormat('j M, H:i'), 'base' => $base?->name ?? '?']) }}@unless ($base && $run->baseKept()) — {{ __('the full backup it leans on is gone') }}@endunless
+                                            </div>
+                                        @elseif ($run->plan?->option('changed_only') && in_array('files', $run->contents ?? [], true) && $run->finished())
+                                            <div class="text-xs mt-0.5 opacity-60">{{ __('all the files — there was no full backup to lean on') }}</div>
+                                        @endif
                                     </td>
                                     <td data-cell="field" data-label="{{ __('Made') }}" class="text-sm whitespace-nowrap">
                                         {{ ($run->started_at ?? $run->created_at)?->timezone(config('app.timezone'))->translatedFormat('j M Y, H:i') }}

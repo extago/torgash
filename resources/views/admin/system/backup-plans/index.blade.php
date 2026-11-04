@@ -51,7 +51,16 @@
                                         @unless ($plan->enabled)
                                             <span class="badge badge-sm badge-neutral ml-1">{{ __('Off') }}</span>
                                         @endunless
-                                        <div class="text-xs opacity-60">{{ collect($plan->contents)->map(fn ($p) => $partNames[$p] ?? $p)->implode(', ') }}</div>
+                                        @php
+                                            $planParts = collect($plan->contents)->map(fn ($p) => $partNames[$p] ?? $p);
+                                            if ($plan->has('files') && $plan->option('changed_only')) {
+                                                $planParts->push(__('changed files only'));
+                                            }
+                                            if ($plan->has('files') && $plan->option('without_thumbnails')) {
+                                                $planParts->push(__('without thumbnails'));
+                                            }
+                                        @endphp
+                                        <div class="text-xs opacity-60">{{ $planParts->implode(', ') }}</div>
                                     </td>
                                     <td data-cell="field" data-label="{{ __('When') }}" class="text-sm">
                                         @forelse ($moments as $moment)

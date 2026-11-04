@@ -3,6 +3,7 @@
 namespace App\Core\Updates;
 
 use App\Core\Modules\ModuleManifest;
+use App\Core\Themes\ThemeManager;
 use RecursiveDirectoryIterator;
 use RecursiveIteratorIterator;
 use Throwable;
@@ -59,7 +60,7 @@ class Distribution
             $data = json_decode((string) file_get_contents($theme), true);
             // The engine's own theme is signed "Torgash"; a theme by anybody
             // else (Crystal is Extago's) is updated on its own.
-            if (is_array($data) && (empty($data['author']) || ($data['author']['name'] ?? null) === 'Torgash')) {
+            if (is_array($data) && ThemeManager::isBundledMeta($data)) {
                 $paths[] = 'themes/'.basename(dirname($theme));
             }
         }

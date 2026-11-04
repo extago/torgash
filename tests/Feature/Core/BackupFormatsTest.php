@@ -166,7 +166,7 @@ class BackupFormatsTest extends TestCase
         $this->assertSame('long enough pass', $plan->password());
         $this->assertStringNotContainsString('long enough pass', (string) $plan->getRawOriginal('secret'));
         // jsonb keeps no key order.
-        $this->assertEqualsCanonicalizing(['db_format' => 'plain', 'level' => 'max', 'encrypt' => true, 'env' => true, 'verify' => ''], $plan->options);
+        $this->assertEqualsCanonicalizing(['db_format' => 'plain', 'level' => 'max', 'encrypt' => true, 'env' => true, 'verify' => '', 'changed_only' => false, 'without_thumbnails' => false], $plan->options);
         $this->assertSame('tar.gz.enc', $plan->extension());
         $this->assertSame(9, $plan->level());
 

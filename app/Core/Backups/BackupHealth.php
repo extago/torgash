@@ -15,6 +15,9 @@ use Throwable;
  *
  * - its last backup failed, or was made but not kept everywhere (partial);
  * - its last check by restoring failed;
+ * - its newest backup holds only the files changed since a full one, and
+ *   that full backup is gone (PLAN §67.10) — what it would restore is the
+ *   pictures of the last day;
  * - it runs by a schedule and its last good backup is older than that
  *   schedule allows (the longest gap between two of its moments, plus three
  *   hours for the backup itself to be made) — a scheduler or a worker that
@@ -67,6 +70,20 @@ class BackupHealth
                     'problem' => 'verify',
                     'reason' => __('A backup by ":plan" did not restore when checked: :error', ['plan' => $plan->name, 'error' => \Illuminate\Support\Str::limit((string) $checked->verify_error, 200)]),
                     'since' => $checked->verified_at,
+                ]);
+
+                continue;
+            }
+
+            $newest = BackupRun::query()->where('plan_id', $plan->id)->whereIn('status', [BackupRun::DONE, BackupRun::PARTIAL])->orderByDesc('id')->first();
+            if ($newest && $newest->isDifferential() && ! $newest->baseKept()) {
+                $found->push([
+                    'plan' => $plan,
+                    'problem' => 'orphan',
+                    'reason' => __('The newest backup by ":plan" holds only the files changed since :when, and the full backup it leans on is gone.', [
+                        'plan' => $plan->name, 'when' => $newest->files_since->timezone(config('app.timezone'))->translatedFormat('j M, H:i'),
+                    ]),
+                    'since' => $newest->finished_at,
                 ]);
 
                 continue;

@@ -61,6 +61,7 @@ class EximProfile extends Model
             'fields' => 'array',
             'locales' => 'array',
             'filters' => 'array',
+            'vars' => 'array',
             'enabled' => 'bool',
             'last_run_at' => 'datetime',
             'rebuild_on_change' => 'bool',

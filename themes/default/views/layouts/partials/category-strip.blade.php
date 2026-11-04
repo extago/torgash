@@ -1,7 +1,9 @@
 {{-- The strip under the header (theme setting "A strip of top categories"):
      the menu chosen in "The strip under the header shows", or the shop's top
-     categories when none is. The first entry is set off as a pill — the
-     menu's own order decides which.
+     categories when none is. One entry (or every one the menu highlights,
+     or none — `category_strip_pill`) is set off as a plate in a brand
+     colour (`category_strip_pill_color`); the strip's own colours are the
+     page's, the header's or the dark bar (`category_strip_palette`).
 
      With the "Catalogue" button switched off this IS the catalogue's menu
      (tac-defense's third row), so an entry with subcategories opens them on
@@ -13,14 +15,32 @@
 @php
     $stripItems = ($menuFromSetting('strip_menu', '') ?? $categoryNodes(0, 3))
         ->filter(fn ($node) => $node->href !== null)->take(60)->values();
+    // Colours: the page's own, the header's (follows header_palette — and
+    // carries torgash-header-bar, so the header's gradient or picture
+    // covers it too) or the dark bar. Literal class names: Tailwind reads
+    // them. The drop-downs go back to the page's palette (torgash-bar-panel).
+    $stripPalette = theme_setting('category_strip_palette', 'page');
+    $stripDark = $stripPalette === 'dark' || ($stripPalette === 'header' && theme_setting('header_palette') !== 'light');
+    $stripBar = ($stripDark ? 'torgash-bar bg-neutral text-neutral-content border-white/10' : 'bg-base-100 border-base-300')
+        .($stripPalette === 'header' ? ' torgash-header-bar' : '');
+    // The plate: which entries, and in which of the brand colours.
+    $stripPill = theme_setting('category_strip_pill', 'first');
+    $stripPillClass = match (theme_setting('category_strip_pill_color', 'primary')) {
+        'secondary' => 'badge-secondary',
+        'accent' => 'badge-accent',
+        default => 'badge-primary',
+    };
 @endphp
 @if ($stripItems->isNotEmpty())
-    <div @class(['bg-base-100 border-b border-base-300 relative z-20', 'sticky top-(--torgash-strip-top)' => $stripSticks ?? false])
+    <div @class([$stripBar, 'border-b relative z-20', 'sticky top-(--torgash-strip-top)' => $stripSticks ?? false])
          x-data="torgashStrip">
         <nav x-ref="nav" class="torgash-category-strip container mx-auto max-w-(--torgash-container) px-(--torgash-gutter) h-12 flex items-center gap-6 overflow-x-auto whitespace-nowrap text-sm font-semibold"
              :class="ready && 'overflow-x-visible!'" aria-label="{{ __('Categories') }}">
             @foreach ($stripItems as $stripItem)
-                @php $stripChildren = collect($stripItem->children ?? [])->filter(fn ($node) => $node->href !== null)->values(); @endphp
+                @php
+                    $stripChildren = collect($stripItem->children ?? [])->filter(fn ($node) => $node->href !== null)->values();
+                    $stripIsPill = match ($stripPill) { 'first' => $loop->first, 'highlight' => $stripItem->highlight, default => false };
+                @endphp
                 <div data-strip-item class="group/strip relative h-full flex items-center shrink-0">
                     <a href="{{ $stripItem->href }}" @if ($stripItem->newTab) target="_blank" rel="noopener" @endif
                        @if ($stripItem->active) aria-current="page" @endif
@@ -28,18 +48,19 @@
                        @class([
                            'inline-flex items-center gap-1.5',
                            $stripItem->cssClass,
-                           'hover:text-primary' => ! $loop->first,
-                           'text-primary' => ! $loop->first && ($stripItem->highlight || $stripItem->active || $stripItem->trail),
-                           // The pill keeps its own text colour on hover: the
-                           // strip's hover colour IS the pill's background.
+                           'hover:text-primary' => ! $stripIsPill,
+                           'text-primary' => ! $stripIsPill && ($stripItem->highlight || $stripItem->active || $stripItem->trail),
+                           // The plate keeps its own text colour on hover: the
+                           // strip's hover colour may BE the plate's background.
                            // `text-[length:inherit]`: a badge sets its own,
-                           // smaller type, and the first entry read a size
-                           // below the rest of the row.
-                           'badge badge-primary text-[length:inherit] font-semibold px-3 h-7 hover:brightness-95' => $loop->first,
+                           // smaller type, and the entry read a size below
+                           // the rest of the row.
+                           'badge text-[length:inherit] font-semibold px-3 h-7 hover:brightness-95' => $stripIsPill,
+                           $stripPillClass => $stripIsPill,
                        ])>
-                        @if (($stripItem->image ?? null) && ! $loop->first)
+                        @if (($stripItem->image ?? null) && ! $stripIsPill)
                             <img src="{{ $stripItem->image }}" alt="" class="w-4 h-4 object-contain" loading="lazy">
-                        @elseif ($stripItem->icon && ! $loop->first)
+                        @elseif ($stripItem->icon && ! $stripIsPill)
                             <x-icon :name="$stripItem->icon" size="sm" class="opacity-70" />
                         @endif
                         {{ $stripItem->label }}
@@ -58,7 +79,7 @@
                              entry in the right half of the row; its arrow
                              points at the entry's middle, like a popover's. --}}
                         <div class="torgash-js-only hidden group-hover/strip:block group-focus-within/strip:block absolute top-full left-0 group-data-[align=right]/strip:left-auto group-data-[align=right]/strip:right-0 pt-2 z-40 whitespace-normal">
-                            <div class="torgash-strip-panel bg-base-100 border border-base-300 rounded-box shadow-xl p-4 flex gap-8 w-max max-w-[min(56rem,90vw)] text-base font-normal">
+                            <div class="torgash-strip-panel torgash-bar-panel bg-base-100 border border-base-300 rounded-box shadow-xl p-4 flex gap-8 w-max max-w-[min(56rem,90vw)] text-base font-normal">
                                 @php $stripHasColumns = $stripChildren->contains(fn ($node) => ! empty($node->children)); @endphp
                                 @if ($stripHasColumns)
                                     <div class="grid grid-flow-row gap-x-8 gap-y-4" style="grid-template-columns: repeat({{ min(4, $stripChildren->count()) }}, minmax(10rem, 1fr))">

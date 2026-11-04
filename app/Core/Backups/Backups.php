@@ -52,6 +52,14 @@ class Backups
     /** Folders of the two disks that are the engine's scratch, not the shop's files. */
     public const SKIP = ['backups', 'exim', '.torgash-probe', 'files-tmp', 'media-tmp'];
 
+    /**
+     * The folder medialibrary keeps a picture's conversions in — its
+     * thumbnails. Left out of a backup made "without thumbnails" (PLAN
+     * §67.10): they are made again from the originals (torgash.media,
+     * "Rebuild all thumbnails") and often weigh more than them.
+     */
+    public const CONVERSIONS = 'conversions';
+
     /** The names §45 gave, still given to an update's backup (its rollback restores it by name). */
     public const NAME_PATTERN = '/^torgash-\d{4}-\d{2}-\d{2}-\d{6}\.zip$/';
 
@@ -143,9 +151,22 @@ class Backups
             $password = $encrypt ? $plan->password() : '';
             $name = Names::file($plan->name_template ?: '{shop}-{plan}-{date}-{time}', $plan, $at, $plan->extension());
 
-            $staged = $this->stage($work, (array) ($run->contents ?: $plan->contents), $say,
+            // Only the files changed since the last full backup (PLAN
+            // §67.10): the base is the newest full backup holding the files
+            // that is still kept — by any plan. Without one every file goes
+            // in, and the manifest says so.
+            $contents = (array) ($run->contents ?: $plan->contents);
+            $base = in_array('files', $contents, true) && (bool) $plan->option('changed_only') ? $this->lastFull() : null;
+
+            $staged = $this->stage($work, $contents, $say,
                 ['plan' => $plan->code, 'format' => $format, 'encrypted' => $encrypt],
-                ['db_format' => $plan->option('db_format', 'custom'), 'env' => $encrypt && (bool) $plan->option('env')],
+                [
+                    'db_format' => $plan->option('db_format', 'custom'),
+                    'env' => $encrypt && (bool) $plan->option('env'),
+                    'files_since' => $base?->started_at,
+                    'base' => $base?->name,
+                    'thumbnails' => ! (bool) $plan->option('without_thumbnails'),
+                ],
             );
             $manifest = $staged['manifest'];
 
@@ -169,6 +190,8 @@ class Backups
                 'contents' => $manifest['contents'],
                 'format' => $format,
                 'encrypted' => $encrypt,
+                'base_run_id' => $manifest['files_since'] !== null ? $base?->id : null,
+                'files_since' => $manifest['files_since'] !== null ? $base?->started_at : null,
             ]);
 
             $stored = 0;
@@ -404,6 +427,23 @@ class Backups
             });
     }
 
+    /**
+     * The newest FULL backup holding the files that is still kept somewhere
+     * — by any plan: what a backup of "only the files changed since" leans
+     * on (PLAN §67.10). Null when there is none; every file goes in then.
+     */
+    public function lastFull(): ?BackupRun
+    {
+        return BackupRun::query()
+            ->whereIn('status', [BackupRun::DONE, BackupRun::PARTIAL])
+            ->whereNull('files_since')
+            ->whereJsonContains('contents', 'files')
+            ->whereNotNull('started_at')
+            ->whereHas('storedCopies')
+            ->orderByDesc('started_at')->orderByDesc('id')
+            ->first();
+    }
+
     // ------------------------------------------------------------ keeping and deleting
 
     /** Applies the plan's "how many to keep" in one destination; returns how many went. */
@@ -462,11 +502,16 @@ class Backups
     /** @param  Collection<int, BackupCopy>  $copies */
     protected function expire(Collection $copies, array $rules, BackupDestination $destination): int
     {
+        // A full backup that a backup of changed files leans on is kept as
+        // long as that one is (PLAN §67.10) — pinned by it, in effect.
+        $bases = BackupRun::query()->whereIn('base_run_id', $copies->pluck('run_id')->unique()->all())
+            ->whereHas('storedCopies')->pluck('base_run_id')->flip();
+
         $expired = Retention::expired($copies->map(fn (BackupCopy $copy) => [
             'id' => $copy->id,
             'at' => $copy->run->started_at ?? $copy->run->created_at,
             'bytes' => $copy->run->bytes,
-            'pinned' => (bool) $copy->run->pinned,
+            'pinned' => (bool) $copy->run->pinned || $bases->has($copy->run_id),
         ])->values()->all(), $rules);
 
         if ($expired === []) {
@@ -684,7 +729,7 @@ class Backups
      * what it needs first without unpacking the pictures.
      *
      * @param  list<string>  $contents  database / files / code
-     * @param  array{db_format?: string, env?: bool}  $options
+     * @param  array{db_format?: string, env?: bool, files_since?: ?Carbon, base?: ?string, thumbnails?: bool}  $options
      * @return array{manifest: array<string, mixed>, entries: list<array{0: string, 1: string}>}
      */
     protected function stage(string $work, array $contents, callable $say, array $extra = [], array $options = []): array
@@ -692,6 +737,10 @@ class Backups
         $files = app(FileStorage::class);
         $withFiles = in_array('files', $contents, true);
         $plain = ($options['db_format'] ?? 'custom') === 'plain';
+        // Only the files changed since a moment — the start of the full
+        // backup this one leans on — and whether thumbnails go in (§67.10).
+        $since = ($options['files_since'] ?? null)?->getTimestamp();
+        $thumbnails = (bool) ($options['thumbnails'] ?? true);
 
         $say('Dumping the database', []);
         $dumpName = $plain ? 'database.sql' : 'database.dump';
@@ -727,7 +776,7 @@ class Backups
         if ($withFiles && ! $files->onS3()) {
             foreach (FileStorage::DISKS as $diskName) {
                 $say('Adding the :disk files', ['disk' => $diskName]);
-                $tree = $this->collectTree((string) config("filesystems.disks.$diskName.root"), 'files/'.$diskName, self::SKIP);
+                $tree = $this->collectTree((string) config("filesystems.disks.$diskName.root"), 'files/'.$diskName, self::SKIP, $since, $thumbnails);
                 $counts[$diskName] = count($tree);
                 array_push($tail, ...$tree);
             }
@@ -756,6 +805,11 @@ class Backups
             'contents' => $packed,
             'env' => $env,
             'files_in_bucket' => $withFiles && $files->onS3(),
+            // Changed files only: since when, and the full backup to restore
+            // first. Null — every file is in (or none: a bucket, no files).
+            'files_since' => in_array('files', $packed, true) && $since !== null ? Carbon::createFromTimestamp($since)->toIso8601String() : null,
+            'base' => in_array('files', $packed, true) && $since !== null ? ($options['base'] ?? null) : null,
+            'thumbnails' => $thumbnails,
             'counts' => $counts,
             'rows' => $rows,
             // Says on a new server whether its APP_KEY is this one (keyMatches()).
@@ -891,7 +945,7 @@ class Backups
      * @param  callable(string): void|null  $say
      * @return array<string, mixed> the backup's manifest
      */
-    public function restore(string $name, ?string $database = null, bool $withFiles = true, ?callable $say = null, bool $withCode = false, ?string $file = null, ?string $password = null, bool $withEnv = false, ?BackupDestination $from = null, bool $lock = true): array
+    public function restore(string $name, ?string $database = null, bool $withFiles = true, ?callable $say = null, bool $withCode = false, ?string $file = null, ?string $password = null, bool $withEnv = false, ?BackupDestination $from = null, bool $lock = true, ?string $baseFile = null): array
     {
         $say ??= fn () => null;
         $work = $this->workDir();
@@ -933,27 +987,19 @@ class Backups
             $files = $withFiles && $database === null && in_array('files', $manifest['contents'] ?? [], true);
             $code = $withCode && $database === null && in_array('code', $manifest['contents'] ?? [], true);
 
+            // A backup of only the files changed since a full one (PLAN
+            // §67.10): that full backup's files go back FIRST, these over
+            // them. Without it the shop would come back with the pictures of
+            // the last day alone — refused, in words.
+            $manifest['base_restored'] = false;
+            if ($files && ! empty($manifest['files_since'])) {
+                $this->restoreBase($manifest, $baseFile, $password, $work, $say, $from);
+                $manifest['base_restored'] = true;
+            }
+
             if ($files || $code) {
                 $say($files ? 'Restoring the files' : 'Restoring the modules and themes');
-                $roots = ['code/modules/' => (string) config('torgash.modules_path'), 'code/themes/' => (string) config('torgash.themes_path')];
-
-                $reader->each(function (string $entry, $stream) use ($files, $code, $roots) {
-                    if ($files && preg_match('#^files/([a-z]+)/(.+)$#', $entry, $m) && in_array($m[1], FileStorage::DISKS, true)) {
-                        if (! in_array('..', explode('/', $m[2]), true)) {
-                            Storage::disk($m[1])->writeStream($m[2], $stream);
-                        }
-                    }
-
-                    if ($code) {
-                        foreach ($roots as $prefix => $root) {
-                            if (str_starts_with($entry, $prefix)) {
-                                $this->writeInto($root, substr($entry, strlen($prefix)), $stream);
-                            }
-                        }
-                    }
-
-                    return true;
-                });
+                $this->restoreEntries($reader, $files, $code);
             }
 
             $manifest['env_in_backup'] = $envFile !== null;
@@ -1007,6 +1053,130 @@ class Backups
             $reader?->close();
             File::deleteDirectory($work);
         }
+    }
+
+    /**
+     * Only the uploaded files put back from a backup — the full one it leans
+     * on first, when it holds only changed files — and the database left
+     * alone: what restore() does for the files, on its own.
+     *
+     * @param  callable(string): void|null  $say
+     * @return array<string, mixed> the backup's manifest
+     */
+    public function restoreFiles(string $name, ?string $file = null, ?string $password = null, ?string $baseFile = null, ?callable $say = null, ?BackupDestination $from = null): array
+    {
+        $say ??= fn () => null;
+        $work = $this->workDir();
+        $reader = null;
+
+        try {
+            $reader = $this->open($name, $file, $password, $work, $say, $from);
+            $manifest = [];
+            $reader->each(function (string $entry, $stream) use (&$manifest) {
+                if ($entry === 'manifest.json') {
+                    $manifest = json_decode((string) stream_get_contents($stream), true) ?: [];
+
+                    return false;
+                }
+
+                return true;
+            });
+
+            if (! in_array('files', $manifest['contents'] ?? [], true)) {
+                throw new RuntimeException('The backup holds no files.');
+            }
+
+            $manifest['base_restored'] = false;
+            if (! empty($manifest['files_since'])) {
+                $this->restoreBase($manifest, $baseFile, $password, $work, $say, $from);
+                $manifest['base_restored'] = true;
+            }
+
+            $say('Restoring the files');
+            $this->restoreEntries($reader, true, false);
+
+            return $manifest;
+        } finally {
+            $reader?->close();
+            File::deleteDirectory($work);
+        }
+    }
+
+    /**
+     * The files of the full backup a backup of changed files leans on, put
+     * back before its own: named by its manifest (`base`), or given as a
+     * path on a new server whose journal knows nothing. Its database is not
+     * touched — the differential carries the whole of it. Refused in words
+     * when it cannot be found, or is not a full backup itself.
+     */
+    protected function restoreBase(array $manifest, ?string $baseFile, ?string $password, string $work, callable $say, ?BackupDestination $from): void
+    {
+        $since = (string) ($manifest['files_since'] ?? '');
+        $baseName = $baseFile !== null ? basename(rtrim($baseFile, '/\\')) : (string) ($manifest['base'] ?? '');
+        $hint = ' On a new server give that backup by its path: --base=/path/to/'.($baseName !== '' ? $baseName : 'full-backup.zip');
+
+        if ($baseName === '') {
+            throw new RuntimeException("This backup holds only the files changed since $since and does not name the full backup it leans on.".$hint);
+        }
+
+        $baseWork = $work.DIRECTORY_SEPARATOR.'base';
+        File::ensureDirectoryExists($baseWork);
+        $say("Restoring the files of the full backup $baseName first");
+
+        try {
+            $base = $this->open($baseName, $baseFile, $password, $baseWork, $say, $from);
+        } catch (RuntimeException $e) {
+            throw new RuntimeException("This backup holds only the files changed since $since; the full backup it leans on, $baseName, must go back first and could not be opened: ".$e->getMessage().$hint, 0, $e);
+        }
+
+        try {
+            $this->restoreEntries($base, true, false, function (array $head) use ($baseName) {
+                if (! empty($head['files_since'])) {
+                    throw new RuntimeException("$baseName holds only changed files itself: it is not the full backup to lean on.");
+                }
+
+                if (! in_array('files', $head['contents'] ?? [], true)) {
+                    throw new RuntimeException("$baseName holds no files: it is not the full backup to lean on.");
+                }
+            });
+        } finally {
+            $base->close();
+        }
+    }
+
+    /**
+     * A backup's files and code written where they belong: every
+     * `files/<disk>/…` entry onto that disk, `code/modules|themes/…` over
+     * the folders — never deleting what the backup lacks. `$head` is handed
+     * the manifest, which comes first, before anything is written.
+     *
+     * @param  callable(array<string, mixed>): void|null  $head
+     */
+    protected function restoreEntries(Archive\Reader $reader, bool $files, bool $code, ?callable $head = null): void
+    {
+        $roots = ['code/modules/' => (string) config('torgash.modules_path'), 'code/themes/' => (string) config('torgash.themes_path')];
+
+        $reader->each(function (string $entry, $stream) use ($files, $code, $roots, $head) {
+            if ($head !== null && $entry === 'manifest.json') {
+                $head(json_decode((string) stream_get_contents($stream), true) ?: []);
+            }
+
+            if ($files && preg_match('#^files/([a-z]+)/(.+)$#', $entry, $m) && in_array($m[1], FileStorage::DISKS, true)) {
+                if (! in_array('..', explode('/', $m[2]), true)) {
+                    Storage::disk($m[1])->writeStream($m[2], $stream);
+                }
+            }
+
+            if ($code) {
+                foreach ($roots as $prefix => $root) {
+                    if (str_starts_with($entry, $prefix)) {
+                        $this->writeInto($root, substr($entry, strlen($prefix)), $stream);
+                    }
+                }
+            }
+
+            return true;
+        });
     }
 
     /**
@@ -1436,7 +1606,13 @@ class Backups
      *
      * @return list<array{0: string, 1: string}>
      */
-    protected function collectTree(string $root, string $prefix, array $skip = []): array
+    /**
+     * @param  list<string>  $skip  top folders left out
+     * @param  ?int  $since  only files changed at or after this moment (a Unix time)
+     * @param  bool  $thumbnails  false leaves out every `<id>/conversions/` folder
+     * @return list<array{0: string, 1: string}>
+     */
+    protected function collectTree(string $root, string $prefix, array $skip = [], ?int $since = null, bool $thumbnails = true): array
     {
         if ($root === '' || ! is_dir($root)) {
             return [];
@@ -1456,6 +1632,15 @@ class Backups
             $relative = str_replace('\\', '/', substr($file->getPathname(), strlen($root) + 1));
 
             if (in_array(strtok($relative, '/'), $skip, true)) {
+                continue;
+            }
+
+            // medialibrary: <media id>/conversions/<name>-<conversion>.jpg
+            if (! $thumbnails && (explode('/', $relative)[1] ?? null) === self::CONVERSIONS) {
+                continue;
+            }
+
+            if ($since !== null && $file->getMTime() < $since) {
                 continue;
             }
 

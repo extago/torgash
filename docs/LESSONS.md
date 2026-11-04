@@ -902,3 +902,14 @@ folder from the backup's `.env` must apply it to the RUNNING process too
 (it booted without that file), and a command line run from Git Bash rewrites
 an argument that starts with `/` into a Windows path (`/install/start` →
 `AI/Git/install/start`) — `MSYS_NO_PATHCONV=1`, or the "bug" is the shell.
+
+## Anchor positioning places a panel against the UNtransformed box
+
+The search scope menu (`torgash.search`, `<x-popover>` in the search form)
+opened half a button too low: its button sat in a wrapper centred the
+Tailwind way, `top-1/2 -translate-y-1/2`. CSS Anchor Positioning takes the
+anchor's border box WITHOUT its transforms, so the panel hung from where the
+box would be before the translate — 18px lower than what the eye saw, on top
+of the popover's own 13px. Measured: gap 13px once the wrapper was
+`inset-y-0 flex items-center`. Centre a popover's button (anything carrying
+`anchor-name`) with flex or grid, never with `translate`/`transform`.

@@ -16,6 +16,10 @@
             'code' => __('The installed modules and themes, with any changes made to them.'),
         ];
         $contents = old('contents', $plan->contents ?? []);
+        $fileOptions = [
+            'changed_only' => (bool) old('options.changed_only', $plan->option('changed_only', false)),
+            'without_thumbnails' => (bool) old('options.without_thumbnails', $plan->option('without_thumbnails', false)),
+        ];
         $schedule = array_values(old('schedule', $plan->schedule ?? []));
         $rules = [
             'last' => __('The newest'),
@@ -75,17 +79,37 @@
                         </fieldset>
                     </div>
 
-                    <fieldset class="fieldset p-0">
+                    {{-- The files' two choices (PLAN §67.10) hang under their
+                         row and only mean anything while the files are in. --}}
+                    <fieldset class="fieldset p-0" x-data="{ files: @js(in_array('files', $contents, true)) }">
                         <legend class="fieldset-legend">{{ __('What goes in') }}</legend>
                         <div class="flex flex-col gap-2">
                             @foreach (\App\Models\BackupPlan::CONTENTS as $part)
                                 <label class="flex items-start gap-3 cursor-pointer">
-                                    <input type="checkbox" name="contents[]" value="{{ $part }}" class="checkbox checkbox-sm mt-0.5" @checked(in_array($part, $contents, true))>
+                                    <input type="checkbox" name="contents[]" value="{{ $part }}" class="checkbox checkbox-sm mt-0.5" @checked(in_array($part, $contents, true)) @if ($part === 'files') x-model="files" @endif>
                                     <span>
                                         <span class="font-medium">{{ $partNames[$part] }}</span>
                                         <span class="block text-xs opacity-60">{{ $partHints[$part] }}</span>
                                     </span>
                                 </label>
+                                @if ($part === 'files' && ! app(\App\Core\Files\FileStorage::class)->onS3())
+                                    <div class="ms-8 flex flex-col gap-2" x-show="files" x-cloak>
+                                        <label class="flex items-start gap-3 cursor-pointer">
+                                            <input type="checkbox" name="options[changed_only]" value="1" class="checkbox checkbox-sm mt-0.5" @checked($fileOptions['changed_only'])>
+                                            <span>
+                                                <span class="font-medium">{{ __('Only the files changed since the last full backup') }}</span>
+                                                <span class="block text-xs opacity-60">{{ __('A daily backup beside a weekly full one: the database whole, the files only those added or changed since the newest full backup that holds the files, by any plan. Restoring puts that full backup\'s files back first, then these. With no full backup to lean on, every file is taken.') }}</span>
+                                            </span>
+                                        </label>
+                                        <label class="flex items-start gap-3 cursor-pointer">
+                                            <input type="checkbox" name="options[without_thumbnails]" value="1" class="checkbox checkbox-sm mt-0.5" @checked($fileOptions['without_thumbnails'])>
+                                            <span>
+                                                <span class="font-medium">{{ __('Without thumbnails') }}</span>
+                                                <span class="block text-xs opacity-60">{{ __('The small copies of the pictures are left out: they often weigh more than the originals, and after a restore "Rebuild all thumbnails" makes them again.') }}</span>
+                                            </span>
+                                        </label>
+                                    </div>
+                                @endif
                             @endforeach
                         </div>
                     </fieldset>

@@ -23,6 +23,10 @@ use Throwable;
  * without it the journal's plan gives its own when it can, and the console
  * asks. `--with-env` puts the backup's .env in place (encrypted backups carry it
  * when the plan says so) — on a new server, the APP_KEY that reads the rest.
+ *
+ * A backup of only the files changed since a full one (PLAN §67.10) puts
+ * that full backup's files back first — found through the journal or the
+ * storage, or named by `--base=` on a new server.
  */
 class BackupRestoreCommand extends Command
 {
@@ -34,6 +38,7 @@ class BackupRestoreCommand extends Command
         {--database= : Restore the database into this other (existing) database instead}
         {--no-files : Do not put the uploaded files back}
         {--code : Put the modules and themes back too, when the backup has them}
+        {--base= : For a backup of only the changed files: the full backup it leans on, by its path (a new server; otherwise it is found by itself)}
         {--force : Do not ask}';
 
     protected $description = 'Restore the shop from a backup (lists the backups when no name is given)';
@@ -91,6 +96,7 @@ class BackupRestoreCommand extends Command
         $restore = fn (?string $password) => $backups->restore(
             $name, $database, ! $this->option('no-files'), fn (string $message) => $this->line('  '.$message),
             (bool) $this->option('code'), $file, $password, (bool) $this->option('with-env'), $from,
+            true, $this->option('base') ? (string) $this->option('base') : null,
         );
 
         try {
@@ -137,6 +143,14 @@ class BackupRestoreCommand extends Command
 
         if (! $this->option('code') && in_array('code', $manifest['contents'] ?? [], true)) {
             $this->line('The backup also holds the modules and themes: add --code to put them back.');
+        }
+
+        if (! empty($manifest['base_restored'])) {
+            $this->line('The backup held only the files changed since '.($manifest['files_since'] ?? '?').': the files of the full backup '.($manifest['base'] ?? '?').' were put back first, these over them.');
+        }
+
+        if (($manifest['thumbnails'] ?? true) === false && ! $this->option('no-files') && ! $database) {
+            $this->line('The backup left the thumbnails out: the Media module\'s "Rebuild all thumbnails" makes them again.');
         }
 
         if (! empty($manifest['files_in_bucket'])) {

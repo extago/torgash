@@ -29,7 +29,31 @@ class BackupRun extends Model
         'started_at' => 'datetime',
         'finished_at' => 'datetime',
         'verified_at' => 'datetime',
+        'files_since' => 'datetime',
     ];
+
+    /**
+     * Holds only the files changed since `files_since` (PLAN §67.10): the
+     * database whole, the files those added or changed after the full
+     * backup it leans on (`base`) started. Restoring takes that one first.
+     */
+    public function isDifferential(): bool
+    {
+        return $this->files_since !== null;
+    }
+
+    /** The full backup a differential one leans on; null once it is deleted. */
+    public function base(): BelongsTo
+    {
+        return $this->belongsTo(self::class, 'base_run_id');
+    }
+
+    /** Whether the full backup it leans on is still kept somewhere. */
+    public function baseKept(): bool
+    {
+        return $this->base_run_id !== null
+            && self::query()->whereKey($this->base_run_id)->whereHas('storedCopies')->exists();
+    }
 
     /** Made "without an archive": its copies are folders. */
     public function isFolder(): bool

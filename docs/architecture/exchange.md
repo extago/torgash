@@ -190,14 +190,39 @@ this file is the reasoning. Read it before changing anything it covers.
   (a feed nobody changed grows no columns); `with` names the relations a
   column reads, eager-loaded by `ExportRunner`. A link to the product's OWN
   photo is that photo (`FetchImages`), never downloaded again.
-- **A profile's own template is `Template\FeedTemplate`** — Mustache's subset:
-  `{{ path | filter }}`, `{{#list}}` (per element, `.` is the element, names
-  looked up innermost first), `{{#x}}`/`{{^x}}` as conditions, `{{! }}`; a tag
-  alone on its line leaves no blank line. No expressions: a comparison a feed
-  needs is a VALUE the owning module computes (`old_price` only when higher,
-  `available`). Parsed once per export; `{{#rows}}` streamed. A template reads
-  the columns it NAMES (`TemplateRenderer::usedKeys`); list values are
+- **A profile's own template is `Template\FeedTemplate`** (PLAN §68) — a
+  subset of Liquid on the engine's own interpreter: `{{ expr | filter: a, b }}`,
+  `{% if / elsif / else / unless %}`, `{% for x in list limit: offset: reversed %}`
+  with `forloop`, `break`, `continue` and `else`, `{% case / when %}`,
+  `{% assign %}`, `{% capture %}`, `{% comment %}`, `{% raw %}`, `-` trimming;
+  Mustache's `{{#x}}` / `{{^x}}` / `{{! }}` kept for templates written before.
+  A condition, a filter argument and `assign` read the exchange's ONE
+  expression language, `Template\Expression` — the same `Import\Formula` is
+  (`$value`, `col()` its two extra words): `and or not contains`,
+  comparisons (numbers as numbers, else text without case), `& + - * /`,
+  functions, paths with `.`/`[ ]`, PHP-like truthiness (nothing, 0, "" and
+  [] are false — unlike Liquid, like `{{#x}}`), `EmptyOperand` → empty.
+  Filters live in `Template\Filters` (Liquid's names plus price / money /
+  cdata; arithmetic hands on a NUMBER so chains add to 0.171, not "0.171").
+  What keeps it safe to hand to whoever edits a profile: no PHP, no object,
+  no file — a path walks arrays only; the only functions are the engine's;
+  and a BUDGET per row (`MAX_STEPS`, `MAX_OUTPUT`, `MAX_DEPTH`, `MAX_RANGE`)
+  past which it is stopped with the line (`TemplateLanguageTest`). What is
+  counted across the file (a feed's collections) is a VALUE the owning
+  module computes, never the template's; filters are not written inside a
+  condition (`len()` or `assign` first). Parsed once per export; the top-level
+  `{% for x in rows %}` / `{{#rows}}` is streamed (`FeedTemplate::stream`,
+  variables outlive a row, the budget starts afresh). A template reads the
+  columns it NAMES, expressions and filter arguments included
+  (`paths()` → `TemplateRenderer::usedKeys`); list values are
   `template_only`. The shop around the rows comes from `exim.template.context`
   (catalog: `shop.*`). Saved strictly (a broken tag refuses the form), rendered leniently (an old `{{ $x }}` stays text). Ready templates: `exim.template_presets`
-  (`templates/*.xml`, `@lang@` = content language). Editor: core's
+  (`templates/*.xml`, `@lang@` = content language). The owner's page is the
+  module's `docs/03-template-language.md`. **A profile's variables are
+  DATA beside the template** (§68.1): `vars` (jsonb, lines `name = value`
+  on the form) reach it as `vars.<name>` through `TemplateRenderer::context`.
+  **No dictionaries**: a map of "this → that" is `case/when` in the
+  template, as in Liquid; a shared-dictionaries screen was built and taken
+  out the same day (the owner: the rarest need there is) — on the branch
+  `shelf/exim-dictionaries` should a module ever want it. Editor: core's
   `/assets/js/code-editor.js` (`data-code-editor`, format/compact buttons). A CSV is RFC 4180 both ways — no escape character.

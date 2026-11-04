@@ -20,7 +20,9 @@
     $hdContactsUp = theme_setting('header_contacts') === 'strip';
 @endphp
 <div @class([$hdBar, 'border-b text-sm relative z-40', $hdLine, 'sticky top-0' => $headerStick === 'all'])>
-    <div @class(['container mx-auto max-w-(--torgash-container) px-(--torgash-gutter) h-10 flex items-center gap-5', 'text-neutral-content/80' => $hdDark, 'text-base-content/70' => ! $hdDark])>
+    {{-- torgash-header-strip: ONE look for everything in the strip, whoever
+         drew it (app.css) — no colour classes per piece here. --}}
+    <div class="torgash-header-strip container mx-auto max-w-(--torgash-container) px-(--torgash-gutter) h-10 flex items-center gap-5">
         <div class="flex items-center min-w-0 shrink-0">{!! hook_render('storefront.header.start', ['storefront' => $storefront, 'header' => $hdDark ? 'dark' : 'light']) !!}</div>
         {{-- Two zones of the strip (PLAN §39): after the town, and before the
              language and currency. The theme puts the "top" menu in the first;
@@ -32,9 +34,9 @@
             <div class="flex items-center shrink-0">{!! zone('storefront.header.after_search', ['storefront' => $storefront]) !!}</div>
         @endif
 
-        @include('layouts.partials.header-switchers', ['switcherTrigger' => $hdDark ? 'btn btn-ghost btn-sm gap-1 normal-case font-normal text-neutral-content/70 hover:text-neutral-content' : 'btn btn-ghost btn-sm gap-1 normal-case font-normal'])
+        @include('layouts.partials.header-switchers', ['switcherTrigger' => 'btn btn-ghost btn-sm gap-1 normal-case font-normal'])
 
-        @include('layouts.partials.mode-switch', ['modeSwitchClass' => $hdDark ? 'text-neutral-content/70 hover:text-neutral-content' : 'btn-touch'])
+        @include('layouts.partials.mode-switch', ['modeSwitchClass' => 'btn-touch'])
     </div>
 </div>
 

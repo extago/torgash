@@ -9,6 +9,16 @@
 @section('title', __('Themes'))
 @section('title_hint', __('A theme is a folder under themes/. One based on another draws only what it changes and takes the rest from it. Each storefront wears one theme and has its own settings for it.'))
 
+{{-- Putting code on the server is the built-in group's alone
+     (ThemesController::upload); everybody else sees the cards only. --}}
+@if ($canUpload)
+    @section('title_actions')
+        <button type="button" class="btn btn-primary gap-1.5" data-open-dialog="modal-theme-upload">
+            <x-icon name="upload" size="sm" /> {{ __('Upload a theme') }}
+        </button>
+    @endsection
+@endif
+
 @section('content')
     @if (session('status'))
         <div class="alert alert-success">{{ session('status') }}</div>
@@ -43,6 +53,9 @@
                         </div>
                         <div class="text-xs opacity-60 flex flex-wrap gap-x-3">
                             <span class="font-mono">{{ $themeCard['dir'] }}</span>
+                            @if ($themeCard['bundled'])
+                                <span>{{ __('ships with the engine') }}</span>
+                            @endif
                             @if ($themeCard['parent'])
                                 <span>{{ __('based on :theme', ['theme' => $themeCard['parent']]) }}</span>
                             @endif
@@ -111,9 +124,47 @@
                                 <button class="btn btn-outline btn-sm join-item">{{ __('Put on') }}</button>
                             </form>
                         @endif
+
+                        {{-- A theme of the shop's own, worn by nobody and based on
+                             by nobody, may go (ThemeArchive::undeletable). The
+                             engine's own themes never show the button. --}}
+                        @if ($canUpload && ! $themeCard['bundled'])
+                            @if ($themeCard['undeletable'] === null)
+                                <form method="POST" action="{{ route('admin.themes.destroy', $themeCard['dir']) }}" class="flex justify-end"
+                                      data-confirm="{{ __('Delete the theme ":theme"? Its folder is moved to storage/app/theme-backups/; the settings storefronts saved for it stay.', ['theme' => $themeCard['name']]) }}">
+                                    @csrf
+                                    @method('DELETE')
+                                    <button class="btn btn-ghost btn-sm text-error gap-1.5"><x-icon name="trash-2" size="sm" /> {{ __('Delete') }}</button>
+                                </form>
+                            @else
+                                <span class="text-xs opacity-50">{{ $themeCard['undeletable'] }}</span>
+                            @endif
+                        @endif
                     </div>
                 </div>
             </div>
         @endforeach
     </div>
+
+    @if ($canUpload)
+        <x-modal name="theme-upload" :title="__('Upload a theme')" icon="upload">
+            <form method="POST" action="{{ route('admin.themes.upload') }}" enctype="multipart/form-data" class="flex flex-col gap-4">
+                @csrf
+                <fieldset class="fieldset p-0">
+                    <legend class="fieldset-legend">{{ __('Theme archive (.zip)') }}</legend>
+                    <input type="file" name="archive" accept=".zip,application/zip" required class="file-input file-input-bordered w-full">
+                    <p class="label whitespace-normal">{{ __('The theme\'s folder, zipped: theme.json at the root of the archive or in one folder, which becomes the folder under themes/. Up to 20 MB.') }}</p>
+                </fieldset>
+                <ul class="text-xs opacity-70 list-disc pl-5 flex flex-col gap-1">
+                    <li>{{ __('The theme.json must name its author: a theme without one counts as the engine\'s and is replaced whole by the next update.') }}</li>
+                    <li>{{ __('A newer version of a theme already here replaces it. The old folder is kept in storage/app/theme-backups/ and put back if anything fails.') }}</li>
+                    <li>{{ __('The themes that ship with the engine are updated with it and cannot be uploaded or deleted here.') }}</li>
+                    <li>{{ __('A theme is code that runs with the shop\'s full rights. Upload only what you got from its author.') }}</li>
+                </ul>
+                <div>
+                    <button class="btn btn-primary btn-sm gap-1.5"><x-icon name="upload" size="sm" /> {{ __('Upload') }}</button>
+                </div>
+            </form>
+        </x-modal>
+    @endif
 @endsection

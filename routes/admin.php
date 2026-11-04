@@ -211,6 +211,8 @@ Route::middleware(['auth', 'can:admin.access'])->group(function () {
     Route::middleware('can:themes.manage')->prefix('themes')->name('themes.')->group(function () {
         Route::get('/', [ThemesController::class, 'index'])->name('index');
         Route::post('apply', [ThemesController::class, 'apply'])->name('apply');
+        Route::post('upload', [ThemesController::class, 'upload'])->name('upload');
+        Route::delete('{theme}', [ThemesController::class, 'destroy'])->name('destroy')->where('theme', '[a-z0-9][a-z0-9_-]*');
         Route::get('customize/{storefront}', [ThemesController::class, 'customize'])->name('customize');
         Route::post('customize/{storefront}/open', [ThemesController::class, 'open'])->name('open');
         Route::post('customize/{storefront}/preview', [ThemesController::class, 'preview'])->name('preview');

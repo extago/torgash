@@ -11,6 +11,20 @@ this file is the reasoning. Read it before changing anything it covers.
   files at the same path; the storefront form offers `ThemeManager::available()`.
   A theme's files are served from `/themes/<dir>/assets/<path>`
   (`ThemeAssetController`, any theme on disk, never outside assets/).
+- **A theme arrives and leaves as its folder** (`App\Core\Themes\ThemeArchive`,
+  Themes screen, the built-in Administrator group only — like
+  `ModuleArchive`, both over `App\Core\Support\CodeArchive`, which checks
+  every entry's name before a byte is written). The folder's name is the
+  archive's one top-level folder (or the name slugged); `theme.json` MUST
+  name an `author` other than "Torgash" — `ThemeManager::isBundledMeta()` is
+  how `Distribution` tells the engine's themes from everybody else's, and a
+  theme without an author is replaced whole by the next core update, so the
+  upload refuses it rather than let that happen. Never uploaded over, never
+  deleted: the engine's own themes (`default`, `skeleton`), the boot theme
+  (`torgash.default_theme`), the safe-mode theme, a theme a storefront wears
+  or another theme on disk is based on (`undeletable()`, the screen shows the
+  reason instead of the button). A replaced or deleted folder goes to
+  `storage/app/theme-backups/`; the storefronts' settings rows for it stay.
 - **A theme's settings are DECLARED in theme.json and stored per storefront**
   (`App\Core\Themes\ThemeSettings`, `theme_setting()`, module id
   `theme.<dir>` in `settings`). A field says how it reaches the page: `css`
@@ -232,6 +246,17 @@ this file is the reasoning. Read it before changing anything it covers.
   because the theme registers its defaults. `header_contacts` draws the zone
   `storefront.header.after_search` (the phone block) after the search or up
   in the strip beside the language — ONE place, never both (a fixed popover id).
+- **The thin strip has ONE look, the strip's own** (`.torgash-header-strip`,
+  app.css): its pieces have different owners — the town (torgash.locations),
+  the menu's links (torgash.menus), a block the shop typed (the phone), the
+  theme's language, currency and light/dark switches — and each came with its
+  own idea of an item (a ghost button in the full colour with a grey fill
+  under the pointer, a muted link turning primary). The CSS on the row
+  decides for all of them: quiet text at rest, the brand colour under the
+  pointer, never a fill (a `btn-ghost` is a hit target of the row's height;
+  a real `btn-primary` stays a button). Written against the base token,
+  which `.torgash-bar` remaps, so neither header carries colour classes per
+  piece — a module drawing into the strip needs none either.
 - **Each row of the desktop header sticks on its own.** The dark `<header>`
   is `display:contents`, so its thin top strip and its main row are the page's
   own boxes (a sticky row sticks only inside its parent, and a parent exactly
@@ -244,6 +269,16 @@ this file is the reasoning. Read it before changing anything it covers.
   not fit goes to the next PAGE of the strip ("› 1/2", measured by the script;
   with no script the row scrolls). The product page's section bar becomes
   fixed under that height across the screen while its sections are read.
+- **The category strip is coloured and plated by settings, not by the
+  template** (`category-strip.blade.php`): `category_strip_palette` — the
+  page's colours, "as the header" (follows `header_palette` and carries
+  `torgash-header-bar`, so the header's gradient or picture covers it) or
+  the dark bar (`torgash-bar`, its drop-downs `torgash-bar-panel`);
+  `category_strip_pill` — the plate goes on the first entry, on every entry
+  the menu highlights, or on none; `category_strip_pill_color` — which
+  brand colour (`badge-primary` / `-secondary` / `-accent`, literal in the
+  template for Tailwind). A highlighted entry that is not a plate stays
+  primary text, as before.
 - **Columns are the same idea as tabs**: adjacent blocks sharing `m_blocks.row`
   are drawn side by side on a 12-column grid (`width` 1/4…3/4 or empty = an
   equal share, `ZoneRenderer::spans()` always fills the row; phones stack).

@@ -926,6 +926,44 @@
             "label": "The strip stays on screen too"
         },
         {
+            "key": "category_strip_palette",
+            "section": "header",
+            "type": "segmented",
+            "default": "page",
+            "label": "Category strip colours",
+            "help": "\"As the header\" follows \"Header colours\"; the header's gradient or picture (Colours) then covers the strip too. A dark strip takes the header and footer colour.",
+            "options": {
+                "page": "The page's colours",
+                "header": "As the header",
+                "dark": "Dark bar"
+            }
+        },
+        {
+            "key": "category_strip_pill",
+            "section": "header",
+            "type": "segmented",
+            "default": "first",
+            "label": "Category strip plate",
+            "help": "Which entry is set off as a coloured plate: the first one, or every entry the menu highlights.",
+            "options": {
+                "first": "The first entry",
+                "highlight": "Highlighted entries",
+                "none": "None"
+            }
+        },
+        {
+            "key": "category_strip_pill_color",
+            "section": "header",
+            "type": "segmented",
+            "default": "primary",
+            "label": "Plate colour",
+            "options": {
+                "primary": "Base colour",
+                "secondary": "Second colour",
+                "accent": "Accent colour"
+            }
+        },
+        {
             "key": "catalog_menu",
             "section": "header",
             "type": "select",

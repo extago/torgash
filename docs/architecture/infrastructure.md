@@ -206,6 +206,25 @@ a format of our own that only the engine can open. `.env` goes only into an
 encrypted backup; a folder is never encrypted. The plan's password is
 `Crypt`-encrypted in its row — the screen says to keep it elsewhere too.
 
+**Only the files changed since the last full backup** (PLAN §67.10, a
+plan's `options.changed_only`): the database whole, the files only those
+whose mtime is at or after the START of the newest full backup holding the
+files that is still kept — by any plan (`Backups::lastFull()`); the run
+records it (`backup_runs.base_run_id`, `files_since`) and so does the
+manifest (`files_since`, `base`). Without one every file goes in and the
+manifest says so. A restore puts the base's files back first
+(`restoreBase()`: by its name through the journal or the storage, or
+`--base=` on a new server; `restoreFiles()` does the files alone) and
+refuses in words when it cannot — never "the pictures of the last day
+alone". Keeping never deletes a full backup while something leans on it
+(pinned by it in `expire()`); `BackupHealth` says when the newest backup's
+base is gone anyway (`orphan`). Not "the last N hours" on purpose: a missed
+run would leave a hole nobody sees. Files are taken by mtime, so after a
+restore every file is new and the first differential after one is nearly
+full — by design. `options.without_thumbnails` leaves every
+`<id>/conversions/` folder out (`Backups::CONVERSIONS`); the manifest's
+`thumbnails` is false and the console says to rebuild them.
+
 **Raising a shop on a new server** (drilled 2026-11-03, docs/LESSONS.md):
 fresh code of the same version, the OLD `.env` (its `APP_KEY` above all),
 an empty database created with the ICU locale, then

@@ -65,6 +65,17 @@ class ThemeManager
         return $this->active ?? config('torgash.default_theme', 'default');
     }
 
+    /**
+     * A theme's folder came, went or changed on disk (ThemeArchive): the
+     * cascade is laid again for the theme now active, and whatever the view
+     * finder, the settings and the zones remembered of the old folders is
+     * forgotten.
+     */
+    public function forget(): void
+    {
+        $this->rewire();
+    }
+
     /** Theme chain from the active theme up through its parents. */
     public function chain(?string $theme = null): array
     {
@@ -89,6 +100,43 @@ class ThemeManager
         $file = config('torgash.themes_path').DIRECTORY_SEPARATOR.$theme.DIRECTORY_SEPARATOR.'theme.json';
 
         return is_file($file) ? (json_decode((string) file_get_contents($file), true) ?: []) : [];
+    }
+
+    /**
+     * Whether a theme.json is the engine's own: no author, or the author
+     * "Torgash". Such a theme ships with core — a core update replaces its
+     * folder whole (Distribution), so it is never uploaded or deleted from
+     * the admin; a theme by anybody else is theirs to put in and take out.
+     */
+    public static function isBundledMeta(array $meta): bool
+    {
+        $author = $meta['author'] ?? null;
+
+        return empty($author) || (is_array($author) && ($author['name'] ?? null) === 'Torgash') || $author === 'Torgash';
+    }
+
+    public function isBundled(string $theme): bool
+    {
+        return self::isBundledMeta($this->meta($theme));
+    }
+
+    /**
+     * Themes on disk that name the given one as their parent — a theme
+     * somebody else draws on cannot be taken away.
+     *
+     * @return list<string>
+     */
+    public function children(string $theme): array
+    {
+        $out = [];
+
+        foreach (array_keys($this->available()) as $dir) {
+            if ($dir !== $theme && ($this->meta($dir)['parent'] ?? null) === $theme) {
+                $out[] = $dir;
+            }
+        }
+
+        return $out;
     }
 
     /**

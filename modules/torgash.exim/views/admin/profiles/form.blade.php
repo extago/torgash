@@ -201,18 +201,24 @@
                                   class="textarea textarea-bordered w-full font-mono text-xs leading-5"
                                   spellcheck="false" placeholder="{{ $templateExample }}">{{ old('template_body', $profile->template_body) }}</textarea>
                         <div class="text-xs opacity-70 flex flex-col gap-1.5">
-                            <p>{{ __('The file is written as typed. What stands between #rows and /rows is repeated for every row; inside it a column is item.<key>, a text in one language item.<key>.<language>, a price type\'s own price item.price_type.<CODE>, a characteristic item.feature.<code>. Outside it: profile.name, profile.generated_at and, for products, shop.name, shop.url, shop.currency, shop.currencies, shop.categories.') }}</p>
-                            <p>{{ __('Values are escaped for the format — XML and JSON cannot be broken by a quote in a product name. Nothing in a template runs as code.') }}</p>
+                            <p>{{ __('The file is written as typed. What stands between {% for item in rows %} and {% endfor %} is repeated for every row; inside it a column is item.<key>, a text in one language item.<key>.<language>, a price type\'s own price item.price_type.<CODE>, a characteristic item.feature.<code>. Outside it: profile.name, profile.generated_at and, for products, shop.name, shop.url, shop.currency, shop.currencies, shop.categories.') }}</p>
+                            <p>{{ __('The profile\'s own values (the card below the template) are vars.<name>.') }}</p>
+                            <p>{{ __('Values are escaped for the format — XML and JSON cannot be broken by a quote in a product name. Nothing in a template runs as code.') }}
+                                <a href="{{ route('admin.modules.docs', ['id' => 'torgash.exim', 'doc' => 'template-language']) }}" class="link" target="_blank">{{ __('The template language, every tag and filter') }}</a></p>
                             <details>
                                 <summary class="cursor-pointer select-none">{{ __('Lists, conditions and filters') }}</summary>
                                 <div class="mt-2 grid gap-x-6 gap-y-1 md:grid-cols-2">
+                                    @php $t = fn (string $inner) => '{% '.$inner.' %}'; @endphp
                                     @foreach ([
-                                        $tag('#item.pictures').'<picture>'.$tag(' . ').'</picture>'.$tag('/item.pictures') => 'a list: once per element, the element is .',
-                                        $tag('#item.params').'<param name="'.$tag(' name ').'">'.$tag(' value ').'</param>'.$tag('/item.params') => 'a list of records: their fields by name',
-                                        $tag('#item.old_price').'…'.$tag('/item.old_price') => 'printed only when there is a value',
-                                        $tag('^item.brand').'…'.$tag('/item.brand') => 'printed only when there is none',
-                                        $tag('! a note ') => 'a comment, not printed',
+                                        $t('if item.old_price > item.price').'…'.$t('elsif …').'…'.$t('else').'…'.$t('endif') => 'a condition: ==, !=, <, >, contains, and, or, not',
+                                        $t('unless item.available').'…'.$t('endunless') => 'printed only when it is false or empty',
+                                        $t('for p in item.pictures limit: 10').'<picture>'.$tag(' p ').'</picture>'.$t('endfor') => 'a list: once per element; forloop.index, first, last',
+                                        $t('assign model = item.name | remove: item.brand | trim') => 'a value kept under a name',
+                                        $t('capture text').'…'.$t('endcapture') => 'what is printed between, kept under a name',
+                                        $t('case x').$t('when "a", "b"').'…'.$t('else').'…'.$t('endcase') => 'one of several',
+                                        $t('comment').'…'.$t('endcomment') => 'a comment, not printed',
                                         $tag(' item.price | price ') => 'through a filter (several: | a | b)',
+                                        $tag('#item.params').'<param name="'.$tag(' name ').'">'.$tag(' value ').'</param>'.$tag('/item.params') => 'the earlier tags still work: a list of records, their fields by name',
                                     ] as $syntaxExample => $syntaxMeaning)
                                         <div class="flex items-baseline gap-2 min-w-0"><code class="font-mono shrink-0">{{ $syntaxExample }}</code> <span class="opacity-70 truncate">{{ __($syntaxMeaning) }}</span></div>
                                     @endforeach
@@ -249,6 +255,24 @@
                                 <span class="label-text">{{ __('Only what is switched on') }}</span>
                             </label>
                         </div>
+                    </div>
+                </section>
+
+                {{-- The profile's own values a template reads as vars.<name>
+                     (PLAN §68, stage 2): the delivery cost, the pickup flag —
+                     typed here, so whoever changes a price does not edit XML. --}}
+                <section class="card bg-base-100 border border-base-300" x-show="mode === 'template'" x-cloak>
+                    <div class="card-body gap-3">
+                        <h3 class="font-semibold">{{ __('Variables of the template') }}</h3>
+                        @php
+                            $varsLines = old('vars_lines', implode("\n", array_map(fn ($k, $v) => $k.' = '.$v, array_keys((array) ($profile->vars ?? [])), (array) ($profile->vars ?? []))));
+                        @endphp
+                        <fieldset class="fieldset p-0">
+                            <textarea name="vars_lines" rows="4" class="textarea textarea-bordered w-full font-mono text-sm" spellcheck="false"
+                                      placeholder="delivery_cost = 790&#10;pickup = true">{{ $varsLines }}</textarea>
+                            <p class="label whitespace-normal">{{ __('One a line, name = value. In the template: vars.delivery_cost, {% if vars.pickup %}. A name is Latin letters, digits and _.') }}</p>
+                        </fieldset>
+                        @error('vars_lines')<p class="text-error text-sm">{{ $message }}</p>@enderror
                     </div>
                 </section>
 

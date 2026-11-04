@@ -14,9 +14,10 @@ use Torgash\Exim\Template\FeedTemplate;
  *   {{#rows}}  <offer id="{{ item.id }}">{{ item.name.ru }}</offer>
  *   {{/rows}}</offers>
  *
- * The language is `Template\FeedTemplate` (Mustache's sections, filters);
- * it used to be Blade, which compiles to PHP — anybody allowed to edit a
- * profile could run code on the server. A column in several languages is
+ * The language is `Template\FeedTemplate` (PLAN §68: Liquid's tags and
+ * filters over the exchange's one expression language, Mustache's sections
+ * kept); it used to be Blade, which compiles to PHP — anybody allowed to
+ * edit a profile could run code on the server. A column in several languages is
  * `item.name.ru`; a price type's own price `item.price_type.WHOLESALE`; a
  * characteristic `item.feature.<code>`. Around the rows, `profile.*` and
  * whatever the entity's module offers (`exim.template.context` — the shop,
@@ -42,29 +43,14 @@ class TemplateRenderer
             default => SafeTemplate::RAW,
         };
         $context = self::context($profile);
-        $nodes = (new FeedTemplate((string) $profile->template_body, strict: false))->nodes();
-
-        $at = null;
-        foreach ($nodes as $i => $node) {
-            if ($node[0] === 'section' && $node[1] === 'rows' && ! $node[2]) {
-                $at = $i;
-                break;
+        $template = new FeedTemplate((string) $profile->template_body, strict: false);
+        $nested = (function () use ($rows, $columns) {
+            foreach ($rows as $row) {
+                yield self::nest($row, $columns);
             }
-        }
+        })();
 
-        if ($at === null) {
-            yield FeedTemplate::renderNodes($nodes, [$context], $escape);
-
-            return;
-        }
-
-        yield FeedTemplate::renderNodes(array_slice($nodes, 0, $at), [$context], $escape);
-
-        foreach ($rows as $row) {
-            yield FeedTemplate::renderNodes($nodes[$at][3], [$context, ['item' => self::nest($row, $columns)]], $escape);
-        }
-
-        yield FeedTemplate::renderNodes(array_slice($nodes, $at + 1), [$context], $escape);
+        yield from $template->stream($context, $nested, $escape);
     }
 
     /** What the template has around the rows. */
@@ -72,6 +58,9 @@ class TemplateRenderer
     {
         return hook_filter('exim.template.context', [
             'profile' => ['name' => $profile->t('name'), 'generated_at' => now()->toIso8601String()],
+            // The profile's own values, typed beside the template (PLAN §68,
+            // stage 2): `vars.pickup`, `vars.delivery_cost`.
+            'vars' => (array) ($profile->vars ?? []),
         ], ['entity' => $profile->entity, 'profile' => $profile]);
     }
 
