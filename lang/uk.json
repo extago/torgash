@@ -1997,5 +1997,15 @@
     "The theme.json must name its author: a theme without one counts as the engine's and is replaced whole by the next update.": "У theme.json має бути вказано автора: тема без автора вважається темою рушія і повністю замінюється наступним оновленням.",
     "A newer version of a theme already here replaces it. The old folder is kept in storage/app/theme-backups/ and put back if anything fails.": "Новіша версія замінює тему, що вже тут. Стара тека зберігається в storage/app/theme-backups/ і повертається на місце, якщо щось пішло не так.",
     "The themes that ship with the engine are updated with it and cannot be uploaded or deleted here.": "Теми, що постачаються з рушієм, оновлюються разом із ним; тут їх не можна ні завантажити, ні видалити.",
-    "A theme is code that runs with the shop's full rights. Upload only what you got from its author.": "Тема — це код, що працює з повними правами магазину. Завантажуйте лише те, що отримали від її автора."
+    "A theme is code that runs with the shop's full rights. Upload only what you got from its author.": "Тема — це код, що працює з повними правами магазину. Завантажуйте лише те, що отримали від її автора.",
+    "send again": "надіслати ще раз",
+    "Send to :storage again from the copy that is kept, without making the backup anew": "Надіслати в «:storage» ще раз із тієї копії, що зберігається, не збираючи копію заново",
+    "The backup is being sent to \":storage\" again from the copy that is kept, without being made anew. The list says when it is there — it needs a queue worker.": "Копія надсилається в «:storage» ще раз із тієї, що зберігається, без перезбирання. Список покаже, коли вона там, — потрібен обробник черги.",
+    "Another copy is being sent: try again when it is done.": "Зараз надсилається інша копія: повторіть, коли вона закінчиться.",
+    "Send a backup to its storage again": "Надіслати копію в сховище ще раз",
+    "Backup :name is in :storage": "Копія :name лежить у «:storage»",
+    ":storage did not take the file (:error) — trying once more": "«:storage» не прийняло файл (:error) — пробуємо ще раз",
+    "Fetching the backup": "Копія завантажується",
+    "Attempts for each part of a file": "Спроб на кожну частину файлу",
+    "A big file goes up in parts of five megabytes. A part the storage refuses with a server error is sent again after a pause that grows, up to this many times; then the whole upload is given up on. Backblaze B2 has such moments: 10 outlasts most of them, 30 the longer ones.": "Великий файл іде частинами по п'ять мегабайт. Частину, яку сховище відкинуло помилкою сервера, надсилають знову після зростаючої паузи, до стількох разів; потім усе завантаження вважається невдалим. У Backblaze B2 такі моменти трапляються: 10 пересиджує більшість, 30 — затяжні."
 }

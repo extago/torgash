@@ -31,6 +31,14 @@ class Destinations
     /** The core kinds that can be reached through a proxy. */
     public const PROXIED = ['s3', 'sftp', 'webdav'];
 
+    /**
+     * How many times a part of a file is sent to an S3 bucket before the
+     * upload is given up on. The library's own 3 proved too few: Backblaze
+     * answers "internal incident" for a while now and then, and a backup of
+     * gigabytes was lost over two parts of five megabytes.
+     */
+    public const ATTEMPTS = 10;
+
     /** @return array<string, string> driver => English label, core's then the modules' */
     public function drivers(): array
     {
@@ -97,6 +105,11 @@ class Destinations
                 'bucket' => (string) $destination->setting('bucket'),
                 'endpoint' => (string) $destination->setting('endpoint') ?: null,
                 'use_path_style_endpoint' => (bool) $destination->setting('path_style', false),
+                // A big file goes up in parts of five megabytes; a part the
+                // service refuses with a server error is sent again after a
+                // pause that grows (the SDK's "standard" mode), this many
+                // times in all — the storage's own setting (`attempts`).
+                'retries' => ['mode' => 'standard', 'max_attempts' => self::attempts($destination)],
                 'http' => $proxy ? ['proxy' => $proxy->guzzle()] : [],
                 'throw' => true,
             ]), (string) $destination->setting('root', '')),
@@ -122,6 +135,12 @@ class Destinations
             default => ($this->extensions()[$destination->driver] ?? null)?->open($destination)
                 ?? throw new RuntimeException('Unknown kind of backup storage: '.$destination->driver),
         };
+    }
+
+    /** The attempts an S3 storage makes for one part: its setting, or `ATTEMPTS`. */
+    public static function attempts(BackupDestination $destination): int
+    {
+        return max(1, min(100, (int) ($destination->setting('attempts') ?: self::ATTEMPTS)));
     }
 
     /** The key an SFTP storage's server shows now (to confirm it). */
@@ -281,6 +300,7 @@ class Destinations
                     'bucket' => $text('bucket'),
                     'root' => $this->cleanFolder($text('root')),
                     'path_style' => (bool) ($input['path_style'] ?? false),
+                    'attempts' => max(1, min(100, (int) ($text('attempts') ?: self::ATTEMPTS))),
                 ];
                 $secrets = [
                     'key' => $text('key') !== '' ? $text('key') : (string) ($old['key'] ?? ''),

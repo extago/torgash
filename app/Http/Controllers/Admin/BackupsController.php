@@ -86,6 +86,18 @@ class BackupsController extends Controller
             : __('Another backup is being checked: try again when it is done.'));
     }
 
+    /** "Send again" beside a copy that was not stored: a background task (PLAN §67.11). */
+    public function resend(BackupCopy $copy)
+    {
+        abort_unless($copy->status === BackupCopy::FAILED && $copy->destination && $copy->run?->finished() && $copy->run->storedCopies()->exists(), 404);
+
+        $task = \App\Core\Backups\ResendBackup::startIfIdle($copy->id);
+
+        return back()->with('status', $task
+            ? __('The backup is being sent to ":storage" again from the copy that is kept, without being made anew. The list says when it is there — it needs a queue worker.', ['storage' => $copy->destination->name])
+            : __('Another copy is being sent: try again when it is done.'));
+    }
+
     public function pin(BackupRun $run)
     {
         $run->update(['pinned' => ! $run->pinned]);

@@ -143,6 +143,10 @@
                                 <input type="checkbox" name="settings[path_style]" value="1" class="toggle toggle-sm toggle-success" @checked($value('path_style', false))>
                                 <span class="text-sm">{{ __('Path-style addresses (MinIO, RustFS)') }}</span>
                             </label>
+                            <fieldset class="fieldset p-0 sm:col-span-2"><legend class="fieldset-legend">{{ __('Attempts for each part of a file') }}</legend>
+                                <input type="number" name="settings[attempts]" value="{{ $value('attempts', \App\Core\Backups\Destinations::ATTEMPTS) }}" min="1" max="100" class="input input-bordered w-32 tabular-nums">
+                                <p class="label">{{ __('A big file goes up in parts of five megabytes. A part the storage refuses with a server error is sent again after a pause that grows, up to this many times; then the whole upload is given up on. Backblaze B2 has such moments: 10 outlasts most of them, 30 the longer ones.') }}</p>
+                            </fieldset>
                         </div>
                         <p class="text-xs opacity-60">{{ __('The keys are kept encrypted with the shop\'s APP_KEY. A key that may only write to this bucket is the safer one.') }}</p>
                     </fieldset>

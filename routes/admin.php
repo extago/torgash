@@ -134,6 +134,7 @@ Route::middleware(['auth', 'can:admin.access'])->group(function () {
         Route::get('backups/copies/{copy}', [\App\Http\Controllers\Admin\BackupsController::class, 'download'])->name('system.backups.download');
         Route::post('backups/runs/{run}/verify', [\App\Http\Controllers\Admin\BackupsController::class, 'verify'])->name('system.backups.verify');
         Route::post('backups/runs/{run}/pin', [\App\Http\Controllers\Admin\BackupsController::class, 'pin'])->name('system.backups.pin');
+        Route::post('backups/copies/{copy}/resend', [\App\Http\Controllers\Admin\BackupsController::class, 'resend'])->name('system.backups.resend');
         Route::delete('backups/runs/{run}', [\App\Http\Controllers\Admin\BackupsController::class, 'destroy'])->name('system.backups.destroy');
         Route::post('backup-plans/{plan}/run', [\App\Http\Controllers\Admin\BackupPlansController::class, 'run'])->name('system.backup-plans.run');
         Route::resource('backup-plans', \App\Http\Controllers\Admin\BackupPlansController::class)

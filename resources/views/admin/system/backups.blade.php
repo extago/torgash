@@ -131,6 +131,13 @@
                                         @foreach ($run->copies as $copy)
                                             <div @class(['text-error' => $copy->status === 'failed'])>
                                                 {{ $copy->destination?->name ?? __('a deleted storage') }}@if ($copy->status === 'failed') — {{ __('not stored') }}@endif
+                                                {{-- Sent again from a copy that is kept (PLAN §67.11), not made anew. --}}
+                                                @if ($copy->status === 'failed' && $copy->destination && ! $busy && $stored->isNotEmpty())
+                                                    <form method="POST" action="{{ route('admin.system.backups.resend', $copy) }}" class="inline">
+                                                        @csrf
+                                                        <button class="link link-primary text-xs align-baseline" title="{{ __('Send to :storage again from the copy that is kept, without making the backup anew', ['storage' => $copy->destination->name]) }}">{{ __('send again') }}</button>
+                                                    </form>
+                                                @endif
                                             </div>
                                         @endforeach
                                     </td>

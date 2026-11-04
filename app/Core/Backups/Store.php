@@ -2,8 +2,11 @@
 
 namespace App\Core\Backups;
 
+use Aws\Exception\MultipartUploadException;
 use Illuminate\Contracts\Filesystem\Filesystem;
+use Illuminate\Filesystem\AwsS3V3Adapter;
 use RuntimeException;
+use Throwable;
 
 /**
  * A destination opened (PLAN §67.1): a filesystem and the folder inside it
@@ -28,8 +31,41 @@ class Store
     /** @param  resource  $stream */
     public function put(string $relative, $stream): void
     {
-        if ($this->filesystem->writeStream($this->path($relative), $stream) === false) {
+        try {
+            $written = $this->filesystem->writeStream($this->path($relative), $stream);
+        } catch (Throwable $e) {
+            $this->abortMultipart($e);
+
+            throw $e;
+        }
+
+        if ($written === false) {
             throw new RuntimeException('The storage did not take the file.');
+        }
+    }
+
+    /**
+     * A multipart upload S3 gave up on is aborted: the parts already there
+     * are kept by the bucket — and billed; Backblaze shows them nowhere —
+     * until the upload is aborted or a lifecycle rule finds them. Flysystem
+     * wraps the SDK's exception; the upload's id is in it.
+     */
+    protected function abortMultipart(Throwable $e): void
+    {
+        if (! $this->filesystem instanceof AwsS3V3Adapter) {
+            return;
+        }
+
+        for ($cause = $e; $cause; $cause = $cause->getPrevious()) {
+            if ($cause instanceof MultipartUploadException) {
+                try {
+                    $this->filesystem->getClient()->abortMultipartUpload($cause->getState()->getId());
+                } catch (Throwable) {
+                    // The bucket keeps the parts; its lifecycle rule is the next line.
+                }
+
+                return;
+            }
         }
     }
 

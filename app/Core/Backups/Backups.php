@@ -72,6 +72,12 @@ class Backups
     /** What the manifest's `key_check` decrypts to under the same APP_KEY. */
     public const KEY_CHECK = 'torgash-backup-key';
 
+    /**
+     * The pause before a storage that refused the file is tried once more
+     * (seconds). A test that wants a refusal to be quick sets it to 0.
+     */
+    public int $retryPause = 20;
+
     public function __construct(protected Destinations $destinations) {}
 
     // ------------------------------------------------------------ plans and runs
@@ -203,22 +209,38 @@ class Backups
                 $folder = Names::folder((string) $destination->path_template, $plan, $at);
                 $path = ($folder === '' ? '' : $folder.'/').$name;
 
-                try {
-                    $store = $this->destinations->open($destination);
-                    $send($store, $path);
-                    $run->copies()->create(['destination_id' => $destination->id, 'path' => $path, 'status' => BackupCopy::STORED]);
-                    $stored++;
-                } catch (Throwable $e) {
-                    // Half a folder is not a backup: taken away again, if it can be.
-                    if ($format === 'folder' && isset($store)) {
-                        try {
-                            $store->deleteFolder($path);
-                        } catch (Throwable) {
+                // A storage that refuses is tried once more after a pause (PLAN
+                // §67.11): a server that was busy for a moment usually is not
+                // any longer, and the whole upload costs less than a backup
+                // nobody has. S3 retries each part on its own before this.
+                for ($attempt = 1; ; $attempt++) {
+                    try {
+                        $store = $this->destinations->open($destination);
+                        $send($store, $path);
+                        $run->copies()->create(['destination_id' => $destination->id, 'path' => $path, 'status' => BackupCopy::STORED]);
+                        $stored++;
+                        break;
+                    } catch (Throwable $e) {
+                        // Half a folder is not a backup: taken away again, if it can be.
+                        if ($format === 'folder' && isset($store)) {
+                            try {
+                                $store->deleteFolder($path);
+                            } catch (Throwable) {
+                            }
                         }
+                        $message = Str::limit(Destinations::reason($e), 800);
+
+                        if ($attempt < 2) {
+                            $say(':storage did not take the file (:error) — trying once more', ['storage' => $destination->name, 'error' => Str::limit($message, 200)]);
+                            sleep($this->retryPause);
+
+                            continue;
+                        }
+
+                        $run->copies()->create(['destination_id' => $destination->id, 'path' => $path, 'status' => BackupCopy::FAILED, 'error' => $message]);
+                        $failures[] = $destination->name.': '.$message;
+                        break;
                     }
-                    $message = Str::limit(Destinations::reason($e), 800);
-                    $run->copies()->create(['destination_id' => $destination->id, 'path' => $path, 'status' => BackupCopy::FAILED, 'error' => $message]);
-                    $failures[] = $destination->name.': '.$message;
                 }
             }
 
@@ -332,6 +354,108 @@ class Backups
         }
 
         return $run->refresh();
+    }
+
+    /**
+     * A copy that was not stored is sent once more (PLAN §67.11) from a copy
+     * that was — the server's own first — without making the backup again:
+     * fetched into the work folder, then uploaded the way the run did it. The
+     * run's status follows its copies: `done` once every one is there.
+     */
+    public function resend(BackupCopy $copy, ?callable $say = null): BackupCopy
+    {
+        $say ??= fn () => null;
+        $run = $copy->run ?? throw new RuntimeException('The backup this copy belongs to is gone.');
+        $destination = $copy->destination ?? throw new RuntimeException('The storage this copy was meant for is gone.');
+
+        if (! $run->finished()) {
+            throw new RuntimeException('The backup is still being made.');
+        }
+
+        [$from, $fromPath] = $this->locate((string) $run->name)
+            ?? throw new RuntimeException("No stored copy of {$run->name} is left to send it from.");
+        $work = $this->workDir();
+        $path = (string) $copy->path;
+
+        try {
+            $say('Fetching the backup', []);
+            $entries = [];
+
+            if ($run->isFolder()) {
+                $prefix = trim($fromPath, '/').'/';
+
+                foreach ($from->files($fromPath, true) as $file) {
+                    $name = str_starts_with($file, $prefix) ? substr($file, strlen($prefix)) : basename($file);
+                    $local = $work.DIRECTORY_SEPARATOR.str_replace('/', DIRECTORY_SEPARATOR, $name);
+                    File::ensureDirectoryExists(dirname($local));
+                    $this->fetch($from, $file, $local);
+                    $entries[] = [$name, $local];
+                }
+
+                if (! in_array('manifest.json', array_column($entries, 0), true)) {
+                    throw new RuntimeException("The copy of {$run->name} holds no manifest.json: not a backup that finished.");
+                }
+            } else {
+                $local = $work.DIRECTORY_SEPARATOR.basename($fromPath);
+                $this->fetch($from, $fromPath, $local);
+            }
+
+            $say('Storing the backup in :storage', ['storage' => $destination->name]);
+            $store = $this->destinations->open($destination);
+
+            try {
+                $run->isFolder() ? $this->uploadFolder($store, $path, $entries) : $this->upload($store, $path, $local);
+            } catch (Throwable $e) {
+                if ($run->isFolder()) {
+                    try {
+                        $store->deleteFolder($path);
+                    } catch (Throwable) {
+                    }
+                }
+                $copy->update(['error' => Str::limit(Destinations::reason($e), 800)]);
+                $this->settle($run);
+
+                throw $e;
+            }
+
+            $copy->update(['status' => BackupCopy::STORED, 'error' => null]);
+            $this->settle($run);
+
+            // The keeping rules for this storage never ran for the run that failed.
+            if ($run->plan) {
+                $this->prune($run->plan, $destination);
+            }
+        } finally {
+            File::deleteDirectory($work);
+        }
+
+        return $copy->refresh();
+    }
+
+    /** A finished run's status from its copies: `done` with every one stored, `partial` while some are not. */
+    protected function settle(BackupRun $run): void
+    {
+        $failed = $run->copies()->where('status', BackupCopy::FAILED)->with('destination')->get();
+
+        $run->update([
+            'status' => $failed->isEmpty() ? BackupRun::DONE : BackupRun::PARTIAL,
+            'error' => $failed->isEmpty() ? null
+                : $failed->map(fn (BackupCopy $c) => ($c->destination?->name ?? '?').': '.$c->error)->implode("\n"),
+        ]);
+    }
+
+    /** A storage's file into a local one, streamed. */
+    protected function fetch(Store $from, string $path, string $local): void
+    {
+        $read = $from->read($path);
+
+        try {
+            $this->copyStream($read, $local);
+        } finally {
+            if (is_resource($read)) {
+                fclose($read);
+            }
+        }
     }
 
     /** The newest backup of a plan that can be checked: made, and kept somewhere. */

@@ -135,8 +135,20 @@ the per-storage `keep`, journal `backup_runs` + `backup_copies`). A plan says
 what goes in, a LIST of moments (`PlanSchedule`: hourly / daily / weekly /
 monthly / cron, each its own scheduler event in the shop's clock), a name
 template (`Names`: must hold `{date}` and `{time}`), and its storages. One run
-packs ONCE and uploads the file to every storage; a storage that refuses makes
-the run `partial`, never costs the others. Runs are QUEUED and made one at a
+packs ONCE and uploads the file to every storage; a storage that refuses is
+tried once more after a pause (`Backups::$retryPause`), and if it refuses
+again makes the run `partial`, never costs the others. **A copy not stored
+is sent again from one that was** (PLAN §67.11, `Backups::resend`, the task
+`ResendBackup`, "send again" beside the copy on the list): fetched from the
+server's copy — or any kept one — into the work folder and uploaded as the
+run did, the run `done` once every copy is there; the backup is never made
+anew for it. An S3 bucket takes a big file in parts, and a part refused with
+a server error is sent again by the SDK in its `standard` mode up to the
+storage's own `attempts` (`Destinations::ATTEMPTS` = 10 by default, the
+form's "Attempts for each part"): the library's 3 lost a backup of
+gigabytes to Backblaze's "internal incident" over two parts. A multipart
+upload given up on is ABORTED (`Store::abortMultipart`): the bucket keeps
+and bills the parts otherwise, and Backblaze shows them nowhere. Runs are QUEUED and made one at a
 time by the single task `CreateBackup` (oldest first, one `continueWith` part
 per run; `core:backup-queue` picks up a run left waiting). Keeping
 (`Retention`): last N, daily/weekly/monthly/yearly, days, GB — applied only
