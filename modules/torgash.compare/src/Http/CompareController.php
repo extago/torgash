@@ -25,13 +25,23 @@ class CompareController extends Controller
         $comparison->keepOnly(Product::reachable()->whereIn('id', array_keys($comparison->ids()))->pluck('id')->map(fn ($id) => (int) $id)->all());
 
         $groups = $comparison->groups();
-        $active = (int) $request->query('group', (string) $comparison->latestGroup());
+        // "All together": one table of everything, beside the category tabs
+        // when the setting offers it and there is more than one category.
+        $allTab = $comparison->offersAllTab() && count($groups) > 1;
+        $requested = (string) $request->query('group', (string) $comparison->latestGroup());
 
-        if (! isset($groups[$active])) {
-            $active = (int) array_key_first($groups);
+        if ($allTab && $requested === Comparison::ALL) {
+            $active = Comparison::ALL;
+            $ids = array_keys($comparison->ids());
+        } else {
+            $active = (int) $requested;
+
+            if (! isset($groups[$active])) {
+                $active = (int) array_key_first($groups);
+            }
+
+            $ids = $groups[$active] ?? [];
         }
-
-        $ids = $groups[$active] ?? [];
         $products = Product::whereIn('id', $ids)->withCardData()->get()
             ->sortBy(fn (Product $p) => array_search($p->id, $ids, true))->values();
 
@@ -53,9 +63,13 @@ class CompareController extends Controller
             'active' => $active,
             'tabs' => collect($groups)->map(fn (array $groupIds, int $id) => [
                 'id' => $id,
-                'name' => $id > 0 ? (string) $tree->find($id)?->t('name') : __('Other products'),
+                'name' => $id > 0 ? (string) $tree->find($id)?->t('name') : ($comparison->byCategory() ? __('Other products') : __('All products')),
                 'count' => count($groupIds),
-            ])->values()->all(),
+            ])->values()->when($allTab, fn ($tabs) => $tabs->push([
+                'id' => Comparison::ALL,
+                'name' => __('All together'),
+                'count' => $comparison->count(),
+            ]))->all(),
             'total' => $comparison->count(),
         ]);
     }

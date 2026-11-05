@@ -24,5 +24,14 @@
     "In the photograph's corner, under the heart; on which devices — the theme's settings, \"Product cards\". On the product page it is always there.": "В углу фотографии, под сердцем; на каких устройствах — настройки темы, «Карточки товаров». На странице товара она есть всегда.",
     "Products of one category compared at once": "Сколько товаров одной категории сравнивать сразу",
     "Adding one more pushes out the one added first, and the notice says which. Past four the columns no longer fit a screen.": "Следующий добавленный вытесняет самый первый, и уведомление говорит, какой именно. Больше четырёх колонок на экран уже не помещается.",
-    "A notice in the corner when a product is added": "Уведомление в углу при добавлении товара"
+    "A notice in the corner when a product is added": "Уведомление в углу при добавлении товара",
+    "By category: a tab per category": "По категориям: вкладка на категорию",
+    "By category, plus an \"All together\" tab": "По категориям, плюс вкладка «Все вместе»",
+    "All together, whatever the category": "Все вместе, независимо от категории",
+    "How the comparison page groups products": "Как страница сравнения группирует товары",
+    "A laptop beside a phone case is a table of dashes, so products are compared by their deepest category, a tab each. The \"All together\" tab puts everything a visitor has collected into one table when they want that anyway. \"All together\" alone drops the categories, and the limit below then counts every product.": "Ноутбук рядом с чехлом для телефона — таблица из прочерков, поэтому товары сравниваются по самой глубокой категории, каждая на своей вкладке. Вкладка «Все вместе» сводит всё собранное посетителем в одну таблицу, когда ему так нужно. Только «Все вместе» убирает категории, и ограничение ниже тогда считает все товары.",
+    "All together": "Все вместе",
+    "All products": "Все товары",
+    ":name — in place of «:old»: up to :max products are compared.": ":name — вместо «:old»: сравнивается не больше :max товаров.",
+    "Clear": "Очистить"
 }

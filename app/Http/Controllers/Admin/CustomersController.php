@@ -58,7 +58,9 @@ class CustomersController extends Controller
         // Per group, over what the search leaves.
         $byGroup = $searched()->toBase()->selectRaw('customer_group_id, count(*) as n')
             ->groupBy('customer_group_id')->pluck('n', 'customer_group_id');
-        $counts = ['' => (int) $byGroup->sum(), 'none' => (int) ($byGroup[''] ?? $byGroup[null] ?? 0)];
+        // A NULL group id lands under the '' key (PHP arrays know no null
+        // key, and reading one is deprecated as of 8.5).
+        $counts = ['' => (int) $byGroup->sum(), 'none' => (int) ($byGroup[''] ?? 0)];
         foreach ($groups as $group) {
             $counts[(string) $group->id] = (int) ($byGroup[$group->id] ?? 0);
         }

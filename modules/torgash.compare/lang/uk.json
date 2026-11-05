@@ -24,5 +24,14 @@
     "In the photograph's corner, under the heart; on which devices — the theme's settings, \"Product cards\". On the product page it is always there.": "У куті фотографії, під серцем; на яких пристроях — налаштування теми, «Картки товарів». На сторінці товару вона є завжди.",
     "Products of one category compared at once": "Скільки товарів однієї категорії порівнювати одразу",
     "Adding one more pushes out the one added first, and the notice says which. Past four the columns no longer fit a screen.": "Наступний доданий витісняє найперший, і сповіщення каже, який саме. Більше чотирьох колонок на екран уже не вміщається.",
-    "A notice in the corner when a product is added": "Сповіщення в куті під час додавання товару"
+    "A notice in the corner when a product is added": "Сповіщення в куті під час додавання товару",
+    "By category: a tab per category": "За категоріями: вкладка на категорію",
+    "By category, plus an \"All together\" tab": "За категоріями, плюс вкладка «Усі разом»",
+    "All together, whatever the category": "Усі разом, незалежно від категорії",
+    "How the comparison page groups products": "Як сторінка порівняння групує товари",
+    "A laptop beside a phone case is a table of dashes, so products are compared by their deepest category, a tab each. The \"All together\" tab puts everything a visitor has collected into one table when they want that anyway. \"All together\" alone drops the categories, and the limit below then counts every product.": "Ноутбук поруч із чохлом для телефону — таблиця з прочерків, тому товари порівнюються за найглибшою категорією, кожна на своїй вкладці. Вкладка «Усі разом» зводить усе зібране відвідувачем в одну таблицю, коли йому так потрібно. Лише «Усі разом» прибирає категорії, і обмеження нижче тоді рахує всі товари.",
+    "All together": "Усі разом",
+    "All products": "Усі товари",
+    ":name — in place of «:old»: up to :max products are compared.": ":name — замість «:old»: порівнюється не більше :max товарів.",
+    "Clear": "Очистити"
 }

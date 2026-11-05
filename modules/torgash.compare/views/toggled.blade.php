@@ -6,7 +6,9 @@
 @if ($compareAdded && setting('torgash.compare', 'notice_on_add'))
     @php
         $compareNoticeText = $comparePushed
-            ? __(':name — in place of «:old»: up to :max products of one category are compared.', [
+            ? __(app(\Torgash\Compare\Comparison::class)->byCategory()
+                ? ':name — in place of «:old»: up to :max products of one category are compared.'
+                : ':name — in place of «:old»: up to :max products are compared.', [
                 'name' => $compareProduct->t('name'),
                 'old' => $comparePushed->t('name'),
                 'max' => max(1, (int) setting('torgash.compare', 'per_group_max')),

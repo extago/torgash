@@ -10,10 +10,10 @@ use App\Models\CustomerGroup;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Validator;
-use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\Rules\Unique;
 use Throwable;
+use Torgash\Catalog\Admin\ProductLookup;
 use Torgash\Catalog\Features\OwnRows;
 use Torgash\Catalog\Features\ProductFeatureSet;
 use Torgash\Catalog\Models\Feature;
@@ -24,9 +24,13 @@ use Torgash\Catalog\Models\ProductPriceTypeOverride;
 use Torgash\Catalog\Models\ProductTab;
 use Torgash\Catalog\Pricing\Prices;
 use Torgash\Catalog\Stock\AvailabilityStatuses;
+use Torgash\Catalog\Support\Assortment;
 use Torgash\Catalog\Support\BulkEdit;
 use Torgash\Catalog\Support\CategoryTree;
 use Torgash\Catalog\Support\ShortDescription;
+use Torgash\Catalog\Support\Slugs;
+use Torgash\Catalog\Support\VariationMaker;
+use Torgash\Catalog\Support\Variations;
 use Torgash\Media\Gallery;
 use Torgash\Media\ImageProcessor;
 
@@ -123,9 +127,12 @@ class ProductsController extends Controller
         return Product::query()
             ->when($filters['q'] !== '', function ($query) use ($filters) {
                 $like = '%'.str_replace(['%', '_'], ['\%', '\_'], $filters['q']).'%';
+                // The group word too, whole: the Variations tab's "In the list"
+                // opens the group here, where the bulk dialog can change it.
                 $query->where(fn ($q) => $q
                     ->where('sku', 'ilike', $like)
                     ->orWhere('slug', 'ilike', $like)
+                    ->orWhere('variation_group', $filters['q'])
                     ->orWhereRaw('name::text ilike ?', [$like]));
             })
             ->when(in_array($filters['status'], Product::STATUSES, true),
@@ -152,7 +159,13 @@ class ProductsController extends Controller
         // has no stock input to send. Requiring it made every such row fail
         // validation with a 422 — which HTMX drops on the floor, so the save
         // just silently did nothing.
-        $validator = Validator::make($request->all(), [
+        //
+        // The row of a product's Variations tab posts the same three under
+        // `variant[…]`: that table stands inside the product's own form, whose
+        // `price` and `stock` HTMX would send along with the row's, and the
+        // last one to arrive would win (_variant-row).
+        $input = is_array($request->input('variant')) ? $request->input('variant') : $request->all();
+        $validator = Validator::make($input, [
             'sku' => ['required', 'string', 'max:190', $this->uniqueRule('sku', $product)],
             'price' => ['required', 'numeric', 'min:0', price_scale()->rule()],
             'stock' => 'sometimes|integer',
@@ -303,7 +316,81 @@ class ProductsController extends Controller
     /** One row, rendered standalone for an HTMX swap — see the list's _row partial. */
     protected function rowResponse(Product $product, ?string $error = null)
     {
+        // The same save, drawn as a row of the Variations tab of the product
+        // `for` when that is where it was made (_variant-row's hx-patch).
+        if (request()->query('row') === 'variant') {
+            $for = Product::find((int) request()->query('for')) ?? $product;
+            $group = app(Variations::class)->for($for, everyStatus: true);
+
+            return view('torgash.catalog::admin.products._variant-row', [
+                'variant' => $group['members']->firstWhere('id', $product->id) ?? $product->fresh(),
+                'product' => $for,
+                'variationInfo' => $group,
+                'variationAxes' => Variations::axesForTable($group['axes']),
+                'locale' => admin_content_locale(),
+                'rowError' => $error,
+            ]);
+        }
+
         return view('torgash.catalog::admin.products._row', ['product' => $product, 'rowError' => $error]);
+    }
+
+    /**
+     * "Add a variation" on the Variations tab: new members of this product's
+     * group, one per combination of the values ticked — made from this
+     * product, with their content shown from it (VariationMaker). One made
+     * opens it, since the next step is its own photos; several stay on the
+     * tab, where the row's quick edit sets their stock and switches them on.
+     */
+    public function addVariations(Request $request, Product $product, VariationMaker $maker)
+    {
+        $validated = $request->validate([
+            'values' => 'nullable|array',
+            'values.*' => 'nullable|array',
+            'values.*.*' => 'integer',
+            'texts' => 'nullable|array',
+            'texts.*' => 'nullable|string|max:190',
+            'price' => ['nullable', 'numeric', 'min:0', price_scale()->rule()],
+            'stock' => 'nullable|integer|min:0',
+            'activate' => 'nullable|boolean',
+        ]);
+
+        $answers = [];
+        foreach ($validated['values'] ?? [] as $featureId => $ids) {
+            $answers[(int) $featureId] = array_map('intval', (array) $ids);
+        }
+        foreach ($validated['texts'] ?? [] as $featureId => $text) {
+            if (trim((string) $text) !== '') {
+                $answers[(int) $featureId] = [trim((string) $text)];
+            }
+        }
+
+        $back = redirect()->route('admin.catalog.products.edit', [$product, 'tab' => 'variations']);
+
+        try {
+            $result = $maker->make($product, $answers, [
+                'price' => $validated['price'] ?? null,
+                'stock' => $validated['stock'] ?? 0,
+                'activate' => (bool) ($validated['activate'] ?? false),
+            ]);
+        } catch (\InvalidArgumentException $e) {
+            return $back->withErrors(['variations' => $e->getMessage()])->withInput();
+        }
+
+        $created = $result['created'];
+        $existed = $result['existed'];
+
+        if (count($created) === 1 && $existed === 0) {
+            return redirect()->route('admin.catalog.products.edit', [$created[0], 'tab' => 'variations'])
+                ->with('status', __('Variation added — this is the new product. It shows the photos and description of :sku until it gets its own.', ['sku' => $product->sku]));
+        }
+
+        $message = trans_choice('{0} No variation added.|{1} One variation added.|[2,*] :count variations added.', count($created));
+        if ($existed > 0) {
+            $message .= ' '.trans_choice('{1} One combination already existed.|[2,*] :count combinations already existed.', $existed);
+        }
+
+        return $back->with('status', $message);
     }
 
     public function create()
@@ -321,7 +408,7 @@ class ProductsController extends Controller
     }
 
     /** The related-products picker's answer to what the admin types; never the product itself. */
-    public function lookup(Request $request, \Torgash\Catalog\Admin\ProductLookup $lookup)
+    public function lookup(Request $request, ProductLookup $lookup)
     {
         return response()->json($lookup->search((string) $request->query('q', ''), array_filter([(int) $request->query('except')])));
     }
@@ -766,7 +853,7 @@ class ProductsController extends Controller
             'name' => $name,
             'description' => $description,
             'short_description' => $shortDescription,
-            'slug' => \Torgash\Catalog\Support\Slugs::make($slugSource),
+            'slug' => Slugs::make($slugSource),
             'stock' => (int) $validated['stock'],
             // Nullable in the request: a form built before this field existed
             // (a test, a script) leaves a product exactly as it always
@@ -814,7 +901,7 @@ class ProductsController extends Controller
                 if (! $request->boolean('customer_groups_set')) {
                     return $product?->customer_groups;
                 }
-                $known = array_keys(\Torgash\Catalog\Support\Assortment::choices());
+                $known = array_keys(Assortment::choices());
                 $picked = array_values(array_intersect((array) $request->input('customer_groups', []), $known));
 
                 return $picked === [] ? null : $picked;

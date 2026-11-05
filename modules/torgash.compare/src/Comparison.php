@@ -28,8 +28,28 @@ class Comparison
     /** Nobody compares fifty things; a session is not a place to grow a list. */
     public const TOTAL_MAX = 40;
 
+    /** The `group` of the page's address that is every product at once (the "All together" tab). */
+    public const ALL = 'all';
+
     /** @var array<int, int>|null */
     protected ?array $groupOf = null;
+
+    /**
+     * Grouped by category at all? The setting `grouping`: `category` (a tab
+     * each), `category_all` (the tabs plus "All together"), `all` (no
+     * categories — every product is one group, 0, and the per-group limit
+     * counts them all).
+     */
+    public function byCategory(): bool
+    {
+        return setting('torgash.compare', 'grouping') !== 'all';
+    }
+
+    /** Is there an "All together" tab beside the category tabs? */
+    public function offersAllTab(): bool
+    {
+        return setting('torgash.compare', 'grouping') === 'category_all';
+    }
 
     /** @return array<int, int> product id => added at (unix time), oldest first */
     public function ids(): array
@@ -153,6 +173,10 @@ class Comparison
 
     public function groupOf(int $productId): int
     {
+        if (! $this->byCategory()) {
+            return 0;
+        }
+
         if ($this->groupOf === null || ! array_key_exists($productId, $this->groupOf)) {
             $this->resolveGroups(array_unique([...array_keys($this->ids()), $productId]));
         }

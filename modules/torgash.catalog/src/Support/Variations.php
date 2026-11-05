@@ -162,7 +162,7 @@ class Variations
      * characteristics and one for the answers, however many products.
      *
      * @param  iterable<Product>  $products
-     * @return array<int, list<array{label: string, value: string}>>  by product id; a product with none is absent
+     * @return array<int, list<array{label: string, value: string}>> by product id; a product with none is absent
      */
     public function answersFor(iterable $products): array
     {
@@ -236,6 +236,69 @@ class Variations
         }
 
         return $best ?? $product;
+    }
+
+    /**
+     * The axes as the admin's table lists them: the ones whose values make
+     * cards in the catalogue first (Colour), then the ones chosen on a card
+     * (Size) — so the rows group by card. Within a kind, the storefront's
+     * own order.
+     *
+     * @param  list<array{feature: Feature, options: list<array>}>  $axes  from for()
+     * @return list<array{feature: Feature, options: list<array>}>
+     */
+    public static function axesForTable(array $axes): array
+    {
+        $choice = fn (array $axis) => $axis['feature']->variation_role === Feature::ROLE_CHOICE;
+
+        return array_values(array_merge(
+            array_filter($axes, fn (array $axis) => ! $choice($axis)),
+            array_filter($axes, $choice),
+        ));
+    }
+
+    /**
+     * The group's members in the order the admin's table shows them: by
+     * card (the answers on the card axes, in those values' own order), then
+     * by the values chosen on the card, then by id — the sizes of one colour
+     * together, in size order. Each row names its card (the card axes'
+     * labels, "Black · 256 GB"), empty when no axis makes cards.
+     *
+     * @param  array  $group  from for()
+     * @param  list<array{feature: Feature, options: list<array>}>  $axes  from axesForTable()
+     * @return list<array{product: Product, card: string, cardLabel: string}>
+     */
+    public static function tableRows(array $group, array $axes): array
+    {
+        $cardAxes = array_filter($axes, fn (array $axis) => $axis['feature']->variation_role !== Feature::ROLE_CHOICE);
+        $positions = [];
+        foreach ($axes as $axis) {
+            foreach ($axis['options'] as $i => $option) {
+                $positions[$axis['feature']->id][$option['key']] = $i;
+            }
+        }
+
+        $rows = [];
+        foreach ($group['members'] as $member) {
+            $answers = $group['values'][$member->id] ?? [];
+            $order = [];
+            foreach ($axes as $axis) {
+                $key = $answers[$axis['feature']->id]['key'] ?? null;
+                $order[] = $key === null ? PHP_INT_MAX : ($positions[$axis['feature']->id][$key] ?? PHP_INT_MAX - 1);
+            }
+            $order[] = $member->id;
+
+            $rows[] = [
+                'product' => $member,
+                'card' => implode('|', array_map(fn (array $axis) => $answers[$axis['feature']->id]['key'] ?? '∅', $cardAxes)),
+                'cardLabel' => implode(' · ', array_filter(array_map(fn (array $axis) => $answers[$axis['feature']->id]['label'] ?? null, $cardAxes))),
+                'order' => $order,
+            ];
+        }
+
+        usort($rows, fn (array $a, array $b) => $a['order'] <=> $b['order']);
+
+        return array_map(fn (array $row) => array_diff_key($row, ['order' => 0]), $rows);
     }
 
     /** @return Collection<int, Product> */

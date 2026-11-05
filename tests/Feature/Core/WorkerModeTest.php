@@ -7,6 +7,7 @@ use App\Core\Settings\SettingsManager;
 use App\Core\Support\WebWorkers;
 use App\Core\Themes\ThemeManager;
 use App\Models\Storefront;
+use Illuminate\Log\Events\MessageLogged;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\View;
 use Tests\Concerns\RunsInOctaneWorker;
@@ -82,6 +83,52 @@ class WorkerModeTest extends TestCase
 
         $this->assertSame(200, $responses[0]->getStatusCode());
         $this->assertSame('default|0', $responses[1]->getContent(), 'a request outside any storefront draws in the default theme again');
+    }
+
+    /**
+     * A PHP deprecation is a warning on the `deprecations` channel, request
+     * after request — never an "emergency". Left undeclared, Laravel composes
+     * that channel at the first deprecation into the booted application's
+     * config, while the request runs on Octane's copy of it, cloned before
+     * the write: the log reads the copy, finds nothing, and the first
+     * deprecation of every worker's life goes through the emergency logger
+     * (a live shop collected 346 rows from one captcha's `imagedestroy()`
+     * under PHP 8.5). config/logging.php now declares the channel outright.
+     */
+    public function test_a_deprecation_in_the_worker_is_a_warning_not_an_emergency(): void
+    {
+        $this->workerRoute('/__worker/deprecate', function () {
+            $image = imagecreatetruecolor(2, 2);
+            imagedestroy($image); // deprecated as of PHP 8.5
+
+            return 'drawn';
+        });
+
+        $logged = [];
+        $this->octaneApp()['events']->listen(MessageLogged::class, function (MessageLogged $event) use (&$logged) {
+            $logged[] = $event->level.': '.$event->message;
+        });
+
+        // Laravel drops deprecations while testing unless told otherwise.
+        $_ENV['LOG_DEPRECATIONS_WHILE_TESTING'] = $_SERVER['LOG_DEPRECATIONS_WHILE_TESTING'] = '1';
+
+        try {
+            $responses = $this->serveInWorker([
+                $this->workerGet('http://localhost/__worker/deprecate'),
+                $this->workerGet('http://localhost/__worker/deprecate'),
+            ]);
+        } finally {
+            unset($_ENV['LOG_DEPRECATIONS_WHILE_TESTING'], $_SERVER['LOG_DEPRECATIONS_WHILE_TESTING']);
+        }
+
+        $this->assertSame(['drawn', 'drawn'], array_map(fn ($r) => $r->getContent(), $responses));
+
+        $emergencies = array_values(array_filter($logged, fn ($line) => str_starts_with($line, 'emergency')));
+        $this->assertSame([], $emergencies, 'a deprecation must not reach the emergency logger');
+
+        $deprecations = array_values(array_filter($logged, fn ($line) => str_contains($line, 'imagedestroy')));
+        $this->assertCount(2, $deprecations, 'the deprecation is logged once per request');
+        $this->assertStringStartsWith('warning:', $deprecations[0]);
     }
 
     public function test_translation_paths_a_request_adds_are_taken_away(): void

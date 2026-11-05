@@ -2,9 +2,14 @@
     The comparison page (PLAN §35.4, the owner's notes of 2026-09-23).
 
     The head is the wishlist's: the title, then one card holding the controls —
-    a tab per group, "differences only" as ONE switch (a GET form its switch
-    submits; "Show" does it without JavaScript) and "Clear" as a form of its
-    own BESIDE it, never inside.
+    a tab per group (and "All together" when the setting offers it),
+    "differences only" as ONE switch (a GET form its switch submits; "Show"
+    does it without JavaScript) and "Clear" as a form of its own BESIDE it,
+    never inside. On a phone the controls are three lines: the tabs across,
+    then the switch with "Clear" at the far end (2026-11-05: on one line
+    the switch wrapped into the tabs and "Clear" fell under them, as the
+    owner's screenshot showed) — the wrapper of those two is `md:contents`,
+    so on a wide screen the forms are the card's own flex items again.
 
     The products are the COLUMNS of one table, so a photograph and a price
     always stand over their own values. The first column (the names of the
@@ -35,35 +40,42 @@
         @php $compareColumns = $products->count(); @endphp
         <div class="flex flex-col gap-4">
             <div class="card bg-base-100 border border-base-300/60 shadow-sm">
-                <div class="card-body gap-4 flex-row flex-wrap items-center">
-                    {{-- A tab per group — ONLY one category is compared at a time. --}}
-                    <nav class="flex flex-wrap gap-2 flex-1 min-w-0" aria-label="{{ __('Categories') }}">
+                <div class="card-body gap-3 md:gap-4 md:flex-row md:flex-wrap md:items-center">
+                    {{-- A tab per group — ONLY one category is compared at a time,
+                         unless the tab is "All together". --}}
+                    <nav class="flex flex-wrap gap-2 md:flex-1 md:min-w-0" aria-label="{{ __('Categories') }}">
                         @foreach ($tabs as $compareTab)
+                            @php $compareTabActive = (string) $compareTab['id'] === (string) $active; @endphp
                             <a href="{{ route('compare.index', array_filter(['group' => $compareTab['id'], 'diff' => $diff ? 1 : null])) }}"
                                @class([
                                    'btn btn-sm btn-touch gap-2',
-                                   'btn-primary' => $compareTab['id'] === $active,
-                                   'btn-ghost bg-base-200' => $compareTab['id'] !== $active,
+                                   'btn-primary' => $compareTabActive,
+                                   'btn-ghost bg-base-200' => ! $compareTabActive,
                                ])
-                               @if ($compareTab['id'] === $active) aria-current="page" @endif>
+                               @if ($compareTabActive) aria-current="page" @endif>
                                 {{ $compareTab['name'] }}
                                 <span class="opacity-70 tabular-nums">{{ $compareTab['count'] }}</span>
                             </a>
                         @endforeach
                     </nav>
-                    <form method="GET" action="{{ route('compare.index') }}" class="flex items-center gap-3" x-data>
-                        <input type="hidden" name="group" value="{{ $active }}">
-                        <label @class(['label gap-2', 'cursor-pointer' => $compareColumns > 1])>
-                            <input type="checkbox" name="diff" value="1" class="toggle toggle-primary"
-                                   @checked($diff) @disabled($compareColumns < 2) x-on:change="$el.form.requestSubmit()">
-                            <span class="text-sm text-base-content">{{ __('Differences only') }}</span>
-                        </label>
-                        <noscript><button class="btn btn-sm btn-touch btn-outline">{{ __('Show') }}</button></noscript>
-                    </form>
-                    <form method="POST" action="{{ route('compare.clear') }}" data-confirm="{{ __('Remove everything from the comparison?') }}">
-                        @csrf
-                        <button class="btn btn-error btn-soft gap-2"><x-icon name="trash-2" /> {{ __('Clear the comparison') }}</button>
-                    </form>
+                    <div class="flex items-center justify-between gap-3 md:contents">
+                        <form method="GET" action="{{ route('compare.index') }}" class="flex items-center gap-3" x-data>
+                            <input type="hidden" name="group" value="{{ $active }}">
+                            <label @class(['label gap-2', 'cursor-pointer' => $compareColumns > 1])>
+                                <input type="checkbox" name="diff" value="1" class="toggle toggle-primary"
+                                       @checked($diff) @disabled($compareColumns < 2) x-on:change="$el.form.requestSubmit()">
+                                <span class="text-sm text-base-content">{{ __('Differences only') }}</span>
+                            </label>
+                            <noscript><button class="btn btn-sm btn-touch btn-outline">{{ __('Show') }}</button></noscript>
+                        </form>
+                        <form method="POST" action="{{ route('compare.clear') }}" data-confirm="{{ __('Remove everything from the comparison?') }}">
+                            @csrf
+                            {{-- Compact on a phone, where it shares the line with the switch. --}}
+                            <button class="btn btn-error btn-soft btn-sm btn-touch md:btn-md gap-2" title="{{ __('Clear the comparison') }}">
+                                <x-icon name="trash-2" /> <span class="hidden sm:inline">{{ __('Clear the comparison') }}</span><span class="sm:hidden">{{ __('Clear') }}</span>
+                            </button>
+                        </form>
+                    </div>
                 </div>
             </div>
 

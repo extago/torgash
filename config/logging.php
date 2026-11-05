@@ -135,6 +135,22 @@ return [
             'path' => storage_path('logs/laravel.log'),
         ],
 
+        // Declared here on purpose. Left out, Laravel composes it at the first
+        // deprecation from `logging.deprecations.channel` — into the config of
+        // the application it booted with, while Octane serves the request from
+        // a COPY of that config cloned before the write. The log then reads
+        // the copy, finds nothing, and the first deprecation of every worker's
+        // life goes through the emergency logger — an "emergency" row in
+        // Guard's errors per worker start (WorkerModeTest proves it; a live
+        // shop collected 346 from one captcha under PHP 8.5). A channel that
+        // exists from boot is in every copy. It still follows
+        // LOG_DEPRECATIONS_CHANNEL (null = dropped).
+        'deprecations' => [
+            'driver' => 'stack',
+            'channels' => [env('LOG_DEPRECATIONS_CHANNEL') ?: 'null'],
+            'ignore_exceptions' => true,
+        ],
+
     ],
 
 ];

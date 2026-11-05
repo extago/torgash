@@ -143,20 +143,17 @@ class ArithmeticCaptcha implements Provider
             // Uneven spacing, so the glyphs do not sit on a grid something can
             // slice into fixed-width columns and match one at a time.
             $x += (int) ($glyphW * $scale * 0.88) + random_int(-2, 4);
-
-            imagedestroy($glyph);
-            imagedestroy($rotated);
         }
 
         $this->noise($canvas);
 
         ob_start();
         imagepng($canvas);
-        $png = (string) ob_get_clean();
-
-        imagedestroy($canvas);
-
-        return $png;
+        // No imagedestroy() anywhere here: deprecated as of PHP 8.5, a no-op
+        // since 8.0 — GdImage is garbage-collected. Under 8.5 each call was a
+        // deprecation notice, and a deprecation the log cannot place is an
+        // "emergency" row in Guard's errors (config/logging.php, deprecations).
+        return (string) ob_get_clean();
     }
 
     /** One character, drawn small and resampled up so the edges are soft. */
@@ -178,8 +175,6 @@ class ArithmeticCaptcha implements Provider
         imagesavealpha($big, true);
         imagefill($big, 0, 0, imagecolorallocatealpha($big, 255, 255, 255, 127));
         imagecopyresampled($big, $small, 0, 0, 0, 0, $w * $scale, $h * $scale, $w, $h);
-
-        imagedestroy($small);
 
         return $big;
     }

@@ -913,3 +913,19 @@ box would be before the translate — 18px lower than what the eye saw, on top
 of the popover's own 13px. Measured: gap 13px once the wrapper was
 `inset-y-0 flex items-center`. Centre a popover's button (anything carrying
 `anchor-name`) with flex or grid, never with `translate`/`transform`.
+
+## A log channel Laravel composes at run time is composed in the wrong config
+
+Laravel declares no `deprecations` log channel: the first PHP deprecation
+composes one from `logging.deprecations.channel` and writes it into the
+config of the application it booted with. Under Octane a request runs on a
+COPY of that config, cloned at the request's start — the write lands in the
+original, the log reads the copy, finds nothing, and the deprecation goes
+through the emergency logger: an "emergency" row in Guard's errors for the
+first deprecation of every worker's life (a live shop collected 346 from one
+captcha's `imagedestroy()` after PHP 8.5 deprecated it). Measured in
+`WorkerModeTest::test_a_deprecation_in_the_worker_is_a_warning_not_an_emergency`,
+which fails without the channel in `config/logging.php`. Anything Laravel
+"ensures" into config on first use is the same trap: declare it at boot.
+PHP 8.5 also deprecated `null` as an array key (`$rows[null]` — it was
+always `''`).

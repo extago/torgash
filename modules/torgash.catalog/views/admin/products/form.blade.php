@@ -16,11 +16,13 @@
         $tabFieldMap = [
             'general' => ['sku', 'slug', 'name', 'description', 'short_description', 'price', 'stock', 'availability_status', 'weight', 'length', 'width', 'height', 'image_url', 'images', 'images.*', 'categories', 'labels', 'status', 'popularity', 'views_count', 'sales_count', 'created_at'],
             'attributes' => ['features', 'global_features'],
-            'variations' => ['variation_group'],
+            'variations' => ['variation_group', 'variations'],
             'related' => ['related_products'],
             'seo' => ['meta_title', 'meta_description', 'h1', 'canonical_url', 'noindex'],
         ];
-        $initialTab = 'general';
+        // "?tab=variations": the page comes back to the tab a variation was
+        // added from; an error in a field opens that field's tab regardless.
+        $initialTab = array_key_exists((string) request()->query('tab'), $tabFieldMap) ? (string) request()->query('tab') : 'general';
         foreach ($tabFieldMap as $tabKey => $fields) {
             if (collect($fields)->contains(fn ($f) => $errors->has($f))) {
                 $initialTab = $tabKey;
@@ -1099,13 +1101,45 @@
                 @endif
             </div></section>
 
+            {{-- The group as a table, one member per row (_variant-row: the
+                 list's quick edit of SKU, price, stock and status, in place).
+                 Rows stand by CARD — the sizes of one colour together, a
+                 heading naming the card — when an axis is chosen on a card;
+                 the axes that make cards come first. A member's own card is
+                 tinted, the member itself more. --}}
+            @php
+                $variationAxes = \Torgash\Catalog\Support\Variations::axesForTable($variationAxes);
+                $variationRows = $variationInfo ? \Torgash\Catalog\Support\Variations::tableRows($variationInfo, $variationAxes) : [];
+                $variationByCard = $variationAxes !== []
+                    && collect($variationAxes)->contains(fn ($axis) => $axis['feature']->variation_role === \Torgash\Catalog\Models\Feature::ROLE_CHOICE)
+                    && collect($variationAxes)->contains(fn ($axis) => $axis['feature']->variation_role !== \Torgash\Catalog\Models\Feature::ROLE_CHOICE);
+                $variationAddable = $product->exists && $product->variation_group && $hasVariationFeatures;
+            @endphp
+            @if ($errors->has('variations'))
+                <div class="alert alert-error text-sm py-2">
+                    <x-icon name="triangle-alert" size="sm" />
+                    <span>{{ $errors->first('variations') }}</span>
+                </div>
+            @endif
             @if ($variationMembers->count() > 1)
                 <section class="card bg-base-100 border border-base-300"><div class="card-body gap-3">
-                    <div class="flex items-baseline justify-between gap-3 flex-wrap">
+                    <div class="flex items-center justify-between gap-3 flex-wrap">
                         <h3 class="font-semibold">{{ __('Products in this group') }} <span class="opacity-50 font-normal">{{ $variationMembers->count() }}</span></h3>
-                        @if ($variationAxes === [])
-                            <span class="text-xs text-warning">{{ __('No variation axis differs between them, so the storefront has nothing to switch.') }}</span>
-                        @endif
+                        <div class="flex items-center gap-2 flex-wrap">
+                            @if ($variationAxes === [])
+                                <span class="text-xs text-warning">{{ __('No variation axis differs between them, so the storefront has nothing to switch.') }}</span>
+                            @endif
+                            <a href="{{ route('admin.catalog.products.index', ['q' => $product->variation_group]) }}" class="btn btn-ghost btn-sm gap-1.5" title="{{ __('The whole group in the products list — tick them there to change prices by a percent at once.') }}">
+                                <x-icon name="list" size="sm" /> {{ __('In the list') }}
+                            </a>
+                            @can('catalog.manage')
+                                @if ($variationAddable)
+                                    <button type="button" class="btn btn-primary btn-sm gap-1.5" x-on:click="document.getElementById('product-add-variations').showModal()">
+                                        <x-icon name="plus" size="sm" /> {{ __('Add variation') }}
+                                    </button>
+                                @endif
+                            @endcan
+                        </div>
                     </div>
                     <div class="overflow-x-auto -mx-2">
                         <table class="table table-sm">
@@ -1115,73 +1149,52 @@
                                     <th>{{ __('Name') }}</th>
                                     <th>SKU</th>
                                     @foreach ($variationAxes as $axis)
-                                        <th>{{ $axis['feature']->t('name', $locale) }}</th>
+                                        {{-- The values' order (what the picker shows first) is the characteristic's own: set it there. --}}
+                                        <th><a href="{{ route('admin.catalog.features.edit', $axis['feature']) }}" class="link link-hover" title="{{ __('The order of the values in the picker is set on the characteristic.') }}">{{ $axis['feature']->t('name', $locale) }}</a></th>
                                     @endforeach
                                     <th class="text-end">{{ __('Price') }}</th>
                                     <th class="text-end">{{ __('Stock') }}</th>
                                     <th>{{ __('Status') }}</th>
+                                    <th></th>
                                 </tr>
                             </thead>
                             <tbody>
-                                @foreach ($variationMembers as $variant)
-                                    @php
-                                        $isThis = $variant->id === $product->id;
-                                        $keptInstead = $variationDuplicates[$variant->id] ?? null;
-                                        $keptProduct = $keptInstead ? $variationMembers->firstWhere('id', $keptInstead) : null;
-                                    @endphp
-                                    <tr @class(['bg-primary/5' => $isThis && ! $keptInstead, 'bg-warning/10' => $keptInstead, 'opacity-60' => $variant->status !== \Torgash\Catalog\Models\Product::STATUS_ACTIVE])>
-                                        <td>
-                                            <span class="w-10 h-10 rounded-md bg-base-200 overflow-hidden flex items-center justify-center">
-                                                @if ($variantImage = $variant->primaryImageUrl(80))
-                                                    <img src="{{ $variantImage }}" alt="" class="w-full h-full object-contain" loading="lazy">
-                                                @else
-                                                    <x-icon name="image" size="sm" class="opacity-30" />
-                                                @endif
-                                            </span>
-                                        </td>
-                                        <td>
-                                            @if ($isThis)
-                                                <span class="font-medium">{{ $variant->t('name', $locale) }}</span>
-                                                <span class="badge badge-primary badge-sm ms-1">{{ __('this product') }}</span>
-                                            @else
-                                                <a href="{{ route('admin.catalog.products.edit', $variant) }}" class="link link-hover">{{ $variant->t('name', $locale) }}</a>
-                                            @endif
-                                            @if ($keptProduct)
-                                                <div class="text-xs text-warning flex items-center gap-1 mt-0.5">
-                                                    <x-icon name="triangle-alert" size="sm" />
-                                                    {{ __('Not offered: the same answers as an older product,') }}
-                                                    <a href="{{ route('admin.catalog.products.edit', $keptProduct) }}" class="link">{{ $keptProduct->sku }}</a>
-                                                </div>
-                                            @endif
-                                        </td>
-                                        <td class="font-mono text-xs">{{ $variant->sku }}</td>
-                                        @foreach ($variationAxes as $axis)
-                                            @php $axisAnswer = $variationInfo['values'][$variant->id][$axis['feature']->id] ?? null; @endphp
-                                            <td>
-                                                @if ($axisAnswer === null)
-                                                    <span class="text-error text-xs" title="{{ __('Without this value the product cannot be chosen by it.') }}">—</span>
-                                                @else
-                                                    <span class="inline-flex items-center gap-1.5">
-                                                        @if ($axisAnswer['swatch'])
-                                                            <span class="h-3 w-3 rounded-full border border-black/15" style="background-color: {{ $axisAnswer['swatch'] }}"></span>
-                                                        @endif
-                                                        {{ $axisAnswer['label'] }}
-                                                    </span>
-                                                @endif
+                                @php $lastCard = null; @endphp
+                                @foreach ($variationRows as $variationRow)
+                                    @if ($variationByCard && $variationRow['card'] !== $lastCard)
+                                        @php $lastCard = $variationRow['card']; @endphp
+                                        <tr class="variant-card-heading">
+                                            <td colspan="{{ 7 + count($variationAxes) }}" class="pt-3 pb-1 text-xs font-semibold uppercase tracking-wide opacity-60">
+                                                {{ $variationRow['cardLabel'] !== '' ? $variationRow['cardLabel'] : '—' }}
                                             </td>
-                                        @endforeach
-                                        <td class="text-end tabular-nums whitespace-nowrap">{{ admin_unit_price($variant->price) }}</td>
-                                        <td class="text-end tabular-nums">{{ $variant->stock }}</td>
-                                        <td><span class="text-xs">{{ __(ucfirst($variant->status)) }}</span></td>
-                                    </tr>
+                                        </tr>
+                                    @endif
+                                    @include('torgash.catalog::admin.products._variant-row', [
+                                        'variant' => $variationRow['product'],
+                                        'rowError' => null,
+                                    ])
                                 @endforeach
                             </tbody>
                         </table>
                     </div>
-                    <p class="text-xs opacity-60">{{ __('A hidden or disabled product stays in the group here but is not offered on the storefront.') }}</p>
+                    <p class="text-xs opacity-60">
+                        {{ __('A hidden or disabled product stays in the group here but is not offered on the storefront.') }}
+                        @can('catalog.manage')
+                            {{ __('Click a row to change its SKU, price or stock in place; the status switches from its badge.') }}
+                        @endcan
+                    </p>
                 </div></section>
             @elseif ($product->variation_group)
-                <div class="text-sm opacity-60">{{ __('No other product carries this group yet: give another product the same word and they become variations of each other.') }}</div>
+                <div class="flex items-center gap-3 flex-wrap">
+                    <div class="text-sm opacity-60">{{ __('No other product carries this group yet: give another product the same word and they become variations of each other.') }}</div>
+                    @can('catalog.manage')
+                        @if ($variationAddable)
+                            <button type="button" class="btn btn-primary btn-sm gap-1.5" x-on:click="document.getElementById('product-add-variations').showModal()">
+                                <x-icon name="plus" size="sm" /> {{ __('Add variation') }}
+                            </button>
+                        @endif
+                    @endcan
+                </div>
             @endif
         </div>
 
@@ -1247,6 +1260,17 @@
         <form id="product-delete" method="POST" action="{{ route('admin.catalog.products.destroy', $product) }}" class="hidden">
             @csrf @method('DELETE')
         </form>
+        {{-- The Variations tab's in-place fields belong to these forms, one
+             per row, not to the product's, so saving the product never sends
+             them; none is ever submitted itself (Enter in a row saves the
+             row through HTMX). One per row, not one for all: HTMX sends the
+             button's form's elements (_variant-row). --}}
+        @foreach ($variationRows ?? [] as $variationRow)
+            <form id="variant-quick-{{ $variationRow['product']->id }}" x-data x-on:submit.prevent class="hidden"></form>
+        @endforeach
+        @if ($variationAddable ?? false)
+            @include('torgash.catalog::admin.products._add-variations')
+        @endif
     @endif
 
     @push('scripts')

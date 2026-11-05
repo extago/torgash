@@ -74,6 +74,42 @@ class CompareTest extends TestCase
             ->assertSee('Complaptop')->assertDontSee('Compphone');
     }
 
+    /** The setting `grouping`: "All together" beside the tabs, or instead of them. */
+    public function test_everything_can_be_compared_together_whatever_the_category(): void
+    {
+        $kettles = Category::create(['name' => ['en' => 'Kettles'], 'slug' => 'cmp-all-kettles', 'enabled' => true]);
+        $toasters = Category::create(['name' => ['en' => 'Toasters'], 'slug' => 'cmp-all-toasters', 'enabled' => true]);
+        $this->product('CMP-11', 'Allkettle')->categories()->attach($kettles->id);
+        $this->product('CMP-12', 'Alltoaster')->categories()->attach($toasters->id);
+        $this->post(route('compare.toggle', 'cmp-11'));
+        $this->post(route('compare.toggle', 'cmp-12'));
+
+        // By category (the default): no such tab, and ?group=all is not an
+        // answer — the first category's tab opens, one category at a time.
+        $this->get(route('compare.index', ['group' => 'all']))->assertOk()
+            ->assertDontSee('All together')->assertSee('Allkettle')->assertDontSee('Alltoaster');
+
+        app(SettingsManager::class)->set('torgash.compare', 'grouping', 'category_all');
+        $page = $this->get(route('compare.index', ['group' => 'all']))->assertOk();
+        $page->assertSee('All together')->assertSee('Kettles')->assertSee('Toasters')->assertSee('Allkettle')->assertSee('Alltoaster');
+        $page->assertSee('aria-current="page"', false);
+        // One category alone has nothing to put together.
+        $this->post(route('compare.toggle', 'cmp-12'));
+        $this->get(route('compare.index'))->assertOk()->assertDontSee('All together');
+
+        // No categories at all: one group, the limit counts every product.
+        app(SettingsManager::class)->set('torgash.compare', 'grouping', 'all');
+        app(SettingsManager::class)->set('torgash.compare', 'per_group_max', 2);
+        $this->post(route('compare.toggle', 'cmp-12'));
+        $this->product('CMP-13', 'Allblender');
+        $third = $this->post(route('compare.toggle', 'cmp-13'), [], ['HX-Request' => 'true'])->getContent();
+        $this->assertStringContainsString('in place of «Allkettle»: up to 2 products are compared.', $third);
+
+        $page = $this->get(route('compare.index'))->assertOk();
+        // (The categories still stand in the site's menu; no TAB names one.)
+        $page->assertSee('All products')->assertDontSee('group='.$kettles->id, false)->assertSee('Alltoaster')->assertSee('Allblender');
+    }
+
     public function test_the_table_shows_what_the_product_page_shows_and_can_hide_the_same(): void
     {
         $colour = Feature::create(['name' => ['en' => 'Shade'], 'code' => 'CMP_SHADE', 'purpose' => 'filter', 'input_type' => 'select']);

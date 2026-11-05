@@ -33,6 +33,7 @@ Route::resource('feature-groups', FeatureGroupsController::class)->except(['show
 Route::get('products/features/search', [ProductsController::class, 'featureSearch'])->name('products.features.search');
 Route::get('products/features/field', [ProductsController::class, 'featureField'])->name('products.features.field');
 Route::post('products/{product}/duplicate', [ProductsController::class, 'duplicate'])->name('products.duplicate');
+Route::post('products/{product}/variations', [ProductsController::class, 'addVariations'])->name('products.variations.add');
 // List-screen actions (HTMX row swaps + the bulk bar). Declared before the
 // resource so none of them is swallowed by the {product} wildcard.
 Route::post('products/bulk', [ProductsController::class, 'bulk'])->name('products.bulk');

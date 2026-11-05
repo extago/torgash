@@ -24,6 +24,18 @@
             "help": "In the photograph's corner, under the heart; on which devices — the theme's settings, \"Product cards\". On the product page it is always there."
         },
         {
+            "key": "grouping",
+            "type": "select",
+            "default": "category",
+            "options": {
+                "category": "By category: a tab per category",
+                "category_all": "By category, plus an \"All together\" tab",
+                "all": "All together, whatever the category"
+            },
+            "label": "How the comparison page groups products",
+            "help": "A laptop beside a phone case is a table of dashes, so products are compared by their deepest category, a tab each. The \"All together\" tab puts everything a visitor has collected into one table when they want that anyway. \"All together\" alone drops the categories, and the limit below then counts every product."
+        },
+        {
             "key": "per_group_max",
             "type": "number",
             "default": 4,

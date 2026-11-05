@@ -246,6 +246,41 @@ this file is the reasoning. Read it before changing anything it covers.
   worked out per page: `{feature:size}`). Read through `galleryImages()`,
   `primaryImageUrl()`, `t()` (INHERITED_TEXT), `featureRows()` and
   `shownAssignments()`; the editor reads the product's own.
+- **The Variations tab is where a group is RUN, not only read** (2026-11-05).
+  Its table (`_variant-row`) is the products list's quick edit: a row
+  opens its SKU, price and stock in place, Enter or the tick saves through
+  `products.quick` and the row comes back drawn afresh, the status is the
+  badge's menu (`products.status`) — `rowResponse()` draws the tab's row
+  when `?row=variant&for=<id>` is in the address. The table stands INSIDE
+  the product's form and HTMX sends the enclosing form's values with every
+  non-GET request, so a row's fields are named `variant[…]` (the form has
+  `price` too; the last to arrive wins), belong to a hidden sibling form
+  OF THEIR OWN ROW (`form="variant-quick-<id>"` — one form for all rows
+  held every row's fields, and the last row's SKU arrived as this one's),
+  and `hx-params` keeps only the row's three. Rows stand by CARD
+  (`Variations::axesForTable()` — card axes first — and `tableRows()`:
+  by the card axes' values in the values' own order, then the chosen
+  ones, then id, a heading per card when both kinds exist); the order of
+  values is the characteristic's, the column head links there. "In the
+  list" opens the group in the products list (the search matches the
+  group word whole) for the bulk dialog.
+  **"Add variation" is not "Duplicate"** (`Support\VariationMaker`,
+  `products.variations.add`, the dialog `_add-variations` beside the
+  form): one product per combination of the values ticked per variation
+  characteristic (the group's axes plus the ones this product answers;
+  red × 40, 42, 44 = three), combinations the group already holds skipped
+  and counted, at most 50. The facts of the model are COPIED (group,
+  categories, labels, prices and tiers, weight, availability, the other
+  characteristics); the content is NOT — description, photos, tabs, own
+  rows, SEO, external id — the member is made empty with
+  `content_source_id` = this product (or its source: never a chain), so
+  a new colour shows this product's photos until it gets its own and a
+  new size stays on this card. Name = this product's with the value
+  swapped in where its old value is written, else appended; SKU the
+  model's / numbering module's (`catalog.product.saved` is announced with
+  a request carrying no form field, so every listener leaves the product
+  alone); made disabled unless "switch on right away". One made opens it,
+  several stay on the tab (`?tab=variations`).
 - **A listing with the panel is ONE thing, over any set** —
   `Torgash\Catalog\Listing\Listing` (the panel's options, applying the
   filters, the sorts, the chips, the count on "Show 12 products") and

@@ -141,6 +141,16 @@ this file is the reasoning. Read it before changing anything it covers.
   in `catalog.product.card_corner` (after the heart) and `cart.buy_box.actions`;
   the counter in `storefront.header.icons`. `--torgash-header-h` (app.css) is
   the storefront header's height, for anything that sticks under it.
+  **Grouping is a setting** (`grouping`, 2026-11-05): `category` (a tab
+  each, the default), `category_all` (the tabs plus an "All together" tab,
+  `?group=all` — `Comparison::ALL` — shown only when there is more than one
+  category, one table of everything with dashes where a product says
+  nothing), `all` (no categories: `groupOf()` answers 0 for every product,
+  one tab "All products", and `per_group_max` counts them all; the
+  pushed-out notice then says "products", not "of one category"). The
+  controls card is three lines on a phone — the tabs across, then the
+  switch with a compact "Clear" at the far end — and one line from `md`
+  (the wrapper of the two forms is `md:contents`).
 
 - **"Delivery to <town>" on the product page** (2026-10-09, shipping setting
   `product_estimate`): `Torgash\Shipping\ProductEstimate` asks the CART's own
