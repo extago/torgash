@@ -34,6 +34,17 @@
             "help": "Longer side of the stored original is downscaled to this. 0 = keep as uploaded."
         },
         {
+            "key": "file_names",
+            "type": "select",
+            "default": "original",
+            "options": {
+                "original": "As uploaded, transliterated",
+                "code": "A short random code"
+            },
+            "label": "Names of stored files",
+            "help": "What the picture's address ends in: red-boot.jpg or k3f9x2qa7m1b.jpg. The uploaded name helps image search a little; a code tells nobody what the file was called. New uploads only — pictures already stored keep their addresses."
+        },
+        {
             "key": "original_untouched",
             "type": "checkbox",
             "default": false,

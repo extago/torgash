@@ -33,5 +33,7 @@
     "All together": "Усі разом",
     "All products": "Усі товари",
     ":name — in place of «:old»: up to :max products are compared.": ":name — замість «:old»: порівнюється не більше :max товарів.",
-    "Clear": "Очистити"
+    "Clear": "Очистити",
+    "Previous": "Назад",
+    "Next": "Уперед"
 }

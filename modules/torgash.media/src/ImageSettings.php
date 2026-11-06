@@ -32,6 +32,17 @@ class ImageSettings
         return $px > 0 ? $px : null;
     }
 
+    /**
+     * The stored file's NAME: the uploaded one transliterated (`red-boot.jpg`,
+     * a little help to image search) or a short random code (`k3f9x2qa7m1b.jpg`,
+     * which tells nobody what the file was called on somebody's desktop).
+     * New uploads only — a file already stored keeps its address.
+     */
+    public static function shortNames(): bool
+    {
+        return self::get('file_names', 'original') === 'code';
+    }
+
     public static function originalUntouched(): bool
     {
         return (bool) self::get('original_untouched', false);

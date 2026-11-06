@@ -80,5 +80,9 @@
     "Photos for :count records": "Фото для записів: :count",
     "The first photo is the main one; the arrows change the order.": "Перше фото — головне; порядок змінюється стрілками.",
     "Move earlier": "Перемістити раніше",
-    "Move later": "Перемістити пізніше"
+    "Move later": "Перемістити пізніше",
+    "As uploaded, transliterated": "Як завантажено, транслітом",
+    "A short random code": "Короткий випадковий код",
+    "Names of stored files": "Імена збережених файлів",
+    "What the picture's address ends in: red-boot.jpg or k3f9x2qa7m1b.jpg. The uploaded name helps image search a little; a code tells nobody what the file was called. New uploads only — pictures already stored keep their addresses.": "Чим закінчується адреса картинки: red-boot.jpg або k3f9x2qa7m1b.jpg. Початкове ім'я трохи допомагає пошуку за картинками; код нікому не каже, як файл називався. Лише для нових завантажень — уже збережені картинки свої адреси зберігають."
 }

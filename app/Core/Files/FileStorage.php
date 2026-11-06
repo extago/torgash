@@ -178,6 +178,26 @@ class FileStorage
     }
 
     /**
+     * A short random name for a stored file — `k3f9x2qa7m1b`: lowercase
+     * letters and digits only, so it survives any URL, any file system and
+     * a case-insensitive one. Twelve of 36 characters are 62 bits — shorter
+     * than a UUID and still no guess. Unique only by chance: the caller
+     * checks the place it writes to (the owner's table, or the media row's
+     * own folder, which already makes the path unique).
+     */
+    public static function shortName(int $length = 12): string
+    {
+        $alphabet = 'abcdefghijklmnopqrstuvwxyz0123456789';
+        $name = '';
+
+        for ($i = 0; $i < $length; $i++) {
+            $name .= $alphabet[random_int(0, 35)];
+        }
+
+        return $name;
+    }
+
+    /**
      * A name for a scratch file on THIS server (nothing is created) — for a
      * program that writes its result to a path, like ffmpeg. The caller
      * deletes it with `release()`.

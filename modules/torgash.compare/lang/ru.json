@@ -33,5 +33,7 @@
     "All together": "Все вместе",
     "All products": "Все товары",
     ":name — in place of «:old»: up to :max products are compared.": ":name — вместо «:old»: сравнивается не больше :max товаров.",
-    "Clear": "Очистить"
+    "Clear": "Очистить",
+    "Previous": "Назад",
+    "Next": "Вперёд"
 }

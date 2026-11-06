@@ -81,9 +81,29 @@
 
             <div class="card bg-base-100 border border-base-300/60 shadow-sm [--cmp-label:7.5rem] [--cmp-col:11rem] md:[--cmp-label:13rem] md:[--cmp-col:15rem]"
                  style="--cmp-min: calc(var(--cmp-label) + {{ $compareColumns }} * var(--cmp-col));"
-                 x-data="{ stuck: false }"
+                 x-data="{
+                     stuck: false, canPrev: false, canNext: false,
+                     edges() { const s = $refs.scroller; this.canPrev = s.scrollLeft > 1; this.canNext = s.scrollLeft + s.clientWidth < s.scrollWidth - 1; },
+                     page(dir) { const s = $refs.scroller, col = $refs.head.querySelector('th + th')?.offsetWidth || 240;
+                         s.scrollBy({ left: dir * col, behavior: 'smooth' }); },
+                 }"
                  x-init="new IntersectionObserver(([e]) => stuck = !e.isIntersecting && e.boundingClientRect.top < 0,
-                            { rootMargin: '-' + (document.querySelector('header')?.offsetHeight || 0) + 'px 0px 0px 0px' }).observe($refs.head)">
+                            { rootMargin: '-' + (document.querySelector('header')?.offsetHeight || 0) + 'px 0px 0px 0px' }).observe($refs.head);
+                         edges(); new ResizeObserver(() => edges()).observe($refs.scroller)">
+                {{-- Paging arrows for a wide screen (2026-11-06: with a long
+                     list of characteristics the scrollbar at the bottom is a
+                     long way off). A zero-height row that sticks half-way down
+                     the window: it stays inside the card, so the arrows ride
+                     along while the table is on screen and leave with it. One
+                     column per press; an arrow with nowhere to go is not drawn. --}}
+                <div class="hidden md:block sticky top-1/2 z-30 h-0 pointer-events-none" x-show="canPrev || canNext">
+                    <button type="button" x-show="canPrev" x-cloak x-on:click="page(-1)"
+                            class="btn btn-circle btn-lg absolute left-[calc(var(--cmp-label)+0.5rem)] -translate-y-1/2 bg-base-100/90 border-base-300 shadow-md pointer-events-auto"
+                            title="{{ __('Previous') }}" aria-label="{{ __('Previous') }}"><x-icon name="chevron-left" size="lg" /></button>
+                    <button type="button" x-show="canNext" x-cloak x-on:click="page(1)"
+                            class="btn btn-circle btn-lg absolute right-2 -translate-y-1/2 bg-base-100/90 border-base-300 shadow-md pointer-events-auto"
+                            title="{{ __('Next') }}" aria-label="{{ __('Next') }}"><x-icon name="chevron-right" size="lg" /></button>
+                </div>
                 {{-- The sticky strip: takes no room (-mb equal to its height)
                      and shows only once the products' row has gone by. --}}
                 <div class="sticky z-20 h-14 -mb-14 top-[var(--torgash-header-h)] pointer-events-none" aria-hidden="true">
@@ -108,7 +128,7 @@
                     </div>
                 </div>
 
-                <div class="overflow-x-auto rounded-box" x-on:scroll.passive="$refs.strip.scrollLeft = $el.scrollLeft">
+                <div class="overflow-x-auto rounded-box" x-ref="scroller" x-on:scroll.passive="$refs.strip.scrollLeft = $el.scrollLeft; edges()">
                     <table class="table-fixed border-collapse w-full min-w-[var(--cmp-min)] text-sm">
                         <colgroup>
                             <col class="w-[var(--cmp-label)]">

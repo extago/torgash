@@ -37,6 +37,10 @@
         default => 'badge-ghost',
     };
     $rowQuery = ['row' => 'variant', 'for' => $product->id];
+    // A hidden or disabled member is dimmed CELL by cell, never the row:
+    // the status menu hangs off the row, and an opacity on the row made
+    // the menu see-through (the owner's screenshot, 2026-11-05).
+    $dim = $variant->status !== Product::STATUS_ACTIVE ? 'opacity-60' : '';
 @endphp
 <tr id="variant-row-{{ $variant->id }}"
     x-data="{ editing: {{ ($rowError ?? null) ? 'true' : 'false' }} }"
@@ -49,9 +53,8 @@
         'bg-primary/10' => $isThis && ! $keptInstead,
         'bg-primary/5' => $sameCard && ! $isThis && ! $keptInstead,
         'bg-warning/10' => $keptInstead,
-        'opacity-60' => $variant->status !== Product::STATUS_ACTIVE,
     ])>
-    <td>
+    <td class="{{ $dim }}">
         <span class="w-10 h-10 rounded-md bg-base-200 overflow-hidden flex items-center justify-center">
             @if ($variantImage = $variant->primaryImageUrl(80))
                 <img src="{{ $variantImage }}" alt="" class="w-full h-full object-contain" loading="lazy">
@@ -60,10 +63,10 @@
             @endif
         </span>
     </td>
-    <td class="min-w-0">
+    <td class="min-w-0 {{ $dim }}">
         @if ($isThis)
-            <span class="font-medium">{{ $variant->t('name', $locale) }}</span>
-            <span class="badge badge-primary badge-sm ms-1">{{ __('this product') }}</span>
+            <span class="font-medium me-1">{{ $variant->t('name', $locale) }}</span>
+            <span class="badge badge-primary badge-sm align-middle">{{ __('this product') }}</span>
         @else
             <a href="{{ route('admin.catalog.products.edit', $variant) }}" class="link link-hover">{{ $variant->t('name', $locale) }}</a>
         @endif
@@ -80,7 +83,7 @@
             </div>
         @endif
     </td>
-    <td class="font-mono text-xs">
+    <td class="font-mono text-xs {{ $dim }}">
         <div class="h-8 flex items-center">
             <span x-show="!editing">{{ $variant->sku }}</span>
             <input x-show="editing" x-cloak form="variant-quick-{{ $variant->id }}" name="variant[sku]" autocapitalize="off" autocorrect="off" spellcheck="false"
@@ -89,7 +92,7 @@
     </td>
     @foreach ($variationAxes as $axis)
         @php $axisAnswer = $variationInfo['values'][$variant->id][$axis['feature']->id] ?? null; @endphp
-        <td>
+        <td class="{{ $dim }}">
             @if ($axisAnswer === null)
                 <span class="text-error text-xs" title="{{ __('Without this value the product cannot be chosen by it.') }}">—</span>
             @else
@@ -102,7 +105,7 @@
             @endif
         </td>
     @endforeach
-    <td class="text-end tabular-nums whitespace-nowrap">
+    <td class="text-end tabular-nums whitespace-nowrap {{ $dim }}">
         <div class="h-8 flex items-center justify-end gap-1">
             {{-- Read in the admin's viewing currency, TYPED in the product's own
                  — the list's rule: a quick edit never moves a price through
@@ -115,7 +118,7 @@
             @endif
         </div>
     </td>
-    <td class="text-end tabular-nums">
+    <td class="text-end tabular-nums {{ $dim }}">
         <div class="h-8 flex items-center justify-end">
             <span x-show="!editing">{{ $variant->stock }}</span>
             @if ($locked)

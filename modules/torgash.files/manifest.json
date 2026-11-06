@@ -1,0 +1,64 @@
+{
+    "id": "torgash.files",
+    "name": "File manager",
+    "version": "1.0.0",
+    "icon": "folder-open",
+    "section": "content",
+    "description": "A folder of the shop's own pictures and files with a permanent public link each: icons and pictures for blocks, photos for a marketplace feed, a price list to hand out. Folders, uploading many at once, previews, and copying the links of several files in one go.",
+    "provider": "Torgash\\Files\\FilesServiceProvider",
+    "autoload": {
+        "Torgash\\Files\\": "src/"
+    },
+    "requires": {
+        "core": ">=0.1"
+    },
+    "settings": [
+        {
+            "key": "types",
+            "type": "text",
+            "default": "jpg, jpeg, png, webp, gif, avif, svg, ico, pdf",
+            "label": "Types of files accepted",
+            "help": "Extensions, comma separated. The type is read from the file itself, not from its name. An SVG is rebuilt from what draws and nothing else; programs and web pages are never accepted, whatever is listed here."
+        },
+        {
+            "key": "max_mb",
+            "type": "number",
+            "default": 20,
+            "label": "Largest file, MB",
+            "help": "The server's own upload limit may be lower; then that one decides."
+        },
+        {
+            "key": "file_names",
+            "type": "select",
+            "default": "original",
+            "options": {
+                "original": "As uploaded, transliterated",
+                "code": "A short random code"
+            },
+            "label": "Names of stored files",
+            "help": "What the file's link ends in: red-boot.jpg or k3f9x2qa7m1b.jpg. New uploads only — a link once handed out never changes, not even when the file is renamed or moved to another folder."
+        },
+        {
+            "key": "max_dimension_px",
+            "type": "number",
+            "default": 0,
+            "label": "Shrink photos larger than, px",
+            "help": "The longer side of a JPEG, PNG or WebP over this is brought down to it on upload. 0 = keep every file exactly as uploaded."
+        }
+    ],
+    "permissions": [
+        {
+            "name": "files.manage",
+            "label": "Manage the file storage"
+        }
+    ],
+    "admin_menu": [
+        {
+            "label": "File manager",
+            "url": "/admin/files",
+            "icon": "folder-open",
+            "group": "content",
+            "position": 11
+        }
+    ]
+}

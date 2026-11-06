@@ -228,7 +228,7 @@ class ImageProcessor
         [$width, $height] = $this->dimensions($path);
 
         $adding = $model->addMedia($path)
-            ->usingFileName(Str::slug(pathinfo($name, PATHINFO_FILENAME)).'.'.pathinfo($path, PATHINFO_EXTENSION))
+            ->usingFileName($this->storedName($name, $path))
             ->withCustomProperties(array_filter([
                 'width' => $width,
                 'height' => $height,
@@ -237,6 +237,14 @@ class ImageProcessor
         return $disk === null
             ? $adding->toMediaCollection($collection)
             : $adding->toMediaCollection($collection, $disk);
+    }
+
+    /** See ImageSettings::shortNames(). The media row's own folder keeps the path unique either way. */
+    protected function storedName(string $name, string $path): string
+    {
+        $base = ImageSettings::shortNames() ? \App\Core\Files\FileStorage::shortName() : (Str::slug(pathinfo($name, PATHINFO_FILENAME)) ?: 'image');
+
+        return $base.'.'.pathinfo($path, PATHINFO_EXTENSION);
     }
 
     protected function assertSize(int|false $bytes): void
