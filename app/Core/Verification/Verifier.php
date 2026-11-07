@@ -29,6 +29,9 @@ class Verifier
 {
     public const TTL_MINUTES = 10;
 
+    /** The purposes whose letter carries a button that finishes the job (link()). */
+    public const LINKED_PURPOSES = ['sign_in', 'password_reset', 'email_change'];
+
     public const MAX_ATTEMPTS = 5;
 
     public const MAX_SENDS = 5;
@@ -305,6 +308,15 @@ class Verifier
      */
     protected function link(VerificationCode $row, string $code): ?string
     {
+        // Only where opening it finishes the job (CodeController::link). A
+        // form's code, a checkout's, a test send: the page waiting for it is
+        // on the device that asked, and a button that led anywhere else
+        // promised what it could not do (reported from the live shop,
+        // 2026-11-07) — the letter then carries the code alone.
+        if (! in_array($row->purpose, self::LINKED_PURPOSES, true)) {
+            return null;
+        }
+
         return \Illuminate\Support\Facades\Route::has('account.code.link')
             ? route('account.code.link', ['code' => $row->id, 'secret' => $code])
             : null;

@@ -164,11 +164,26 @@ class CodeController extends Controller
     /**
      * The button in the letter: the row and its code, on whatever device the
      * letter was opened. The same check as typing it, attempts included.
+     *
+     * Signing in and getting back in log the holder in, so a visitor already
+     * signed in is sent to the account as the guest-only route used to.
+     * A new email is confirmed WITHOUT signing anybody in: the link proves
+     * the inbox, the change was asked for from the account, and the device
+     * the letter is opened on (a phone's mail app) is usually not that one —
+     * the link was outside its reach until 2026-11-07, so it did nothing.
      */
     public function link(Request $request, VerificationCode $code, string $secret)
     {
-        if (! in_array($code->purpose, self::PURPOSES, true) || ! $code->user_id) {
+        if (! $code->user_id || ! in_array($code->purpose, Verifier::LINKED_PURPOSES, true)) {
             abort(404);
+        }
+
+        if ($code->purpose === 'email_change') {
+            return $this->confirmEmail($request, $code, $secret);
+        }
+
+        if (auth()->check()) {
+            return redirect()->route('account.dashboard');
         }
 
         if ($error = $this->verifier->check($code, $secret)) {
@@ -176,6 +191,26 @@ class CodeController extends Controller
         }
 
         return $this->signIn($request, $code);
+    }
+
+    protected function confirmEmail(Request $request, VerificationCode $code, string $secret)
+    {
+        $mine = $request->user()?->id === $code->user_id;
+        $back = $mine ? route('account.dashboard') : route('account.login');
+
+        if ($error = $this->verifier->check($code, $secret)) {
+            return redirect()->to($back)->withErrors(['login' => $error]);
+        }
+
+        if ($error = ContactController::applyEmail($code)) {
+            return redirect()->to($back)->withErrors(['login' => $error]);
+        }
+
+        if ($mine) {
+            $this->verifier->forget($request, $code->purpose);
+        }
+
+        return redirect()->to($back)->with('status', __('Your email is changed and confirmed.'));
     }
 
     /** What the customer is told when the channel did not take the code. */

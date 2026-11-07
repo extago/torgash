@@ -80,7 +80,6 @@
     "Server: :server": "Сервер: :server",
     "Run the self-test": "Запустити самоперевірку",
     "What to change, if it is executed": "Що виправити, якщо виконується",
-    "The engine cannot write your web server's configuration — under OSPanel the Caddyfile is generated and an edit would not survive a restart — so here are the lines. Adapt the socket to yours, then press the button again: the self-test is the proof, not the config file.": "Рушій не може записати конфігурацію вебсервера — під OSPanel Caddyfile генерується, і правка не переживе перезапуску, — тому ось рядки. Підставте свій сокет і натисніть кнопку знову: доказ — самоперевірка, а не файл конфігу.",
     "The self-test passed: nothing is executed where uploads go.": "Самоперевірку пройдено: там, куди потрапляють завантаження, нічого не виконується.",
     "The self-test found something. See the statement below.": "Самоперевірка дещо знайшла. Дивіться твердження нижче.",
     "unknown": "невідомий",
@@ -359,5 +358,6 @@
     "Put back everything this task changed? Fields changed again since then are left alone; what could not be put back is counted in the result.": "Повернути все, що змінило це завдання? Поля, які змінювали після нього, залишаться як є; що не вдалося повернути, буде пораховано в підсумку.",
     "Put back everything this task did": "Повернути все, що зробило завдання",
     "What broke on the shop's pages and in its jobs, grouped by place: when each last happened, how often, and whether the code has changed since.": "Що ламалося на сторінках магазину та в його задачах, згруповано за місцем: коли сталося востаннє, як часто і чи змінювався код відтоді.",
-    "What must always be true of the shop's own data — stock, totals, links between rows. The guard checks each statement and names the rows that break it.": "Що завжди має бути правдою про дані магазину — залишки, суми, зв'язки між рядками. Вартовий перевіряє кожне твердження й називає рядки, які його порушують."
+    "What must always be true of the shop's own data — stock, totals, links between rows. The guard checks each statement and names the rows that break it.": "Що завжди має бути правдою про дані магазину — залишки, суми, зв'язки між рядками. Вартовий перевіряє кожне твердження й називає рядки, які його порушують.",
+    "The engine does not change your web server's configuration itself: it belongs to the server, and whoever looks after it may keep it in a form of their own. So here are the lines for the common servers. Add the one for yours (with your own PHP address where there is one), restart the server and press the button again: the self-test is the proof, not the config file.": "Рушій не змінює налаштування вебсервера сам: вони належать серверу, і той, хто його обслуговує, може зберігати їх по-своєму. Тому ось рядки для поширених серверів. Додайте рядки для свого (з адресою свого PHP, де вона є), перезапустіть сервер і натисніть кнопку знову: доказ — самоперевірка, а не файл налаштувань."
 }

@@ -136,6 +136,22 @@ class UploadsTest extends TestCase
         $this->assertSame([], (new Uploads)->selfTest());
     }
 
+    /**
+     * The probe ITSELF served back as text — what a safe server does. Its
+     * source held the marker whole, and this was reported as EXECUTED
+     * (the live shop, 2026-11-07); a fake body of other text never caught it.
+     */
+    public function test_the_probes_own_source_served_back_is_not_a_problem(): void
+    {
+        Http::fake(fn ($request) => Http::response(
+            (string) file_get_contents(storage_path('app/public/'.basename((string) parse_url($request->url(), PHP_URL_PATH)))),
+            200,
+        ));
+
+        $this->assertSame([], (new Uploads)->selfTest());
+        $this->assertStringNotContainsString('TORGASH-GUARD-EXECUTED', Uploads::probe());
+    }
+
     public function test_a_server_that_refuses_outright_is_not_a_problem(): void
     {
         Http::fake(['*' => Http::response('', 403)]);

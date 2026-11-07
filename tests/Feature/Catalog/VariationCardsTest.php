@@ -240,4 +240,35 @@ class VariationCardsTest extends TestCase
         $titles = collect(((new \Torgash\Catalog\Invariants\CatalogInvariants)->register()['catalog.titles_are_distinct']['check'])(50))->pluck('title');
         $this->assertFalse($titles->contains(fn ($t) => str_starts_with((string) $t, 'Boots Black Low')));
     }
+
+    /**
+     * A size that takes its description from its card's product has
+     * something to say; when that product is silent too, the card is ONE
+     * finding, not one per size (2026-11-07).
+     */
+    public function test_a_size_says_what_its_source_says(): void
+    {
+        $silent = fn () => collect(((new \Torgash\Catalog\Invariants\CatalogInvariants)->register()['catalog.pages_say_something']['check'])(500))->pluck('id');
+        $blackLow = collect($this->boots)->filter(fn ($p, $key) => str_starts_with($key, 'Black-Low-'));
+
+        $this->assertSame([], $silent()->intersect($blackLow->pluck('id')->map(fn ($id) => (string) $id))->values()->all());
+
+        $this->boots['Black-Low-42-Standard']->update(['description' => null]);
+
+        $this->assertCount(1, $silent()->intersect($blackLow->pluck('id')->map(fn ($id) => (string) $id)));
+    }
+
+    /** The same for a photograph: a size shows its card's; a card with none is one finding. */
+    public function test_a_size_shows_its_cards_photograph(): void
+    {
+        $missing = fn () => collect(((new \Torgash\Catalog\Invariants\CatalogInvariants)->register()['catalog.products_have_a_photograph']['check'])(500))->pluck('id');
+        $blackLow = collect($this->boots)->filter(fn ($p, $key) => str_starts_with($key, 'Black-Low-'))->pluck('id')->map(fn ($id) => (string) $id);
+
+        // No photo anywhere on the card: one finding, not six.
+        $this->assertCount(1, $missing()->intersect($blackLow));
+
+        $this->boots['Black-Low-42-Standard']->addMedia(\Illuminate\Http\UploadedFile::fake()->image('boot.jpg', 40, 40))->toMediaCollection('gallery');
+
+        $this->assertCount(0, $missing()->intersect($blackLow));
+    }
 }

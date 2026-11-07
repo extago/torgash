@@ -80,39 +80,25 @@ class CatalogInvariants
                 'label' => 'Every product page has something to say about the product',
                 'explain' => 'Neither a description of its own nor a meta description, so the only sentence the page can offer a search result is the name and the price. Write a description, or write one SEO template for the category and fill them all in at once from "What is still empty".',
                 'severity' => 'warning',
-                'check' => fn (int $limit) => Product::query()
-                    ->where('status', Product::STATUS_ACTIVE)
-                    ->whereRaw("coalesce(description->>?, '') = ''", [self::locale()])
-                    ->whereRaw("coalesce(meta_description->>?, '') = ''", [self::locale()])
-                    ->orderByDesc('id')
-                    ->limit($limit)
-                    ->get()
-                    ->map(fn (Product $p) => [
-                        'id' => (string) $p->id,
-                        'title' => $p->sku ?: $p->t('name'),
-                        'detail' => (string) $p->t('name'),
-                        'url' => route('admin.catalog.products.edit', $p->id),
-                    ]),
+                'check' => fn (int $limit) => $this->silentPages($limit),
             ],
 
             'catalog.products_have_a_photograph' => [
                 'label' => 'Every product on sale has a photograph',
                 'explain' => 'A product with no photograph is a grey square in every listing and is absent from image search entirely. Usually an import that brought the rows and not the files. Add one on the product, or check what the exchange was told to fetch.',
                 'severity' => 'warning',
-                'check' => fn (int $limit) => Product::query()
-                    ->where('status', Product::STATUS_ACTIVE)
-                    // Links count as a photo only while the shop shows them.
-                    ->when(setting('torgash.catalog', 'external_images', false), fn ($q) => $q->whereRaw("coalesce(image_url, '') = ''"))
-                    ->whereDoesntHave('media', fn ($q) => $q->where('collection_name', 'gallery'))
-                    ->orderByDesc('id')
-                    ->limit($limit)
-                    ->get()
-                    ->map(fn (Product $p) => [
-                        'id' => (string) $p->id,
-                        'title' => $p->sku ?: $p->t('name'),
-                        'detail' => (string) $p->t('name'),
-                        'url' => route('admin.catalog.products.edit', $p->id),
-                    ]),
+                // A size with no photos of its own shows its card's
+                // (Product::primaryImageUrl()) — what is asked is whether the
+                // PAGE has one, and a card with none is one finding.
+                'check' => fn (int $limit) => $this->perCard(
+                    Product::query()
+                        ->where('status', Product::STATUS_ACTIVE)
+                        // Links count as a photo only while the shop shows them.
+                        ->when(setting('torgash.catalog', 'external_images', false), fn ($q) => $q->whereRaw("coalesce(image_url, '') = ''"))
+                        ->whereDoesntHave('media', fn ($q) => $q->where('collection_name', 'gallery')),
+                    fn (Product $p) => $p->primaryImageUrl() !== null,
+                    $limit,
+                ),
             ],
 
             'catalog.characteristics_in_one_place' => [
@@ -289,6 +275,93 @@ class CatalogInvariants
         }
 
         return $found;
+    }
+
+    /**
+     * Product pages with nothing of their own to say — and not saying it
+     * through anybody else either (the clothing scenario, 2026-11-07):
+     *
+     *  - a size that takes its description from another product
+     *    (`Product::contentFrom()`) has one — what its page prints;
+     *  - a description an SEO template writes is one too;
+     *  - the sizes of one card that are all silent are ONE finding: they are one page to a search engine
+     *    (Support\VariationCards), and one description fixes them all —
+     *    the newest of them names the card.
+     *
+     * The stored columns are the sieve (both empty), read newest first in
+     * chunks; the rest is asked of each candidate until the limit is met.
+     *
+     * @return list<array<string, mixed>>
+     */
+    protected function silentPages(int $limit): array
+    {
+        $locale = self::locale();
+
+        return $this->perCard(
+            Product::query()
+                ->where('status', Product::STATUS_ACTIVE)
+                ->whereRaw("coalesce(description->>?, '') = ''", [$locale])
+                ->whereRaw("coalesce(meta_description->>?, '') = ''", [$locale]),
+            fn (Product $p) => $this->saysSomething($p),
+            $limit,
+        );
+    }
+
+    /**
+     * The products a cheap SQL sieve let through that are still at fault once
+     * asked properly (`$fine` says they are not), ONE per variation card —
+     * the sizes of a card are one page, and one fix mends them all. Newest
+     * first, in chunks, until the limit; in the shop's base language.
+     *
+     * @param  \Illuminate\Database\Eloquent\Builder<Product>  $sieve
+     * @param  callable(Product): bool  $fine
+     * @return list<array<string, mixed>>
+     */
+    protected function perCard(\Illuminate\Database\Eloquent\Builder $sieve, callable $fine, int $limit): array
+    {
+        $was = app()->getLocale();
+        app()->setLocale(self::locale());
+        $found = [];
+        $cards = [];
+
+        try {
+            $sieve->select('m_catalog_products.*')
+                ->selectRaw(VariationCards::keySql().' as card_key')
+                ->with(['media', 'contentSource.media', 'categories'])
+                ->chunkByIdDesc(200, function ($products) use (&$found, &$cards, $fine, $limit) {
+                    foreach ($products as $p) {
+                        if (isset($cards[$p->card_key]) || $fine($p)) {
+                            continue;
+                        }
+
+                        $cards[$p->card_key] = true;
+                        $found[] = [
+                            'id' => (string) $p->id,
+                            'title' => $p->sku ?: $p->t('name'),
+                            'detail' => (string) $p->t('name'),
+                            'url' => route('admin.catalog.products.edit', $p->id),
+                        ];
+
+                        if (count($found) >= $limit) {
+                            return false;
+                        }
+                    }
+                }, 'm_catalog_products.id', 'id');
+        } finally {
+            app()->setLocale($was);
+        }
+
+        return $found;
+    }
+
+    /** A description read through its source, or one an SEO template writes. */
+    protected function saysSomething(Product $product): bool
+    {
+        if (trim(strip_tags((string) $product->t('description'))) !== '') {
+            return true;
+        }
+
+        return (new PageMeta)->describe($product)->description() !== '';
     }
 
     /** The product page's own title, worked out by the chain the page runs (StorefrontController::describeProduct). */

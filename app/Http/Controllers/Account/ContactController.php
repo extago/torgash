@@ -130,22 +130,20 @@ class ContactController extends Controller
             throw ValidationException::withMessages(['code' => $error]);
         }
 
-        $old = $user->email;
-
-        try {
-            $kind === 'email'
-                ? $user->forceFill(['email' => $row->address, 'email_verified_at' => now()])->save()
-                : $user->forceFill(['phone' => $row->address, 'phone_country' => Phones::parse($row->address)['country'] ?? null, 'phone_verified_at' => now()])->save();
-        } catch (UniqueConstraintViolationException) {
-            // Taken between the code going out and coming back.
-            return redirect()->route('account.contact', $kind)->withErrors(['address' => __('This address is already bound to another account. Type another one.')]);
+        if ($kind === 'email') {
+            if ($error = self::applyEmail($row)) {
+                return redirect()->route('account.contact', $kind)->withErrors(['address' => $error]);
+            }
+        } else {
+            try {
+                $user->forceFill(['phone' => $row->address, 'phone_country' => Phones::parse($row->address)['country'] ?? null, 'phone_verified_at' => now()])->save();
+            } catch (UniqueConstraintViolationException) {
+                // Taken between the code going out and coming back.
+                return redirect()->route('account.contact', $kind)->withErrors(['address' => __('This address is already bound to another account. Type another one.')]);
+            }
         }
 
         $this->verifier->forget($request, $this->purpose($kind));
-
-        if ($kind === 'email' && $old && strcasecmp($old, $row->address) !== 0) {
-            \App\Core\Mail\Letters::send('account.email_changed', $old, ['name' => $user->name, 'new_email' => $row->address]);
-        }
 
         return redirect()->route('account.dashboard')->with('status', $kind === 'email'
             ? __('Your email is changed and confirmed.')
@@ -207,6 +205,35 @@ class ContactController extends Controller
     protected function kindKnown(string $kind): void
     {
         abort_unless(in_array($kind, self::KINDS, true), 404);
+    }
+
+    /**
+     * A proven code for a new (or unconfirmed) email put on its account —
+     * typed on the page or opened from the letter (CodeController::link).
+     * The old address is told it was replaced. Null, or why it could not be.
+     */
+    public static function applyEmail(\App\Models\VerificationCode $row): ?string
+    {
+        $user = $row->user;
+
+        if (! $user) {
+            return __('The code has expired. Ask for a new one.');
+        }
+
+        $old = $user->email;
+
+        try {
+            $user->forceFill(['email' => $row->address, 'email_verified_at' => now()])->save();
+        } catch (UniqueConstraintViolationException) {
+            // Taken between the code going out and coming back.
+            return __('This address is already bound to another account. Type another one.');
+        }
+
+        if ($old && strcasecmp($old, $row->address) !== 0) {
+            \App\Core\Mail\Letters::send('account.email_changed', $old, ['name' => $user->name, 'new_email' => $row->address]);
+        }
+
+        return null;
     }
 
     protected function purpose(string $kind): string

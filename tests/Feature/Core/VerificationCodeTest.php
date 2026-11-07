@@ -198,4 +198,48 @@ class VerificationCodeTest extends TestCase
             ->assertOk()
             ->assertSee($this->customer->email);
     }
+
+    /**
+     * "Continue on this device" in a letter confirming a new email did
+     * nothing: the link knew only signing in, and a signed-in customer never
+     * reached it (the live shop, 2026-11-07). It confirms the address now —
+     * signed in, or on another device without signing anybody in.
+     */
+    public function test_the_letters_button_confirms_a_new_email_on_any_device(): void
+    {
+        $customer = $this->customer;
+        $customer->forceFill(['email_verified_at' => null])->save();
+        $mail = fn () => Mail::sent(EventMail::class)->last()->payload;
+
+        // Signed in, the same browser.
+        $this->actingAs($customer)->post('http://localhost/account/contact/email', ['address' => $customer->email])
+            ->assertRedirect(route('account.contact.enter', 'email'));
+        $this->assertNotSame('', (string) $mail()['link'], 'the letter carries the button');
+        $this->actingAs($customer)->get($mail()['link'])
+            ->assertRedirect(route('account.dashboard'))->assertSessionHas('status');
+        $this->assertNotNull($customer->fresh()->email_verified_at);
+
+        // Another device: nobody signed in, the new address confirmed all the same.
+        $new = 'new-'.uniqid().'@example.com';
+        $this->actingAs($customer)->post('http://localhost/account/contact/email', ['address' => $new]);
+        $link = (string) $mail()['link'];
+        auth()->logout();
+        $this->flushSession();
+        $this->get($link)->assertRedirect(route('account.login'))->assertSessionHas('status');
+        $this->assertGuest();
+        $this->assertSame($new, $customer->fresh()->email);
+
+        // Used once.
+        $this->get($link)->assertRedirect(route('account.login'))->assertSessionHasErrors('login');
+    }
+
+    /** A form's code is waited for on the page that asked: its letter has no button to go elsewhere. */
+    public function test_a_code_whose_page_waits_elsewhere_is_sent_without_a_button(): void
+    {
+        $row = new VerificationCode(['purpose' => \App\Core\Verification\FormVerification::PURPOSE, 'kind' => 'email', 'address' => $this->customer->email]);
+
+        $link = (new \ReflectionMethod(Verifier::class, 'link'))->invoke(app(Verifier::class), $row, '123456');
+
+        $this->assertNull($link);
+    }
 }

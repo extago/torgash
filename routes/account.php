@@ -23,13 +23,16 @@ Route::middleware('guest')->group(function () {
     Route::get('code/enter', [CodeController::class, 'enter'])->name('code.enter');
     Route::post('code/enter', [CodeController::class, 'verify'])->name('code.verify');
     Route::post('code/resend', [CodeController::class, 'resend'])->name('code.resend');
-    Route::get('code/{code}/{secret}', [CodeController::class, 'link'])->whereNumber('code')->name('code.link');
 
     // "An account was made for you — choose a password" (PLAN §41).
     Route::get('password/set/{token}', [\App\Http\Controllers\Account\SetPasswordController::class, 'edit'])->name('password.set');
     Route::post('password/set', [\App\Http\Controllers\Account\SetPasswordController::class, 'update'])
         ->middleware('throttle:10,10')->name('password.set.update');
 });
+
+// The button in a code letter — opened signed in or not, on any device
+// (CodeController::link says what each purpose does with it).
+Route::get('code/{code}/{secret}', [CodeController::class, 'link'])->whereNumber('code')->name('code.link');
 
 Route::middleware('auth')->group(function () {
     Route::post('logout', [SessionController::class, 'destroy'])->name('logout');

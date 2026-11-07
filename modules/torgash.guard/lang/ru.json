@@ -80,7 +80,6 @@
     "Server: :server": "Сервер: :server",
     "Run the self-test": "Запустить самопроверку",
     "What to change, if it is executed": "Что поправить, если исполняется",
-    "The engine cannot write your web server's configuration — under OSPanel the Caddyfile is generated and an edit would not survive a restart — so here are the lines. Adapt the socket to yours, then press the button again: the self-test is the proof, not the config file.": "Движок не может записать конфигурацию веб-сервера — под OSPanel Caddyfile генерируется, и правка не переживёт перезапуск, — поэтому вот строки. Подставьте свой сокет и нажмите кнопку снова: доказательство — самопроверка, а не файл конфига.",
     "The self-test passed: nothing is executed where uploads go.": "Самопроверка пройдена: там, куда попадают загрузки, ничего не исполняется.",
     "The self-test found something. See the statement below.": "Самопроверка кое-что нашла. Смотрите утверждение ниже.",
     "unknown": "неизвестен",
@@ -359,5 +358,6 @@
     "Put back everything this task changed? Fields changed again since then are left alone; what could not be put back is counted in the result.": "Вернуть всё, что изменила эта задача? Поля, которые меняли после неё, останутся как есть; что не удалось вернуть, будет посчитано в итоге.",
     "Put back everything this task did": "Вернуть всё, что сделала задача",
     "What broke on the shop's pages and in its jobs, grouped by place: when each last happened, how often, and whether the code has changed since.": "Что ломалось на страницах магазина и в его задачах, сгруппировано по месту: когда случилось в последний раз, как часто и менялся ли код с тех пор.",
-    "What must always be true of the shop's own data — stock, totals, links between rows. The guard checks each statement and names the rows that break it.": "Что всегда должно быть верно о данных магазина — остатки, суммы, связи между строками. Страж проверяет каждое утверждение и называет строки, которые его нарушают."
+    "What must always be true of the shop's own data — stock, totals, links between rows. The guard checks each statement and names the rows that break it.": "Что всегда должно быть верно о данных магазина — остатки, суммы, связи между строками. Страж проверяет каждое утверждение и называет строки, которые его нарушают.",
+    "The engine does not change your web server's configuration itself: it belongs to the server, and whoever looks after it may keep it in a form of their own. So here are the lines for the common servers. Add the one for yours (with your own PHP address where there is one), restart the server and press the button again: the self-test is the proof, not the config file.": "Движок не меняет настройки веб-сервера сам: они принадлежат серверу, и тот, кто его обслуживает, может хранить их по-своему. Поэтому вот строки для распространённых серверов. Добавьте строки для своего (с адресом своего PHP, где он есть), перезапустите сервер и нажмите кнопку снова: доказательство — самопроверка, а не файл настроек."
 }

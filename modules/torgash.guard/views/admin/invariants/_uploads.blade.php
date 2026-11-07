@@ -25,7 +25,7 @@
 
     <div class="mt-3 flex flex-col gap-3">
         <p class="opacity-70 max-w-4xl">
-            {{ __('The engine cannot write your web server\'s configuration — under OSPanel the Caddyfile is generated and an edit would not survive a restart — so here are the lines. Adapt the socket to yours, then press the button again: the self-test is the proof, not the config file.') }}
+            {{ __('The engine does not change your web server\'s configuration itself: it belongs to the server, and whoever looks after it may keep it in a form of their own. So here are the lines for the common servers. Add the one for yours (with your own PHP address where there is one), restart the server and press the button again: the self-test is the proof, not the config file.') }}
         </p>
 
         @foreach ($snippets as $name => $snippet)

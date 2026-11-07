@@ -9,6 +9,10 @@
             <div class="card-body gap-4">
                 <h1 class="text-xl font-bold">{{ __('Sign in') }}</h1>
 
+                {{-- "Your email is confirmed" from a letter opened signed out (CodeController::link). --}}
+                @if (session('status'))
+                    <div class="alert alert-success text-sm">{{ session('status') }}</div>
+                @endif
                 @if ($errors->any())
                     <div class="alert alert-error text-sm">{{ $errors->first() }}</div>
                 @endif

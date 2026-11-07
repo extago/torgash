@@ -60,9 +60,6 @@
                                         <x-icon name="circle-alert" size="sm" /> {{ __('not confirmed yet') }}
                                         <button class="link link-primary ms-1">{{ __('Confirm it') }}</button>
                                     </form>
-                                    @error('address')
-                                        <div class="text-xs text-error mt-1">{{ $message }}</div>
-                                    @enderror
                                 @endunless
                             @else
                                 <div class="opacity-60">{{ __('No email — the shop sends you no letters') }}</div>
