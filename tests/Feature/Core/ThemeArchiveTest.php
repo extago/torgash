@@ -236,4 +236,21 @@ class ThemeArchiveTest extends TestCase
         $this->actingAs($admin)->delete('http://localhost/admin/themes/acme')->assertRedirect(route('admin.themes.index'));
         $this->assertDirectoryDoesNotExist($this->themesDir.'/acme');
     }
+
+    /** TORGASH_CODE_UPLOAD=false: no upload from the admin, deleting stays the built-in group's. */
+    public function test_uploads_switched_off_on_the_server_leave_deleting_alone(): void
+    {
+        $admin = User::role('admin')->firstOrFail();
+        $this->archive()->put($this->zip(['acme/theme.json' => $this->meta()]));
+        config(['torgash.code_upload' => false]);
+
+        $upload = UploadedFile::fake()->createWithContent('acme.zip', (string) file_get_contents($this->zip(['acme/theme.json' => $this->meta(['version' => '1.1.0'])])));
+        $this->actingAs($admin)
+            ->post('http://localhost/admin/themes/upload', ['archive' => $upload])
+            ->assertForbidden();
+
+        $screen = $this->actingAs($admin)->get('http://localhost/admin/themes')->assertOk();
+        $screen->assertDontSee('modal-theme-upload')->assertSee('TORGASH_CODE_UPLOAD');
+        $screen->assertSee(route('admin.themes.destroy', 'acme'), false);
+    }
 }

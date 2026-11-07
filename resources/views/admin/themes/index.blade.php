@@ -20,6 +20,9 @@
 @endif
 
 @section('content')
+    @if ($uploadsOff)
+        <p class="text-xs opacity-60">{{ __('Uploading code through the admin is switched off on this server (TORGASH_CODE_UPLOAD in .env): a theme is added by putting its folder into themes/.') }}</p>
+    @endif
     @if (session('status'))
         <div class="alert alert-success">{{ session('status') }}</div>
     @endif
@@ -128,7 +131,7 @@
                         {{-- A theme of the shop's own, worn by nobody and based on
                              by nobody, may go (ThemeArchive::undeletable). The
                              engine's own themes never show the button. --}}
-                        @if ($canUpload && ! $themeCard['bundled'])
+                        @if ($canDelete && ! $themeCard['bundled'])
                             @if ($themeCard['undeletable'] === null)
                                 <form method="POST" action="{{ route('admin.themes.destroy', $themeCard['dir']) }}" class="flex justify-end"
                                       data-confirm="{{ __('Delete the theme ":theme"? Its folder is moved to storage/app/theme-backups/; the settings storefronts saved for it stay.', ['theme' => $themeCard['name']]) }}">

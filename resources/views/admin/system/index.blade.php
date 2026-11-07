@@ -370,6 +370,22 @@
                         @endif
                     </div>
                 </section>
+
+                {{-- TORGASH_CODE_UPLOAD: told here because .env is the only
+                     place it can be changed, and a shop that never opens
+                     .env should still learn the switch exists. --}}
+                <section class="card bg-base-100 border border-base-300">
+                    <div class="card-body gap-3">
+                        <h3 class="font-semibold flex items-center gap-2"><x-icon name="file-code" size="sm" /> {{ __('Uploading code') }}</h3>
+                        @if ($codeUpload)
+                            <p class="text-sm">{{ __('Modules and themes may be uploaded as a .zip from the admin.') }}</p>
+                            <p class="text-xs opacity-60">{{ __('If only you install modules, switch it off: TORGASH_CODE_UPLOAD=false in .env. A stolen administrator password then can no longer put code on the server; new modules go into modules/ through the server itself.') }}</p>
+                        @else
+                            <div class="text-sm text-success flex items-center gap-2"><x-icon name="circle-check" size="sm" /> {{ __('Switched off: modules and themes arrive only through the server itself.') }}</div>
+                            <p class="text-xs opacity-60">{{ __('TORGASH_CODE_UPLOAD=false in .env. Signed engine updates are not affected.') }}</p>
+                        @endif
+                    </div>
+                </section>
             </div>
         </div>
     </div>

@@ -14,7 +14,13 @@ this file is the reasoning. Read it before changing anything it covers.
 - **A theme arrives and leaves as its folder** (`App\Core\Themes\ThemeArchive`,
   Themes screen, the built-in Administrator group only — like
   `ModuleArchive`, both over `App\Core\Support\CodeArchive`, which checks
-  every entry's name before a byte is written). The folder's name is the
+  every entry's name before a byte is written). `TORGASH_CODE_UPLOAD=false`
+  (`CodeArchive::uploadsAllowed()`, asked by both controllers, shown on
+  System) takes the upload away from the admin altogether — a stolen
+  administrator password then cannot put PHP on the server; new code
+  arrives as a folder through the server itself, the console unaffected,
+  deleting a theme unaffected. Only in .env, so the person it guards
+  against cannot switch it back on. The folder's name is the
   archive's one top-level folder (or the name slugged); `theme.json` MUST
   name an `author` other than "Torgash" — `ThemeManager::isBundledMeta()` is
   how `Distribution` tells the engine's themes from everybody else's, and a

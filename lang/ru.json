@@ -2007,5 +2007,14 @@
     ":storage did not take the file (:error) — trying once more": "«:storage» не приняло файл (:error) — пробуем ещё раз",
     "Fetching the backup": "Копия скачивается",
     "Attempts for each part of a file": "Попыток на каждую часть файла",
-    "A big file goes up in parts of five megabytes. A part the storage refuses with a server error is sent again after a pause that grows, up to this many times; then the whole upload is given up on. Backblaze B2 has such moments: 10 outlasts most of them, 30 the longer ones.": "Большой файл уходит частями по пять мегабайт. Часть, которую хранилище отвергло ошибкой сервера, отправляется снова после растущей паузы, до стольких раз; потом вся загрузка считается неудавшейся. У Backblaze B2 такие моменты бывают: 10 пересиживает большинство, 30 — затяжные."
+    "A big file goes up in parts of five megabytes. A part the storage refuses with a server error is sent again after a pause that grows, up to this many times; then the whole upload is given up on. Backblaze B2 has such moments: 10 outlasts most of them, 30 the longer ones.": "Большой файл уходит частями по пять мегабайт. Часть, которую хранилище отвергло ошибкой сервера, отправляется снова после растущей паузы, до стольких раз; потом вся загрузка считается неудавшейся. У Backblaze B2 такие моменты бывают: 10 пересиживает большинство, 30 — затяжные.",
+    "Uploading code through the admin is switched off on this server.": "Загрузка кода через админку на этом сервере выключена.",
+    "Uploading code through the admin is switched off on this server (TORGASH_CODE_UPLOAD in .env): a theme is added by putting its folder into themes/.": "Загрузка кода через админку на этом сервере выключена (TORGASH_CODE_UPLOAD в .env): тема добавляется папкой в themes/.",
+    "Uploading code through the admin is switched off on this server (TORGASH_CODE_UPLOAD in .env): a module is added by putting its folder into modules/ — it then appears here to be installed.": "Загрузка кода через админку на этом сервере выключена (TORGASH_CODE_UPLOAD в .env): модуль добавляется папкой в modules/ — после этого он появится здесь для установки.",
+    "Uploading code": "Загрузка кода",
+    "Modules and themes may be uploaded as a .zip from the admin.": "Модули и темы можно загружать из админки архивом .zip.",
+    "If only you install modules, switch it off: TORGASH_CODE_UPLOAD=false in .env. A stolen administrator password then can no longer put code on the server; new modules go into modules/ through the server itself.": "Если модули ставите только вы — выключите: TORGASH_CODE_UPLOAD=false в .env. Тогда украденный пароль администратора уже не позволит положить код на сервер; новые модули кладутся в modules/ через сам сервер.",
+    "Switched off: modules and themes arrive only through the server itself.": "Выключено: модули и темы попадают на сервер только через сам сервер.",
+    "TORGASH_CODE_UPLOAD=false in .env. Signed engine updates are not affected.": "TORGASH_CODE_UPLOAD=false в .env. На подписанные обновления движка это не влияет.",
+    "Confirm it": "Подтвердить"
 }

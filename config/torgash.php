@@ -3,7 +3,7 @@
 return [
     // The engine's own version — what the System page reports and what an
     // update server will one day be asked about (PLAN §45).
-    'version' => '0.5.3',
+    'version' => '0.5.4',
 
     // Where pg_dump / pg_restore live, for backups (PLAN §45). Empty means
     // "on the PATH", which is how a Linux server has them; OSPanel keeps them
@@ -117,6 +117,14 @@ return [
     // storefront that a theme or a snippet has broken for everyone; staff can
     // turn the same thing on for themselves alone from the admin.
     'safe_mode' => (bool) env('TORGASH_SAFE_MODE', false),
+
+    // May a module or a theme be uploaded as a .zip from the admin
+    // (App\Core\Support\CodeArchive::uploadsAllowed). Off: the stolen
+    // password of an administrator is no longer a way to run code on the
+    // server — new code then arrives only through the server itself (a
+    // folder put into modules/ or themes/). Here and not in the admin, so
+    // the person it guards against cannot switch it back on.
+    'code_upload' => (bool) env('TORGASH_CODE_UPLOAD', true),
 
     // Codes that prove an address (PLAN §44). Asking DNS whether an email's
     // domain takes mail catches "gmial.com" before a code is sent; a server

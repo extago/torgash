@@ -96,7 +96,11 @@
                 @endif
                 @unless ($canUpload)
                     <p class="text-xs opacity-50 ms-auto">
-                        {{ __('A module is added by putting its folder into modules/ — it then appears here to be installed.') }}
+                        @if ($uploadsOff)
+                            {{ __('Uploading code through the admin is switched off on this server (TORGASH_CODE_UPLOAD in .env): a module is added by putting its folder into modules/ — it then appears here to be installed.') }}
+                        @else
+                            {{ __('A module is added by putting its folder into modules/ — it then appears here to be installed.') }}
+                        @endif
                     </p>
                 @endunless
             </div>

@@ -172,4 +172,72 @@ class VariationCardsTest extends TestCase
         $this->actingAs($admin)->get(route('admin.catalog.features.edit', $feature))->assertOk()
             ->assertSee('name="variation_role"', false);
     }
+
+    /**
+     * A size is the card to a search engine (2026-11-07): its page names the
+     * card's oldest member as canonical, and the sitemap lists that one only.
+     */
+    public function test_a_size_names_its_cards_head_as_canonical(): void
+    {
+        $head = $this->boots['Black-Low-42-Standard'];
+
+        $this->get('http://localhost/product/vc-black-low-44-orthopedic')->assertOk()
+            ->assertSee('<link rel="canonical" href="'.route('catalog.product', $head->slug).'"', false);
+
+        // The head names itself; a typed canonical still wins.
+        $this->get('http://localhost/product/vc-black-low-42-standard')->assertOk()
+            ->assertSee('<link rel="canonical" href="http://localhost/product/vc-black-low-42-standard"', false);
+        $this->boots['Black-Low-40-Standard']->update(['canonical_url' => 'https://example.com/own']);
+        $this->get('http://localhost/product/vc-black-low-40-standard')->assertOk()
+            ->assertSee('<link rel="canonical" href="https://example.com/own"', false);
+
+        // A head that is switched off hands the place to the next oldest.
+        $head->update(['status' => 'disabled']);
+        $this->get('http://localhost/product/vc-black-low-44-orthopedic')->assertOk()
+            ->assertSee('<link rel="canonical" href="'.route('catalog.product', 'vc-black-low-42-orthopedic').'"', false);
+    }
+
+    public function test_the_sitemap_lists_one_address_per_card(): void
+    {
+        preg_match_all('#/product/(vc-[a-z0-9-]+)</loc>#', $this->get('http://localhost/sitemap.xml')->assertOk()->getContent(), $m);
+        $listed = $m[1];
+        sort($listed);
+
+        $this->assertSame(['vc-black-high-42-standard', 'vc-black-low-42-standard', 'vc-olive-high-42-standard', 'vc-olive-low-42-standard'], $listed);
+    }
+
+    /** Sizes of one card share a title by design; two CARDS sharing one is still a finding. */
+    public function test_a_title_is_a_duplicate_only_between_cards(): void
+    {
+        $titles = fn () => collect(((new \Torgash\Catalog\Invariants\CatalogInvariants)->register()['catalog.titles_are_distinct']['check'])(50))->pluck('title');
+
+        $this->assertNotContains('Boots Black Low', $titles());
+
+        foreach ($this->boots as $key => $boot) {
+            if (str_starts_with($key, 'Olive-Low-')) {
+                $boot->update(['name' => ['en' => 'Boots Black Low']]);
+            }
+        }
+
+        $this->assertSame(1, $titles()->filter(fn ($t) => $t === 'Boots Black Low')->count());
+    }
+
+    /** What is compared is what the page prints: a template that tells the colours apart ends the finding. */
+    public function test_an_seo_template_that_parts_the_titles_ends_the_finding(): void
+    {
+        foreach ($this->boots as $key => $boot) {
+            if (str_starts_with($key, 'Olive-Low-')) {
+                $boot->update(['name' => ['en' => 'Boots Black Low']]);
+            }
+        }
+
+        \Torgash\Seo\Models\Template::create([
+            'subject' => 'product', 'scope' => 'global', 'mode' => 'override', 'enabled' => true,
+            'title' => ['en' => '{product_name} {product_sku}'],
+        ]);
+        app(\Torgash\Seo\Templates::class)->flush();
+
+        $titles = collect(((new \Torgash\Catalog\Invariants\CatalogInvariants)->register()['catalog.titles_are_distinct']['check'])(50))->pluck('title');
+        $this->assertFalse($titles->contains(fn ($t) => str_starts_with((string) $t, 'Boots Black Low')));
+    }
 }

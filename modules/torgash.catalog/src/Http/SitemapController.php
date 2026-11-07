@@ -112,8 +112,12 @@ class SitemapController extends Controller
 
         // visible(), not listed(): a sitemap has no visitor, so it cannot ask
         // "what may THIS person be shown" — and `with('media')` because every
-        // row below asks for its photograph.
-        foreach (Product::visible()->openToGuests()->with('media')->get() as $product) {
+        // row below asks for its photograph. One address per card (the sizes
+        // of one colour name the oldest as their canonical) and none marked
+        // noindex: inviting a crawler to a page that sends it elsewhere is a
+        // contradiction (Support\VariationCards::indexable()).
+        $cards = app(\Torgash\Catalog\Support\VariationCards::class);
+        foreach ($cards->onlyHeads($cards->indexable())->with('media')->get() as $product) {
             $urls[] = $this->url(route('catalog.product', $product->slug), [
                 'lastmod' => $product->updated_at->toAtomString(),
                 'changefreq' => 'weekly',

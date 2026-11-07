@@ -33,6 +33,7 @@ class SystemController extends Controller
             'background' => $facts->background(),
             'warnings' => $facts->warnings(),
             'audit' => setting(CoreSettings::ID, 'dependency_audit'),
+            'codeUpload' => \App\Core\Support\CodeArchive::uploadsAllowed(),
             'auditRunning' => $this->running('Check the libraries for known vulnerabilities'),
             'updates' => [
                 'current' => (string) config('torgash.version'),

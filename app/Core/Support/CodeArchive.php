@@ -36,6 +36,16 @@ abstract class CodeArchive
     /** Bytes it may unpack to. */
     public const MAX_BYTES = 100 * 1024 * 1024;
 
+    /**
+     * May code be uploaded through the admin at all (`TORGASH_CODE_UPLOAD`).
+     * Asked by the controllers, not by put(): the console and the tests are
+     * the server itself, which is exactly the door that stays open.
+     */
+    public static function uploadsAllowed(): bool
+    {
+        return (bool) config('torgash.code_upload', true);
+    }
+
     /** The file that marks the folder: `manifest.json` for a module, `theme.json` for a theme. */
     abstract protected function marker(): string;
 

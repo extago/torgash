@@ -52,7 +52,17 @@
                             @if ($user->email)
                                 <div class="font-medium break-all">{{ $user->email }}</div>
                                 @unless ($user->email_verified_at)
-                                    <div class="text-xs font-medium text-warning flex items-center gap-1"><x-icon name="circle-alert" size="sm" /> {{ __('not confirmed yet') }}</div>
+                                    {{-- A code to the address it already has (ContactController::store
+                                         takes the same address while it is unconfirmed). --}}
+                                    <form method="POST" action="{{ route('account.contact.store', 'email') }}" class="text-xs font-medium text-warning flex flex-wrap items-center gap-1">
+                                        @csrf
+                                        <input type="hidden" name="address" value="{{ $user->email }}">
+                                        <x-icon name="circle-alert" size="sm" /> {{ __('not confirmed yet') }}
+                                        <button class="link link-primary ms-1">{{ __('Confirm it') }}</button>
+                                    </form>
+                                    @error('address')
+                                        <div class="text-xs text-error mt-1">{{ $message }}</div>
+                                    @enderror
                                 @endunless
                             @else
                                 <div class="opacity-60">{{ __('No email — the shop sends you no letters') }}</div>

@@ -210,6 +210,24 @@ class ModuleArchiveTest extends TestCase
         $this->assertFileExists($this->modulesDir.'/acme.demo/manifest.json');
     }
 
+    /** TORGASH_CODE_UPLOAD=false: not even the built-in group puts code on the server from the admin. */
+    public function test_uploads_switched_off_on_the_server_refuse_even_the_administrator(): void
+    {
+        config(['torgash.code_upload' => false]);
+        $admin = User::role('admin')->firstOrFail();
+        $upload = UploadedFile::fake()->createWithContent('demo.zip', (string) file_get_contents($this->zip(['manifest.json' => $this->manifest()])));
+
+        $this->actingAs($admin)
+            ->post('http://localhost/admin/modules/upload', ['archive' => $upload])
+            ->assertForbidden();
+        $this->assertDirectoryDoesNotExist($this->modulesDir.'/acme.demo');
+
+        $this->actingAs($admin)->get('http://localhost/admin/modules')
+            ->assertOk()->assertDontSee('modal-module-upload')->assertSee('TORGASH_CODE_UPLOAD');
+        $this->actingAs($admin)->get('http://localhost/admin/system')
+            ->assertOk()->assertSee(__('Switched off: modules and themes arrive only through the server itself.'));
+    }
+
     /** Uninstalling drops a module's tables: not something every member of the staff may do. */
     public function test_switching_modules_needs_its_own_permission(): void
     {

@@ -133,4 +133,64 @@ class VariationCards
 
         return array_values($byFirst);
     }
+
+    /**
+     * The products a search engine is offered: what a guest may see and is
+     * not noindex, and of those ONE per card — the oldest. Sizes are chosen
+     * on the card, nobody searches for size 44 on its own, so a dozen pages
+     * that differ only by the size would be a dozen copies competing with
+     * each other. The oldest and not "the one in stock": a canonical that
+     * moved with the stock would tell the engine a different thing every day.
+     *
+     * @return Builder<Product>
+     */
+    public function indexable(): Builder
+    {
+        return Product::visible()->openToGuests()->where('noindex', false);
+    }
+
+    /**
+     * The same query with only each card's head (see indexable()). Untouched
+     * when no characteristic is chosen on a card.
+     *
+     * @param  Builder<Product>  $query
+     * @return Builder<Product>
+     */
+    public function onlyHeads(Builder $query): Builder
+    {
+        if (! $this->inUse()) {
+            return $query;
+        }
+
+        return $query->whereIn('m_catalog_products.id', $this->headIds());
+    }
+
+    /**
+     * The card's head a member's page names as its canonical, or null when
+     * the page is its own (it IS the head, it is alone on its card, or its
+     * card has no head a search engine may be sent to).
+     */
+    public function canonicalFor(Product $product): ?Product
+    {
+        if (blank($product->variation_group) || ! $this->inUse()) {
+            return null;
+        }
+
+        $head = $this->indexable()
+            ->whereRaw(self::keySql().' = (select '.self::keySql('me').' from m_catalog_products me where me.id = ?)', [$product->id])
+            ->orderBy('id')
+            ->first();
+
+        return $head && $head->id !== $product->id ? $head : null;
+    }
+
+    /** The heads' ids, as a subquery. */
+    protected function headIds(): \Illuminate\Database\Query\Builder
+    {
+        $ranked = $this->indexable()->toBase()
+            ->select('m_catalog_products.id')
+            ->selectRaw('row_number() over (partition by '.self::keySql().' order by m_catalog_products.id) as head_rank');
+
+        return DB::query()->fromSub($ranked, 'heads')->where('head_rank', 1)->select('heads.id');
+    }
 }

@@ -62,7 +62,14 @@ class ThemesController extends Controller
         }
         unset($card);
 
-        return view('admin.themes.index', ['cards' => $cards, 'storefronts' => $storefronts, 'canUpload' => $super]);
+        return view('admin.themes.index', [
+            'cards' => $cards,
+            'storefronts' => $storefronts,
+            // Deleting stays the built-in group's; uploading also asks the server.
+            'canDelete' => $super,
+            'canUpload' => $super && ThemeArchive::uploadsAllowed(),
+            'uploadsOff' => $super && ! ThemeArchive::uploadsAllowed(),
+        ]);
     }
 
     /**
@@ -73,6 +80,7 @@ class ThemesController extends Controller
     public function upload(Request $request, ThemeArchive $archive)
     {
         abort_unless(app(AccessGuard::class)->isSuper($request->user()), 403);
+        abort_unless(ThemeArchive::uploadsAllowed(), 403, __('Uploading code through the admin is switched off on this server.'));
 
         $request->validate([
             'archive' => ['required', 'file', 'max:20480', 'mimes:zip'],

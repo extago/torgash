@@ -602,6 +602,11 @@ class StorefrontController extends Controller
                 'description' => $facts->summary(),
                 'type' => 'product',
                 'image' => $facts->images(1200)[0]['url'] ?? '',
+                // A size of a card is the card to a search engine: its page
+                // names the card's head (Support\VariationCards::canonicalFor).
+                // Before describe(), so a canonical typed on the product wins.
+                'canonical' => ($head = app(\Torgash\Catalog\Support\VariationCards::class)->canonicalFor($product))
+                    ? route('catalog.product', $head->slug) : null,
             ])
             ->describe($product)
             // How a machine finds the text version without being told: the same

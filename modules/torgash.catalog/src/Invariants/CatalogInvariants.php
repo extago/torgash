@@ -2,11 +2,14 @@
 
 namespace Torgash\Catalog\Invariants;
 
+use App\Core\Seo\PageMeta;
 use Illuminate\Support\Facades\DB;
 use Torgash\Catalog\Features\Spelling;
 use Torgash\Catalog\Models\Feature;
 use Torgash\Catalog\Models\FeatureValue;
 use Torgash\Catalog\Models\Product;
+use Torgash\Catalog\Seo\ProductFacts;
+use Torgash\Catalog\Support\VariationCards;
 
 /**
  * What must be true about the catalogue, said by the module that owns it.
@@ -212,11 +215,19 @@ class CatalogInvariants
      * Titles shared by more than one product, as ONE finding each: the fault is
      * the collision, not either of the products in it.
      *
-     * Grouped in SQL because this is the one check that would otherwise have to
-     * read the whole catalogue to answer, and every check here is bounded. The
-     * title compared is the one the page would print — the product's own meta
-     * title where it has one, its name otherwise — which is why it cannot be a
-     * plain index on a column.
+     * Two things are not a collision, and both were reported as one (the
+     * clothing scenario, 2026-11-07):
+     *
+     *  - the sizes of one card. They are one product to a search engine —
+     *    their pages name the card's head as canonical and only the head is
+     *    in the sitemap (Support\VariationCards) — so a card counts once;
+     *  - a title an SEO template makes different. What is compared is what
+     *    the page PRINTS: the same PageMeta chain the product page runs
+     *    (name → own fields → `core.page.meta`, where `torgash.seo` answers),
+     *    asked of the products whose stored words collide. Asking it of the
+     *    whole catalogue would render a template per product per night; the
+     *    stored words are the cheap sieve, and a template that makes two
+     *    different names the SAME is a template mistake the SEO screen shows.
      *
      * @return list<array<string, mixed>>
      */
@@ -224,28 +235,69 @@ class CatalogInvariants
     {
         $locale = self::locale();
         $title = "coalesce(nullif(meta_title->>?, ''), name->>?)";
+        $key = VariationCards::keySql();
 
-        $rows = DB::table('m_catalog_products')
-            ->selectRaw("{$title} as title, count(*) as total, min(id) as first_id, string_agg(sku, ', ' order by id) as skus", [$locale, $locale])
+        // One row per card: its oldest active member, as the sitemap offers it.
+        $cards = DB::table('m_catalog_products')
+            ->selectRaw("distinct on ({$key}) id, {$title} as title", [$locale, $locale])
             ->whereNull('deleted_at')
             ->where('status', Product::STATUS_ACTIVE)
             ->whereRaw("coalesce({$title}, '') <> ''", [$locale, $locale])
-            // By POSITION, not by repeating the expression: Postgres compares
-            // the grouping expression textually, and the same expression
-            // written twice carries different placeholder numbers — so it
-            // refuses the query as ungrouped.
+            ->orderByRaw("{$key}, id");
+
+        // More groups than will be reported: a template may part some of them.
+        $groups = DB::query()->fromSub($cards, 'cards')
+            ->selectRaw("lower(title) as title, string_agg(id::text, ',' order by id) as ids")
             ->groupByRaw('1')
             ->havingRaw('count(*) > 1')
-            ->orderByDesc('total')
-            ->limit($limit)
+            ->orderByRaw('count(*) desc')
+            ->limit($limit * 5)
             ->get();
 
-        return $rows->map(fn ($row) => [
-            'id' => 'title:'.md5((string) $row->title),
-            'title' => (string) $row->title,
-            'detail' => [':count products: :skus', ['count' => $row->total, 'skus' => (string) $row->skus]],
-            'url' => route('admin.catalog.products.edit', $row->first_id),
-        ])->all();
+        $was = app()->getLocale();
+        app()->setLocale($locale);
+        $found = [];
+
+        try {
+            foreach ($groups as $group) {
+                $products = Product::with('categories')
+                    ->whereIn('id', array_map('intval', explode(',', (string) $group->ids)))
+                    ->orderBy('id')
+                    ->get();
+
+                $byPrinted = $products->groupBy(fn (Product $p) => mb_strtolower($this->printedTitle($p)));
+
+                foreach ($byPrinted as $printed => $same) {
+                    if ($printed === '' || $same->count() < 2) {
+                        continue;
+                    }
+
+                    $found[] = [
+                        'id' => 'title:'.md5((string) $printed),
+                        'title' => $this->printedTitle($same->first()),
+                        'detail' => [':count products: :skus', ['count' => $same->count(), 'skus' => $same->pluck('sku')->filter()->implode(', ')]],
+                        'url' => route('admin.catalog.products.edit', $same->first()->id),
+                    ];
+
+                    if (count($found) >= $limit) {
+                        break 2;
+                    }
+                }
+            }
+        } finally {
+            app()->setLocale($was);
+        }
+
+        return $found;
+    }
+
+    /** The product page's own title, worked out by the chain the page runs (StorefrontController::describeProduct). */
+    protected function printedTitle(Product $product): string
+    {
+        return (new PageMeta)
+            ->set('title', (new ProductFacts($product))->name())
+            ->describe($product)
+            ->rawTitle();
     }
 
     /**

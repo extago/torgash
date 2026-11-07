@@ -42,7 +42,8 @@ class ModulesController extends Controller
             'rows' => $rows,
             'counts' => $counts,
             'sections' => array_intersect_key($headings, array_flip(array_unique(array_column($rows, 'section')))),
-            'canUpload' => app(AccessGuard::class)->isSuper(auth()->user()),
+            'canUpload' => app(AccessGuard::class)->isSuper(auth()->user()) && \App\Core\Support\CodeArchive::uploadsAllowed(),
+            'uploadsOff' => ! \App\Core\Support\CodeArchive::uploadsAllowed(),
             // The countries some module is made for, and the shop's own picked
             // first — so a Ukrainian shop does not scroll past other countries'.
             'regions' => collect($modules->all())->flatMap(fn ($m) => $m->regions)->unique()->sort()->values()->all(),
@@ -127,11 +128,13 @@ class ModulesController extends Controller
      * person uploading sees what arrived before it touches the database.
      *
      * Only the built-in Administrator group: this writes PHP onto the server,
-     * which is more power than any permission the shop can hand out.
+     * which is more power than any permission the shop can hand out. And not
+     * at all where the server said so (TORGASH_CODE_UPLOAD=false).
      */
     public function upload(Request $request, ModuleArchive $archive)
     {
         abort_unless(app(AccessGuard::class)->isSuper($request->user()), 403);
+        abort_unless(ModuleArchive::uploadsAllowed(), 403, __('Uploading code through the admin is switched off on this server.'));
 
         $request->validate([
             'archive' => ['required', 'file', 'max:20480', 'mimes:zip'],

@@ -48,7 +48,10 @@ class ContactController extends Controller
         if ($kind === 'email') {
             $address = Verifier::normalise('email', (string) $request->validate(['address' => ['required', 'email', 'max:190']])['address']);
             $taken = User::whereRaw('lower(email) = ?', [$address])->where('id', '!=', $user->id)->exists();
-            $same = strcasecmp((string) $user->email, $address) === 0;
+            // The same address NOT yet confirmed is a confirmation, not a
+            // change: a shop that asks no code at registration left it so,
+            // and this was the only way to confirm it (reported 2026-11-07).
+            $same = strcasecmp((string) $user->email, $address) === 0 && $user->email_verified_at;
         } else {
             $phone = Phones::parse((string) $request->validate(['address' => ['required', 'string', 'max:40']])['address']);
 

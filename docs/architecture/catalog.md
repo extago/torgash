@@ -236,6 +236,16 @@ this file is the reasoning. Read it before changing anything it covers.
   first, then a member that takes from nobody, then the oldest. Product
   blocks (`Selection`) collapse the same way; a search's id list through
   `collapseIds()`. No `choice` characteristic → queries untouched.
+  **A search engine is offered ONE page per card** (2026-11-07): the card's
+  HEAD is its oldest member a guest may see that is not noindex
+  (`VariationCards::indexable()` / `canonicalFor()` / `onlyHeads()`) —
+  the oldest, never "the one in stock", or the canonical would move with
+  the stock. Every other member's page names the head as canonical (before
+  `describe()`, so a canonical typed on the product wins), and the sitemap
+  lists heads only (and nothing noindex). `catalog.titles_are_distinct`
+  counts a card once and compares the PRINTED title (the PageMeta chain,
+  `core.page.meta` included — an SEO template with `{feature:…}` ends a
+  finding), asked only of products whose stored words collide.
   **Content is inherited when READ, never copied** (`Product::contentFrom()`):
   a member with no photos / description / short description / attributes /
   shop characteristics shows its source's — `content_source_id` ("Takes its

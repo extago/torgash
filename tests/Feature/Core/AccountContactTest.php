@@ -56,6 +56,30 @@ class AccountContactTest extends TestCase
         app(SettingsManager::class)->set('core', 'account_contact', $mode);
     }
 
+    /**
+     * A shop that asks no code at registration leaves the email unconfirmed,
+     * and the account said so with nothing to do about it — typing the same
+     * address under "Change" was refused as "already yours" (2026-11-07).
+     */
+    public function test_an_unconfirmed_email_can_be_confirmed_from_the_dashboard(): void
+    {
+        $user = User::create(['name' => 'U', 'email' => 'unconfirmed@torgash.local', 'password' => 'secret123']);
+
+        $this->actingAs($user)->get('http://localhost/account')->assertOk()
+            ->assertSee(route('account.contact.store', 'email'), false)
+            ->assertSee(__('Confirm it'));
+
+        $this->actingAs($user)->post('http://localhost/account/contact/email', ['address' => 'unconfirmed@torgash.local'])
+            ->assertSessionHasNoErrors()
+            ->assertRedirect(route('account.contact.enter', 'email'));
+
+        // Once confirmed, the same address is not a change any more.
+        $user->forceFill(['email_verified_at' => now()])->save();
+        $this->actingAs($user)->post('http://localhost/account/contact/email', ['address' => 'unconfirmed@torgash.local'])
+            ->assertSessionHasErrors('address');
+        $this->actingAs($user)->get('http://localhost/account')->assertOk()->assertDontSee(__('Confirm it'));
+    }
+
     public function test_by_default_an_email_is_required_as_before(): void
     {
         $this->post('http://localhost/account/register', $this->form(['email' => '']))->assertSessionHasErrors('email');
