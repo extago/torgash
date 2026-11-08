@@ -135,6 +135,16 @@ by the shop's clock (`app.timezone`) and the time there now — in the inbox and
 the shop's letter, only when the offsets differ. The shop's own forms can use
 the type too (`Form::TYPES`).
 
+**What the browser said is written down once, by `Submit`** — the same facts as
+an order (`App\Core\Support\ClientFacts`; `Enquiries\ClientFacts` is only where
+the shop's ticks live, setting `client_facts`). Core's because a second kind of
+row needed them and enquiries depend on checkout only softly. `ip_address` is a
+column (searched, counted, a link to the guard's block), the rest the jsonb
+`client` bag; a module adds a fact to both kinds of row with `core.client_facts`
+(no `column` there — only `ip_address` exists on every table) and to orders alone
+with `checkout.order.client_facts`. A later message captures nothing. Both
+expire after the shop's retention (`enquiry_ip`) and go on erasure.
+
 ## Returns (torgash.rma)
 
 A return is a KIND of enquiry, and this module is the half an enquiry cannot

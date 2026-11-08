@@ -36,6 +36,8 @@ class OrderPersonalData
                     'name' => $order->customer_name,
                     'email' => $order->email,
                     'phone' => $order->phone,
+                    'ip_address' => $order->ip_address,
+                    'browser' => $order->client,
                     'company' => $order->company_name,
                     'address' => collect([$order->address_line, $order->city, $order->postal_code, $order->country])->filter()->implode(', '),
                     'items' => collect($order->items ?? [])->map(fn ($item) => [

@@ -43,6 +43,21 @@ class EnquiriesServiceProvider extends ServiceProvider
         // What it keeps about a person, for core's personal-data registry (PLAN §49).
         hook_listen('core.personal_data', fn (array $context) => EnquiryPersonalData::register($context['registry']));
 
+        // The facts a shop can tick are a registry a manifest cannot know.
+        hook_listen('core.settings.fields', function (array $fields, array $context) {
+            if (($context['module'] ?? null) !== 'torgash.enquiries') {
+                return $fields;
+            }
+
+            return array_map(function (array $field) {
+                if (($field['key'] ?? null) === 'client_facts') {
+                    $field['options'] = app(ClientFacts::class)->options();
+                }
+
+                return $field;
+            }, $fields);
+        });
+
         // Its card on core's admin dashboard.
         app(Admin\DashboardWidgets::class)->register();
 

@@ -290,6 +290,19 @@ class Backups
     public function verify(BackupRun $run, ?callable $say = null): BackupRun
     {
         $say ??= fn () => null;
+
+        // Nothing has been restored, so nothing is known about the backup:
+        // `blocked`, never `failed` — which says the backup itself is bad.
+        if (! $this->mayCreateDatabases()) {
+            $reason = __('The shop\'s database user may not create a database, and checking needs one for a moment: give it CREATEDB ("alter role … createdb").');
+            $run->update(['verified_at' => now(), 'verify_status' => 'blocked', 'verify_error' => $reason]);
+            $this->tell($run, 'verify_blocked', __('The backup :name by ":plan" was made, but could not be checked: :error', [
+                'name' => $run->name, 'plan' => $run->plan?->name ?? '?', 'error' => $reason,
+            ]));
+
+            return $run->refresh();
+        }
+
         $temp = substr(preg_replace('/[^a-z0-9_]/', '_', strtolower($this->connection()['database'])), 0, 40).'_check_'.$run->id;
         $problems = [];
         $made = false;
@@ -328,10 +341,7 @@ class Backups
             }
             $check = null;
         } catch (Throwable $e) {
-            $message = Destinations::reason($e);
-            $problems[] = str_contains($message, 'permission denied to create database')
-                ? __('The shop\'s database user may not create a database, and checking needs one for a moment: give it CREATEDB ("alter role … createdb").')
-                : $message;
+            $problems[] = Destinations::reason($e);
         } finally {
             if ($made) {
                 try {
@@ -354,6 +364,19 @@ class Backups
         }
 
         return $run->refresh();
+    }
+
+    /**
+     * Whether the shop's database user may make the database a check restores
+     * into. Not knowing counts as yes: the check itself then says what is wrong.
+     */
+    public function mayCreateDatabases(): bool
+    {
+        try {
+            return (bool) $this->pdo()->query('select rolcreatedb or rolsuper from pg_roles where rolname = current_user')->fetchColumn();
+        } catch (Throwable) {
+            return true;
+        }
     }
 
     /**

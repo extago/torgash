@@ -71,6 +71,7 @@ class Enquiry extends Model implements HasMedia
         return [
             'fields' => 'array',
             'cart' => 'array',
+            'client' => 'array',
             'answered_at' => 'datetime',
             'customer_seen_at' => 'datetime',
             'locked_at' => 'datetime',

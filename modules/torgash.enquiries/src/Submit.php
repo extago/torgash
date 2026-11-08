@@ -127,6 +127,7 @@ class Submit
             'storefront_id' => current_storefront()?->id,
             'locale' => app()->getLocale(),
             'page_url' => $context['page_url'] ?? $request->headers->get('referer'),
+            ...app(ClientFacts::class)->capture($request),
         ]);
 
         // On the ENQUIRY, not on a message: what the person typed is stored

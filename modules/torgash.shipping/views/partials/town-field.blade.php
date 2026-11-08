@@ -25,7 +25,10 @@
     $placeId = $placeId ?? '';
     // One country needs no question; none means the registry is not installed.
     $only = count($countries) === 1 ? $countries[0]['code'] : null;
-    $country = ($country ?? null) ?: $only;
+    // Several: the shop's own country is the likely answer — unless a town is
+    // already there, which may be in any of them. Only one it really serves.
+    $shopCountry = $town === '' ? strtoupper(trim((string) setting('core', 'default_country'))) : '';
+    $country = ($country ?? null) ?: $only ?: (collect($countries)->contains('code', $shopCountry) ? $shopCountry : null);
 @endphp
 
 @if ($suggest)

@@ -177,6 +177,10 @@ abstract class TrackedJob implements ShouldQueue
             ]);
 
             return;
+        } catch (TaskRefused $e) {
+            $this->markFailed($e);
+
+            return;
         } catch (Throwable $e) {
             $this->markFailed($e);
 

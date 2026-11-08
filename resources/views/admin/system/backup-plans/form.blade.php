@@ -239,6 +239,9 @@
                             @endforeach
                         </select>
                         <p class="label whitespace-normal">{{ __('The newest backup is restored into a database of its own, its rows compared with the shop\'s at the moment it was made, the database dropped. A backup never restored is a hope, not a backup.') }}</p>
+                        @unless ($mayCheck)
+                            <div class="alert alert-warning alert-soft text-sm mt-1"><x-icon name="triangle-alert" size="sm" /> <span>{{ __('The shop\'s database user may not create a database, and checking needs one for a moment: give it CREATEDB ("alter role … createdb").') }}</span></div>
+                        @endunless
                     </fieldset>
 
                     @if ($next)

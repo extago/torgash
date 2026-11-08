@@ -390,6 +390,30 @@
                                 <a href="{{ $enquiry->page_url }}" class="link" target="_blank" rel="noopener">{{ $enquiry->page_url }}</a>
                             </div>
                         @endif
+                        @if ($enquiry->ip_address)
+                            <div class="flex items-center flex-wrap gap-x-3 gap-y-1">
+                                <span class="min-w-0 break-all"><span class="opacity-60">{{ __('IP address') }}:</span> <span class="font-mono">{{ $enquiry->ip_address }}</span></span>
+                                @if ($sameAddress)
+                                    <a href="{{ route('admin.enquiries.index', ['view' => 'all', 'q' => $enquiry->ip_address]) }}" class="link link-hover text-xs opacity-70">
+                                        {{ trans_choice('{1}:n more enquiry from here|[2,*]:n more enquiries from here', $sameAddress, ['n' => $sameAddress]) }}
+                                    </a>
+                                @endif
+                                {{-- The guard's screen, when the guard is here: this
+                                     module asks the route table, never its classes. --}}
+                                @if (\Illuminate\Support\Facades\Route::has('admin.guard.blocks.index') && auth()->user()?->can('guard.manage'))
+                                    <a href="{{ route('admin.guard.blocks.index', ['block' => $enquiry->ip_address, 'note' => __('Enquiry #:id', ['id' => $enquiry->id])]) }}"
+                                       class="link link-hover text-xs text-error">{{ __('Block this address') }}</a>
+                                @endif
+                            </div>
+                        @endif
+                        {{-- Quiet, one line each, the whole value on hover: a user
+                             agent is two hundred characters. --}}
+                        @foreach ($clientFacts as $clientFact)
+                            <div class="text-xs flex gap-1.5 min-w-0" title="{{ $clientFact['raw'] }}">
+                                <span class="opacity-50 shrink-0">{{ $clientFact['label'] }}:</span>
+                                <span class="opacity-70 truncate">{{ $clientFact['value'] }}</span>
+                            </div>
+                        @endforeach
                     </div>
                 </section>
             </div>

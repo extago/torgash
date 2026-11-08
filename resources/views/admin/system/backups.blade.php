@@ -122,6 +122,8 @@
                                             <div class="text-xs text-success mt-1 inline-flex items-center gap-1"><x-icon name="shield-check" size="sm" /> {{ __('restores — checked :when', ['when' => $run->verified_at?->timezone(config('app.timezone'))->translatedFormat('j M, H:i')]) }}</div>
                                         @elseif ($run->verify_status === 'failed')
                                             <div class="text-xs text-error mt-1 whitespace-pre-line max-w-md"><x-icon name="shield-x" size="sm" /> {{ __('did not restore when checked:') }} {{ \Illuminate\Support\Str::limit((string) $run->verify_error, 300) }}</div>
+                                        @elseif ($run->verify_status === 'blocked')
+                                            <div class="text-xs text-warning mt-1 whitespace-pre-line max-w-md"><x-icon name="shield-alert" size="sm" /> {{ __('could not be checked:') }} {{ \Illuminate\Support\Str::limit((string) $run->verify_error, 300) }}</div>
                                         @endif
                                         @if ($run->error)
                                             <div class="text-xs text-error mt-1 whitespace-pre-line max-w-md">{{ \Illuminate\Support\Str::limit($run->error, 400) }}</div>

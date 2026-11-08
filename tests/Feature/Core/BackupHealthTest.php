@@ -5,8 +5,10 @@ namespace Tests\Feature\Core;
 use App\Core\Admin\AdminNotifications;
 use App\Core\Backups\BackupHealth;
 use App\Core\Backups\Backups;
+use App\Core\Backups\VerifyBackup;
 use App\Core\Mail\CoreLetters;
 use App\Core\Mail\EventMail;
+use App\Models\BackgroundTask;
 use App\Models\BackupPlan;
 use App\Models\BackupRun;
 use App\Models\User;
@@ -113,6 +115,45 @@ class BackupHealthTest extends TestCase
         Mail::assertQueued(EventMail::class, fn (EventMail $mail) => $mail->event === CoreLetters::BACKUP_PROBLEM);
 
         $this->actingAs($this->admin)->get('http://localhost/admin/system/backups')->assertOk()->assertSee('did not restore when checked', false);
+    }
+
+    public function test_a_check_the_database_user_may_not_make_is_not_called_a_bad_backup(): void
+    {
+        Mail::fake();
+        $plan = $this->plan(['schedule' => [['kind' => 'daily', 'at' => '03:40']]]);
+        $plan->options = (array) $plan->options + ['verify' => 'weekly'];
+        $plan->save();
+        $run = $this->journal($plan, BackupRun::DONE, now()->subHour());
+
+        $role = 'torgash_test_no_createdb';
+        $owner = config('database.connections.pgsql.username');
+        $this->superuser(fn ($pdo) => $pdo->exec("drop role if exists $role"));
+        $this->superuser(fn ($pdo) => $pdo->exec("create role $role login nocreatedb nosuperuser"));
+
+        try {
+            config(['database.connections.pgsql.username' => $role]);
+            $this->assertFalse(app(Backups::class)->mayCreateDatabases());
+
+            // Not thrown: a refusal is not a failure of the queue's.
+            $task = VerifyBackup::runHere(null, $run->id);
+
+            $this->assertSame(BackgroundTask::FAILED, $task->status);
+            $this->assertStringContainsString('CREATEDB', (string) $task->error);
+            $this->assertSame('blocked', $run->fresh()->verify_status);
+            $this->assertSame(['verify_blocked'], app(BackupHealth::class)->attention()->pluck('problem')->all());
+            Mail::assertQueued(EventMail::class, fn (EventMail $mail) => $mail->event === CoreLetters::BACKUP_PROBLEM);
+
+            $this->actingAs($this->admin)->get('http://localhost/admin/system/backups')->assertOk()
+                ->assertSee('could not be checked', false)->assertDontSee('did not restore when checked', false);
+            $this->get('http://localhost/admin/system/backup-plans/'.$plan->id.'/edit')->assertOk()->assertSee('CREATEDB', false);
+        } finally {
+            config(['database.connections.pgsql.username' => $owner]);
+            $this->superuser(fn ($pdo) => $pdo->exec("drop role if exists $role"));
+        }
+
+        $this->assertTrue(app(Backups::class)->mayCreateDatabases());
+        $this->assertCount(0, app(BackupHealth::class)->attention(), 'giving the right clears it, before the next check');
+        $this->get('http://localhost/admin/system/backup-plans/'.$plan->id.'/edit')->assertOk()->assertDontSee('CREATEDB', false);
     }
 
     public function test_the_console_restores_from_a_storage_the_journal_does_not_know(): void

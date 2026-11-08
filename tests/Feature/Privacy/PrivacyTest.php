@@ -108,12 +108,13 @@ class PrivacyTest extends TestCase
         Address::create(['user_id' => $customer->id, 'full_name' => 'Olena', 'phone' => '+380671112233', 'address_line' => '1 Street', 'city' => 'Kyiv']);
         $order = $this->order(['user_id' => $customer->id, 'email' => 'olena@example.test', 'ip_address' => '10.0.0.7', 'client' => ['user_agent' => 'Firefox']]);
         $guestOrder = $this->order(['email' => 'OLENA@example.test', 'ip_address' => '10.0.0.8']);
-        $enquiry = Enquiry::create(['kind' => 'message', 'status' => 'new', 'name' => 'Olena', 'email' => 'olena@example.test', 'fields' => ['values' => ['message' => 'Hi'], 'labels' => []]]);
+        $enquiry = Enquiry::create(['kind' => 'message', 'status' => 'new', 'name' => 'Olena', 'email' => 'olena@example.test', 'ip_address' => '10.0.0.9', 'client' => ['user_agent' => 'Firefox'], 'fields' => ['values' => ['message' => 'Hi'], 'labels' => []]]);
         $review = Review::create(['product_id' => $product->id, 'user_id' => $customer->id, 'author_name' => 'Olena Leaving', 'body' => 'Fine', 'rating' => 5, 'status' => Review::PUBLISHED, 'verified' => false]);
 
         // "My data": the account's own rows — never everything under the email.
         $download = $this->actingAs($customer)->get('http://localhost/account/privacy/download')->assertOk()->streamedContent();
         $this->assertStringContainsString($order->order_number, $download);
+        $this->assertStringContainsString('10.0.0.7', $download);
         $this->assertStringNotContainsString($guestOrder->order_number, $download);
 
         // Not without the password: a signed-in phone in somebody else's hands.
@@ -145,6 +146,8 @@ class PrivacyTest extends TestCase
         $enquiry->refresh();
         $this->assertNull($enquiry->name);
         $this->assertNull($enquiry->email);
+        $this->assertNull($enquiry->ip_address);
+        $this->assertNull($enquiry->client);
         $this->assertSame([], $enquiry->fields['values']);
 
         $review->refresh();

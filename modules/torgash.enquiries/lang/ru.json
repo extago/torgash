@@ -304,5 +304,11 @@
     "By your local time": "По вашему местному времени",
     "We will reply to": "Ответим вам",
     "Other contacts": "Указать другие",
-    "Enquiry carts": "Корзины в обращениях"
+    "Enquiry carts": "Корзины в обращениях",
+    "What an enquiry writes down about the sender's browser": "Что обращение запоминает о браузере отправителя",
+    "Recorded once, when the enquiry is sent, and shown on its card — the address is what makes several enquiries from one place visible. Unticking stops recording from now on; enquiries sent before keep what they have.": "Записывается один раз, при отправке, и видно в карточке обращения — по адресу видно несколько обращений из одного места. Снятая галочка останавливает запись с этого момента; у уже отправленных обращений всё остаётся.",
+    "IP address and browser of an enquiry": "IP-адрес и браузер в обращении",
+    "{1}:n more enquiry from here|[2,*]:n more enquiries from here": "{1}ещё :n обращение отсюда|[2,4]ещё :n обращения отсюда|[5,*]ещё :n обращений отсюда",
+    "Block this address": "Заблокировать адрес",
+    "Enquiry #:id": "Обращение №:id"
 }

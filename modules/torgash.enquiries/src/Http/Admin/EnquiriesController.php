@@ -7,6 +7,7 @@ use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Arr;
 use Illuminate\Validation\Rule;
+use Torgash\Enquiries\ClientFacts;
 use Torgash\Enquiries\Kinds;
 use Torgash\Enquiries\Models\Enquiry;
 use Torgash\Enquiries\PostMessage;
@@ -154,6 +155,8 @@ class EnquiriesController extends Controller
                     $w->where('name', 'ilike', $term)
                         ->orWhere('phone', 'ilike', $term)
                         ->orWhere('email', 'ilike', $term)
+                        // The address it came from: "what else came from here".
+                        ->orWhere('ip_address', 'ilike', $term)
                         // What they typed into the form, and anything said
                         // since — "the one who asked about the red kettle".
                         ->orWhereRaw('fields::text ilike ?', [$term])
@@ -278,6 +281,11 @@ class EnquiriesController extends Controller
             // manager answering the third question about one order should
             // see the first two.
             'samePerson' => Enquiry::samePersonAs($enquiry)->with('lastMessage')->latest('id')->limit(10)->get(),
+            // Ten callbacks, ten names, one address is what a flood looks like.
+            'sameAddress' => $enquiry->ip_address
+                ? Enquiry::where('ip_address', $enquiry->ip_address)->whereKeyNot($enquiry->getKey())->count()
+                : 0,
+            'clientFacts' => app(ClientFacts::class)->describeBag($enquiry->client),
             // "Next" is the queue's own order — the oldest one still owed an
             // answer — so working through the inbox is one button, not a
             // trip back to the list after every reply.

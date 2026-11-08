@@ -89,7 +89,8 @@ class BackupPlansController extends Controller
             'plan' => $plan,
             'destinations' => BackupDestination::query()->orderByDesc('system')->orderBy('id')->get(),
             'keep' => $keep,
-            'next' => $plan->exists && $plan->enabled ? PlanSchedule::next((array) $plan->schedule) : [],
+            'mayCheck' => app(Backups::class)->mayCreateDatabases(),
+            'next' =>$plan->exists && $plan->enabled ? PlanSchedule::next((array) $plan->schedule) : [],
         ]);
     }
 

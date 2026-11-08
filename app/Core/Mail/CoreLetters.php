@@ -116,12 +116,13 @@ class CoreLetters
                 'audience' => 'shop',
                 'subject' => 'Backups of {shop_name}: {problem_short}',
                 'heading' => '{problem_short}',
-                'body' => "{problem}\n\nUntil it is put right, the shop may have no backup to come back to.",
+                'body' => "{problem}\n\n{consequence}",
                 'button' => ['label' => 'Open the backups', 'url' => '{backups_url}'],
                 'help' => [
                     'plan' => 'The backup plan',
                     'problem' => 'What is wrong, in a sentence',
                     'problem_short' => 'The same in a few words',
+                    'consequence' => 'What it means for the shop',
                     'backups_url' => 'The backups in the admin panel',
                 ],
                 'tokens' => fn (array $c) => [
@@ -130,9 +131,13 @@ class CoreLetters
                     'problem_short' => match ($c['kind'] ?? '') {
                         'partial' => __('a backup not stored everywhere'),
                         'verify' => __('a backup did not restore'),
+                        'verify_blocked' => __('a backup could not be checked'),
                         'stale' => __('no fresh backup'),
                         default => __('a backup failed'),
                     },
+                    'consequence' => ($c['kind'] ?? '') === 'verify_blocked'
+                        ? __('The backup itself is in place: only the check could not be done.')
+                        : __('Until it is put right, the shop may have no backup to come back to.'),
                     'backups_url' => route('admin.system.backups'),
                 ],
                 'recipients' => fn () => \App\Models\User::staff()->get()

@@ -222,6 +222,12 @@ There is no CAPTCHA. It taxes every real customer to stop what the three cheap
 layers stop most of, and a shop that needs one needs a specific one — so a
 module can add it by answering the `core.form.check` hook with a message.
 
+An enquiry remembers where it was sent from: the IP address, the browser and its
+languages. All of it is on the card, with a count of other enquiries from that
+address and a link to block it, and the list can be searched by address. The
+module's settings choose what is recorded; the address and browser expire after
+the shop's retention, as an order's do.
+
 ## Rules
 
 Every enquiry announces `enquiries.enquiry.created`, and a hook name is what the

@@ -4,6 +4,7 @@ namespace Torgash\Enquiries;
 
 use App\Core\Privacy\PersonalData;
 use App\Core\Privacy\Subject;
+use Carbon\CarbonInterface;
 use Torgash\Enquiries\Models\Enquiry;
 use Torgash\Enquiries\Models\Message;
 
@@ -14,6 +15,8 @@ use Torgash\Enquiries\Models\Message;
  * Erasing keeps the ROW — a return's ticket is where a refund hangs, and the
  * inbox's counts stay true — and empties everything that names the person:
  * the contacts, the answers, their side of the conversation, the photos.
+ * The address and browser it was sent from also expire on their own, after
+ * the shop's retention — the same as an order's.
  */
 class EnquiryPersonalData
 {
@@ -28,6 +31,8 @@ class EnquiryPersonalData
                     'name' => $enquiry->name,
                     'email' => $enquiry->email,
                     'phone' => $enquiry->phone,
+                    'ip_address' => $enquiry->ip_address,
+                    'browser' => $enquiry->client,
                     'answers' => collect($enquiry->answers())->mapWithKeys(fn ($a) => [$a['label'] => $a['value']])->all(),
                     'conversation' => $enquiry->messages->map(fn (Message $m) => [
                         'from' => $m->is_staff ? 'shop' : 'customer',
@@ -55,6 +60,7 @@ class EnquiryPersonalData
                     $enquiry->forceFill([
                         'name' => null, 'email' => null, 'phone' => null, 'user_id' => null,
                         'customer_ref' => null, 'page_url' => null, 'cart' => null, 'fields' => $fields,
+                        'ip_address' => null, 'client' => null,
                     ])->saveQuietly();
 
                     $count++;
@@ -62,6 +68,15 @@ class EnquiryPersonalData
 
                 return $count;
             },
+        ]);
+
+        $registry->register('enquiry_ip', [
+            'label' => 'IP address and browser of an enquiry',
+            'default_days' => 180,
+            'retention' => fn (CarbonInterface $before) => Enquiry::query()
+                ->where('created_at', '<', $before)
+                ->where(fn ($q) => $q->whereNotNull('ip_address')->orWhereNotNull('client'))
+                ->update(['ip_address' => null, 'client' => null]),
         ]);
     }
 }

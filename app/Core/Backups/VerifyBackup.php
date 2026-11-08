@@ -2,6 +2,7 @@
 
 namespace App\Core\Backups;
 
+use App\Core\Tasks\TaskRefused;
 use App\Core\Tasks\TrackedJob;
 use App\Models\BackupPlan;
 use App\Models\BackupRun;
@@ -35,6 +36,10 @@ class VerifyBackup extends TrackedJob
         }
 
         $run = $backups->verify($run, fn (string $message) => $this->message($message));
+
+        if ($run->verify_status === 'blocked') {
+            throw new TaskRefused((string) $run->verify_error);
+        }
 
         if ($run->verify_status !== 'passed') {
             throw new RuntimeException((string) $run->verify_error);

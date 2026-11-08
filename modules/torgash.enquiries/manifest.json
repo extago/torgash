@@ -63,6 +63,18 @@
             "default": 3,
             "label": "Photos a customer may attach",
             "help": "Per enquiry and per reply, counted against what that message already holds. 0 turns attachments off everywhere. Photographs only — the size limit and the formats are the Media module's, and a file is checked by what it actually is rather than by its name."
+        },
+        {
+            "key": "client_facts",
+            "type": "checkboxes",
+            "default": [
+                "ip_address",
+                "user_agent",
+                "languages"
+            ],
+            "options": {},
+            "label": "What an enquiry writes down about the sender's browser",
+            "help": "Recorded once, when the enquiry is sent, and shown on its card — the address is what makes several enquiries from one place visible. Unticking stops recording from now on; enquiries sent before keep what they have."
         }
     ],
     "permissions": [

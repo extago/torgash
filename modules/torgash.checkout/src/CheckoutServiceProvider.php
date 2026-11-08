@@ -475,9 +475,7 @@ class CheckoutServiceProvider extends ServiceProvider
                 }
 
                 if (($field['key'] ?? null) === 'client_facts') {
-                    $field['options'] = collect(app(ClientFacts::class)->all())
-                        ->map(fn (array $fact) => $fact['label'])
-                        ->all();
+                    $field['options'] = app(ClientFacts::class)->options();
                 }
 
                 if (($field['key'] ?? null) === 'one_click_statuses') {

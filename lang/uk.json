@@ -1926,7 +1926,14 @@
     "did not restore when checked:": "не відновилася під час перевірки:",
     "no fresh backup": "немає свіжої копії",
     "restores — checked :when": "відновлюється — перевірено :when",
-    "{problem}\n\nUntil it is put right, the shop may have no backup to come back to.": "{problem}\n\nПоки це не виправлено, магазину може бути нікуди повернутися.",
+    "{problem}\n\n{consequence}": "{problem}\n\n{consequence}",
+    "Until it is put right, the shop may have no backup to come back to.": "Поки це не виправлено, магазину може бути нікуди повернутися.",
+    "The backup itself is in place: only the check could not be done.": "Сама копія на місці — не вдалося лише її перевірити.",
+    "What it means for the shop": "Що це означає для магазину",
+    "The backup :name by \":plan\" was made, but could not be checked: :error": "Копію :name за завданням «:plan» зроблено, але перевірити її не вдалося: :error",
+    "Backups by \":plan\" are not being checked: :error": "Копії за завданням «:plan» не перевіряються: :error",
+    "a backup could not be checked": "копію не вдалося перевірити",
+    "could not be checked:": "перевірити не вдалося:",
     ":tool is not found (looked in :where): install the PostgreSQL client tools, or name the folder they are in (the field \"Folder of the PostgreSQL tools\", --pg-bin).": ":tool не знайдено (шукали: :where): встановіть клієнтські утиліти PostgreSQL або вкажіть їхню теку (поле «Тека утиліт PostgreSQL», --pg-bin).",
     "A backup made by Torgash: a .zip, .tar, .tar.gz or .enc file, or the folder of one made without an archive. A big one is best put on the server first — by FTP or SSH into :path — rather than uploaded here.": "Копія, зроблена Torgash: файл .zip, .tar, .tar.gz або .enc чи тека копії без архіву. Велику краще заздалегідь покласти на сервер — по FTP або SSH у :path, — а не завантажувати тут.",
     "A new shop": "Новий магазин",
@@ -2016,5 +2023,8 @@
     "If only you install modules, switch it off: TORGASH_CODE_UPLOAD=false in .env. A stolen administrator password then can no longer put code on the server; new modules go into modules/ through the server itself.": "Якщо модулі встановлюєте лише ви — вимкніть: TORGASH_CODE_UPLOAD=false у .env. Тоді вкрадений пароль адміністратора вже не дозволить покласти код на сервер; нові модулі кладуться в modules/ через сам сервер.",
     "Switched off: modules and themes arrive only through the server itself.": "Вимкнено: модулі й теми потрапляють на сервер лише через сам сервер.",
     "TORGASH_CODE_UPLOAD=false in .env. Signed engine updates are not affected.": "TORGASH_CODE_UPLOAD=false у .env. На підписані оновлення рушія це не впливає.",
-    "Confirm it": "Підтвердити"
+    "Confirm it": "Підтвердити",
+    "IP address": "IP-адреса",
+    "Browser and device": "Браузер і пристрій",
+    "Languages of the browser": "Мови браузера"
 }

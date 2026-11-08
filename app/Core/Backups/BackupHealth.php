@@ -14,7 +14,7 @@ use Throwable;
  * System page and the letters say. A plan needs attention when:
  *
  * - its last backup failed, or was made but not kept everywhere (partial);
- * - its last check by restoring failed;
+ * - its last check by restoring failed, or could not even begin;
  * - its newest backup holds only the files changed since a full one, and
  *   that full backup is gone (PLAN §67.10) — what it would restore is the
  *   pictures of the last day;
@@ -90,21 +90,32 @@ class BackupHealth
             }
 
             $limit = $this->allowedHours($plan);
-            if ($limit === null) {
-                continue;
+            if ($limit !== null) {
+                $good = BackupRun::query()->where('plan_id', $plan->id)->where('status', BackupRun::DONE)->max('finished_at');
+                $since = $good ? Carbon::parse($good) : $plan->created_at;
+
+                if ($since && $since->lt(now()->subHours($limit))) {
+                    $found->push([
+                        'plan' => $plan,
+                        'problem' => 'stale',
+                        'reason' => $good
+                            ? __('No backup by ":plan" since :when — its schedule expects one at least every :hours h.', ['plan' => $plan->name, 'when' => $since->timezone(config('app.timezone'))->translatedFormat('j M, H:i'), 'hours' => $limit - 3])
+                            : __('The plan ":plan" has not made a single backup yet — its schedule expects one at least every :hours h.', ['plan' => $plan->name, 'hours' => $limit - 3]),
+                        'since' => $since,
+                    ]);
+
+                    continue;
+                }
             }
 
-            $good = BackupRun::query()->where('plan_id', $plan->id)->where('status', BackupRun::DONE)->max('finished_at');
-            $since = $good ? Carbon::parse($good) : $plan->created_at;
-
-            if ($since && $since->lt(now()->subHours($limit))) {
+            // Last: the backups are fine, only their check cannot run. Cleared
+            // by giving the right, without waiting for the next check.
+            if ($checked && $checked->verify_status === 'blocked' && $plan->option('verify') && ! app(Backups::class)->mayCreateDatabases()) {
                 $found->push([
                     'plan' => $plan,
-                    'problem' => 'stale',
-                    'reason' => $good
-                        ? __('No backup by ":plan" since :when — its schedule expects one at least every :hours h.', ['plan' => $plan->name, 'when' => $since->timezone(config('app.timezone'))->translatedFormat('j M, H:i'), 'hours' => $limit - 3])
-                        : __('The plan ":plan" has not made a single backup yet — its schedule expects one at least every :hours h.', ['plan' => $plan->name, 'hours' => $limit - 3]),
-                    'since' => $since,
+                    'problem' => 'verify_blocked',
+                    'reason' => __('Backups by ":plan" are not being checked: :error', ['plan' => $plan->name, 'error' => (string) $checked->verify_error]),
+                    'since' => $checked->verified_at,
                 ]);
             }
         }

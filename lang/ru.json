@@ -1926,7 +1926,14 @@
     "did not restore when checked:": "не восстановилась при проверке:",
     "no fresh backup": "нет свежей копии",
     "restores — checked :when": "восстанавливается — проверено :when",
-    "{problem}\n\nUntil it is put right, the shop may have no backup to come back to.": "{problem}\n\nПока это не исправлено, магазину может быть не к чему вернуться.",
+    "{problem}\n\n{consequence}": "{problem}\n\n{consequence}",
+    "Until it is put right, the shop may have no backup to come back to.": "Пока это не исправлено, магазину может быть не к чему вернуться.",
+    "The backup itself is in place: only the check could not be done.": "Сама копия на месте — не удалось только её проверить.",
+    "What it means for the shop": "Что это значит для магазина",
+    "The backup :name by \":plan\" was made, but could not be checked: :error": "Копия :name по заданию «:plan» сделана, но проверить её не удалось: :error",
+    "Backups by \":plan\" are not being checked: :error": "Копии по заданию «:plan» не проверяются: :error",
+    "a backup could not be checked": "копию не удалось проверить",
+    "could not be checked:": "проверить не удалось:",
     ":tool is not found (looked in :where): install the PostgreSQL client tools, or name the folder they are in (the field \"Folder of the PostgreSQL tools\", --pg-bin).": ":tool не найден (искали: :where): установите клиентские утилиты PostgreSQL или укажите их папку (поле «Папка утилит PostgreSQL», --pg-bin).",
     "A backup made by Torgash: a .zip, .tar, .tar.gz or .enc file, or the folder of one made without an archive. A big one is best put on the server first — by FTP or SSH into :path — rather than uploaded here.": "Копия, сделанная Torgash: файл .zip, .tar, .tar.gz или .enc либо папка копии без архива. Большую лучше заранее положить на сервер — по FTP или SSH в :path, — а не загружать здесь.",
     "A new shop": "Новый магазин",
@@ -2016,5 +2023,8 @@
     "If only you install modules, switch it off: TORGASH_CODE_UPLOAD=false in .env. A stolen administrator password then can no longer put code on the server; new modules go into modules/ through the server itself.": "Если модули ставите только вы — выключите: TORGASH_CODE_UPLOAD=false в .env. Тогда украденный пароль администратора уже не позволит положить код на сервер; новые модули кладутся в modules/ через сам сервер.",
     "Switched off: modules and themes arrive only through the server itself.": "Выключено: модули и темы попадают на сервер только через сам сервер.",
     "TORGASH_CODE_UPLOAD=false in .env. Signed engine updates are not affected.": "TORGASH_CODE_UPLOAD=false в .env. На подписанные обновления движка это не влияет.",
-    "Confirm it": "Подтвердить"
+    "Confirm it": "Подтвердить",
+    "IP address": "IP-адрес",
+    "Browser and device": "Браузер и устройство",
+    "Languages of the browser": "Языки браузера"
 }

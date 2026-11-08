@@ -271,8 +271,13 @@ row): the backup is restored into `<db>_check_<run>` made with the shop
 database's own locale, every table's rows are compared with `rows` in the
 manifest — counted inside the very snapshot pg_dump was handed
 (`--snapshot`), so the numbers are exact on a shop taking orders — and the
-database is dropped, whatever happened. It needs CREATEDB for the shop's
-database user, and says so. **The console reads a storage itself**:
+database is dropped, whatever happened; the shop's own database and files
+are not touched. It needs CREATEDB for the shop's database user. Without it
+the check does not begin and the run says `blocked`, never `failed`: nothing
+is known about the backup. The plan's form warns beforehand, the bell clears
+as soon as the right is given, and the task ends through `TaskRefused`
+(failed on the Background tasks screen, not in failed_jobs).
+**The console reads a storage itself**:
 `torgash:backup-restore --destination=<id|name>` lists the backups found
 in it (a file the engine names, or a folder with `manifest.json`) and
 restores one — the journal of a restored or new database does not know
