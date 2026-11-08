@@ -1603,6 +1603,7 @@
     "Space taken": "Занимают",
     "All thrown away :time": "Все выброшены :time",
     "Why pages were not kept": "Почему страницы не сохранились",
+    "Why pages were thrown away": "Почему страницы выбрасывались",
     "Throw the kept pages away": "Выбросить сохранённые страницы",
     "Not needed after a change in the admin — that throws them away by itself. For a template or a file changed on the server.": "После изменений в админке не нужно — они выбрасываются сами. Это для шаблона или файла, изменённого на сервере.",
     "Settings of the page cache": "Настройки кэша страниц",
@@ -2026,5 +2027,8 @@
     "Confirm it": "Подтвердить",
     "IP address": "IP-адрес",
     "Browser and device": "Браузер и устройство",
-    "Languages of the browser": "Языки браузера"
+    "Languages of the browser": "Языки браузера",
+    "Installed: :version": "Установлена: :version",
+    "fixed in :version": "исправлено в :version",
+    "Known vulnerabilities: :count. Libraries affected: :packages.": "Известных уязвимостей: :count. Затронуто библиотек: :packages."
 }

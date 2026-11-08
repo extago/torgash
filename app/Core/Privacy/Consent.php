@@ -2,6 +2,8 @@
 
 namespace App\Core\Privacy;
 
+use App\Core\Hooks\HookBus;
+
 /**
  * What a visitor may have agreed to, as a vocabulary core owns (PLAN §49).
  *
@@ -39,12 +41,30 @@ class Consent
         return isset(self::CATEGORIES[$category]);
     }
 
-    /** May code of this category run for the current visitor? */
+    /**
+     * Is it the visitor's answer that decides? Not for what needs nobody's
+     * permission, and not on a shop with no privacy module, where nothing
+     * answers and everything is allowed.
+     */
+    public static function isAsked(string $category): bool
+    {
+        return $category !== self::NECESSARY
+            && self::exists($category)
+            && app(HookBus::class)->hasListeners('core.consent.allows');
+    }
+
+    /**
+     * May code of this category run for the current visitor? Their own
+     * answer: on a page kept for every guest it is asked inside a personal
+     * part — `personal()` — and asked anywhere else that page is not kept.
+     */
     public static function allows(string $category): bool
     {
-        if ($category === self::NECESSARY || ! self::exists($category)) {
+        if (! self::isAsked($category)) {
             return true;
         }
+
+        page_cache()->visitorRead('asks what the visitor agreed to');
 
         return (bool) hook_filter('core.consent.allows', true, ['category' => $category]);
     }

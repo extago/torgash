@@ -44,25 +44,29 @@ class PrivacyServiceProvider extends ServiceProvider
         hook_listen('core.personal_data', fn (array $context) => $this->describeOwnData($context['registry']));
 
         // Before every snippet (they listen at the default 10): Google tags
-        // must find the consent defaults already set.
-        hook_listen('core.head', fn (string $html) => $html.$this->consentModeDefaults(), 1);
+        // must find the consent defaults already set. This visitor's own, so
+        // a part of the page; whether there are any is the shop's.
+        hook_listen('core.head', function (string $html) {
+            return setting('torgash.privacy', 'google_consent_mode', true) && setting('torgash.privacy', 'consent_mode', 'opt_in') !== 'off'
+                ? $html.personal('torgash.privacy::consent-defaults')
+                : $html;
+        }, 1);
 
-        // What the visitor allowed decides the banner, the consent defaults
-        // and which of the shop's snippets run: every page kept ready for
-        // guests is filed under it (PLAN §61) — their choice, or the
-        // browser's "do not sell" where the shop listens to it.
+        // What the visitor allowed — their choice, or the browser's "do not
+        // sell" where the shop listens to it — is printed only inside parts
+        // drawn again for every visitor: the defaults above, the banner
+        // below, the snippets' gates. So one copy of a page serves those who
+        // agreed and those who did not (PLAN §61), and the cookie is harmless
+        // rather than personal: its holder would get every part of the page
+        // drawn again, the heart on each card included.
         page_cache()
-            ->vary('consent', function () {
-                $state = app(ConsentState::class);
-
-                return implode(',', $state->allowed()).($state->shouldAsk() ? '?' : '');
-            }, cookies: [ConsentState::COOKIE])
+            ->harmless(cookies: [ConsentState::COOKIE])
             ->unseen(['m_privacy_consents', 'm_privacy_requests']);
 
         hook_listen('core.footer', function (string $html) {
             return setting('torgash.privacy', 'consent_mode', 'opt_in') === 'off'
                 ? $html
-                : $html.view('torgash.privacy::banner', ['consent' => app(ConsentState::class)])->render();
+                : $html.personal('torgash.privacy::banner');
         });
 
         // "#cookie-settings" anywhere — a footer menu item, a policy page —
@@ -121,35 +125,6 @@ class PrivacyServiceProvider extends ServiceProvider
             'ip' => request()->ip(),
             'created_at' => now(),
         ]);
-    }
-
-    /**
-     * Google Consent Mode v2: the defaults for THIS visitor, before any tag.
-     * The banner sends the update when they choose.
-     */
-    protected function consentModeDefaults(): string
-    {
-        if (! setting('torgash.privacy', 'google_consent_mode', true)
-            || setting('torgash.privacy', 'consent_mode', 'opt_in') === 'off') {
-            return '';
-        }
-
-        $state = app(ConsentState::class);
-        $grant = fn (string $category) => $state->allows($category) ? 'granted' : 'denied';
-
-        $defaults = [
-            'ad_storage' => $grant('marketing'),
-            'ad_user_data' => $grant('marketing'),
-            'ad_personalization' => $grant('marketing'),
-            'analytics_storage' => $grant('statistics'),
-            'functionality_storage' => $grant('functional'),
-            'personalization_storage' => $grant('functional'),
-            'security_storage' => 'granted',
-            'wait_for_update' => 500,
-        ];
-
-        return '<script nonce="'.csp_nonce().'">window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}'
-            ."gtag('consent','default',".json_encode($defaults).');</script>'."\n";
     }
 
     protected function describeOwnData(PersonalData $registry): void

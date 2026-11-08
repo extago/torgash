@@ -47,7 +47,10 @@ this file is the reasoning. Read it before changing anything it covers.
   in (`Torgash\Speed\Attribution`). A request is ARMED at boot / on `request`
   rebinding and DECIDED at the route match — `setting()` is not readable at
   provider boot, and the container rebinds `request` inside one request, so
-  deciding at either measured nothing or measured from the middle. Under tests
+  deciding at either measured nothing or measured from the middle. A worker's
+  request is armed when Octane hands it over (`RequestReceived` →
+  `Meter::restart()`): what the worker's start armed, or a request that died
+  before it terminated left, must not be its clock. Under tests
   it measures only when `torgash.speed.measure_in_tests` is set, or the random
   sample would make query-counting tests flaky. The dashboard is extensible
   through `core.admin.dashboard` (HTML).

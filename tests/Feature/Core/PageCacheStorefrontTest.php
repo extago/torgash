@@ -115,6 +115,26 @@ class PageCacheStorefrontTest extends TestCase
         $this->assertKept('http://localhost/catalog/kettles?sort=price_asc&page=1');
     }
 
+    /** The real page's links — the language switcher, the sorting — print the address they were drawn for. */
+    public function test_a_page_drawn_for_an_advert_click_leaves_no_tags_in_the_copy(): void
+    {
+        $category = Category::create(['name' => ['en' => 'Kettles'], 'slug' => 'kettles']);
+        $this->kettle->categories()->attach($category->id);
+
+        $this->newVisitor();
+        $first = $this->get('http://localhost/catalog/kettles?utm_source=direct&yclid=77&etext=abc&sort=price_asc');
+        $this->assertSame('stored', $this->cache($first), (string) $first->headers->get('X-Torgash-Cache'));
+
+        $this->newVisitor();
+        $kept = $this->get('http://localhost/catalog/kettles?sort=price_asc');
+        $this->assertSame('hit', $this->cache($kept));
+        $this->assertStringContainsString('/ru/catalog/kettles?sort=price_asc', (string) $kept->getContent(), 'the language link keeps what the page reads');
+
+        foreach (['utm_source', 'yclid', 'etext=abc'] as $tag) {
+            $this->assertStringNotContainsString($tag, (string) $kept->getContent());
+        }
+    }
+
     public function test_a_guests_basket_is_theirs_alone(): void
     {
         $badge = fn (TestResponse $response) => preg_match('/id="cart-badge"[^>]*aria-label="[^"(]*\((\d+)\)"/s', $response->getContent(), $m) ? (int) $m[1] : 0;

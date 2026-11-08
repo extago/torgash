@@ -2,11 +2,16 @@
 
 namespace Tests\Feature\Privacy;
 
+use App\Core\PageCache\PageCache;
+use App\Core\Privacy\Consent;
 use App\Core\Privacy\PersonalData;
 use App\Core\Settings\SettingsManager;
 use App\Models\Address;
 use App\Models\User;
+use Illuminate\Support\Facades\Route;
+use Illuminate\Support\Facades\View;
 use Illuminate\Support\Str;
+use Illuminate\Testing\TestResponse;
 use Tests\TestCase;
 use Torgash\Catalog\Models\Product;
 use Torgash\Checkout\Models\Order;
@@ -66,6 +71,68 @@ class PrivacyTest extends TestCase
         $this->assertStringContainsString('<template data-consent="marketing">', $html);
         $this->assertStringContainsString('"analytics_storage":"granted"', $html);
         $this->assertStringNotContainsString('data-privacy-banner', $html);
+    }
+
+    /**
+     * What a visitor agreed to is printed inside parts of the page, so one
+     * copy serves every answer (PLAN §61) — it used to be one copy per answer,
+     * and half the visitors found none. The copy is taken from a visitor who
+     * agreed: the way round in which a leak runs somebody's code unasked.
+     */
+    public function test_one_kept_page_serves_every_answer_each_getting_their_own(): void
+    {
+        $this->settings->set('core', PageCache::ENABLED, true);
+        $this->snippet('Own helper', 'necessary', '<script>window.ownHelper=1</script>');
+        $this->snippet('Analytics', 'statistics', '<script>window.analyticsRan=1</script>');
+
+        $agreed = $this->withCookie(ConsentState::COOKIE, '1:statistics')->get('http://localhost/')->assertOk();
+        $this->assertSame('stored', $this->cacheState($agreed), (string) $agreed->headers->get('X-Torgash-Cache'));
+        $this->assertAgreed($agreed);
+
+        $this->flushSession();
+        $this->defaultCookies = [];
+        $stranger = $this->get('http://localhost/')->assertOk();
+        $this->assertSame('hit', $this->cacheState($stranger));
+
+        $html = preg_replace('/ nonce="[^"]*"/', '', $stranger->getContent());
+        $this->assertStringContainsString('<template data-consent="statistics"><script>window.analyticsRan=1</script></template>', $html);
+        $this->assertSame(1, substr_count($html, 'window.analyticsRan=1'));
+        $this->assertStringContainsString('<script>window.ownHelper=1</script>', $html);
+        $this->assertStringContainsString('data-privacy-banner', $html);
+        $this->assertStringContainsString('"analytics_storage":"denied"', $html);
+        $this->assertStringContainsString('snippets/assets/consent.js', $html);
+        $this->assertOneNonce($stranger);
+
+        $this->flushSession();
+        $again = $this->withCookie(ConsentState::COOKIE, '1:statistics')->get('http://localhost/')->assertOk();
+        $this->assertSame('hit', $this->cacheState($again));
+        $this->assertAgreed($again);
+        $this->assertNotSame($this->nonce($stranger), $this->nonce($again), 'a nonce is per visit');
+    }
+
+    /** Asked outside a part, one visitor's answer would be everybody's: the page is not kept. */
+    public function test_a_page_asking_what_the_visitor_agreed_to_outside_a_part_is_not_kept(): void
+    {
+        $this->settings->set('core', PageCache::ENABLED, true);
+        Route::middleware(['web', 'page.cache:privacy_test'])->get('/privacy-leak', fn () => Consent::allows('statistics') ? 'yes' : 'no');
+
+        $this->assertSame('miss', $this->cacheState($this->get('http://localhost/privacy-leak')->assertOk()));
+        $this->assertSame('asks what the visitor agreed to', page_cache()->refusals()[0]['reason'] ?? null);
+    }
+
+    /** Nothing watches a cookie: a part that asks is drawn for every visitor, whatever it says of itself. */
+    public function test_a_part_that_asks_is_never_kept_as_drawn(): void
+    {
+        $this->settings->set('core', PageCache::ENABLED, true);
+        View::addNamespace('pctest', base_path('tests/fixtures/views/pagecache'));
+        Route::middleware(['web', 'page.cache:privacy_test'])->get('/privacy-part', fn () => '<p>'.personal('pctest::consent', reusable: true).'</p>');
+
+        $this->get('http://localhost/privacy-part')->assertOk()->assertSee('waits');
+
+        $this->flushSession();
+        $second = $this->withCookie(ConsentState::COOKIE, '1:statistics')->get('http://localhost/privacy-part');
+        $this->assertSame('hit', $this->cacheState($second));
+        $second->assertSee('allowed')->assertDontSee('waits');
     }
 
     public function test_a_chat_waits_behind_its_own_button(): void
@@ -234,5 +301,40 @@ class PrivacyTest extends TestCase
             'status' => 'open', 'payment_state' => PaymentState::PENDING, 'stock_deducted' => false,
             'items' => [],
         ]);
+    }
+
+    /** What happened to the page — without the reason APP_DEBUG adds after a semicolon. */
+    protected function cacheState(TestResponse $response): ?string
+    {
+        $state = $response->headers->get('X-Torgash-Cache');
+
+        return $state === null ? null : strtok($state, ';');
+    }
+
+    protected function assertAgreed(TestResponse $response): void
+    {
+        $html = preg_replace('/ nonce="[^"]*"/', '', $response->getContent());
+
+        $this->assertStringContainsString('<script>window.analyticsRan=1</script>', $html);
+        $this->assertStringNotContainsString('<template data-consent="statistics">', $html);
+        $this->assertStringNotContainsString('data-privacy-banner', $html);
+        $this->assertStringContainsString('"analytics_storage":"granted"', $html);
+        $this->assertOneNonce($response);
+    }
+
+    protected function nonce(TestResponse $response): string
+    {
+        preg_match('/<script nonce="([^"]+)">window\.analyticsRan=1/', $response->getContent(), $found);
+
+        return $found[1] ?? '';
+    }
+
+    /** Every script on the page, the parts' included, carries this visit's nonce. */
+    protected function assertOneNonce(TestResponse $response): void
+    {
+        preg_match_all('/<script nonce="([^"]+)"/', $response->getContent(), $found);
+
+        $this->assertNotSame('', $this->nonce($response), 'the snippet is signed');
+        $this->assertSame([$this->nonce($response)], array_values(array_unique($found[1])));
     }
 }

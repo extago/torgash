@@ -12,6 +12,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\ServiceProvider;
+use Laravel\Octane\Events\RequestReceived;
 
 /**
  * Wires the meter to what the framework already announces — a query ran, a
@@ -63,8 +64,11 @@ class SpeedServiceProvider extends ServiceProvider
 
         // The first request of this process is already here, and began when
         // PHP did — LARAVEL_START — so starting the engine is part of what it
-        // cost. Any later request in a long-lived process (a test run, a
-        // persistent worker) begins when the container is handed it.
+        // cost. Any later request in a long-lived process (a test run) begins
+        // when the container is handed it. A persistent worker has no request
+        // yet at this point: what is armed here is replaced when it gets one
+        // (RequestReceived, in listen()) — and resolving the Meter now is what
+        // makes the application's clone for each request share it.
         // (Not under tests: there the boot-time request is not a page, and the
         // test's own request arrives through the rebinding below.)
         if (! $this->app->runningUnitTests()) {
@@ -81,6 +85,13 @@ class SpeedServiceProvider extends ServiceProvider
 
     protected function listen(): void
     {
+        // Not left to the rebinding in boot(): that one waits while something
+        // is armed, and a worker's start is — its first request used to be
+        // timed from then, a page that "took" as long as the worker had idled.
+        Event::listen(RequestReceived::class, function (RequestReceived $event) {
+            app(Meter::class)->restart($event->request, hrtime(true));
+        });
+
         DB::listen(function (QueryExecuted $query) {
             app(Meter::class)->profile()?->query($query->sql, (float) $query->time);
         });

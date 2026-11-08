@@ -37,8 +37,12 @@ class NovaPoshtaServiceProvider extends ServiceProvider
 
     public function boot(): void
     {
-        // The sync's bookkeeping is on no guest's page (PLAN §61).
-        page_cache()->unseen('m_np_sync');
+        // The sync's bookkeeping is on no guest's page (PLAN §61), and neither
+        // is the directory outside the delivery estimate, a part of the page:
+        // at worst a part kept as drawn is a day behind a list that is itself
+        // fetched nightly — and fetching it rewrites every row, changed or
+        // not, which would throw every page away each night.
+        page_cache()->unseen(['m_np_sync', 'm_np_settlements', 'm_np_warehouses', 'm_np_place_map']);
 
         // Views and JSON translations are registered for every enabled module
         // by CoreServiceProvider — nothing to do here.

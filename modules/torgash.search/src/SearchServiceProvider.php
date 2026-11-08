@@ -46,12 +46,14 @@ class SearchServiceProvider extends ServiceProvider implements ModuleLifecycle
         // Pages kept ready for guests (PLAN §61): the search box says which
         // half of the shop it searches — every copy filed under it; what the
         // visitor searched before is read by the live window alone, and the
-        // counting of clicks by nothing a page shows.
+        // counting of clicks by nothing a page shows. Neither does the index
+        // and its dictionary: results are drawn for each search, and rebuilding
+        // them is no reason to draw the rest of the shop again.
         page_cache()
             ->vary('search_scope', fn (\Illuminate\Http\Request $request) => Scope::current($request), session: ['torgash.search.scope'])
             ->personal(session: [History::KEY], copies: true)
             ->harmless(session: ['torgash.search.counted', 'torgash.search.shown'])
-            ->unseen(['m_search_clicks', 'm_search_stats', 'm_search_phrases']);
+            ->unseen(['m_search_clicks', 'm_search_stats', 'm_search_phrases', 'm_search_documents', 'm_search_words']);
 
         hook_listen('search.retrievers', fn (array $all) => $all + [
             'text' => ['class' => Retrievers\TextRetriever::class, 'weight' => 1.0],

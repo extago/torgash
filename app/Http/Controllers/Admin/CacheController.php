@@ -47,7 +47,7 @@ class CacheController extends Controller
      * they were last all thrown away and why, and why the latest pages were
      * not kept — a module that forgot to declare something shows up here.
      *
-     * @return array{enabled: bool, stats: array{entries: int, bytes: int}|null, flush: array{at: int, why: string}|null, refusals: list<array<string, mixed>>, kinds: array<string, string>}
+     * @return array{enabled: bool, stats: array{entries: int, bytes: int}|null, flush: array<string, mixed>|null, flushes: list<array<string, mixed>>, refusals: list<array<string, mixed>>, kinds: array<string, string>}
      */
     protected function keptPages(): array
     {
@@ -63,6 +63,7 @@ class CacheController extends Controller
             'enabled' => $cache->enabled(),
             'stats' => $stats,
             'flush' => $cache->lastFlush(),
+            'flushes' => $cache->flushes(),
             'refusals' => $cache->refusals(),
             'kinds' => $cache->kinds(),
         ];

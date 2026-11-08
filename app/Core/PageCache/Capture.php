@@ -344,6 +344,20 @@ class Capture
         }
     }
 
+    /**
+     * Something of the visitor's that no session shows (PageCache::visitorRead):
+     * outside a part the page is not kept; inside one, that part is drawn for
+     * every visitor, whatever it said about being reusable.
+     */
+    public function visitorRead(string $what): void
+    {
+        if ($this->depth > 0) {
+            $this->holeSpoiled();
+        } elseif ($this->quiet === 0) {
+            $this->personalTouched($what);
+        }
+    }
+
     public function sessionReadAll(): void
     {
         if ($this->depth > 0) {

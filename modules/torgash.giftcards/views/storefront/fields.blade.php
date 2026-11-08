@@ -9,6 +9,8 @@
     };
     $giftAmount = isset($giftAnswers['amount']) ? rtrim(rtrim(number_format($giftAnswers['amount'] / 100, 2, '.', ''), '0'), '.') : '';
     $giftFor = ! empty($giftAnswers['to_email']) || ! empty($giftAnswers['to_name']);
+    // The earliest date to send on is today's: a page kept from yesterday would offer yesterday.
+    page_cache()->until(today()->addDay());
 @endphp
 <div class="flex flex-col gap-3" x-data="{ gift: {{ \Illuminate\Support\Js::from($giftFor) }} }">
     @if ($giftRow->free_amount)

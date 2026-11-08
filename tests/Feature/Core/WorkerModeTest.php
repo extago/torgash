@@ -7,6 +7,7 @@ use App\Core\Settings\SettingsManager;
 use App\Core\Support\WebWorkers;
 use App\Core\Themes\ThemeManager;
 use App\Models\Storefront;
+use Illuminate\Http\Request;
 use Illuminate\Log\Events\MessageLogged;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\View;
@@ -14,6 +15,7 @@ use Tests\Concerns\RunsInOctaneWorker;
 use Tests\TestCase;
 use Torgash\Catalog\Models\Product;
 use Torgash\Seo\Models\Template;
+use Torgash\Speed\Meter;
 
 /**
  * Requests served by ONE booted application, the way FrankenPHP's worker mode
@@ -304,6 +306,34 @@ class WorkerModeTest extends TestCase
             'artisan', 'composer.json', 'composer.lock', 'bootstrap/app.php', 'bootstrap/providers.php',
             'public/index.php', 'public/.htaccess', 'public/favicon.ico',
         ], \App\Core\Updates\Distribution::FILES);
+    }
+
+    /**
+     * What a worker's start armed the meter with is over the moment the worker
+     * is handed a request — and so is what a request that died before it
+     * terminated left behind. Found on the first live shop (2026-11-08): a page
+     * that "took" 21 hours, the time its worker had been waiting for it.
+     */
+    public function test_a_workers_first_request_is_timed_from_when_it_arrived(): void
+    {
+        $settings = app(SettingsManager::class);
+        $settings->set('torgash.speed', 'enabled', true);
+        $settings->set('torgash.speed', 'sample_percent', 100);
+
+        $this->octaneApp()['config']->set('torgash.speed.measure_in_tests', true);
+        $this->workerRoute('/__worker/measured', fn () => 'ok');
+
+        // What the provider does at a worker's start — an hour ago.
+        $hourMs = 3_600_000.0;
+        $this->octaneApp()->make(Meter::class)->arm(Request::create('http://localhost/'), hrtime(true) - (int) ($hourMs * 1e6), $hourMs);
+
+        $this->serveInWorker([$this->workerGet('http://localhost/__worker/measured')]);
+
+        $row = DB::table('m_speed_routes')->where('route', '/__worker/measured')->first();
+
+        $this->assertNotNull($row, 'the request was measured');
+        $this->assertLessThan(60_000, (float) $row->total_ms, 'timed from the worker\'s start');
+        $this->assertEquals(0, (float) $row->boot_ms, 'starting the worker is no part of what a page cost');
     }
 
     /** A route on the worker's own application — its router is shared by every request, as in production. */

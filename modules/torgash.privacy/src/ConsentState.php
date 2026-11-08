@@ -84,6 +84,28 @@ class ConsentState
         return setting('torgash.privacy', 'respect_gpc', true) && request()->header('Sec-GPC') === '1';
     }
 
+    /**
+     * Google Consent Mode v2: what this visitor's tags may do until they say
+     * otherwise.
+     *
+     * @return array<string, string|int>
+     */
+    public function googleDefaults(): array
+    {
+        $grant = fn (string $category) => $this->allows($category) ? 'granted' : 'denied';
+
+        return [
+            'ad_storage' => $grant('marketing'),
+            'ad_user_data' => $grant('marketing'),
+            'ad_personalization' => $grant('marketing'),
+            'analytics_storage' => $grant('statistics'),
+            'functionality_storage' => $grant('functional'),
+            'personalization_storage' => $grant('functional'),
+            'security_storage' => 'granted',
+            'wait_for_update' => 500,
+        ];
+    }
+
     /** @param  list<string>  $categories */
     public static function encode(array $categories): string
     {

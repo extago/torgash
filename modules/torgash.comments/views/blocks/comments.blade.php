@@ -30,6 +30,12 @@
             ->orderBy('id')->get()
         : collect();
 
+    // "5 minutes ago" on a page kept for a day: for an hour at most while
+    // any of them is that fresh.
+    if ($comments->flatMap(fn ($comment) => [$comment, ...$comment->replies])->contains(fn ($comment) => $comment->created_at?->gt(now()->subDay()))) {
+        page_cache()->until(now()->addHour());
+    }
+
     $closed = ! empty($settings['closed']);
     $heading = trim((string) ($settings['heading'] ?? '')) ?: __('Comments');
 @endphp

@@ -11,8 +11,12 @@
     Both are ordinary forms posting to /privacy/consent, so a browser without
     scripts can still answer; banner.js sends them over fetch instead and
     switches the waiting code on in place.
+
+    A personal part of the page: drawn alone, for every visitor, from their
+    own choice.
 --}}
 @php
+    $consent = app(\Torgash\Privacy\ConsentState::class);
     $bannerPolicy = trim((string) setting('torgash.privacy', 'policy_url', ''));
     $bannerDoc = trim((string) setting('torgash.privacy', 'consent_doc_url', ''));
     $bannerCorner = setting('torgash.privacy', 'banner_style', 'bar') === 'corner';

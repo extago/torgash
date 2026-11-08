@@ -11,9 +11,14 @@ that is the visitor's own, a session key, a cookie or a table.
   `page.cache:<kind>,<param>,…` — the kind (declared by its module with
   `page_cache()->kind('product', 'Product pages')`, a declared word: English,
   translated by lang files) and the address's parameters the page READS
-  (`page`, `sort`, `per_page`, `view`). Any other parameter is drawn afresh;
-  advert tags (`utm_*`, `gclid`, … `PageCache::AD_PARAMS`) are served the
-  clean address's copy but never copied themselves.
+  (`page`, `sort`, `per_page`, `view`). Any other parameter is drawn afresh.
+- Advert tags (`utm_*`, `gclid`, `yclid`, … `PageCache::AD_PARAMS`) are no
+  part of the address: `withoutAdTags()` takes them off the request first, so
+  a click on an advert is served the clean address's copy or, when there is
+  none yet, is drawn as that address and leaves it. Off the parsed query AND
+  the raw `QUERY_STRING`, pair by pair: the language links and the sorting
+  print the address they were drawn for. The visitor's own counters still
+  find the tags — they read the browser's address bar.
 - Only guests: a signed-in visitor, a POST, htmx / XHR / JSON, a page with a
   message to show (flash) or a form that came back are drawn afresh
   (`bypassReason()`). A copy is taken only from a visitor who holds nothing
@@ -43,10 +48,13 @@ owner says what it means for a page — at boot, in its service provider:
   chosen town, viewed recently): its holder still gives copies.
 - `vary(name, resolve, session:, cookies:)` — the page is drawn differently
   for it, each value its own copy (the currency, a listing's layout, the
-  pickup point, the tax rates where the visitor is, the consent given, the
-  search's scope).
+  pickup point, the tax rates where the visitor is, the search's scope).
   EVERY copy is filed under EVERY vary's value; `resolve` answers what the
-  pages will make of it, cheaply, on every request.
+  pages will make of it, cheaply, on every request — so a vary with many
+  values divides every page's visitors. When only a small part of the page
+  differs, make it a personal part and declare the state `harmless` (what the
+  visitor agreed to: the banner, the Consent Mode defaults and each gated
+  snippet are parts; one copy serves every answer).
 - `under(vary, fn)` — a read of personal state that a vary already answers
   for (the taxes read the visitor's town; the `tax_place` vary files copies
   by the rates that town gets): quiet while a copy is drawn.
@@ -55,7 +63,10 @@ What nobody declared closes the door: a session key → the page is drawn
 afresh for that visitor and the key is named on the cache screen; a cookie
 the shop wrote (it decrypts) → the same. A third party's cookie decrypts to
 nothing and is ignored. Cookies cannot be watched (Symfony's bag is final),
-so a personal cookie is read in personal parts only, by rule.
+so a personal cookie is read in personal parts only, by rule. Whoever owns
+such an answer says it was asked — `page_cache()->visitorRead('…')`, which
+`Consent::allows()` does: outside a part the page is not kept, inside one the
+part is drawn for every visitor, whatever it said about being reusable.
 
 While a copy is drawn the session is WATCHED (`WatchedSessionManager`): a
 personal read outside a personal part, or any write to the session, and the
@@ -128,7 +139,13 @@ part (that part is then drawn for every visitor).
   only some columns: `unseen('m_catalog_products', ['views_count', …])`.
   Orders, baskets, logs, counters, sessions are unseen. When in doubt, it is
   seen: a needless flush costs the next pages' drawing, a missing one serves
-  a stale page.
+  a stale page. A statement counts whether or not it changed a row, so what
+  a background job keeps rewriting (the search index, the carriers'
+  directories) is unseen if no page outside a part reads it.
+- Everything thrown away is written down with why (`update
+  m_catalog_products (price)`) and from where (`POST /admin/…`, `queue:work`):
+  `flushes()`, the last 30, "Why pages were thrown away" on the cache screen.
+  The same reason from the same place within ten minutes is one line, counted.
 - Tags: a page says what it shows (`page_cache()->tag('product:12')`, the
   catalogue tags every listed product); `discard('product:12')` throws away
   those copies only, after the commit. Stock: `catalog.stock.moved` discards
@@ -137,9 +154,13 @@ part (that part is then drawn for every visitor).
 
 ## The clock
 
+- A copy lives `page_cache_minutes`, a day unless the shop says otherwise:
+  the typical return to a page is hours, and whatever changes throws it away
+  by itself. So words that go stale by themselves bound the copy.
 - `page_cache()->until($moment)` from a page or a part: the copy is kept
   only until then (a transfer date counted from today, a display rule's
-  period — `RuleKinds` `changes` callbacks).
+  period — `RuleKinds` `changes` callbacks; "3 days left", "5 minutes ago",
+  today as a date field's earliest).
 - `page_cache()->changes(fn () => ?DateTimeInterface)` at boot for what a
   module switches on and off by dates with nothing written (banners, sales
   and their weekly windows, collections, kits, landings, labels and "new for

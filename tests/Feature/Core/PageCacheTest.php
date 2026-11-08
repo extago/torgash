@@ -19,8 +19,9 @@ use Tests\TestCase;
  * visitor's own; personal parts are drawn for each visitor, or kept as drawn
  * for whoever holds what they read; a page that reads or writes what it must
  * not is not kept, and says why; writes throw copies away once committed,
- * tags only theirs; varies file copies apart; an advert's address is served
- * but never copied; a visit action runs on every visit.
+ * tags only theirs, and each throw-away is written down; varies file copies
+ * apart; an advert's address is the clean address, served and kept as it; a
+ * visit action runs on every visit.
  */
 class PageCacheTest extends TestCase
 {
@@ -81,6 +82,17 @@ class PageCacheTest extends TestCase
         });
 
         Route::middleware(['web', 'page.cache:pctest,page'])->get('/pc-test/list', fn () => view('pctest::page', ['body' => 'page '.request('page', 1)]));
+
+        // The address as a page can find it, every way the storefront's own do.
+        Route::middleware(['web', 'page.cache:pctest,page'])->get('/pc-test/address', fn () => view('pctest::page', [
+            'body' => implode(' | ', [request()->fullUrl(), (string) request()->server('QUERY_STRING'), (string) json_encode(request()->query())]),
+        ]));
+
+        Route::get('/pc-test/flusher', function () {
+            page_cache()->flush('by a request');
+
+            return 'ok';
+        });
 
         app(SettingsManager::class)->set('core', PageCache::ENABLED, true);
         page_cache()->flush('a test begins');
@@ -336,15 +348,90 @@ class PageCacheTest extends TestCase
         $this->assertSame('bypass', $this->cache($this->get('/pc-test/list?page=2&nocache=1')));
     }
 
-    public function test_an_advert_link_is_served_the_clean_copy_but_never_copied(): void
+    /**
+     * A click on an advert is the page's clean address: served that copy,
+     * and when there is none yet it leaves one — drawn as if the tags had
+     * never been there, since the pagination and the language links print
+     * the address they were drawn for. Before (2026-11): every click drew a
+     * page and left nothing, on a shop whose visitors mostly arrive so.
+     */
+    public function test_an_advert_link_is_served_the_clean_copy_and_leaves_one(): void
     {
         $this->newVisitor();
-        $this->assertSame('miss', $this->cache($this->get('/pc-test/page?utm_source=mail&gclid=abc')));
-        $this->assertSame(0, (int) DB::table('page_cache')->count());
+        $first = $this->get('/pc-test/address?utm_source=mail&page=2&yclid=abc&utm.term=x&etext=1');
+        $this->assertSame('stored', $this->cache($first));
+        $this->assertSame(1, (int) DB::table('page_cache')->count());
 
-        $this->get('/pc-test/page');
         $this->newVisitor();
-        $this->assertSame('hit', $this->cache($this->get('/pc-test/page?utm_source=mail')));
+        $kept = $this->get('/pc-test/address?page=2');
+        $this->assertSame('hit', $this->cache($kept));
+        $this->assertStringContainsString('/pc-test/address?page=2 | page=2 | {&quot;page&quot;:&quot;2&quot;}', (string) $kept->getContent());
+
+        foreach (['utm', 'yclid', 'etext'] as $tag) {
+            $this->assertStringNotContainsString($tag, (string) $first->getContent(), 'the visitor who drew it');
+            $this->assertStringNotContainsString($tag, (string) $kept->getContent(), 'and everybody after them');
+        }
+
+        $this->newVisitor();
+        $this->assertSame('hit', $this->cache($this->get('/pc-test/address?page=2&gad_source=1&ybaip=1&erid=2')), 'another advert, the same page');
+    }
+
+    public function test_a_page_is_kept_for_a_day_unless_the_shop_says_otherwise(): void
+    {
+        $this->freezeSecond();
+        $this->get('/pc-test/page');
+
+        $this->assertSame(now()->addDay()->format('Y-m-d H:i'), substr((string) DB::table('page_cache')->value('expires_at'), 0, 16));
+    }
+
+    /** A nightly rebuild rewrites every row, changed or not: no reason to draw the whole shop again. */
+    public function test_the_search_index_and_the_carriers_directories_throw_nothing_away(): void
+    {
+        $this->get('/pc-test/page');
+
+        foreach (['m_search_documents', 'm_search_words', 'm_cdek_cities', 'm_cdek_points', 'm_cdek_place_map', 'm_np_settlements', 'm_np_warehouses', 'm_np_place_map'] as $table) {
+            DB::table($table)->whereRaw('false')->delete();
+        }
+
+        $this->newVisitor();
+        $this->assertSame('hit', $this->cache($this->get('/pc-test/page')));
+    }
+
+    /** "Why did everything go?" had one answer, the latest; a day of them is what shows a pattern. */
+    public function test_every_throw_away_is_written_down_and_a_repeat_is_counted(): void
+    {
+        page_cache()->flush('first');
+        page_cache()->flush('second');
+        page_cache()->flush('first');
+
+        $lines = page_cache()->flushes();
+        $this->assertSame(['first', 'second'], array_slice(array_column($lines, 'why'), 0, 2), 'the newest first');
+        $this->assertSame(2, $lines[0]['count']);
+        $this->assertSame($lines[0]['why'], page_cache()->lastFlush()['why']);
+
+        // Ten minutes on it is another event, not the same one.
+        $this->travel(11)->minutes();
+        page_cache()->flush('first');
+        $this->assertSame(1, page_cache()->flushes()[0]['count']);
+        $this->assertSame(['first', 'first', 'second'], array_slice(array_column(page_cache()->flushes(), 'why'), 0, 3));
+
+        // Where from — the address without its query — and which columns.
+        $this->get('/pc-test/flusher?token=secret')->assertOk();
+        $this->assertSame('GET /pc-test/flusher', page_cache()->flushes()[0]['from']);
+
+        DB::table('storefronts')->update(['updated_at' => now()]);
+        $this->assertSame('update storefronts (updated_at)', page_cache()->flushes()[0]['why']);
+
+        // A shop's day of them, not all of its life.
+        foreach (range(1, 40) as $n) {
+            page_cache()->flush('reason '.$n);
+        }
+
+        $this->assertCount(30, page_cache()->flushes());
+
+        $this->actingAs(User::role('admin')->firstOrFail())->get('http://localhost/admin/cache')->assertOk()
+            ->assertSee('Why pages were thrown away')
+            ->assertSee('reason 40');
     }
 
     public function test_htmx_is_not_served_a_copy_and_head_is(): void

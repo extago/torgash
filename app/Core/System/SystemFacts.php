@@ -3,9 +3,12 @@
 namespace App\Core\System;
 
 use App\Core\Files\FileStorage;
+use Composer\InstalledVersions;
+use Composer\Semver\Semver;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Throwable;
+use UnexpectedValueException;
 
 /**
  * What the server is, gathered for Admin → System (PLAN §45) — read-only,
@@ -220,5 +223,67 @@ class SystemFacts
         }
 
         return $warnings;
+    }
+
+    /**
+     * What the last check of the libraries found, one row per library: such
+     * a list is mostly a few packages again and again, and each advisory's
+     * range names every branch the project ever had. What an owner can use
+     * is the version this shop has and the one that closes it.
+     *
+     * @param  mixed  $audit  the `dependency_audit` setting
+     * @return list<array{package: string, installed: ?string, fixed: ?string, advisories: list<array{title: string, cve: string, link: string}>}>
+     */
+    public function advisories(mixed $audit): array
+    {
+        $libraries = [];
+
+        foreach ((array) (is_array($audit) ? ($audit['advisories'] ?? []) : []) as $advisory) {
+            $package = (string) ($advisory['package'] ?? '');
+
+            $libraries[$package] ??= ['package' => $package, 'installed' => $this->installed($package), 'fixed' => null, 'advisories' => []];
+
+            $fixed = $this->fixedIn((string) ($advisory['affected'] ?? ''), $libraries[$package]['installed']);
+
+            if ($fixed !== null && ($libraries[$package]['fixed'] === null || version_compare($fixed, $libraries[$package]['fixed'], '>'))) {
+                $libraries[$package]['fixed'] = $fixed;
+            }
+
+            $libraries[$package]['advisories'][] = [
+                // The number is printed beside the title; some titles start with it too.
+                'title' => (string) preg_replace('/^CVE-\d+-\d+:\s*/i', '', (string) ($advisory['title'] ?? '')),
+                'cve' => (string) ($advisory['cve'] ?? ''),
+                'link' => (string) ($advisory['link'] ?? ''),
+            ];
+        }
+
+        return array_values($libraries);
+    }
+
+    protected function installed(string $package): ?string
+    {
+        return InstalledVersions::isInstalled($package)
+            ? (ltrim((string) InstalledVersions::getPrettyVersion($package), 'v') ?: null)
+            : null;
+    }
+
+    /** The end of the affected range this version falls in — where it is closed. */
+    protected function fixedIn(string $affected, ?string $installed): ?string
+    {
+        if ($installed === null) {
+            return null;
+        }
+
+        foreach (array_filter(array_map('trim', explode('|', $affected))) as $range) {
+            try {
+                if (Semver::satisfies($installed, $range)) {
+                    return preg_match('/<(?!=)\s*v?(\d[^\s,]*)/', $range, $end) ? $end[1] : null;
+                }
+            } catch (UnexpectedValueException) {
+                // A range or a version Composer cannot read (a dev branch): nothing to say.
+            }
+        }
+
+        return null;
     }
 }

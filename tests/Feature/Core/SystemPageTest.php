@@ -50,6 +50,65 @@ class SystemPageTest extends TestCase
         );
     }
 
+    /**
+     * A list of advisories is a few libraries again and again, each with the
+     * ranges of every branch the project ever had: one row per library, the
+     * version here and the one that closes it.
+     */
+    public function test_the_libraries_are_one_row_each_with_the_version_that_closes_them(): void
+    {
+        $installed = ltrim((string) \Composer\InstalledVersions::getPrettyVersion('symfony/mime'), 'v');
+
+        app(\App\Core\Settings\SettingsManager::class)->set(\App\Core\Settings\CoreSettings::ID, 'dependency_audit', [
+            'advisories' => [
+                ['package' => 'symfony/mime', 'title' => 'CVE-2026-1: Header injection', 'cve' => 'CVE-2026-1', 'link' => 'https://example.test/1', 'affected' => '>=2.0.0,<3.0.0|>=0.0.1,<99.9.1'],
+                ['package' => 'symfony/mime', 'title' => 'Another hole', 'cve' => '', 'link' => '', 'affected' => '>=2.0.0,<3.0.0|>=0.0.1,<99.9.9'],
+                ['package' => 'no/such-library', 'title' => 'Gone', 'cve' => '', 'link' => '', 'affected' => '>=1.0.0,<2.0.0'],
+            ],
+            'checked_at' => now()->toIso8601String(),
+        ]);
+
+        $libraries = app(SystemFacts::class)->advisories(setting('core', 'dependency_audit'));
+
+        $this->assertSame(['symfony/mime', 'no/such-library'], array_column($libraries, 'package'));
+        $this->assertSame($installed, $libraries[0]['installed']);
+        $this->assertSame('99.9.9', $libraries[0]['fixed'], 'the highest of what its advisories need');
+        $this->assertSame('Header injection', $libraries[0]['advisories'][0]['title'], 'the number is printed beside it');
+        $this->assertNull($libraries[1]['installed']);
+        $this->assertNull($libraries[1]['fixed']);
+
+        $this->actingAs($this->admin)->get('http://localhost/admin/system')->assertOk()
+            ->assertSee(__('fixed in :version', ['version' => '99.9.9']))
+            ->assertSee('Another hole')
+            ->assertDontSee('&gt;=2.0.0,&lt;3.0.0|', false);
+    }
+
+    /** The upload of a package answers with `error`; the page has to say it. */
+    public function test_an_error_handed_back_is_shown(): void
+    {
+        $this->actingAs($this->admin)->withSession(['error' => 'The package is not signed.'])
+            ->get('http://localhost/admin/system')->assertOk()
+            ->assertSee('The package is not signed.');
+    }
+
+    /** The message is inside the window: closed, the form would seem to have done nothing. */
+    public function test_a_form_that_came_back_with_an_error_opens_its_window_again(): void
+    {
+        // Followed in one go, as a browser does: asserting on the session between
+        // the two requests starts it again and empties a JSON-serialised error bag.
+        $page = (string) $this->actingAs($this->admin)->from('http://localhost/admin/system')->followingRedirects()
+            ->post('http://localhost'.route('admin.system.updates.server', [], false), ['address' => 'ftp://example.test'])
+            ->assertOk()->getContent();
+
+        $dialog = strpos($page, 'id="modal-update-server"');
+        $script = strpos($page, "getElementById('modal-update-server')");
+
+        $this->assertNotFalse($dialog);
+        $this->assertNotFalse($script, 'nothing opens the window');
+        $this->assertLessThan($script, $dialog, 'the window has to exist when the script runs');
+        $this->assertStringNotContainsString("getElementById('modal-update-server')", (string) $this->get('http://localhost/admin/system')->getContent(), 'and only once');
+    }
+
     public function test_a_plan_makes_a_backup_with_the_database_and_keeps_its_number(): void
     {
         if (! Backups::toolVersion('pg_dump')) {

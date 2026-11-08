@@ -26,7 +26,7 @@ class Placements
     /** @var Collection<int, Snippet>|null */
     protected $all = null;
 
-    /** Did this page print anything that waits — for consent or for a click? */
+    /** Did this page print anything that may wait — for consent or for a click? */
     protected bool $waiting = false;
 
     public function render(string $placement): string
@@ -54,9 +54,7 @@ class Placements
             // write; the values mostly land inside a <script>, where HTML
             // escaping is not a safety measure but a corruption — a shop called
             // "Bob & Co" would reach JavaScript as "Bob &amp; Co".
-            // Its scripts carry this page's nonce: the shop's own code is
-            // trusted to run, injected markup is not (PLAN §53).
-            $code = app(\App\Core\Http\Csp::class)->sign(trim(app(Placeholders::class)->expand($snippet->code, [], false)));
+            $code = trim(app(Placeholders::class)->expand($snippet->code, [], false));
 
             if ($code !== '') {
                 $out[] = $this->gate($snippet, $code);
@@ -73,20 +71,25 @@ class Placements
     }
 
     /**
-     * The code as it may be printed for THIS visitor (PLAN §49).
+     * The code as it may be printed (PLAN §49), its scripts carrying this
+     * page's nonce: the shop's own code is trusted to run, injected markup
+     * is not (PLAN §53).
      *
-     * Not allowed yet, it goes out inside a <template>: the browser parses it
-     * and runs nothing, and consent.js moves it into the page the moment the
-     * visitor agrees — on this page, without a reload. "Necessary", or no
-     * privacy module answering, prints it exactly as it always was.
+     * "Necessary", or no privacy module answering, prints it exactly as it
+     * always was. Anything else depends on the visitor (the `gated` view),
+     * so it is a personal part of the page: one copy of it serves those who
+     * agreed and those who did not (PLAN §61). Its code is kept with the copy
+     * unsigned — the nonce is each visitor's, and the part signs it itself.
      */
     protected function gate(Snippet $snippet, string $code): string
     {
+        $csp = app(\App\Core\Http\Csp::class);
+
         if ($snippet->on_click) {
             $this->waiting = true;
             $id = 'snippet-'.$snippet->id;
 
-            return '<template id="'.$id.'" data-consent-click>'.$code.'</template>'
+            return '<template id="'.$id.'" data-consent-click>'.$csp->sign($code).'</template>'
                 .view('torgash.snippets::click-button', [
                     'clickTarget' => $id,
                     'clickLabel' => $snippet->t('click_label') ?: __('Chat'),
@@ -95,13 +98,13 @@ class Placements
 
         $category = $snippet->category ?: Consent::NECESSARY;
 
-        if (Consent::allows($category)) {
-            return $code;
+        if (! Consent::isAsked($category)) {
+            return $csp->sign($code);
         }
 
         $this->waiting = true;
 
-        return '<template data-consent="'.e($category).'">'.$code.'</template>';
+        return personal('torgash.snippets::gated', ['category' => $category, 'code' => $code]);
     }
 
     /** @return Collection<int, Snippet> */

@@ -60,19 +60,30 @@ class PageCache
 
     public const SKIP = 'page_cache_skip';
 
-    /** Kept on the cache store: when everything was last thrown away, and why. */
-    protected const LAST_FLUSH = 'page_cache.last_flush';
+    /** A day: the median return to a page is hours, and whatever changes throws a copy away by itself. */
+    public const DEFAULT_MINUTES = 1440;
+
+    /** Kept on the cache store: when everything was thrown away, why and by what, the newest first. */
+    protected const FLUSHES = 'page_cache.flushes';
+
+    /** How many lines of it: a few days of a shop nobody is working on, an evening of one somebody is. */
+    protected const FLUSHES_KEPT = 30;
+
+    /** The same reason from the same place within this many seconds is one line, counted. */
+    protected const FLUSHES_MERGED = 600;
 
     /** ...and the latest reasons a page was not kept. */
     protected const REFUSALS = 'page_cache.refusals';
 
     /**
-     * What a link from an advert or a newsletter carries. Such a page is
-     * served from the copy of its clean address, but never copied itself:
-     * the pagination and the language links would carry the tags along.
+     * What a link from an advert or a newsletter carries. No page reads
+     * them, so they are no part of its address: such a visit is served the
+     * copy of the clean address and, when there is none yet, is drawn as
+     * that address (withoutAdTags()) and leaves the copy for the next visitor.
      */
-    public const AD_PARAMS = ['gclid', 'gbraid', 'wbraid', 'dclid', 'fbclid', 'msclkid', 'yclid', 'ysclid', 'ttclid', 'igshid',
-        '_openstat', 'mc_cid', 'mc_eid', '_ga', '_gl', 'srsltid'];
+    public const AD_PARAMS = ['gclid', 'gbraid', 'wbraid', 'dclid', 'gad_source', 'gad_campaignid', 'fbclid', 'msclkid',
+        'yclid', 'ysclid', 'etext', 'ybaip', 'pm_source', 'pm_block', 'pm_position', 'erid', 'rb_clickid',
+        'ttclid', 'twclid', 'igshid', '_openstat', 'mc_cid', 'mc_eid', '_ga', '_gl', 'srsltid'];
 
     /** @var array<string, string> session path => harmless | personal | personal+copies | vary:<name> */
     protected array $session = [];
@@ -379,7 +390,7 @@ class PageCache
 
     public function minutes(): int
     {
-        return max(1, (int) setting(CoreSettings::ID, self::MINUTES, 60));
+        return max(1, (int) setting(CoreSettings::ID, self::MINUTES, self::DEFAULT_MINUTES));
     }
 
     public function skips(string $kind): bool
@@ -470,23 +481,12 @@ class PageCache
 
     /**
      * Why a copy must not be TAKEN from this visitor, though they may be
-     * served one: they carry something personal (whatever was cached about
-     * them before the page began would end up in everybody's copy), or the
-     * address carries an advert's tags.
+     * served one: they carry something personal, and whatever was cached
+     * about them before the page began would end up in everybody's copy.
      */
     public function takeRefusal(Request $request): ?string
     {
-        if (! $request->isMethod('GET')) {
-            return 'not a GET';
-        }
-
-        foreach (array_keys($request->query()) as $param) {
-            if ($this->isAdParam((string) $param)) {
-                return 'advert parameter '.$param;
-            }
-        }
-
-        return $this->personalHeld($request);
+        return $request->isMethod('GET') ? $this->personalHeld($request) : 'not a GET';
     }
 
     /**
@@ -542,6 +542,37 @@ class PageCache
     public function isAdParam(string $param): bool
     {
         return str_starts_with($param, 'utm_') || in_array($param, self::AD_PARAMS, true);
+    }
+
+    /**
+     * Takes an advert's tags off the request, so that what is drawn is the
+     * clean address — the pagination and the language links print the
+     * address they were drawn for, and a copy is everybody's. The visitor's
+     * own counters still find the tags: those read the browser's address bar.
+     *
+     * Pair by pair, never rebuilt from the parsed values: those links repeat
+     * the rest of the query exactly as it was spelled.
+     */
+    public function withoutAdTags(Request $request): void
+    {
+        $tags = array_filter(array_keys($request->query()), fn ($param) => $this->isAdParam((string) $param));
+
+        if ($tags === []) {
+            return;
+        }
+
+        foreach ($tags as $tag) {
+            $request->query->remove((string) $tag);
+        }
+
+        $kept = array_filter(explode('&', (string) $request->server->get('QUERY_STRING')), function (string $pair) {
+            // PHP's own reading of the name: `utm.source[]` is `utm_source`.
+            parse_str($pair, $read);
+
+            return ! $this->isAdParam((string) array_key_first($read));
+        });
+
+        $request->server->set('QUERY_STRING', implode('&', $kept));
     }
 
     /**
@@ -638,6 +669,19 @@ class PageCache
         }
 
         return $this->current->quietly($read);
+    }
+
+    /**
+     * Something of the visitor's that no session shows is being read — what
+     * they agreed to, which a cookie and a header answer. Nothing can watch
+     * those, so whoever owns such an answer says it was asked: outside a
+     * personal part the page is not kept, and inside one that part is drawn
+     * for every visitor. Reading it is never how one visitor's answer reaches
+     * another.
+     */
+    public function visitorRead(string $what): void
+    {
+        $this->current?->visitorRead($what);
     }
 
     /** Marks the page being drawn as showing these — `product:12`. */
@@ -788,7 +832,44 @@ class PageCache
             return;
         }
 
-        Cache::forever(self::LAST_FLUSH, ['at' => time(), 'why' => mb_substr($why, 0, 300)]);
+        $this->journal(mb_substr($why, 0, 300));
+    }
+
+    /**
+     * A line more in the journal on the cache screen. The same reason from
+     * the same place within ten minutes is one line, counted: an import is
+     * one event of a thousand statements, and must not push out the day's
+     * other reasons.
+     */
+    protected function journal(string $why): void
+    {
+        $now = now()->getTimestamp();
+        $from = $this->flushedBy();
+        $count = 1;
+        $lines = [];
+
+        foreach ($this->flushes() as $line) {
+            if ($line['why'] === $why && $line['from'] === $from && $now - $line['at'] < self::FLUSHES_MERGED) {
+                $count += $line['count'];
+            } else {
+                $lines[] = $line;
+            }
+        }
+
+        array_unshift($lines, ['at' => $now, 'why' => $why, 'from' => $from, 'count' => $count]);
+        Cache::forever(self::FLUSHES, array_slice($lines, 0, self::FLUSHES_KEPT));
+    }
+
+    /** What threw them away: the address that was written to — never its query — or the command. */
+    protected function flushedBy(): string
+    {
+        if (app()->runningInConsole() && ! app()->runningUnitTests()) {
+            return (string) ($_SERVER['argv'][1] ?? 'console');
+        }
+
+        $request = request();
+
+        return mb_substr($request->method().' /'.ltrim($request->path(), '/'), 0, 200);
     }
 
     /**
@@ -832,10 +913,16 @@ class PageCache
         return ['entries' => (int) $row->entries, 'bytes' => (int) $row->bytes];
     }
 
-    /** @return array{at: int, why: string}|null */
+    /** @return array{at: int, why: string, from: string, count: int}|null */
     public function lastFlush(): ?array
     {
-        return Cache::get(self::LAST_FLUSH);
+        return $this->flushes()[0] ?? null;
+    }
+
+    /** @return list<array{at: int, why: string, from: string, count: int}> the newest first */
+    public function flushes(): array
+    {
+        return array_values((array) Cache::get(self::FLUSHES, []));
     }
 
     /**

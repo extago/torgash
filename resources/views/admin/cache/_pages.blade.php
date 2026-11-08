@@ -1,10 +1,9 @@
 {{--
     Pages kept ready for guests (PLAN §61, App\Core\PageCache\PageCache):
-    how many there are, the last time all of them were thrown away and why,
-    and why the latest pages were not kept — the reasons are the engine's
-    own words, for whoever looks into a module that forgot to declare
-    something. Named kept* — an @include hands a partial everything its
-    caller has.
+    how many there are, when all of them were thrown away and why, and why
+    the latest pages were not kept — the reasons are the engine's own words,
+    for whoever looks into a module that forgot to declare something. Named
+    kept* — an include hands a partial everything its caller has.
 --}}
 <section class="card bg-base-100 border border-base-300">
     <div class="card-body gap-3 text-sm">
@@ -35,6 +34,20 @@
                 {{ __('All thrown away :time', ['time' => $keptWhen($keptPages['flush']['at'])]) }}:
                 <span class="font-mono break-words">{{ $keptPages['flush']['why'] }}</span>
             </p>
+        @endif
+
+        @if ($keptPages['flushes'] !== [])
+            <details class="text-xs">
+                <summary class="cursor-pointer opacity-80">{{ __('Why pages were thrown away') }} ({{ count($keptPages['flushes']) }})</summary>
+                <ul class="flex flex-col gap-2 mt-2">
+                    @foreach ($keptPages['flushes'] as $keptFlush)
+                        <li class="flex flex-col gap-0.5">
+                            <span class="opacity-60">{{ $keptWhen($keptFlush['at']) }}@if ($keptFlush['count'] > 1) · ×{{ $keptFlush['count'] }}@endif · <span class="font-mono break-all">{{ $keptFlush['from'] }}</span></span>
+                            <span class="font-mono break-words">{{ $keptFlush['why'] }}</span>
+                        </li>
+                    @endforeach
+                </ul>
+            </details>
         @endif
 
         @if ($keptPages['enabled'] && $keptPages['refusals'] !== [])

@@ -524,7 +524,7 @@ class CoreSettings
             [
                 'key' => 'page_cache_minutes',
                 'type' => 'number',
-                'default' => 60,
+                'default' => \App\Core\PageCache\PageCache::DEFAULT_MINUTES,
                 'label' => 'Keep a page for, minutes',
                 'help' => 'At most. A change in the admin throws a page away sooner, and a page with a sale or a banner that starts or ends sooner is kept only until then.',
             ],

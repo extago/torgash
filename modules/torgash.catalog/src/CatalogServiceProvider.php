@@ -278,8 +278,8 @@ class CatalogServiceProvider extends ServiceProvider
                 cookies: [Support\ListingView::PER_PAGE_COOKIE, Support\ListingView::LAYOUT_COOKIE],
             )
             // Counted in the product's own row on every view and sale; a label
-            // reading them is right again within the copy's hour. Stock is
-            // announced on its own (below), by product.
+            // reading them is right again when the copy's time is up. Stock
+            // is announced on its own (below), by product.
             ->unseen('m_catalog_products', ['views_count', 'sales_count', 'popularity', 'stock', 'updated_at'])
             // A label's dates, and "new for N days", put badges on and take
             // them off with nothing written.

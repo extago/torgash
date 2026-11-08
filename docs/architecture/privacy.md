@@ -16,17 +16,20 @@ asks core whether a category may run and listens for the DOM event
 not allowed is printed as `<template data-consent="statistics">…</template>` —
 the browser parses it and runs nothing — and `snippets/assets/consent.js`
 re-creates its scripts on consent, on the same page, without a reload (a script
-moved out of a template as it is never runs). Printed the same way for every
-visitor, so the page does not depend on whose it is; on the next page the server
-prints allowed code plainly. "Load on click" snippets wait in the FOOTER behind
+moved out of a template as it is never runs); on the next page the server
+prints allowed code plainly. Which of the two a visitor gets is a personal part
+of the page (the `gated` view, `personal()`), like the banner and the Consent
+Mode defaults: one kept copy serves every answer (page-cache.md). The part is
+given the code unsigned and signs it itself — the nonce is per visit. A page
+asking `Consent::allows()` outside a part is not kept. "Load on click" snippets wait in the FOOTER behind
 their own button (`click-button` view) whatever their placement. Only code
 added through Snippets is gated: our own scripts need no consent, and code
 pasted into a theme or an HTML block is invisible to this — third-party code
 goes through Snippets, that is the rule.
 
 **Google Consent Mode v2** defaults go into `core.head` at priority 1, before
-any snippet (they listen at 10), from the same `ConsentState`; the banner sends
-`gtag('consent','update')`.
+any snippet (they listen at 10), as a personal part from the same
+`ConsentState` (`googleDefaults()`); the banner sends `gtag('consent','update')`.
 
 **`ConsentState`** (singleton forgotten per request — one visitor's choice must
 never reach the next under a worker) reads the `torgash_consent` cookie

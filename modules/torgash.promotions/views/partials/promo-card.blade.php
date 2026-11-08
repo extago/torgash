@@ -21,6 +21,14 @@
     // A schedule the shop chose not to tell is not hinted at by the repeat icon either.
     $promoCyclic = $promoCard->show_schedule && ! $promoCard->scheduleWindows()->isEmpty();
     $promoLine = ($promoTeaser ?? false) ? $promoShowcase->teaser($promoCard) : '';
+
+    // A page is kept for up to a day: no longer than these words stay true —
+    // the number of days drops at the sale's own hour, "opens in 3 hours" hourly.
+    if ($promoUntil && $promoDays >= 1) {
+        page_cache()->until($promoUntil->copy()->subDays($promoDays));
+    } elseif (in_array($promoStatus, ['paused', 'scheduled'], true)) {
+        page_cache()->until(now()->addHour());
+    }
 @endphp
 <a href="{{ route('promotions.show', $promoCard->slug) }}" @class(['torgash-promo-card group', 'is-ended' => $promoStatus === 'ended'])
    style="--promo-hue: {{ $promoCard->tint ? $promoCard->hue() : $promoHue }}">

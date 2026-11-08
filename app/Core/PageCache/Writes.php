@@ -64,7 +64,11 @@ class Writes
             }
         }
 
-        $this->pend($verb.($table !== null ? ' '.$table : ''), []);
+        // Which columns, for the journal: an UPDATE of a table part of which
+        // is unseen says what was not.
+        $set = $columns === null ? '' : ' ('.implode(', ', array_slice($columns, 0, 6)).')';
+
+        $this->pend($verb.($table !== null ? ' '.$table : '').$set, []);
     }
 
     /**

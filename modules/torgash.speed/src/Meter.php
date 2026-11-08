@@ -14,8 +14,9 @@ use Throwable;
  * the listeners (bound once, at boot) look at — so everything about the
  * current request lives in `$profile`. A request is ARMED when it begins
  * (at boot for the first one, on the container rebinding `request` for any
- * later one — the moment `PerRequest` uses) and DECIDED at the route match,
- * the first moment the settings can be read.
+ * later one — the moment `PerRequest` uses; under a worker, when the worker
+ * is handed it: restart()) and DECIDED at the route match, the first moment
+ * the settings can be read.
  *
  * Unmeasured requests cost one setting read and one null check per query and
  * per hook call — never a Profile, never a write.
@@ -66,6 +67,17 @@ class Meter
         $this->end();
         $this->active = true;
         $this->pending = [$request, $startNs, $bootMs];
+    }
+
+    /**
+     * A worker was handed a request: it began now, whatever was armed before
+     * it — the worker's own start, or a request that died before it terminated.
+     */
+    public function restart(Request $request, int $startNs): void
+    {
+        $this->active = false;
+        $this->pending = null;
+        $this->arm($request, $startNs);
     }
 
     /** Decide whether the armed request is measured, and start if it is. */

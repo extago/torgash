@@ -38,6 +38,8 @@
             if (! $noteCyclic && $promotion->starts_at && $promotion->ends_at && $promotion->ends_at->greaterThan($promotion->starts_at)) {
                 $noteShare = (int) round(100 * $promotion->starts_at->diffInSeconds(now(), true) / $promotion->starts_at->diffInSeconds($promotion->ends_at, true));
                 $noteShare = max(2, min(100, $noteShare));
+                // A page is kept for up to a day: the bar may lag by a twentieth of the sale, no more.
+                page_cache()->until(now()->addSeconds((int) max(3600, $promotion->starts_at->diffInSeconds($promotion->ends_at, true) / 20)));
             }
             // The period in words: "9 – 31 October", "until 31 October", or the windows.
             $notePeriod = match (true) {

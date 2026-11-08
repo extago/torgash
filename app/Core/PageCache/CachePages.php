@@ -49,6 +49,10 @@ class CachePages
             return $this->marked($next($request), 'bypass', $reason);
         }
 
+        // From here on it is the clean address: the page served is that
+        // address's copy, and the page drawn becomes it.
+        $this->cache->withoutAdTags($request);
+
         $address = $this->cache->address($request, $params);
 
         try {

@@ -6,6 +6,12 @@
     What the server is (PLAN §45), read-only: versions, limits, the database
     and its locale, the disk, whether background work moves, and the
     libraries' known vulnerabilities. Problems first, as sentences.
+
+    Laid out as the dashboard is (docs/architecture/admin.md): a row of cards
+    only where they are of one kind and one height — three short lists of
+    facts. Everything else stands in two columns, each a stack: blocks of
+    different heights leave holes in a grid, and what grows (the release
+    notes, the advisories, the tables) belongs in the wide one.
 --}}
 @section('content')
     @php
@@ -28,6 +34,10 @@
             <div class="alert alert-success text-sm">{{ session('status') }}</div>
         @endif
 
+        @if (session('error'))
+            <div class="alert alert-error text-sm">{{ session('error') }}</div>
+        @endif
+
         @if ($warnings)
             <div class="alert alert-warning text-sm">
                 <div class="flex flex-col gap-1.5">
@@ -37,7 +47,7 @@
                 </div>
             </div>
         @else
-            <div class="alert alert-success text-sm"><x-icon name="circle-check" size="sm" /> {{ __('Nothing needs attention.') }}</div>
+            <div class="alert alert-success alert-soft text-sm"><x-icon name="circle-check" size="sm" /> {{ __('Nothing needs attention.') }}</div>
         @endif
 
         {{-- PLAN §55: the demo shop stays in view until it is gone — removal
@@ -61,7 +71,7 @@
             </section>
         @endif
 
-        <div class="grid gap-4 xl:grid-cols-3 items-start">
+        <div class="grid gap-4 xl:grid-cols-3">
             <section class="card bg-base-100 border border-base-300">
                 <div class="card-body gap-3">
                     <h3 class="font-semibold flex items-center gap-2"><x-icon name="package" size="sm" /> {{ __('Versions') }}</h3>
@@ -74,148 +84,6 @@
                         <dd>{{ $engine['env'] }} @if ($engine['debug']) <span class="badge badge-warning badge-sm ml-1">debug</span> @endif</dd>
                         <dt class="opacity-60">{{ __('Time zone') }}</dt><dd>{{ $engine['timezone'] }}</dd>
                     </dl>
-                </div>
-            </section>
-
-            {{-- The storefront without what the shop added to it, for this
-                 person only (App\Core\Support\SafeMode) — the way to look at
-                 a page a theme, its CSS or a snippet has broken. --}}
-            <section class="card bg-base-100 border border-base-300">
-                <div class="card-body gap-3">
-                    <h3 class="font-semibold flex items-center gap-2"><x-icon name="shield" size="sm" /> {{ __('Safe mode') }}</h3>
-                    <p class="text-sm opacity-70">{{ __('The storefront in the engine\'s own theme, without your own CSS and code snippets — for you alone, customers still see the shop as it is. When a page broke after an edit, this tells you whether the theme or a snippet is to blame.') }}</p>
-                    @if (\App\Core\Support\SafeMode::forced())
-                        <div class="alert alert-warning text-sm py-2"><x-icon name="triangle-alert" size="sm" /> {{ __('TORGASH_SAFE_MODE in .env has it on for every visitor.') }}</div>
-                    @else
-                        <form method="POST" action="{{ route('admin.safe_mode') }}" class="flex flex-wrap gap-2">
-                            @csrf
-                            @if (session(\App\Core\Support\SafeMode::SESSION) === true)
-                                <input type="hidden" name="on" value="0">
-                                <input type="hidden" name="back" value="{{ url()->current() }}">
-                                <span class="badge badge-sm badge-warning">{{ __('On for you') }}</span>
-                                <button class="btn btn-sm">{{ __('Turn off') }}</button>
-                            @else
-                                <input type="hidden" name="on" value="1">
-                                <button class="btn btn-sm gap-2 max-sm:shrink max-sm:h-auto max-sm:min-h-10 max-sm:py-2 max-sm:whitespace-normal"><x-icon name="external-link" size="sm" /> {{ __('Open the storefront in safe mode') }}</button>
-                            @endif
-                        </form>
-                    @endif
-                    <p class="text-xs opacity-60">{{ __('For every visitor at once: TORGASH_SAFE_MODE=true in .env.') }}</p>
-                </div>
-            </section>
-
-            {{-- PLAN §45.8: what the update server offers. Installing runs in the
-                 background — backup, maintenance, swap, migrations — and puts
-                 the previous version back by itself when anything fails. --}}
-            <section id="updates" class="scroll-mt-20 card bg-base-100 border border-base-300">
-                <div class="card-body gap-3">
-                    <div class="flex items-center justify-between gap-2">
-                        <h3 class="font-semibold flex items-center gap-2"><x-icon name="refresh-cw" size="sm" /> {{ __('Updates') }}</h3>
-                        <form method="POST" action="{{ route('admin.system.updates.check') }}">
-                            @csrf
-                            <button class="btn btn-sm" @disabled($updates['running'])>{{ __('Check for updates') }}</button>
-                        </form>
-                    </div>
-                    @if ($updates['offer'])
-                        <div class="flex flex-col gap-2">
-                            <div class="font-medium">Torgash {{ $updates['offer']['version'] }}</div>
-                            @if (trim((string) ($updates['offer']['notes'] ?? '')) !== '')
-                                {{-- Markdown, English first and each translation under a `---`: the
-                                     admin's own section (ReleaseNotes). --}}
-                                <div class="text-sm opacity-80 max-h-48 overflow-y-auto prose prose-sm max-w-none">{{ \App\Core\Updates\ReleaseNotes::html((string) $updates['offer']['notes']) }}</div>
-                            @endif
-                            <form method="POST" action="{{ route('admin.system.updates.install') }}">
-                                @csrf
-                                <button class="btn btn-primary btn-sm" @disabled($updates['running'])>
-                                    @if ($updates['running']) <span class="loading loading-spinner loading-xs"></span> @endif
-                                    {{ __('Install :version', ['version' => $updates['offer']['version']]) }}
-                                </button>
-                            </form>
-                            <p class="text-xs opacity-60">{{ __("A backup of the database is made first; if anything fails, the previous version is put back by itself. The way back afterwards, from the server's console:") }} <code>php artisan torgash:update-rollback</code></p>
-                        </div>
-                    @elseif (! empty($updates['last']['error']))
-                        <div class="alert alert-warning text-sm">{{ __('The update server could not be asked: :reason', ['reason' => $updates['last']['error']]) }}</div>
-                    @elseif ($updates['last'])
-                        <div class="text-sm text-success flex items-center gap-2"><x-icon name="circle-check" size="sm" /> {{ __('This is the newest version.') }}</div>
-                    @else
-                        <p class="text-sm opacity-70">{{ __('Not checked yet.') }}</p>
-                    @endif
-                    @if (! empty($updates['last']['checked_at']))
-                        <p class="text-xs opacity-50">{{ __('Checked :when', ['when' => \Illuminate\Support\Carbon::parse($updates['last']['checked_at'])->diffForHumans()]) }} · {{ __('checked by itself once a day') }}@if (! empty($updates['last']['source'])) · <span class="font-mono">{{ $updates['last']['source'] }}</span>@endif</p>
-                    @endif
-                    {{-- By hand, for a shop that cannot download from the update
-                         server (a blocked address, no outgoing connections): the
-                         same signed package, the same checks, the same job. --}}
-                    <details class="text-sm" @if ($updates['incoming'] !== [] || $errors->has('package')) open @endif>
-                        <summary class="cursor-pointer opacity-70">{{ __('Install from a file') }}</summary>
-                        <div class="flex flex-col gap-2 mt-2">
-                            @foreach ($updates['incoming'] as $package)
-                                <div class="flex flex-wrap items-center gap-2 border border-base-300 rounded-box p-2">
-                                    <x-icon :name="$package['error'] ? 'circle-x' : 'package'" size="sm" @class(['text-error' => $package['error']]) />
-                                    <span class="font-mono text-xs">{{ $package['name'] }}</span>
-                                    <span class="text-xs opacity-60">{{ number_format($package['size'] / 1048576, 1) }} MB</span>
-                                    @if ($package['error'])
-                                        <span class="text-xs text-error basis-full">{{ $package['error'] }}</span>
-                                    @elseif (! $package['newer'])
-                                        <span class="text-xs opacity-60">{{ __('Torgash :version — not newer than this one', ['version' => $package['version']]) }}</span>
-                                    @else
-                                        <form method="POST" action="{{ route('admin.system.updates.install_file') }}" class="ms-auto"
-                                              data-confirm="{{ __('Install Torgash :version? A backup is made first; the shop is in maintenance for a minute or two.', ['version' => $package['version']]) }}">
-                                            @csrf
-                                            <input type="hidden" name="name" value="{{ $package['name'] }}">
-                                            <button class="btn btn-primary btn-sm" @disabled($updates['running'])>{{ __('Install :version', ['version' => $package['version']]) }}</button>
-                                        </form>
-                                    @endif
-                                    <form method="POST" action="{{ route('admin.system.updates.delete_file') }}" @class(['ms-auto' => $package['error'] || ! $package['newer']])>
-                                        @csrf @method('DELETE')
-                                        <input type="hidden" name="name" value="{{ $package['name'] }}">
-                                        <button class="btn btn-ghost btn-sm btn-square" title="{{ __('Delete') }}" aria-label="{{ __('Delete') }}"><x-icon name="trash-2" size="sm" /></button>
-                                    </form>
-                                </div>
-                            @endforeach
-                            <form method="POST" action="{{ route('admin.system.updates.upload') }}" enctype="multipart/form-data" class="flex flex-wrap gap-2">
-                                @csrf
-                                <input type="file" name="package" accept=".zip" required class="file-input file-input-sm grow">
-                                <button class="btn btn-sm">{{ __('Upload') }}</button>
-                            </form>
-                            @error('package') <p class="text-xs text-error">{{ $message }}</p> @enderror
-                            <p class="text-xs opacity-60">{{ __('For a shop that cannot reach the update server: download the package (torgash-X.Y.Z.zip, not the -install archive) where it opens, and upload it here. Larger than :limit? Put it into :folder by FTP and reload this page. Only a package signed by the makers of Torgash is accepted.', ['limit' => number_format($updates['upload_limit'] / 1048576).' MB', 'folder' => 'storage/app/update/incoming']) }}</p>
-                        </div>
-                    </details>
-                    <details class="text-sm" @if ($errors->has('address')) open @endif>
-                        <summary class="cursor-pointer opacity-70">{{ __('Update server') }}: <span class="font-mono text-xs">{{ $updates['url'] }}</span></summary>
-                        <form method="POST" action="{{ route('admin.system.updates.server') }}" class="flex flex-col gap-2 mt-2">
-                            @csrf
-                            <div class="flex gap-2">
-                                <input type="url" name="address" value="{{ old('address', $updates['address']) }}" placeholder="{{ $updates['default'] }}" class="input input-sm grow font-mono @error('address') input-error @enderror" aria-label="{{ __('Update server') }}">
-                                <button class="btn btn-sm btn-primary">{{ __('Save') }}</button>
-                            </div>
-                            @error('address') <p class="text-xs text-error">{{ $message }}</p> @enderror
-                            <p class="text-xs opacity-60">{{ __('Blank: the built-in address. Another server can only offer what is signed by the key in this code, so a wrong address stops updates, it cannot install anything.') }}</p>
-                            <p class="text-xs opacity-60">{{ __('A GitHub repository works too — https://github.com/owner/repo: its releases are asked. TORGASH_GITHUB_REPO in .env names one to ask when this address does not answer.') }}</p>
-                        </form>
-                    </details>
-                </div>
-            </section>
-
-            <section class="card bg-base-100 border border-base-300">
-                <div class="card-body gap-3">
-                    <h3 class="font-semibold flex items-center gap-2"><x-icon name="cpu" size="sm" /> PHP</h3>
-                    <dl class="grid grid-cols-[auto_1fr] gap-x-4 gap-y-1 text-sm">
-                        <dt class="opacity-60">{{ __('Memory') }}</dt><dd>{{ $limits['memory_limit'] }}</dd>
-                        <dt class="opacity-60">{{ __('Largest upload') }}</dt><dd>{{ $limits['upload_max_filesize'] }} <span class="opacity-50">/ {{ __('form') }} {{ $limits['post_max_size'] }}</span></dd>
-                        <dt class="opacity-60">{{ __('Time per request') }}</dt><dd>{{ $limits['max_execution_time'] === '0' ? __('unlimited') : $limits['max_execution_time'].' s' }}</dd>
-                        <dt class="opacity-60">max_input_vars</dt><dd>{{ $limits['max_input_vars'] }}</dd>
-                    </dl>
-                    <div class="flex flex-wrap gap-1">
-                        @foreach ($extensions['required'] as $ext => $has)
-                            <span @class(['badge badge-sm', 'badge-ghost' => $has, 'badge-error' => ! $has])>{{ $ext }}</span>
-                        @endforeach
-                        @foreach ($extensions['optional'] as $ext => $has)
-                            <span @class(['badge badge-sm badge-ghost', 'opacity-40 line-through' => ! $has])>{{ $ext }}</span>
-                        @endforeach
-                    </div>
-                    <p class="text-xs opacity-60">{{ __('As the web server runs PHP; the console may have other limits.') }}</p>
                 </div>
             </section>
 
@@ -243,47 +111,227 @@
                         <dt class="opacity-60">{{ __('Cache') }}</dt><dd>{{ $background['cache'] }} · {{ __('sessions') }}: {{ $background['session'] }}</dd>
                         <dt class="opacity-60">{{ __('Mail') }}</dt><dd>{{ $background['mail'] }}</dd>
                     </dl>
-                    <div class="flex flex-wrap gap-2 text-sm">
+                    <div class="flex flex-wrap gap-2 text-sm mt-auto">
                         @can('tasks.manage') <a href="{{ route('admin.tasks') }}" class="link">{{ __('Background tasks') }}</a> @endcan
                         @can('cache.manage') <a href="{{ route('admin.cache') }}" class="link">{{ __('Cache and sessions') }}</a> @endcan
                     </div>
                 </div>
             </section>
+
+            <section class="card bg-base-100 border border-base-300">
+                <div class="card-body gap-3">
+                    <h3 class="font-semibold flex items-center gap-2"><x-icon name="cpu" size="sm" /> PHP</h3>
+                    <dl class="grid grid-cols-[auto_1fr] gap-x-4 gap-y-1 text-sm">
+                        <dt class="opacity-60">{{ __('Memory') }}</dt><dd>{{ $limits['memory_limit'] }}</dd>
+                        <dt class="opacity-60">{{ __('Largest upload') }}</dt><dd>{{ $limits['upload_max_filesize'] }} <span class="opacity-50">/ {{ __('form') }} {{ $limits['post_max_size'] }}</span></dd>
+                        <dt class="opacity-60">{{ __('Time per request') }}</dt><dd>{{ $limits['max_execution_time'] === '0' ? __('unlimited') : $limits['max_execution_time'].' s' }}</dd>
+                        <dt class="opacity-60">max_input_vars</dt><dd>{{ $limits['max_input_vars'] }}</dd>
+                    </dl>
+                    <div class="flex flex-wrap gap-1">
+                        @foreach ($extensions['required'] as $ext => $has)
+                            <span @class(['badge badge-sm', 'badge-ghost' => $has, 'badge-error' => ! $has])>{{ $ext }}</span>
+                        @endforeach
+                        @foreach ($extensions['optional'] as $ext => $has)
+                            <span @class(['badge badge-sm badge-ghost', 'opacity-40 line-through' => ! $has])>{{ $ext }}</span>
+                        @endforeach
+                    </div>
+                    <p class="text-xs opacity-60 mt-auto">{{ __('As the web server runs PHP; the console may have other limits.') }}</p>
+                </div>
+            </section>
         </div>
 
         <div class="grid gap-4 xl:grid-cols-[minmax(0,1fr)_26rem] items-start">
-            <section class="card bg-base-100 border border-base-300">
-                <div class="card-body gap-3">
-                    <h3 class="font-semibold flex items-center gap-2"><x-icon name="database" size="sm" /> {{ __('Database') }}</h3>
-                    @if (! ($database['ok'] ?? false))
-                        <div class="alert alert-error text-sm">{{ $database['error'] ?? '' }}</div>
-                    @else
-                        <dl class="grid grid-cols-[auto_1fr] gap-x-4 gap-y-1 text-sm">
-                            <dt class="opacity-60">{{ __('Name') }}</dt><dd class="font-mono">{{ $database['name'] }}</dd>
-                            <dt class="opacity-60">{{ __('Size') }}</dt><dd>{{ $mb($database['bytes']) }}</dd>
-                            <dt class="opacity-60">{{ __('Locale') }}</dt>
-                            <dd>
-                                {{ $database['provider'] }} · {{ $database['ctype'] }}
-                                <span class="{{ $ok($database['cyrillic_ok']) }}">— {{ $database['cyrillic_ok'] ? __('Cyrillic search works') : __('Cyrillic is not folded') }}</span>
-                            </dd>
-                        </dl>
-                        <div class="overflow-x-auto">
-                            <table class="table table-sm">
-                                <thead><tr><th>{{ __('Largest tables') }}</th><th class="text-end">{{ __('Rows') }}</th><th class="text-end">{{ __('Size') }}</th></tr></thead>
-                                <tbody>
-                                    @foreach ($database['tables'] as $table)
-                                        <tr>
-                                            <td class="font-mono text-xs">{{ $table['name'] }}</td>
-                                            <td class="text-end tabular-nums">{{ number_format($table['rows'], 0, ',', ' ') }}</td>
-                                            <td class="text-end tabular-nums">{{ $mb($table['bytes']) }}</td>
-                                        </tr>
-                                    @endforeach
-                                </tbody>
-                            </table>
+            <div class="flex flex-col gap-4 min-w-0">
+                {{-- PLAN §45.8: what the update server offers. Installing runs in the
+                     background — backup, maintenance, swap, migrations — and puts
+                     the previous version back by itself when anything fails. --}}
+                <section id="updates" class="scroll-mt-20 card bg-base-100 border border-base-300">
+                    <div class="card-body gap-3">
+                        <div class="flex items-center justify-between gap-2">
+                            <h3 class="font-semibold flex items-center gap-2"><x-icon name="refresh-cw" size="sm" /> {{ __('Updates') }}</h3>
+                            <form method="POST" action="{{ route('admin.system.updates.check') }}">
+                                @csrf
+                                <button class="btn btn-sm" @disabled($updates['running'])>{{ __('Check for updates') }}</button>
+                            </form>
                         </div>
-                    @endif
-                </div>
-            </section>
+
+                        @if ($updates['offer'])
+                            <div class="flex flex-wrap items-center justify-between gap-x-4 gap-y-2">
+                                <div>
+                                    <div class="font-medium">Torgash {{ $updates['offer']['version'] }}</div>
+                                    <div class="text-xs opacity-60">{{ __('Installed: :version', ['version' => $updates['current']]) }}</div>
+                                </div>
+                                <form method="POST" action="{{ route('admin.system.updates.install') }}">
+                                    @csrf
+                                    <button class="btn btn-primary btn-sm" @disabled($updates['running'])>
+                                        @if ($updates['running']) <span class="loading loading-spinner loading-xs"></span> @endif
+                                        {{ __('Install :version', ['version' => $updates['offer']['version']]) }}
+                                    </button>
+                                </form>
+                            </div>
+                            @if (trim((string) ($updates['offer']['notes'] ?? '')) !== '')
+                                {{-- Markdown, English first and each translation under a `---`: the
+                                     admin's own section (ReleaseNotes). --}}
+                                <div class="text-sm max-h-80 overflow-y-auto rounded-box bg-base-200/50 px-4 py-3 torgash-rich">{{ \App\Core\Updates\ReleaseNotes::html((string) $updates['offer']['notes']) }}</div>
+                            @endif
+                            <p class="text-xs opacity-60">{{ __("A backup of the database is made first; if anything fails, the previous version is put back by itself. The way back afterwards, from the server's console:") }} <code>php artisan torgash:update-rollback</code></p>
+                        @elseif (! empty($updates['last']['error']))
+                            <div class="alert alert-warning text-sm">{{ __('The update server could not be asked: :reason', ['reason' => $updates['last']['error']]) }}</div>
+                        @elseif ($updates['last'])
+                            <div class="text-sm text-success flex items-center gap-2"><x-icon name="circle-check" size="sm" /> {{ __('This is the newest version.') }}</div>
+                        @else
+                            <p class="text-sm opacity-70">{{ __('Not checked yet.') }}</p>
+                        @endif
+
+                        {{-- Packages already handed in (uploaded, or put in the folder by
+                             FTP) wait here in plain sight: a second, deliberate click. --}}
+                        @if ($updates['incoming'] !== [])
+                            <div class="flex flex-col gap-2 text-sm">
+                                @foreach ($updates['incoming'] as $package)
+                                    <div class="flex flex-wrap items-center gap-2 border border-base-300 rounded-box p-2">
+                                        <x-icon :name="$package['error'] ? 'circle-x' : 'package'" size="sm" @class(['text-error' => $package['error']]) />
+                                        <span class="font-mono text-xs">{{ $package['name'] }}</span>
+                                        <span class="text-xs opacity-60">{{ number_format($package['size'] / 1048576, 1) }} MB</span>
+                                        @if ($package['error'])
+                                            <span class="text-xs text-error basis-full">{{ $package['error'] }}</span>
+                                        @elseif (! $package['newer'])
+                                            <span class="text-xs opacity-60">{{ __('Torgash :version — not newer than this one', ['version' => $package['version']]) }}</span>
+                                        @else
+                                            <form method="POST" action="{{ route('admin.system.updates.install_file') }}" class="ms-auto"
+                                                  data-confirm="{{ __('Install Torgash :version? A backup is made first; the shop is in maintenance for a minute or two.', ['version' => $package['version']]) }}">
+                                                @csrf
+                                                <input type="hidden" name="name" value="{{ $package['name'] }}">
+                                                <button class="btn btn-primary btn-sm" @disabled($updates['running'])>{{ __('Install :version', ['version' => $package['version']]) }}</button>
+                                            </form>
+                                        @endif
+                                        <form method="POST" action="{{ route('admin.system.updates.delete_file') }}" @class(['ms-auto' => $package['error'] || ! $package['newer']])>
+                                            @csrf @method('DELETE')
+                                            <input type="hidden" name="name" value="{{ $package['name'] }}">
+                                            <button class="btn btn-ghost btn-sm btn-square" title="{{ __('Delete') }}" aria-label="{{ __('Delete') }}"><x-icon name="trash-2" size="sm" /></button>
+                                        </form>
+                                    </div>
+                                @endforeach
+                            </div>
+                        @endif
+
+                        {{-- By hand, for a shop that cannot download from the update
+                             server (a blocked address, no outgoing connections): the
+                             same signed package, the same checks, the same job. Rare
+                             errands, so each is a window and not a part of the card. --}}
+                        <div class="flex flex-wrap items-center gap-x-4 gap-y-2 border-t border-base-300 pt-3">
+                            @if (! empty($updates['last']['checked_at']))
+                                <p class="text-xs opacity-60 flex-1 min-w-60">{{ __('Checked :when', ['when' => \Illuminate\Support\Carbon::parse($updates['last']['checked_at'])->diffForHumans()]) }} · {{ __('checked by itself once a day') }}@if (! empty($updates['last']['source'])) · <span class="font-mono break-all">{{ $updates['last']['source'] }}</span>@endif</p>
+                            @endif
+                            <div class="flex flex-wrap gap-2 ms-auto">
+                                <x-modal name="update-file" :title="__('Install from a file')" icon="upload"
+                                         :trigger="__('Install from a file')" trigger-class="btn btn-ghost btn-sm gap-1.5" trigger-icon="upload">
+                                    <form method="POST" action="{{ route('admin.system.updates.upload') }}" enctype="multipart/form-data" class="flex flex-col gap-3">
+                                        @csrf
+                                        <input type="file" name="package" accept=".zip" required class="file-input file-input-bordered w-full" aria-label="{{ __('Install from a file') }}">
+                                        @error('package') <p class="text-xs text-error">{{ $message }}</p> @enderror
+                                        <p class="text-xs opacity-60">{{ __('For a shop that cannot reach the update server: download the package (torgash-X.Y.Z.zip, not the -install archive) where it opens, and upload it here. Larger than :limit? Put it into :folder by FTP and reload this page. Only a package signed by the makers of Torgash is accepted.', ['limit' => number_format($updates['upload_limit'] / 1048576).' MB', 'folder' => 'storage/app/update/incoming']) }}</p>
+                                        <div><button class="btn btn-primary btn-sm gap-1.5"><x-icon name="upload" size="sm" /> {{ __('Upload') }}</button></div>
+                                    </form>
+                                </x-modal>
+                                <x-modal name="update-server" :title="__('Update server')" icon="server"
+                                         :trigger="__('Update server')" trigger-class="btn btn-ghost btn-sm gap-1.5" trigger-icon="server">
+                                    <form method="POST" action="{{ route('admin.system.updates.server') }}" class="flex flex-col gap-3">
+                                        @csrf
+                                        <input type="url" name="address" value="{{ old('address', $updates['address']) }}" placeholder="{{ $updates['default'] }}" class="input input-bordered w-full font-mono text-sm @error('address') input-error @enderror" aria-label="{{ __('Update server') }}">
+                                        @error('address') <p class="text-xs text-error">{{ $message }}</p> @enderror
+                                        <p class="text-xs opacity-60">{{ __('Blank: the built-in address. Another server can only offer what is signed by the key in this code, so a wrong address stops updates, it cannot install anything.') }}</p>
+                                        <p class="text-xs opacity-60">{{ __('A GitHub repository works too — https://github.com/owner/repo: its releases are asked. TORGASH_GITHUB_REPO in .env names one to ask when this address does not answer.') }}</p>
+                                        <div><button class="btn btn-sm btn-primary">{{ __('Save') }}</button></div>
+                                    </form>
+                                </x-modal>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <section class="card bg-base-100 border border-base-300">
+                    <div class="card-body gap-3">
+                        <div class="flex items-center justify-between gap-2">
+                            <h3 class="font-semibold flex items-center gap-2"><x-icon name="shield-alert" size="sm" /> {{ __('Libraries') }}</h3>
+                            <form method="POST" action="{{ route('admin.system.audit') }}">
+                                @csrf
+                                <button class="btn btn-sm" @disabled($auditRunning)>
+                                    @if ($auditRunning) <span class="loading loading-spinner loading-xs"></span> @endif
+                                    {{ __('Check now') }}
+                                </button>
+                            </form>
+                        </div>
+                        <p class="text-xs opacity-60">{{ __('Asks the public advisories database whether any library the engine is built on has a known vulnerability.') }}</p>
+                        @if (! $audit)
+                            <p class="text-sm opacity-70">{{ __('Not checked yet.') }}</p>
+                        @elseif (! empty($audit['error']))
+                            <div class="alert alert-warning text-sm">{{ __('The check could not be made.') }} <span class="opacity-70">{{ $audit['error'] }}</span></div>
+                        @elseif ($advisories === [])
+                            <div class="text-sm text-success flex items-center gap-2"><x-icon name="circle-check" size="sm" /> {{ __('No known vulnerabilities.') }}</div>
+                        @else
+                            <div class="text-sm text-warning flex items-center gap-2"><x-icon name="triangle-alert" size="sm" class="shrink-0" /> {{ __('Known vulnerabilities: :count. Libraries affected: :packages.', ['count' => count($audit['advisories']), 'packages' => count($advisories)]) }}</div>
+                            {{-- One row per library, with the version here and the one that closes it —
+                                 not the ranges of every branch the project ever had. --}}
+                            <div class="rounded-box border border-base-300 divide-y divide-base-300">
+                                @foreach ($advisories as $library)
+                                    <div class="grid gap-x-4 gap-y-1.5 p-3 md:grid-cols-[15rem_minmax(0,1fr)]">
+                                        <div class="min-w-0">
+                                            <div class="font-mono text-xs break-words">{{ $library['package'] }}</div>
+                                            @if ($library['installed'])
+                                                <div class="text-xs opacity-60 mt-0.5">{{ __('Installed: :version', ['version' => $library['installed']]) }}@if ($library['fixed']) · {{ __('fixed in :version', ['version' => $library['fixed']]) }}@endif</div>
+                                            @endif
+                                        </div>
+                                        <ul class="text-sm flex flex-col gap-1.5 min-w-0">
+                                            @foreach ($library['advisories'] as $advisory)
+                                                <li>
+                                                    @if ($advisory['link'])<a href="{{ $advisory['link'] }}" target="_blank" rel="noopener" class="link link-hover">{{ $advisory['title'] }}</a>@else{{ $advisory['title'] }}@endif
+                                                    @if ($advisory['cve'] !== '') <span class="text-xs opacity-60 whitespace-nowrap">{{ $advisory['cve'] }}</span> @endif
+                                                </li>
+                                            @endforeach
+                                        </ul>
+                                    </div>
+                                @endforeach
+                            </div>
+                        @endif
+                        @if ($audit)
+                            <p class="text-xs opacity-60">{{ __('Checked :when', ['when' => \Illuminate\Support\Carbon::parse($audit['checked_at'])->diffForHumans()]) }}</p>
+                        @endif
+                    </div>
+                </section>
+
+                <section class="card bg-base-100 border border-base-300">
+                    <div class="card-body gap-3">
+                        <h3 class="font-semibold flex items-center gap-2"><x-icon name="database" size="sm" /> {{ __('Database') }}</h3>
+                        @if (! ($database['ok'] ?? false))
+                            <div class="alert alert-error text-sm">{{ $database['error'] ?? '' }}</div>
+                        @else
+                            <dl class="grid grid-cols-[auto_1fr] gap-x-4 gap-y-1 text-sm">
+                                <dt class="opacity-60">{{ __('Name') }}</dt><dd class="font-mono">{{ $database['name'] }}</dd>
+                                <dt class="opacity-60">{{ __('Size') }}</dt><dd>{{ $mb($database['bytes']) }}</dd>
+                                <dt class="opacity-60">{{ __('Locale') }}</dt>
+                                <dd>
+                                    {{ $database['provider'] }} · {{ $database['ctype'] }}
+                                    <span class="{{ $ok($database['cyrillic_ok']) }}">— {{ $database['cyrillic_ok'] ? __('Cyrillic search works') : __('Cyrillic is not folded') }}</span>
+                                </dd>
+                            </dl>
+                            <div class="overflow-x-auto">
+                                <table class="table table-sm">
+                                    <thead><tr><th>{{ __('Largest tables') }}</th><th class="text-end">{{ __('Rows') }}</th><th class="text-end">{{ __('Size') }}</th></tr></thead>
+                                    <tbody>
+                                        @foreach ($database['tables'] as $table)
+                                            <tr>
+                                                <td class="font-mono text-xs">{{ $table['name'] }}</td>
+                                                <td class="text-end tabular-nums">{{ number_format($table['rows'], 0, ',', ' ') }}</td>
+                                                <td class="text-end tabular-nums">{{ $mb($table['bytes']) }}</td>
+                                            </tr>
+                                        @endforeach
+                                    </tbody>
+                                </table>
+                            </div>
+                        @endif
+                    </div>
+                </section>
+            </div>
 
             <div class="flex flex-col gap-4">
                 <section class="card bg-base-100 border border-base-300">
@@ -330,44 +378,35 @@
                             <div class="alert alert-warning text-sm">{{ __('The last build failed.') }} <span class="opacity-70">{{ $styles['last']['error'] }}</span></div>
                         @endif
                         @if (! empty($styles['last']['at']))
-                            <p class="text-xs opacity-50">{{ __('Built :when', ['when' => \Illuminate\Support\Carbon::parse($styles['last']['at'])->diffForHumans()]) }}</p>
+                            <p class="text-xs opacity-60">{{ __('Built :when', ['when' => \Illuminate\Support\Carbon::parse($styles['last']['at'])->diffForHumans()]) }}</p>
                         @endif
                     </div>
                 </section>
 
+                {{-- The storefront without what the shop added to it, for this
+                     person only (App\Core\Support\SafeMode) — the way to look at
+                     a page a theme, its CSS or a snippet has broken. --}}
                 <section class="card bg-base-100 border border-base-300">
                     <div class="card-body gap-3">
-                        <div class="flex items-center justify-between gap-2">
-                            <h3 class="font-semibold flex items-center gap-2"><x-icon name="shield-alert" size="sm" /> {{ __('Libraries') }}</h3>
-                            <form method="POST" action="{{ route('admin.system.audit') }}">
-                                @csrf
-                                <button class="btn btn-sm" @disabled($auditRunning)>
-                                    @if ($auditRunning) <span class="loading loading-spinner loading-xs"></span> @endif
-                                    {{ __('Check now') }}
-                                </button>
-                            </form>
-                        </div>
-                        <p class="text-xs opacity-60">{{ __('Asks the public advisories database whether any library the engine is built on has a known vulnerability.') }}</p>
-                        @if (! $audit)
-                            <p class="text-sm opacity-70">{{ __('Not checked yet.') }}</p>
-                        @elseif (! empty($audit['error']))
-                            <div class="alert alert-warning text-sm">{{ __('The check could not be made.') }} <span class="opacity-70">{{ $audit['error'] }}</span></div>
-                        @elseif (empty($audit['advisories']))
-                            <div class="text-sm text-success flex items-center gap-2"><x-icon name="circle-check" size="sm" /> {{ __('No known vulnerabilities.') }}</div>
+                        <h3 class="font-semibold flex items-center gap-2"><x-icon name="shield" size="sm" /> {{ __('Safe mode') }}</h3>
+                        <p class="text-sm opacity-70">{{ __('The storefront in the engine\'s own theme, without your own CSS and code snippets — for you alone, customers still see the shop as it is. When a page broke after an edit, this tells you whether the theme or a snippet is to blame.') }}</p>
+                        @if (\App\Core\Support\SafeMode::forced())
+                            <div class="alert alert-warning text-sm py-2"><x-icon name="triangle-alert" size="sm" /> {{ __('TORGASH_SAFE_MODE in .env has it on for every visitor.') }}</div>
                         @else
-                            <ul class="text-sm flex flex-col gap-2">
-                                @foreach ($audit['advisories'] as $advisory)
-                                    <li>
-                                        <span class="font-mono text-xs">{{ $advisory['package'] }}</span>
-                                        <div>@if ($advisory['link'])<a href="{{ $advisory['link'] }}" target="_blank" rel="noopener" class="link">{{ $advisory['title'] }}</a>@else{{ $advisory['title'] }}@endif</div>
-                                        <div class="text-xs opacity-60">{{ $advisory['cve'] }} · {{ $advisory['affected'] }}</div>
-                                    </li>
-                                @endforeach
-                            </ul>
+                            <form method="POST" action="{{ route('admin.safe_mode') }}" class="flex flex-wrap gap-2">
+                                @csrf
+                                @if (session(\App\Core\Support\SafeMode::SESSION) === true)
+                                    <input type="hidden" name="on" value="0">
+                                    <input type="hidden" name="back" value="{{ url()->current() }}">
+                                    <span class="badge badge-sm badge-warning">{{ __('On for you') }}</span>
+                                    <button class="btn btn-sm">{{ __('Turn off') }}</button>
+                                @else
+                                    <input type="hidden" name="on" value="1">
+                                    <button class="btn btn-sm gap-2 max-sm:shrink max-sm:h-auto max-sm:min-h-10 max-sm:py-2 max-sm:whitespace-normal"><x-icon name="external-link" size="sm" /> {{ __('Open the storefront in safe mode') }}</button>
+                                @endif
+                            </form>
                         @endif
-                        @if ($audit)
-                            <p class="text-xs opacity-50">{{ __('Checked :when', ['when' => \Illuminate\Support\Carbon::parse($audit['checked_at'])->diffForHumans()]) }}</p>
-                        @endif
+                        <p class="text-xs opacity-60">{{ __('For every visitor at once: TORGASH_SAFE_MODE=true in .env.') }}</p>
                     </div>
                 </section>
 
@@ -390,4 +429,9 @@
         </div>
     </div>
     <form id="system-jobs-prune" method="POST" action="{{ route('admin.system.jobs.prune') }}" class="hidden">@csrf</form>
+
+    {{-- A form in a window that came back with an error opens its window again. --}}
+    @if ($errors->has('package') || $errors->has('address'))
+        <script nonce="{{ csp_nonce() }}">document.getElementById('{{ $errors->has('package') ? 'modal-update-file' : 'modal-update-server' }}')?.showModal();</script>
+    @endif
 @endsection
