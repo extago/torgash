@@ -128,6 +128,13 @@ $request))`. It runs now, is recorded with the copy, and runs again BEFORE
 the parts on every serve, so the parts see what it did. Never from inside a
 part (that part is then drawn for every visitor).
 
+A counter it moves is written after the response (`defer()`,
+`Popularity::viewed()`: `views_count` and `popularity` in one statement).
+Nobody needs the number on this page, and a commit in front of the visitor is
+a large part of what serving a copy costs. What the page and the next one must
+see stays in front — the session guard "once per session" is written at once.
+The columns are still declared `unseen`, so the late write throws nothing away.
+
 ## Throwing copies away
 
 - Every write statement (`Writes`, from `DB::listen`) throws EVERY copy away

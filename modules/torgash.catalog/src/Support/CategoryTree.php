@@ -255,7 +255,7 @@ class CategoryTree
         return $this->children = $map;
     }
 
-    /** For the admin, which edits the tree and then reads it back in the same request. */
+    /** The tree changed under it: a Category model saved or deleted says so itself; a write around the model has to. */
     public function flush(): void
     {
         $this->all = null;

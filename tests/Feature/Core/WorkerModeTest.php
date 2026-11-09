@@ -50,6 +50,26 @@ class WorkerModeTest extends TestCase
         $this->assertCount(4, array_unique($nonces), 'a CSP nonce is per request');
     }
 
+    /**
+     * A product's view is written once the response has gone (`defer()`,
+     * Popularity::viewed): under FrankenPHP it is the worker that has to end
+     * the request the way a web server would, or nothing runs what was put off.
+     */
+    public function test_what_a_page_put_off_is_done_by_the_worker(): void
+    {
+        $product = Product::create([
+            'sku' => 'WORKER-VIEW', 'name' => ['en' => 'Looked at'], 'slug' => 'worker-view',
+            'price' => 100_00, 'stock' => 5, 'status' => 'active',
+        ]);
+
+        $responses = $this->serveInWorker([
+            $this->workerGet('http://localhost/product/worker-view', ['User-Agent' => 'Mozilla/5.0 Chrome/131.0']),
+        ]);
+
+        $this->assertSame(200, $responses[0]->getStatusCode());
+        $this->assertSame(1, (int) DB::table('m_catalog_products')->where('id', $product->id)->value('views_count'));
+    }
+
     public function test_a_hook_listener_added_by_a_request_does_not_outlive_it(): void
     {
         $this->workerRoute('/__worker/listen', function () {

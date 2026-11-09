@@ -130,6 +130,22 @@ class SpeedTest extends TestCase
         $this->assertSame(0, DB::table('m_speed_queries')->where('sql', 'like', '%m_speed_%')->count());
     }
 
+    /** What runs once the response has gone was not waited for: it is no part of the page. */
+    public function test_what_was_put_off_until_after_the_response_is_not_charged_to_the_page(): void
+    {
+        Route::get('/speed-later', function () {
+            defer(fn () => DB::select('select ? as later', [1]));
+
+            return 'ok';
+        })->name('speed.later');
+        app('router')->getRoutes()->refreshNameLookups();
+
+        $this->get('http://localhost/speed-later')->assertOk();
+
+        $this->assertSame(1, DB::table('m_speed_routes')->where('route', 'speed.later')->count(), 'the page itself was measured');
+        $this->assertSame(0, DB::table('m_speed_queries')->where('sql', 'select ? as later')->count());
+    }
+
     // ------------------------------------------------------------------ hooks
 
     /** A listener's OWN time: what a hook it fired in turn costs is not its. */

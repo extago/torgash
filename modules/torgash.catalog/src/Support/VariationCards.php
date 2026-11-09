@@ -39,14 +39,24 @@ class VariationCards
             ->exists();
     }
 
-    /** The card a product row belongs to, as an SQL expression over `$table`. */
+    /**
+     * The card a product row belongs to, as an SQL expression over `$table`.
+     *
+     * The `card` characteristics are named once for the whole statement
+     * (`any(array(…))` is worked out one time) and not joined row by row,
+     * which looked up every characteristic of every product: on a live shop
+     * of 808 products that was half of a listing's query, 15.7 ms against 7.6.
+     * Adding all the products' keys up ahead of the query came to the same
+     * there (6.6) and was worse inside one category (3.1 against 2.1), because
+     * it works the whole catalogue out to answer about thirty products.
+     */
     public static function keySql(string $table = 'm_catalog_products'): string
     {
         return "case when coalesce({$table}.variation_group, '') = '' then 'p' || {$table}.id::text "
             ."else 'g' || {$table}.variation_group || '|' || coalesce(("
             ."select string_agg(pf.feature_id::text || ':' || coalesce(pf.feature_value_id::text, lower(pf.value_text)), ',' order by pf.feature_id, pf.feature_value_id) "
-            .'from m_catalog_product_features pf join m_catalog_features f on f.id = pf.feature_id '
-            ."where pf.product_id = {$table}.id and f.purpose = 'variation' and f.variation_role = 'card'"
+            .'from m_catalog_product_features pf '
+            ."where pf.product_id = {$table}.id and pf.feature_id = any(array(select f.id from m_catalog_features f where f.purpose = 'variation' and f.variation_role = 'card'))"
             ."), '') end";
     }
 
@@ -176,7 +186,11 @@ class VariationCards
             return null;
         }
 
+        // The group first: a key begins with it, so nothing outside can match,
+        // and the index finds a dozen rows instead of the key being worked
+        // out for the whole catalogue (3.8 ms against 0.7, measured).
         $head = $this->indexable()
+            ->where('variation_group', $product->variation_group)
             ->whereRaw(self::keySql().' = (select '.self::keySql('me').' from m_catalog_products me where me.id = ?)', [$product->id])
             ->orderBy('id')
             ->first();

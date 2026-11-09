@@ -311,9 +311,6 @@ class CatalogServiceProvider extends ServiceProvider
                 $seen = (array) session('viewed_products', []);
 
                 if (! in_array($id, $seen, true)) {
-                    // A plain query: a view is not an edit of the product, and
-                    // must not move updated_at or wake the model's listeners.
-                    DB::table('m_catalog_products')->where('id', $id)->increment('views_count');
                     app(Support\Popularity::class)->viewed($id, $request);
                     session(['viewed_products' => array_slice([...$seen, $id], -200)]);
                 }

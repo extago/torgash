@@ -12,6 +12,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Torgash\Catalog\Support\CategoryTree;
 use Torgash\Catalog\Support\KeepsAddress;
 
 class Category extends Model implements PageSubject
@@ -49,6 +50,16 @@ class Category extends Model implements PageSubject
     public static function auditRevertible(): bool
     {
         return true;
+    }
+
+    protected static function booted(): void
+    {
+        // The tree is read once per request, and whoever has just moved a
+        // row is the next to ask where it stands.
+        $forget = static fn () => app(CategoryTree::class)->flush();
+
+        static::saved($forget);
+        static::deleted($forget);
     }
 
     /** @return array<string, string> status => its admin label */
@@ -190,21 +201,27 @@ class Category extends Model implements PageSubject
 
     /**
      * The chain from the root down to this category's parent, outermost first
-     * — what a breadcrumb trail is made of. Walks `parent` rather than a
-     * materialised path: the tree is a handful of levels deep and a shop edits
-     * it by dragging rows about, which a stored path would have to be kept in
-     * step with.
+     * — what a breadcrumb trail is made of. Read off CategoryTree rather than
+     * a materialised path: a shop edits the tree by dragging rows about, which
+     * a stored path would have to be kept in step with. And not by walking
+     * `parent`, which was a query per level per copy of the category — a
+     * template for a picture's alt text asks for every picture on the page.
      *
      * @return list<self>
      */
     public function ancestors(): array
     {
-        $chain = [];
-        $cursor = $this->parent;
+        if (! $this->parent_id) {
+            return [];
+        }
 
-        while ($cursor) {
-            array_unshift($chain, $cursor);
-            $cursor = $cursor->parent;
+        $tree = app(CategoryTree::class);
+        $chain = [];
+
+        foreach ($tree->ancestors((int) $this->parent_id, includeSelf: true) as $id) {
+            if ($category = $tree->find($id)) {
+                array_unshift($chain, $category);
+            }
         }
 
         return $chain;

@@ -46,24 +46,32 @@ class Popularity
     protected const BOTS = '/bot|crawl|spider|slurp|search|fetch|monitor|preview|scan|curl|wget|python|headless/i';
 
     /**
-     * A person has looked at a product page.
+     * Somebody has looked at a product page: its `views_count` goes up, and
+     * when it was a person, its popularity.
      *
-     * Called from the same place, and under the same once-per-session guard,
-     * as `views_count` — the two count the same event, and a second guard
-     * would eventually disagree with the first. `views_count` itself keeps its
-     * old behaviour, bots included: it is an existing statistic, and quietly
-     * changing what it counts would move the thresholds of every label already
-     * written against it.
+     * One write for the two, under the one once-per-session guard of the
+     * caller — they count the same event, and a second guard would eventually
+     * disagree with the first. `views_count` keeps its old behaviour, bots
+     * included: it is an existing statistic, and quietly changing what it
+     * counts would move the thresholds of every label already written against
+     * it.
+     *
+     * Written once the response has gone (`defer()`): nobody needs the number
+     * on this page, and as two commits in front of the visitor it cost up to
+     * 17 ms on a live shop, on a page served from a copy as well. A worker
+     * dying in between loses a view, which a counter can afford.
      */
     public function viewed(Product|int $product, Request $request): void
     {
+        $id = (int) ($product instanceof Product ? $product->id : $product);
         $points = (int) setting('torgash.catalog', 'popularity_view_points', 1);
+        $counts = ['views_count' => 1];
 
-        if ($points <= 0 || $this->isBot($request)) {
-            return;
+        if ($points > 0 && ! $this->isBot($request)) {
+            $counts['popularity'] = $points;
         }
 
-        $this->award([(int) ($product instanceof Product ? $product->id : $product)], $points);
+        defer(fn () => DB::table('m_catalog_products')->where('id', $id)->incrementEach($counts));
     }
 
     /**

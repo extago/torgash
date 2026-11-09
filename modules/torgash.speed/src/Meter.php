@@ -48,9 +48,15 @@ class Meter
 
     public function __construct(protected HookBus $hooks) {}
 
+    /**
+     * The request being measured, while it is: not once the clock has stopped
+     * — what runs after the response (`defer()`, terminating callbacks) was
+     * not waited for, and charged to the page its parts would add up to more
+     * than the whole.
+     */
     public function profile(): ?Profile
     {
-        return $this->recording ? null : $this->profile;
+        return $this->recording || $this->profile?->endNs !== null ? null : $this->profile;
     }
 
     /**

@@ -93,6 +93,46 @@ class LandingsTest extends TestCase
         $this->assertStringNotContainsString('ONLY-PICKED', $this->page($inGaming));
     }
 
+    /** A landing is its HTML and CSS: on a live shop all of them together were 763 KB per product page. */
+    public function test_a_page_reads_the_bodies_of_only_the_landings_it_shows(): void
+    {
+        $here = $this->landing(['space_top' => 'large', 'html' => ['en' => '<p>SHOWN-HERE</p>'], 'css' => '.here { color: red }']);
+        $elsewhere = $this->landing(['html' => ['en' => '<p>SHOWN-ELSEWHERE</p>']]);
+        DB::table('m_landing_products')->insert(['landing_id' => $elsewhere->id, 'product_id' => $this->product('LND-5', '<p>x</p>')->id, 'excluded' => false]);
+        app(Landings::class)->flush();
+
+        DB::enableQueryLog();
+        $found = app(Landings::class)->for($this->product);
+        app(Landings::class)->for($this->product('LND-6', '<p>x</p>'));
+        $reads = array_values(array_filter(DB::getQueryLog(), fn (array $q) => str_starts_with($q['query'], 'select') && str_contains($q['query'], 'from "m_landings"')));
+        DB::disableQueryLog();
+
+        $this->assertCount(2, $reads, 'who sees what once, and the body once however many products show it');
+        $this->assertStringNotContainsString('html', $reads[0]['query']);
+        $this->assertStringNotContainsString('*', $reads[0]['query']);
+        $this->assertStringEndsWith('in ('.$here->id.')', $reads[1]['query']);
+
+        // What is handed out is whole.
+        $this->assertSame('<p>SHOWN-HERE</p>', $found['after'][0]->t('html'));
+        $this->assertSame('.here { color: red }', $found['after'][0]->css);
+        $this->assertSame('large', $found['after'][0]->space_top);
+    }
+
+    public function test_a_product_that_shows_no_landing_reads_no_body(): void
+    {
+        $elsewhere = $this->landing(['html' => ['en' => '<p>SHOWN-ELSEWHERE</p>']]);
+        DB::table('m_landing_products')->insert(['landing_id' => $elsewhere->id, 'product_id' => $this->product('LND-7', '<p>x</p>')->id, 'excluded' => false]);
+        app(Landings::class)->flush();
+
+        DB::enableQueryLog();
+        $found = app(Landings::class)->for($this->product);
+        $reads = array_filter(DB::getQueryLog(), fn (array $q) => str_starts_with($q['query'], 'select') && str_contains($q['query'], 'from "m_landings"'));
+        DB::disableQueryLog();
+
+        $this->assertSame([], $found);
+        $this->assertCount(1, $reads);
+    }
+
     public function test_switched_off_and_dates_and_a_staff_preview(): void
     {
         $off = $this->landing(['enabled' => false, 'html' => ['en' => '<p>SWITCHED-OFF</p>']]);

@@ -50,7 +50,11 @@ this file is the reasoning. Read it before changing anything it covers.
   deciding at either measured nothing or measured from the middle. A worker's
   request is armed when Octane hands it over (`RequestReceived` →
   `Meter::restart()`): what the worker's start armed, or a request that died
-  before it terminated left, must not be its clock. Under tests
+  before it terminated left, must not be its clock. The clock stops when the
+  response is built (`RequestHandled`), and what runs after it — `defer()`,
+  terminating callbacks — is not charged to the page (`Meter::profile()` is
+  null from then on): nobody waited for it, and the parts must not add up to
+  more than the whole. Under tests
   it measures only when `torgash.speed.measure_in_tests` is set, or the random
   sample would make query-counting tests flaky. The dashboard is extensible
   through `core.admin.dashboard` (HTML).

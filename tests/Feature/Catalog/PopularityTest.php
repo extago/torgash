@@ -4,6 +4,10 @@ namespace Tests\Feature\Catalog;
 
 use App\Core\Settings\SettingsManager;
 use App\Models\User;
+use Illuminate\Database\Events\QueryExecuted;
+use Illuminate\Foundation\Http\Events\RequestHandled;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Event;
 use Tests\TestCase;
 use Torgash\Checkout\Models\Order;
 use Torgash\Catalog\Models\Category;
@@ -47,6 +51,34 @@ class PopularityTest extends TestCase
         // keeps the points honest too, because it is the same guard.
         $this->browse('http://localhost/product/pop-1');
         $this->assertSame(3, $product->fresh()->popularity);
+    }
+
+    /**
+     * Both counters in one statement, once the response is done: written in
+     * front of the visitor they were two commits, up to 17 ms on a live shop,
+     * on a page served from a copy as well.
+     */
+    public function test_a_view_is_one_write_and_waits_for_the_response(): void
+    {
+        $product = $this->product('POP-5', 'Looked at late');
+
+        $this->settings(['popularity_view_points' => 2]);
+
+        $whenBuilt = null;
+        Event::listen(RequestHandled::class, function () use ($product, &$whenBuilt) {
+            $whenBuilt = $product->fresh()->views_count;
+        });
+
+        $writes = 0;
+        DB::listen(function (QueryExecuted $query) use (&$writes) {
+            $writes += str_starts_with($query->sql, 'update "m_catalog_products"') ? 1 : 0;
+        });
+
+        $this->browse('http://localhost/product/pop-5');
+
+        $this->assertSame(0, $whenBuilt, 'nothing was written while the visitor waited');
+        $this->assertSame(1, $writes, 'both counters, one statement');
+        $this->assertSame([1, 2], [$product->fresh()->views_count, $product->fresh()->popularity]);
     }
 
     /**

@@ -11,6 +11,10 @@ this file is the reasoning. Read it before changing anything it covers.
   impossible one, and a walk that trusts the data hangs the request. Depth lives
   in the service and is never assigned to the model — an Eloquent model has no
   spare properties, and an attribute becomes a column on the next `save()`.
+  `Category::ancestors()` is read off it too (walking `parent` was a query per
+  level per copy of the category, and an image's alt template asks per picture:
+  27–50 queries on a live shop's product page); so a Category model saved or
+  deleted flushes the tree itself, and a write around the model has to say so.
   A parent category page lists its children and shows the products of the whole
   subtree; every rule that names a category (promotions, shipping, labels,
   price-type markups, motivation cards, display rules) takes the subtree; every
@@ -230,6 +234,12 @@ this file is the reasoning. Read it before changing anything it covers.
   `choice` — chosen on the card (Size, Insole). A product's card is its group
   plus its answers on the `card` characteristics, worked out in SQL each time
   (`Support\VariationCards::keySql()`, never stored, so nothing goes stale).
+  The `card` characteristics are named once per statement
+  (`feature_id = any(array(select …))`), never joined per row: measured on a
+  shop of 808 products, 15.7 ms against 7.6 for the query that collapses the
+  whole catalogue. Summing every product's key ahead of the query matched that
+  and was slower inside one category. A lookup of one member's card narrows by
+  `variation_group` first (`canonicalFor()`, 3.8 ms against 0.7).
   `Listing::applyFilters()` ends in `VariationCards::collapse()` — every
   listing, its count and its pages show ONE member per card: the best of
   those that passed the filters (so "size 42" opens the card at 42), orderable

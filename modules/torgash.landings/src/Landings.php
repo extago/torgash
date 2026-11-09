@@ -14,7 +14,10 @@ use Torgash\Landings\Models\Landing;
  * The table is small and every product page asks, so the enabled landings
  * are read once per request (a registered singleton, forgotten between
  * requests — PerRequest), and a product costs one query: its own rows in
- * `m_landing_products`.
+ * `m_landing_products`. Small in rows only: a landing is its HTML and CSS,
+ * so who sees what is decided from the columns that say so, and the bodies
+ * are read for the ones shown (28 landings on a live shop were 763 KB per
+ * product page, nearly all of it for landings the page did not show).
  *
  * A member of staff who may edit landings can look at one on any product
  * before it is switched on: `?landing_preview=<id>` puts it on the page
@@ -22,8 +25,14 @@ use Torgash\Landings\Models\Landing;
  */
 class Landings
 {
-    /** @var Collection<int, Landing>|null */
+    /** What deciding who sees a landing reads (Landing::isRunning(), appliesTo(), the order they stand in). */
+    protected const DECIDING = ['id', 'enabled', 'placement', 'sort', 'starts_at', 'ends_at', 'rules', 'rules_match'];
+
+    /** @var Collection<int, Landing>|null without their bodies: never handed out */
     protected ?Collection $enabled = null;
+
+    /** @var array<int, Landing> landing id => the whole row, once one has been shown */
+    protected array $whole = [];
 
     /** @var array<int, true>|null landing id => it has products picked by hand */
     protected ?array $picking = null;
@@ -51,10 +60,11 @@ class Landings
         $context = app(DisplayRules::class)->context(['product' => $product]);
         $preview = $this->previewed();
 
-        $shown = $this->enabled()
+        $shown = $this->whole($this->enabled()
             ->filter(fn (Landing $landing) => $landing->isRunning()
                 && $landing->appliesTo($rows[$landing->id] ?? null, isset($this->picking()[$landing->id]), $context))
-            ->keyBy('id');
+            ->pluck('id')
+            ->all());
 
         if ($preview !== null) {
             $shown[$preview->id] = $preview;
@@ -72,7 +82,24 @@ class Landings
     /** @return Collection<int, Landing> */
     protected function enabled(): Collection
     {
-        return $this->enabled ??= Landing::query()->where('enabled', true)->get();
+        return $this->enabled ??= Landing::query()->where('enabled', true)->get(self::DECIDING);
+    }
+
+    /**
+     * The landings to show, with their bodies, keyed by id.
+     *
+     * @param  list<int>  $ids
+     * @return Collection<int, Landing>
+     */
+    protected function whole(array $ids): Collection
+    {
+        $missing = array_diff($ids, array_keys($this->whole));
+
+        if ($missing !== []) {
+            $this->whole += Landing::query()->whereKey($missing)->get()->keyBy('id')->all();
+        }
+
+        return collect(array_intersect_key($this->whole, array_flip($ids)));
     }
 
     /** @return array<int, true> */
@@ -96,6 +123,7 @@ class Landings
     public function flush(): void
     {
         $this->enabled = null;
+        $this->whole = [];
         $this->picking = null;
         $this->for = [];
     }
