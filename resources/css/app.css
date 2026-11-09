@@ -1010,6 +1010,16 @@ html:has([data-sections-nav]) .torgash-buy-mini { top: calc(var(--torgash-header
 .torgash-tab:has(:checked) { opacity: 1; border-bottom-color: currentColor; }
 .torgash-tab:has(:focus-visible) { outline: 2px solid var(--color-primary); outline-offset: 2px; border-radius: 2px; }
 .torgash-tab-panel { display: none; }
+/* One name in the row is a heading, not a choice — the row a tab that waits
+   (ZoneRenderer) joins only for a visitor with something under it. Looks as
+   the heading of a lone tab does (views/tabs). */
+.torgash-tabs-bar:not(:has(.torgash-tab ~ .torgash-tab)) { border-bottom: 0; }
+.torgash-tabs-bar:not(:has(.torgash-tab ~ .torgash-tab)) > .torgash-tab {
+    margin: 0; padding: 0; border-bottom: 0; opacity: 1; cursor: default;
+    font-size: 1.125rem; line-height: 1.75rem; font-weight: 600;
+}
+/* And no name at all: a row of one tab that waits, with nothing under it. */
+section:has(> .torgash-tabs):not(:has(.torgash-tab)) { display: none; }
 .torgash-tabs:has(> .torgash-tabs-bar input[value="0"]:checked) > [data-tab-panel="0"],
 .torgash-tabs:has(> .torgash-tabs-bar input[value="1"]:checked) > [data-tab-panel="1"],
 .torgash-tabs:has(> .torgash-tabs-bar input[value="2"]:checked) > [data-tab-panel="2"],

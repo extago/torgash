@@ -2,6 +2,7 @@
 
 namespace Torgash\Pages;
 
+use App\Core\Access\ImpersonateCustomer;
 use App\Core\Storefronts\LocaleResolver;
 use App\Core\Storefronts\StorefrontRoutes;
 use Illuminate\Support\Facades\Route;
@@ -223,11 +224,11 @@ class PagesServiceProvider extends ServiceProvider
         // `page.cache`: kept ready for guests (PLAN §61) — an address that is
         // no page answers 404 and is simply not kept.
         foreach (LocaleResolver::routePrefixes() as $locale) {
-            Route::middleware('web')->prefix($locale)->name($locale.'.')
+            Route::middleware(['web', ImpersonateCustomer::class])->prefix($locale)->name($locale.'.')
                 ->group(fn () => Route::fallback([PageController::class, 'show'])->name('pages.page')->middleware('page.cache:page'));
         }
 
-        Route::middleware('web')
+        Route::middleware(['web', ImpersonateCustomer::class])
             ->group(fn () => Route::fallback([PageController::class, 'show'])->name('pages.page')->middleware('page.cache:page'));
 
         page_cache()->kind('page', 'Pages');

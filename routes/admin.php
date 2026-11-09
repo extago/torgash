@@ -235,6 +235,12 @@ Route::middleware(['auth', 'can:admin.access'])->group(function () {
             ->except(['show']);
     });
 
+    // The storefront through a customer's eyes (App\Core\Access\Impersonation).
+    // Its own permission to go in; nothing but being here to come back out.
+    Route::post('customers/{customer}/impersonate', [\App\Http\Controllers\Admin\CustomerImpersonationController::class, 'start'])
+        ->middleware('can:'.\App\Core\Access\Impersonation::PERMISSION)->name('customers.impersonate');
+    Route::post('impersonation/stop', [\App\Http\Controllers\Admin\CustomerImpersonationController::class, 'stop'])->name('impersonation.stop');
+
     Route::middleware('can:customers.manage')->group(function () {
         Route::get('customers', [CustomersController::class, 'index'])->name('customers.index');
         Route::get('customers/create', [CustomersController::class, 'create'])->name('customers.create');

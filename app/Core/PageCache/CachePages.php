@@ -227,31 +227,63 @@ class CachePages
         $headers = $response->headers->allPreserveCaseWithoutCookies();
         unset($headers['Date'], $headers['Content-Length'], $headers['X-Torgash-Cache']);
 
-        try {
-            $stored = $this->cache->store(
-                $capture->address,
-                $capture->kind,
-                $this->cache->varyValues($request),
-                $cut['stored'],
-                [
-                    'id' => $capture->id,
-                    'headers' => $headers,
-                    'holes' => $capture->holes(),
-                    'visits' => $capture->visits(),
-                ],
-                $capture->tags(),
-                $capture->expires($this->cache->minutes()),
-                $capture->counters['generation'],
-                $capture->counters['changes'],
-            );
-        } catch (Throwable $e) {
-            report($e);
-            $stored = false;
-        }
-
         $response->setContent($this->forVisitor($capture, $cut['visitor']));
 
-        return $this->marked($response, $stored ? 'stored' : 'miss', $stored ? null : 'changed while drawn');
+        try {
+            if ($this->cache->counters()['changes'] !== $capture->counters['changes']) {
+                return $this->marked($response, 'miss', 'changed while drawn');
+            }
+
+            $this->storeAfterResponse($capture, $request, $headers, $cut['stored']);
+        } catch (Throwable $e) {
+            report($e);
+
+            return $this->marked($response, 'miss', 'could not be kept');
+        }
+
+        return $this->marked($response, 'stored');
+    }
+
+    /**
+     * Writes the copy once the response has gone: packing a page and
+     * committing it cost 33 ms on average and up to 650 on a live shop, and
+     * the visitor who drew it gets nothing from the wait. Whatever the copy
+     * needs from the request is worked out now; `store()` still refuses it
+     * if anything was thrown away since the drawing began, so `stored` in the
+     * header is what was asked for and one visitor in a great many draws the
+     * page again.
+     *
+     * @param  array<string, list<string|null>>  $headers
+     */
+    protected function storeAfterResponse(Capture $capture, Request $request, array $headers, string $body): void
+    {
+        $vary = $this->cache->varyValues($request);
+        $meta = [
+            'id' => $capture->id,
+            'headers' => $headers,
+            'holes' => $capture->holes(),
+            'visits' => $capture->visits(),
+        ];
+        $tags = $capture->tags();
+        $expires = $capture->expires($this->cache->minutes());
+
+        defer(function () use ($capture, $vary, $body, $meta, $tags, $expires) {
+            try {
+                $this->cache->store(
+                    $capture->address,
+                    $capture->kind,
+                    $vary,
+                    $body,
+                    $meta,
+                    $tags,
+                    $expires,
+                    $capture->counters['generation'],
+                    $capture->counters['changes'],
+                );
+            } catch (Throwable $e) {
+                report($e);
+            }
+        });
     }
 
     /** A response whose body is a string in memory — not a file or a stream. */

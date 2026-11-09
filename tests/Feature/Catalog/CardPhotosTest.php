@@ -39,6 +39,25 @@ class CardPhotosTest extends TestCase
         $this->assertStringNotContainsString('card-photos.js', $html);
     }
 
+    /** The first row is what a visitor looks at first: no waiting for the layout to ask for it. */
+    public function test_the_first_row_of_a_listing_is_not_left_for_later(): void
+    {
+        $columns = (int) theme_setting('catalog_columns', 4);
+
+        foreach (range(1, $columns + 2) as $n) {
+            $this->product('CPH-ROW'.$n, 1);
+        }
+
+        $html = $this->get('http://localhost/catalog')->assertOk()->getContent();
+        preg_match_all('/<img [^>]*object-contain"[^>]*loading="(eager|lazy)"([^>]*)>/', $html, $cards);
+
+        $this->assertGreaterThan($columns, count($cards[1]));
+        $this->assertSame(array_fill(0, $columns, 'eager'), array_slice($cards[1], 0, $columns));
+        $this->assertSame('lazy', $cards[1][$columns]);
+        $this->assertStringContainsString('fetchpriority="high"', $cards[2][0]);
+        $this->assertSame(1, substr_count(implode('', $cards[2]), 'fetchpriority'), 'one picture comes first, or none does');
+    }
+
     /** One photo is nothing to flip through, and says so by drawing no marks. */
     public function test_a_single_photo_draws_nothing_extra(): void
     {

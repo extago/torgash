@@ -48,6 +48,16 @@ namespace Torgash\Blocks;
  * CALLED to a visitor, given its settings already in their language. Asked only
  * when the block is one of several drawn as tabs (see ZoneRenderer), and
  * defaults to the `heading` setting every built-in type has.
+ *
+ * `later` (optional) is for a block that is the visitor's own and costs them
+ * a redraw on every page kept for guests (see ZoneRenderer):
+ *  - `when`: `fn (array $settings): bool` — does THIS block wait? Asked while
+ *    the page is drawn for everybody: it must not ask about the visitor;
+ *  - `has`: `fn (array $settings, array $keys): bool` — has this visitor
+ *    anything for it? Asked on every page they open, so it must be cheap; a
+ *    false costs them no tab and no request;
+ *  - `context`: `['product' => Product::class]` — what of the zone's context
+ *    the block needs again, found by the key its address carries.
  */
 class BlockTypes
 {
@@ -75,6 +85,7 @@ class BlockTypes
             // Content blocks default to the page's width and a side column; a
             // control meant for the header or the phone menu says so.
             'fits' => ['wide', 'narrow'],
+            'later' => null,
         ];
     }
 
@@ -88,6 +99,20 @@ class BlockTypes
     public static function all(): array
     {
         return static::$types;
+    }
+
+    /**
+     * Has this visitor anything for a block that waits? The type's own answer
+     * (`later.has`); a type gone since the page was kept has nothing.
+     *
+     * @param  array<string, mixed>  $settings
+     * @param  array<string, int>  $keys
+     */
+    public static function hasLater(string $name, array $settings, array $keys): bool
+    {
+        $has = static::find($name)['later']['has'] ?? null;
+
+        return is_callable($has) && (bool) $has($settings, $keys);
     }
 
     public static function find(string $name): ?array

@@ -210,6 +210,20 @@ class GuardServiceProvider extends ServiceProvider
             );
         });
 
+        hook_listen('core.impersonation.started', fn (array $context) => app(Auditor::class)->note(
+            'entered_as',
+            \App\Models\User::class,
+            (string) $context['customer']->getKey(),
+            $context['customer']->name,
+        ));
+
+        hook_listen('core.impersonation.stopped', fn (array $context) => app(Auditor::class)->note(
+            'left_as',
+            \App\Models\User::class,
+            (string) $context['customer_id'],
+            $context['customer']?->name,
+        ));
+
         hook_listen('core.module.changed', function (array $context) {
             app(Auditor::class)->note(
                 $context['action'],
@@ -420,6 +434,11 @@ class GuardServiceProvider extends ServiceProvider
                 ? $session + [TwoFactor\Stamp::KEY => (array) session(TwoFactor\Stamp::KEY)]
                 : $session;
         });
+
+        // A manager looking through a customer's eyes (PLAN §70) still answers
+        // for their own second factor, and has no business on the customer's.
+        hook_listen('core.impersonation.own', fn (array $routes) => [...$routes, 'guard.two_factor', 'guard.two_factor.*']);
+        hook_listen('core.impersonation.closed', fn (array $routes) => [...$routes, 'account.security', 'account.security.*']);
 
         hook_listen('core.auth.handed_over', fn (array $context) => app(Auditor::class)->note(
             'signed_in',

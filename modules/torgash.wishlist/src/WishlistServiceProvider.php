@@ -49,6 +49,10 @@ class WishlistServiceProvider extends ServiceProvider
 
         hook_listen('core.seo.private_routes', fn (array $names) => [...$names, 'wishlist.*']);
 
+        // A product on or off the list; not its letters, which are consent,
+        // nor making it public, nor emptying it (PLAN §70).
+        hook_listen('core.impersonation.writes', fn (array $routes) => [...$routes, 'wishlist.toggle', 'wishlist.remove']);
+
         // Its letters in core's registry (PLAN §41).
         hook_listen('core.mail.events', fn (array $events) => $events + \Torgash\Wishlist\Mail\WishlistLetters::events());
 

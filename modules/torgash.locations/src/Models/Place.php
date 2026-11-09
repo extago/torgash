@@ -69,6 +69,13 @@ class Place extends Model
      *
      * Ordered by population, not by relevance: someone typing "Дн" means
      * Дніпро, not a hamlet of eight people that happens to sort first.
+     *
+     * Fewer than three letters match the START of a word and nothing else.
+     * A trigram index has no trigram to look for in `%бб%`, so Postgres
+     * walked all of it and checked 144,000 rows: 2.7 s idle and 15 s on a
+     * live shop, for a suggestion asked at every key press. The start of a
+     * word has its padded trigrams and takes 6–11 ms — and two letters from
+     * inside a word were never the town anybody meant.
      */
     public function scopeSearch(Builder $query, string $term): Builder
     {
@@ -78,8 +85,16 @@ class Place extends Model
             return $query->whereRaw('false');
         }
 
+        $like = addcslashes($term, '%_\\');
+
         return $query
-            ->where('search_text', 'like', '%'.addcslashes($term, '%_').'%')
+            ->when(
+                mb_strlen($term) < 3,
+                fn (Builder $query) => $query->where(fn (Builder $query) => $query
+                    ->where('search_text', 'like', $like.'%')
+                    ->orWhere('search_text', 'like', '% '.$like.'%')),
+                fn (Builder $query) => $query->where('search_text', 'like', '%'.$like.'%'),
+            )
             // The id breaks ties: without it, two villages of equal size can
             // swap places between one page of suggestions and the next, which
             // shows a duplicate and hides a real match.

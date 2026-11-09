@@ -28,6 +28,9 @@ class KitsServiceProvider extends ServiceProvider
             ['name' => 'Kit discounts', 'table' => 'm_kits_slots', 'columns' => ['discount_amount', 'discount_amount_original']],
         ]);
 
+        // Filling a customer's basket for them (PLAN §70).
+        hook_listen('core.impersonation.writes', fn (array $routes) => [...$routes, 'kits.add', 'kits.quote']);
+
         // A kit's dates offer and withdraw it with nothing written: a page
         // kept ready for guests is kept only until the next (PLAN §61).
         page_cache()->changes(fn () => page_cache()->nextDateIn('m_kits_kits'));

@@ -11,6 +11,10 @@
         // Something another module stands between the products, by how many
         // products come before it: [6 => '<html>'] goes after the sixth.
         // Named distinctively, like everything an @include may inherit.
+        // How many cards open the page (a listing's first row): a picture the
+        // browser is told it may leave for later waits for the layout before
+        // it is even asked for. A block further down leaves this out.
+        $gridEagerCards = max(0, (int) ($gridEager ?? 0));
         $gridInsertsAt = array_filter((array) ($gridInserts ?? []), fn ($html, $after) => is_int($after) && $after > 0 && is_string($html) && trim($html) !== '', ARRAY_FILTER_USE_BOTH);
     @endphp
     {{-- The dividers are each cell's TOP and LEFT border, dropped on the first
@@ -54,6 +58,8 @@
                 'cardLabels' => $gridCards['labels'][$product->id] ?? [],
                 'cardShortDescription' => $gridCards['short'][$product->id] ?? '',
                 'cardClass' => '',
+                'cardEager' => $loop->index < $gridEagerCards,
+                'cardFetchFirst' => $loop->first && $gridEagerCards > 0,
                 // Cards past the step wait for the button. Hidden on the page
                 // rather than fetched later: the set is a block's, bounded and
                 // already loaded, and a second request would have to rebuild the

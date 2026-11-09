@@ -63,6 +63,10 @@ class PrivacyServiceProvider extends ServiceProvider
             ->harmless(cookies: [ConsentState::COOKIE])
             ->unseen(['m_privacy_consents', 'm_privacy_requests']);
 
+        // A manager looking through a customer's eyes neither takes a copy of
+        // the customer's data nor asks for it to be erased (PLAN §70).
+        hook_listen('core.impersonation.closed', fn (array $routes) => [...$routes, 'account.privacy.*']);
+
         hook_listen('core.footer', function (string $html) {
             return setting('torgash.privacy', 'consent_mode', 'opt_in') === 'off'
                 ? $html

@@ -59,6 +59,15 @@ class name as a phrase through the owner's lang file, or the model's own
 `public static function auditLabel()` where the bare word means something else
 in the shared table (`Block` is a verb there); neighbouring entries of one act
 (same row, person, action, minute) fold into one line.
+**A manager looking through a customer's eyes** (PLAN §70, access.md) arms the
+trail on the storefront too, and only then: `armed()` asks
+`Impersonation::active()` beside the path, and the actor is
+`Impersonation::manager()`, since `auth()->user()` is the customer there. Going
+in and coming out are their own actions (`entered_as`, `left_as`, the row is the
+customer's account), announced by core (`core.impersonation.started` /
+`stopped`) and recorded here; a view that ended by itself is recorded the same.
+`action` is 16 characters, and a row that does not fit is lost in silence:
+`note()` catches everything by design.
 **Putting a change back** (`Torgash\Guard\Audit\Revert`, PLAN §56, its
 own permission `guard.revert` — reading who changed a price is not the right
 to change it back) refuses rather than guesses, per field: only an `updated`

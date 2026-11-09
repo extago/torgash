@@ -18,6 +18,12 @@ this file is the reasoning. Read it before changing anything it covers.
   `Transfers`: the smallest `transfer_days` of another warehouse holding the
   product, working days by setting, primed per page like `StockAllocator`.
   The old header point picker stands down while the window exists.
+- **A town is searched by any part of a name from three letters, by the start
+  of a word below that** (`Place::scopeSearch`, PLAN §61.10). `%бб%` holds no
+  trigram, so the index was walked whole and 144,000 rows checked (2.7 s idle,
+  15 s on a live shop, at every key press); `бб%` and `% бб%` have padded
+  trigrams: 6–11 ms. Two letters from inside a word were never the town anybody
+  meant.
 - **"Only to visitors from…" are this module's display rules** (PLAN §51,
   `VisitorRules`): `visitor_town` (searched through `places.suggest` — the
   registry holds 174 000 towns, never listed into a page), `visitor_region`,

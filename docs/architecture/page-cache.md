@@ -29,6 +29,14 @@ that is the visitor's own, a session key, a cookie or a table.
   (`miss; reads the session's cart_token outside a personal part`). A copy
   that cannot be served (it throws) is forgotten and the page drawn again —
   a broken copy costs one slow page.
+- The copy is written AFTER the response (`defer()`, `storeAfterResponse()`):
+  packing a page and committing it cost 33 ms on average and up to 650 on a
+  live shop, and the visitor who drew it gets nothing from the wait. So
+  `stored` in the header is what was asked for. Anything thrown away while
+  the page was drawn is seen before the header leaves (`miss; changed while
+  drawn`); anything thrown away in the milliseconds after that is refused by
+  the INSERT's own check of `page_cache_changes`, and the next visitor draws
+  the page.
 - Served pages get the visitor's own form token, CSP nonce and form stamp
   (`FormGuard`): in the copy they are placeholders, random per copy.
 
@@ -88,7 +96,7 @@ forgotten declaration costs speed, never a stranger's basket.
   with `until()`, see below). It records the personal keys it read and WHAT
   THEY HELD; a visitor holding the same gets it as drawn, without drawing.
   So the heart on every card costs nothing for a guest without a wishlist,
-  and "Viewed recently" costs nothing for a guest on their first product.
+  and a tab that waits costs nothing for a guest on their first product.
 - A part is not reusable when it writes the session, reads the whole of it,
   or reads a key a part before it wrote. A visitor holding any `personal`
   key (not `copies`) or a personal cookie gets NO part as drawn: a memo of
@@ -118,6 +126,13 @@ holds what it read. A block TYPE or a display rule KIND that reads what no
 session shows declares `'personal' => true` — never reused. A row or tabs
 with one personal member is ONE part (the others close up around it). A
 personal block must not push to a stack.
+
+A block that need not be drawn with the page WAITS instead (`later` on its
+type, storefront.md): only the name of its tab, or its place, is a personal
+part. It is what a copy costs someone with a browsing history: "Viewed
+recently" in a row of tabs made the row one part, 24–36 cards drawn again on
+every page they opened — 310–440 ms against 12. Waiting, it is one `exists`
+query: 13 ms.
 
 ## Visit actions
 
@@ -149,6 +164,10 @@ The columns are still declared `unseen`, so the late write throws nothing away.
   a stale page. A statement counts whether or not it changed a row, so what
   a background job keeps rewriting (the search index, the carriers'
   directories) is unseen if no page outside a part reads it.
+- A note the engine keeps for itself in a table pages are drawn from (the
+  last update check, in `settings`): `page_cache()->unseenWrite(fn () => …)`,
+  for that write alone — a statement cannot tell that row from the shop's
+  name, and the table as a whole stays seen.
 - Everything thrown away is written down with why (`update
   m_catalog_products (price)`) and from where (`POST /admin/…`, `queue:work`):
   `flushes()`, the last 30, "Why pages were thrown away" on the cache screen.

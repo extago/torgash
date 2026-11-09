@@ -3,6 +3,8 @@
 namespace Tests\Feature\Core;
 
 use App\Core\Admin\AdminNotifications;
+use App\Core\PageCache\PageCache;
+use App\Core\Settings\SettingsManager;
 use App\Core\Updates\InstallUpdate;
 use App\Core\Updates\UpdateServer;
 use App\Models\BackgroundTask;
@@ -34,6 +36,22 @@ class UpdateServerTest extends TestCase
             'updates' => [['version' => $version, 'notes' => 'Faster checkout', 'size' => 3, 'sha256' => $sha,
                 'download' => 'https://uds.test/uds/torgash/?action=download&product=torgash&version='.$version]],
         ])]);
+    }
+
+    /** Every night, and read by the admin alone: it was throwing away every page kept for guests. */
+    public function test_the_daily_check_throws_no_kept_page_away(): void
+    {
+        app(SettingsManager::class)->set('core', PageCache::ENABLED, true);
+        $this->offering();
+        $journal = page_cache()->flushes();
+
+        app(UpdateServer::class)->check();
+        $this->assertSame($journal, page_cache()->flushes());
+        $this->assertSame('0.2.0', app(UpdateServer::class)->offer()['version'], 'and it is remembered all the same');
+
+        // For that write alone: the shop's own setting still throws them away.
+        app(SettingsManager::class)->set('core', 'timezone', 'Europe/Kyiv');
+        $this->assertStringContainsString('settings', page_cache()->flushes()[0]['why']);
     }
 
     public function test_a_newer_version_is_remembered_and_offered_on_the_system_page(): void

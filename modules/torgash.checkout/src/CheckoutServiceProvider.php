@@ -130,6 +130,10 @@ class CheckoutServiceProvider extends ServiceProvider
         // indexed one is a private page in a public list.
         hook_listen('core.seo.private_routes', fn (array $names) => [...$names, 'checkout.*']);
 
+        // Placing an order for a customer (PLAN §70). Not an enquiry or a
+        // return about one: those are the customer's own words.
+        hook_listen('core.impersonation.writes', fn (array $routes) => [...$routes, 'checkout.store', 'checkout.quote', 'checkout.summary', 'checkout.one_click']);
+
         $this->announceOrderChanges();
         $this->oneClick();
         $this->minimumOrder();
@@ -144,6 +148,12 @@ class CheckoutServiceProvider extends ServiceProvider
         // optional order log.
         hook_listen('checkout.order_placed', function (array $context) {
             OrderLog::record($context['order'], 'Order placed', by: null);
+
+            // Whose order it is stays the customer's; who pressed the button
+            // is written down here, where the shop reads an order's history.
+            if ($manager = app(\App\Core\Access\Impersonation::class)->manager()) {
+                OrderLog::record($context['order'], 'Placed by :name on behalf of the customer', ['name' => $manager->name], $manager->getKey());
+            }
         });
 
         // Feeds Label's "sales" rule/[sales] placeholder (a "Hit" badge) —

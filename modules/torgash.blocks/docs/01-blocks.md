@@ -72,6 +72,9 @@ or give one its own display rules, and the row follows.
 - A row left with one member is drawn as a heading over its content.
 - A different word, or a block with no word, between them starts a new row.
 - The tabs are plain radio buttons, so they work with no JavaScript.
+- A **Viewed recently** tab appears only for a visitor who has something in it,
+  and its products load when it is opened, so the page stays fast however much
+  somebody has browsed.
 
 ## Products
 

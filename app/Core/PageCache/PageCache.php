@@ -106,6 +106,8 @@ class PageCache
     /** @var list<Closure(): ?DateTimeInterface> */
     protected array $clocks = [];
 
+    protected int $writingUnseen = 0;
+
     /** The copy being drawn in this request, when one is. */
     protected ?Capture $current = null;
 
@@ -231,6 +233,34 @@ class PageCache
     public function unseenIn(string $table): true|array|null
     {
         return $this->unseen[$table] ?? null;
+    }
+
+    /**
+     * A write no page shows, into a table pages are drawn from: a note the
+     * engine keeps for itself among the shop's settings (the last update
+     * check). A statement cannot tell that row from the shop's name, so the
+     * one who writes it says so — for that write alone, never for a table.
+     *
+     * @template T
+     *
+     * @param  callable(): T  $write
+     * @return T
+     */
+    public function unseenWrite(callable $write): mixed
+    {
+        $this->writingUnseen++;
+
+        try {
+            return $write();
+        } finally {
+            $this->writingUnseen--;
+        }
+    }
+
+    /** Is what is being written now one no page shows (unseenWrite)? */
+    public function writingUnseen(): bool
+    {
+        return $this->writingUnseen > 0;
     }
 
     /**

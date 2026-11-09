@@ -70,7 +70,7 @@
                  photo in the flow stretched its card (224×400 made a card
                  590px high beside square ones). --}}
             <img src="{{ $cardImage }}" alt="{{ $cardAlt }}" class="absolute inset-0 w-full h-full object-contain" width="400" height="400"
-                 loading="lazy" decoding="async" @if ($cardPhotos->count() > 1) data-card-photo @endif>
+                 loading="{{ ($cardEager ?? false) ? 'eager' : 'lazy' }}" @if ($cardFetchFirst ?? false) fetchpriority="high" @endif decoding="async" @if ($cardPhotos->count() > 1) data-card-photo @endif>
             @if ($cardPhotos->count() > 1)
                 {{-- The other photos, one strip of the figure each: moving the
                      pointer across it shows them in turn (card-photos.js, a

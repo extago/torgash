@@ -578,6 +578,16 @@ rows. `category_nav_hide_empty` never hides the current row or the way up.
   already" guard in first-seen order — two questions, two lists. The theme
   puts "Similar / Bestsellers / Viewed recently" as tabs in
   `catalog.product.bottom` (a migration seeds them while the zone is empty).
+  `viewed` waits for its tab to be opened (`later`, storefront.md). "Similar"
+  leaves out the product's variations, so it is empty in a category holding
+  one model's variations — on the first live shop 581 products of 638: one tab
+  beside the one that waits is the usual case, not the rare one.
+
+- **A listing's first row is not left for later** (`gridEager`, the theme's
+  `catalog_columns`, PLAN §61.9): those cards' pictures are `loading="eager"`,
+  the first with `fetchpriority="high"` — a `lazy` picture waits for the
+  layout before it is even asked for. Only the listing passes it; a block
+  further down the page stays lazy, and so do a list's small rows.
 
 - **An address follows the MODEL, not the screen** (2026-10-27,
   `Support\KeepsAddress` on Product and Category; the first live shop's

@@ -281,6 +281,11 @@ class CatalogServiceProvider extends ServiceProvider
             // reading them is right again when the copy's time is up. Stock
             // is announced on its own (below), by product.
             ->unseen('m_catalog_products', ['views_count', 'sales_count', 'popularity', 'stock', 'updated_at'])
+            // No page reads what a price has been: only `prior_lowest_price`,
+            // on the product's own row, which throws pages away when it is
+            // written (a price that moved). The nightly prune removes what
+            // that number can no longer be worked out from.
+            ->unseen('m_catalog_price_history')
             // A label's dates, and "new for N days", put badges on and take
             // them off with nothing written.
             ->changes(function () {

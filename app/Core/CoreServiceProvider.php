@@ -90,9 +90,12 @@ class CoreServiceProvider extends ServiceProvider
         // This request's script nonce: a nonce that repeats is no nonce.
         $this->app->scoped(\App\Core\Http\Csp::class);
 
+        // Who is looking at the storefront as whom, for this request alone.
+        $this->app->scoped(\App\Core\Access\Impersonation::class);
+
         // ...and actually forgotten when the next request begins. `scoped()`
         // declares the intent; only Octane enforces it. See PerRequest.
-        PerRequest::forget($this->app, PageMeta::class, Breadcrumbs::class, StructuredData::class, \App\Core\Themes\ThemeSettings::class, \App\Core\Themes\ShopPalette::class, \App\Core\Support\GrammaticalCases::class, \App\Core\Content\SafeHtml::class, \App\Core\Assets\AssetVersions::class, \App\Core\Http\Csp::class);
+        PerRequest::forget($this->app, PageMeta::class, Breadcrumbs::class, StructuredData::class, \App\Core\Themes\ThemeSettings::class, \App\Core\Themes\ShopPalette::class, \App\Core\Support\GrammaticalCases::class, \App\Core\Content\SafeHtml::class, \App\Core\Assets\AssetVersions::class, \App\Core\Http\Csp::class, \App\Core\Access\Impersonation::class);
         $this->app->singleton(ModuleManager::class, fn ($app) => new ModuleManager($app));
 
         // Pages kept ready for guests (PLAN §61): the registry every module
@@ -340,6 +343,20 @@ class CoreServiceProvider extends ServiceProvider
             return $html.view('components.staff-bar', ['closed' => $closed, 'safe' => $safe])->render();
         }, 1);
 
+        // A manager looking through a customer's eyes is told so on every
+        // page, with the way out (App\Core\Access\Impersonation).
+        hook_listen('core.body_start', function (string $html) {
+            $impersonation = app(\App\Core\Access\Impersonation::class);
+
+            return $impersonation->active()
+                ? $html.view('components.impersonation-bar', ['customer' => $impersonation->customer()])->render()
+                : $html;
+        }, 1);
+
+        // An order needs an address; the account's own doors do not open.
+        hook_listen('core.impersonation.writes', fn (array $routes) => [...$routes, 'account.addresses.*']);
+        hook_listen('core.impersonation.closed', fn (array $routes) => [...$routes, 'account.password.*', 'account.contact', 'account.contact.*', 'account.code.link']);
+
         // Asking for a sign-in or restore code is a public form that sends
         // mail on demand — guarded like the others, and nameable on the
         // CAPTCHA screen (PLAN §44).
@@ -427,7 +444,7 @@ class CoreServiceProvider extends ServiceProvider
             // on every request.
             ->harmless(session: ['locale'])
             ->personal(
-                session: ['verification', 'code_pending', \App\Http\Controllers\Account\NewPasswordController::SESSION],
+                session: ['verification', 'code_pending', \App\Http\Controllers\Account\NewPasswordController::SESSION, \App\Core\Access\Impersonation::SESSION, \App\Core\Access\Impersonation::REFUSED],
                 cookies: [\App\Core\Verification\FormVerification::COOKIE],
             )
             ->vary('currency', fn () => current_currency(), session: ['currency'])

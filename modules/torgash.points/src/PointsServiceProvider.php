@@ -30,6 +30,9 @@ class PointsServiceProvider extends ServiceProvider
 
     public function boot(): void
     {
+        // Spending a customer's points on their order (PLAN §70).
+        hook_listen('core.impersonation.writes', fn (array $routes) => [...$routes, 'points.spend', 'points.line']);
+
         // Customers' points and their history are on no guest's page (PLAN §61).
         page_cache()->unseen(['m_points_accounts', 'm_points_ledger', 'm_points_orders']);
 

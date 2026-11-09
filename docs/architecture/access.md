@@ -92,6 +92,61 @@ setting `account_menu`): only items that say `'quick' => true` (the orders,
 the wishlist) and any item with a badge are on top; the rest fold under
 "All sections". The profile is the name plate, staff get "Control panel".
 
+### A manager looking through a customer's eyes (PLAN §70)
+
+`App\Core\Access\Impersonation`, the item "Enter as this customer" in the gear
+menu of a customer's card, permission `customers.impersonate` (its own: being
+able to read a card is not this). It exists to see what a customer complains
+of and to place an order for them over the phone.
+
+- **No key, no link.** The button is a POST form opening a new tab; it writes
+  `['manager' => id, 'customer' => id]` into the manager's own session. For the
+  length of one storefront request `ImpersonateCustomer` hands the guard that
+  customer with `Auth::setUser()`. The session's identity is untouched, so
+  there is no `Login` event (which would adopt baskets and lists and move the
+  language), and the admin in the next tab is still the manager.
+- **On the storefront's routes and nothing else** (`StorefrontRoutes::group()`
+  and the pages at root addresses), after `web` and `ClosedStorefront`: the
+  second factor, blocking, a closed shop and the remembered language answer
+  about the real person. It is on the same session and host as the admin, so
+  it opens on the address the admin was opened at.
+- **`auth()->user()` there is the CUSTOMER.** Code that asks who really did
+  something asks `Impersonation::manager()`: `OrderLog::record()`'s default,
+  the audit. Anything that lives in the browser rather than on the account
+  (the town, the pickup point, the comparison) stays the manager's; the basket
+  is the customer's last-used row (`core.impersonation.entered`, the cart's
+  `useToken()`), and the manager's own is left alone.
+- **Asked again on every request.** A manager who lost the right or
+  `admin.access`, a customer deleted or given a role, a session whose note
+  names another manager: the view ends by itself on the next page and the
+  journal says so. A staff account is never entered.
+- **A page is open unless its owner closes it, a change is closed unless its
+  owner opens it.** Three lists of route names without the locale prefix, each
+  answered by whoever owns the route: `core.impersonation.writes` (what a
+  manager may change: the basket, checkout, addresses),
+  `core.impersonation.closed` (pages not even to be looked at: the password
+  and contact forms, the customer's Security page, their personal data) and
+  `core.impersonation.own` (routes that stay the manager's: their own second
+  factor). So a module written next year cannot have a manager subscribe
+  somebody or write a review in their name because nobody forbade it; to open
+  a route, add it to `writes` in the module's provider. `CustomerImpersonationTest`
+  holds the whole list of `writes`, and fails on a name that is no route.
+- **A refusal is said by the strip** (`components/impersonation-bar`, printed on
+  `core.body_start`, the one thing every page has): flashed, then a redirect
+  back, `HX-Refresh` for HTMX, a 403 for a script.
+- **Looking changes nothing for the customer.** The rule above stops changes
+  that come as POST; a page that writes by being READ has to ask `active()`
+  itself. Two do: an enquiry marks itself read (`customer_seen_at`, the
+  customer would lose the "new reply" mark) and `Wishlists::current()` adopts a
+  guest list the session holds (it would be the manager's list landing on the
+  customer). A new page that writes on a GET asks the same question.
+- **"Sign out" in the customer's menu leaves the customer**: a real sign-out
+  would end the manager's own session.
+- **An order placed this way** goes through `PlaceOrder` like any other (stock,
+  minimum, letters to the customer), is the customer's, has the source "By a
+  manager", no client facts (the browser says nothing about the customer), and
+  a line in its history naming the manager. The customer is not shown that line.
+
 ### Signing in pauses, and staff HTML is cleaned (audit 2026-10-15)
 
 **Both sign-in forms pause after wrong passwords — core's, always on**

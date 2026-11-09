@@ -29,6 +29,9 @@ class CompareServiceProvider extends ServiceProvider
 
         hook_listen('core.seo.private_routes', fn (array $names) => [...$names, 'compare.*']);
 
+        // A comparison is the browser's, so a manager's stays their own (PLAN §70).
+        hook_listen('core.impersonation.writes', fn (array $routes) => [...$routes, 'compare.*']);
+
         // A menu item can point at this page by name (torgash.menus, PLAN §39).
         hook_listen('menus.pages', fn (array $pages) => $pages + [
             'route:compare.index' => ['label' => 'Comparison', 'route' => 'compare.index', 'icon' => 'square-kanban'],

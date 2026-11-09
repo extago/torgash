@@ -2,6 +2,7 @@
 
 namespace Torgash\Enquiries\Http;
 
+use App\Core\Access\Impersonation;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use Torgash\Enquiries\Models\Enquiry;
@@ -53,7 +54,12 @@ class AccountEnquiriesController extends Controller
         // opening their own page is not the shop editing the enquiry: an
         // exporter pulling everything changed since yesterday would re-export
         // it, and a rule watching for edits would fire on a page view.
-        Enquiry::whereKey($enquiry->id)->toBase()->update(['customer_seen_at' => now()]);
+        //
+        // Only when the customer reads it: a manager looking through their
+        // eyes must not take the "new reply" mark away from them.
+        if (! app(Impersonation::class)->active()) {
+            Enquiry::whereKey($enquiry->id)->toBase()->update(['customer_seen_at' => now()]);
+        }
 
         return view('torgash.enquiries::account.show', ['enquiry' => $enquiry]);
     }

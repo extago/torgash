@@ -23,6 +23,9 @@
             </div>
             <ul tabindex="0" class="dropdown-content menu menu-sm bg-base-100 rounded-box shadow-md w-60 mt-2 p-2 z-50 border border-base-300">
                 <li><button type="submit" form="customer-form" name="after_save" value="close"><x-icon name="check" /> {{ __('Save and close') }}</button></li>
+                @can(\App\Core\Access\Impersonation::PERMISSION)
+                    <li><button type="submit" form="customer-impersonate"><x-icon name="log-in" /> {{ __('Enter as this customer') }}</button></li>
+                @endcan
                 @if ($customer->email)
                     <li><a href="mailto:{{ $customer->email }}"><x-icon name="mail" /> {{ __('Write an email') }}</a></li>
                 @endif
@@ -115,6 +118,12 @@
             </section>
         </div>
     </div>
+
+    {{-- The storefront opens in a tab of its own, as this customer; this one
+         stays on the card. POST: a link is something a browser may follow by itself. --}}
+    @can(\App\Core\Access\Impersonation::PERMISSION)
+        <form id="customer-impersonate" method="POST" action="{{ route('admin.customers.impersonate', $customer) }}" target="_blank" class="hidden">@csrf</form>
+    @endcan
 
     {{-- Outside the account form: a form inside a form leaks its _method. --}}
     <x-modal name="customer-delete" :title="__('Delete :name?', ['name' => $customer->name])" icon="trash-2">

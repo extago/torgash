@@ -33,6 +33,9 @@ class Writes
 
     protected bool $applying = false;
 
+    /** {@see count()} */
+    protected int $count = 0;
+
     public function __construct(protected PageCache $cache)
     {
         $this->waiting = new WeakMap;
@@ -40,13 +43,19 @@ class Writes
 
     public function saw(QueryExecuted $query): void
     {
-        if ($this->applying) {
+        if ($this->applying || $this->cache->writingUnseen()) {
             return;
         }
 
         $write = $this->parse($query->sql);
 
-        if ($write === null || ! $this->cache->enabled()) {
+        if ($write === null) {
+            return;
+        }
+
+        $this->count++;
+
+        if (! $this->cache->enabled()) {
             return;
         }
 
@@ -69,6 +78,18 @@ class Writes
         $set = $columns === null ? '' : ' ('.implode(', ', array_slice($columns, 0, 6)).')';
 
         $this->pend($verb.($table !== null ? ' '.$table : '').$set, []);
+    }
+
+    /**
+     * How many write statements have run so far, whatever they wrote and
+     * whether or not the page cache is on. For a memo of rows that must not
+     * outlive a change: the same number twice means nothing was written in
+     * between (`CartManager::goods()`) — the statement again, not a list of
+     * events somebody could forget to announce.
+     */
+    public function count(): int
+    {
+        return $this->count;
     }
 
     /**

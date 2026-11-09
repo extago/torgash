@@ -929,3 +929,12 @@ which fails without the channel in `config/logging.php`. Anything Laravel
 "ensures" into config on first use is the same trap: declare it at boot.
 PHP 8.5 also deprecated `null` as an array key (`$rows[null]` — it was
 always `''`).
+
+## "The rare case" is the shop's to say, not the fixture's
+
+A row of tabs with "Viewed recently" and fewer than two other tabs was left
+to the old full redraw, as an edge. Tests passed; the local measurement still
+said 310 ms; counted on the live shop it was 581 products of 638 — categories
+there hold one model's variations, and "Similar" leaves those out. Before a
+speed fix keeps the old path for "the unusual case", count that case on real
+data: here the fallback would have been the fix's whole effect on most pages.

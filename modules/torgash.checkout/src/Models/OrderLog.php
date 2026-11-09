@@ -2,6 +2,7 @@
 
 namespace Torgash\Checkout\Models;
 
+use App\Core\Access\Impersonation;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Model;
 
@@ -48,7 +49,9 @@ class OrderLog extends Model
     {
         return static::create([
             'order_id' => $order instanceof Order ? $order->getKey() : $order,
-            'user_id' => $by === -1 ? auth()->id() : $by,
+            // The real person: a manager looking through the customer's eyes
+            // is signed in as nobody but themselves (PLAN §70).
+            'user_id' => $by === -1 ? (app(Impersonation::class)->manager()?->getKey() ?? auth()->id()) : $by,
             'description' => $key,
             'params' => $params ?: null,
         ]);

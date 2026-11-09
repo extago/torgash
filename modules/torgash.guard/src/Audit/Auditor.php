@@ -2,6 +2,7 @@
 
 namespace Torgash\Guard\Audit;
 
+use App\Core\Access\Impersonation;
 use App\Core\Tasks\CurrentTask;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Model;
@@ -239,7 +240,9 @@ class Auditor
             $this->capped = false;
         }
 
-        return $this->inAdmin && ! $this->capped && auth()->hasUser();
+        // A manager looking at the storefront as a customer (PLAN §70) is the
+        // admin's business too: what they change there is theirs.
+        return ($this->inAdmin || app(Impersonation::class)->active()) && ! $this->capped && auth()->hasUser();
     }
 
     protected function write(array $row): void
@@ -265,7 +268,7 @@ class Auditor
 
         // A task's rows have no request of their own: the worker's is `/`.
         $request = $task ? null : request();
-        $user = $task ? $this->taskUser : auth()->user();
+        $user = $task ? $this->taskUser : (app(Impersonation::class)->manager() ?? auth()->user());
 
         AuditEntry::create($row + [
             'user_id' => $user?->getKey(),

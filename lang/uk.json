@@ -1,5 +1,10 @@
 {
     "+1": "+1",
+    "Enter the storefront as a customer": "Входити на вітрину як покупець",
+    "Enter as this customer": "Увійти як покупець",
+    "You are viewing the shop as the customer :name": "Ви дивитесь магазин як покупець :name",
+    "Leave the customer view": "Вийти з режиму покупця",
+    "Only the customer can do this.": "Це може зробити лише сам покупець.",
     "1C exchange": "Обмін з 1С",
     ":count images rebuilt, :failed unreadable, :removed stale files deleted": "перезібрано зображень: :count, не прочитано: :failed, видалено зайвих файлів: :removed",
     ":entity — :created created, :updated updated": ":entity — створено: :created, оновлено: :updated",

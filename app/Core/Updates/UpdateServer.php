@@ -112,7 +112,9 @@ class UpdateServer
         }
 
         $found['checked_at'] = now()->toIso8601String();
-        app(SettingsManager::class)->set(CoreSettings::ID, self::SETTING, $found);
+        // Read by the admin alone; every night it would throw away every page
+        // kept for guests.
+        page_cache()->unseenWrite(fn () => app(SettingsManager::class)->set(CoreSettings::ID, self::SETTING, $found));
 
         return $found;
     }

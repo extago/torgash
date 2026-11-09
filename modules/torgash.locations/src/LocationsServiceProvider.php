@@ -100,6 +100,9 @@ class LocationsServiceProvider extends ServiceProvider implements ModuleLifecycl
         // visitor already asked (PLAN §61).
         page_cache()->personal(session: ['locations.town_prompted'], copies: true);
 
+        // The town is the browser's, and a delivery needs one (PLAN §70).
+        hook_listen('core.impersonation.writes', fn (array $routes) => [...$routes, 'locations.save']);
+
         // The country of the visitor's town — what a phone number typed
         // without its + is read in (core's Phones). A place's `country` is
         // its ISO code.

@@ -43,6 +43,9 @@ class OptionsServiceProvider extends ServiceProvider
             'options' => ['label' => 'Options', 'after' => ['catalog'], 'install' => fn (\App\Core\Demo\DemoPack $pack) => app(Demo\OptionsDemo::class)->install($pack)],
         ]);
 
+        // Pricing a choice for a customer's basket (PLAN §70).
+        hook_listen('core.impersonation.writes', fn (array $routes) => [...$routes, 'options.quote']);
+
         // The files customers attach to a choice are ours to declare on core's
         // storage screen and to its copy command — core does not name this table.
         hook_listen('core.files.directories', function (array $directories) {

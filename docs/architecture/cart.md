@@ -30,6 +30,16 @@ this file is the reasoning. Read it before changing anything it covers.
   never creates a row (the header badge asks on every page), `clear()` empties
   rather than deletes, and a pre-token session cart is migrated once on first
   touch.
+- **`items()` reads the rows once, for as long as nothing is written**
+  (`CartManager::goods()`, PLAN §61.10). A checkout asks for the items about
+  twenty times in one request (its total, its weight, every promotion, every
+  delivery method, the taxes), at seven queries each. Only the products and
+  their variation answers are kept, keyed by the set of ids and
+  `Writes::count()`: any statement this process writes and the next call reads
+  them again, so nothing has to remember to announce a change. Prices for the
+  visitor, what may be bought and what a configuration adds are worked out on
+  every call, and the lines still come from `raw()`. The products are the SAME
+  objects on every call: nothing may change one it got from `items()`.
 - **A cart line is a record with a KEY, not "a product and a number"**
   (`Torgash\Cart\Lines`, PLAN §33.3): `{key, product_id, qty, config}`, and the
   key of a line with NO configuration is its product id — which is what keeps

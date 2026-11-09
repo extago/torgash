@@ -2,6 +2,7 @@
 
 namespace Torgash\Cart;
 
+use App\Core\PageCache\Writes;
 use Illuminate\Support\Collection;
 use Torgash\Cart\Contracts\Basket;
 use Torgash\Cart\Models\Cart;
@@ -44,6 +45,13 @@ class CartManager implements Basket
     protected bool $onBehalf = false;
 
     /**
+     * The rows {@see items()} is made of, as last read — see {@see goods()}.
+     *
+     * @var array{ids: list<int>, writes: int, products: Collection<int, Product>, variations: array<int, mixed>}|null
+     */
+    protected ?array $goods = null;
+
+    /**
      * Talk to this cart instead of the session's.
      *
      * The shop API hands a caller a token and takes it back on every
@@ -54,6 +62,7 @@ class CartManager implements Basket
     {
         $this->token = $token;
         $this->cart = null;
+        $this->goods = null;
 
         return $this;
     }
@@ -74,6 +83,7 @@ class CartManager implements Basket
     public function reload(): static
     {
         $this->cart = null;
+        $this->goods = null;
 
         return $this;
     }
@@ -492,13 +502,7 @@ class CartManager implements Basket
             return collect();
         }
 
-        // withCardData(), not with('priceTiers'): a cart line renders a 120px
-        // thumbnail too, and without the media relation that was one extra
-        // query per line (plus priceTypeOverrides for effectivePrice below).
-        $products = Product::whereIn('id', array_column($cart, 'product_id'))->withCardData()->get()->keyBy('id');
-        // Which variation each line is ("Colour: Purple") — the basket, the
-        // checkout and, through OrderLines, the order's own snapshot print it.
-        $variations = app(\Torgash\Catalog\Support\Variations::class)->answersFor($products);
+        [$products, $variations] = $this->goods(array_column($cart, 'product_id'));
 
         // What the basket holds of each product across its lines (two builds of
         // one server are one shelf) — measured against what may be bought.
@@ -552,6 +556,52 @@ class CartManager implements Basket
             })
             ->filter()
             ->values();
+    }
+
+    /**
+     * The products behind these lines and which variation each is, read once
+     * for as long as nothing is written. A checkout asks for the basket's
+     * items about twenty times in one request (its total, its weight, every
+     * promotion, every delivery method, the taxes), at seven queries each:
+     * four fifths of the 146–184 queries a quote cost on a live shop.
+     *
+     * Only the rows are kept. What is worked out from them — this visitor's
+     * price, what may still be bought, what a configuration adds — is worked
+     * out on every call, and the lines come from raw(), asked every time.
+     *
+     * "Nothing written" is the statement itself (`Writes::count()`): a
+     * product, its stock, this basket or anything a module keeps beside them,
+     * and the next call reads them again. The shelf a placed order takes from
+     * is read afresh with its rows locked (`OrderStock`) and never came from
+     * here. Nothing may change a product it got from items(): the next call
+     * hands out the same object.
+     *
+     * @param  list<int>  $ids
+     * @return array{0: Collection<int, Product>, 1: array<int, mixed>}
+     */
+    protected function goods(array $ids): array
+    {
+        $ids = array_values(array_unique($ids));
+        sort($ids);
+        $writes = app(Writes::class)->count();
+
+        if ($this->goods === null || $this->goods['ids'] !== $ids || $this->goods['writes'] !== $writes) {
+            // withCardData(), not with('priceTiers'): a cart line renders a 120px
+            // thumbnail too, and without the media relation that was one extra
+            // query per line (plus priceTypeOverrides for effectivePrice).
+            $products = Product::whereIn('id', $ids)->withCardData()->get()->keyBy('id');
+
+            $this->goods = [
+                'ids' => $ids,
+                'writes' => $writes,
+                'products' => $products,
+                // Which variation each line is ("Colour: Purple") — the basket, the
+                // checkout and, through OrderLines, the order's own snapshot print it.
+                'variations' => app(\Torgash\Catalog\Support\Variations::class)->answersFor($products),
+            ];
+        }
+
+        return [$this->goods['products'], $this->goods['variations']];
     }
 
     /** Whether any line cannot be ordered as it stands ({@see items()}'s `problem`). */

@@ -291,6 +291,14 @@ class ProductBlock
             'icon' => 'layout-grid',
             'view' => 'torgash.catalog::blocks.products',
             'heading' => fn (array $settings) => app(Selection::class)->heading($settings),
+            // "Viewed recently" is a dozen cards drawn again for each visitor
+            // with a history, on a page otherwise kept ready: it waits to be
+            // opened (ZoneRenderer), and the page only asks if it would be empty.
+            'later' => [
+                'when' => fn (array $settings) => (string) ($settings['source'] ?? '') === 'viewed',
+                'has' => fn (array $settings, array $keys) => self::anythingViewed($keys),
+                'context' => ['product' => Product::class],
+            ],
             'schema' => [
                 [
                     'key' => 'heading',
@@ -400,6 +408,21 @@ class ProductBlock
             ['key' => 'arrows_phone', 'type' => 'select', 'default' => 'head', 'label' => 'Carousel arrows on a phone', 'options' => $kinds,
                 'help' => "Two cards fill a phone's width, so arrows at the sides lie on them."],
         ];
+    }
+
+    /**
+     * Would "Viewed recently" show this visitor anything? What they have seen
+     * may have been taken off sale since, and a tab with nothing under it is
+     * not a tab.
+     *
+     * @param  array<string, int>  $keys
+     */
+    protected static function anythingViewed(array $keys): bool
+    {
+        $current = (int) ($keys['product'] ?? 0);
+        $ids = array_values(array_filter(app(RecentlyViewed::class)->ids(), fn (int $id) => $id !== $current));
+
+        return $ids !== [] && Product::listed()->whereIn('m_catalog_products.id', $ids)->exists();
     }
 
     /** @return list<int> the visitor's recently viewed products, newest first, without the page's own. */

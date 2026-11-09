@@ -2,6 +2,7 @@
 
 namespace App\Core\Storefronts;
 
+use App\Core\Access\ImpersonateCustomer;
 use Closure;
 use Illuminate\Support\Facades\Route;
 
@@ -34,10 +35,12 @@ class StorefrontRoutes
     {
         // ClosedStorefront after `web`, whose ResolveStorefront has bound the
         // storefront it asks about.
-        Route::middleware(['web', ClosedStorefront::class])->group($routes);
+        // ImpersonateCustomer last: the two before it answer about the real
+        // person, whoever they are looking at.
+        Route::middleware(['web', ClosedStorefront::class, ImpersonateCustomer::class])->group($routes);
 
         foreach (LocaleResolver::routePrefixes() as $locale) {
-            Route::middleware(['web', ClosedStorefront::class])->prefix($locale)->name($locale.'.')->group($routes);
+            Route::middleware(['web', ClosedStorefront::class, ImpersonateCustomer::class])->prefix($locale)->name($locale.'.')->group($routes);
         }
     }
 }

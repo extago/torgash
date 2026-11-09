@@ -8,6 +8,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Testing\TestResponse;
 use Tests\Concerns\RunsInOctaneWorker;
 use Tests\TestCase;
+use Torgash\Blocks\Models\Block;
 use Torgash\Catalog\Models\Category;
 use Torgash\Catalog\Models\Product;
 use Torgash\Locations\Models\Country;
@@ -195,24 +196,103 @@ class PageCacheStorefrontTest extends TestCase
     {
         $this->onlyViewedRecentlyBelowProducts();
 
+        $name = '<span>Viewed recently</span>';
+
         // A guest who looked at the teapot first takes the kettle's copy.
         $this->get($this->url($this->teapot));
         $first = $this->get($this->url($this->kettle));
         $this->assertSame('stored', $this->cache($first));
-        $first->assertSee('Other teapot');
+        $first->assertSee($name, false);
+        $first->assertDontSee('Other teapot');
 
         // A guest on their first page: the kettle's page lists nothing of anybody's.
         $this->newVisitor();
         $fresh = $this->get($this->url($this->kettle));
         $this->assertSame('hit', $this->cache($fresh));
-        $fresh->assertDontSee('Other teapot');
+        $fresh->assertDontSee($name, false);
 
-        // The same trail as the first guest: the same list.
+        // The same trail as the first guest: the same answer.
         $this->newVisitor();
         $this->get($this->url($this->teapot));
         $same = $this->get($this->url($this->kettle));
         $this->assertSame('hit', $this->cache($same));
-        $same->assertSee('Other teapot');
+        $same->assertSee($name, false);
+    }
+
+    /** Two tabs of the page's own beside "Viewed recently" — the row a shop's product page has. */
+    protected function viewedRecentlyBesideOtherTabs(): Block
+    {
+        $category = Category::create(['name' => ['en' => 'Elsewhere'], 'slug' => 'pc-elsewhere', 'enabled' => true]);
+        Product::create(['sku' => 'PC-THIRD', 'name' => ['en' => 'Third thing'], 'slug' => 'third-thing', 'price' => 5_00, 'stock' => 10, 'status' => 'active'])
+            ->categories()->sync([$category->id]);
+
+        DB::table('m_blocks')->where('zone', 'catalog.product.bottom')->delete();
+
+        $tab = fn (string $heading, string $source, int $sort) => Block::create([
+            'zone' => 'catalog.product.bottom', 'type' => 'products', 'title' => $heading, 'enabled' => true, 'sort' => $sort,
+            'tabs' => 'product', 'rules_match' => 'all', 'settings' => ['heading' => $heading, 'source' => $source, 'limit' => 4],
+        ]);
+
+        $tab('Popular', 'category:'.$category->id, 1);
+        $tab('Fresh', 'category:'.$category->id, 2);
+
+        return $tab('Seen before', 'viewed', 3);
+    }
+
+    /**
+     * What it was for: the row of tabs drawn again, 36 cards, on every page of
+     * anyone who had looked at a second product — 442 ms against 12.
+     */
+    public function test_viewed_recently_beside_other_tabs_costs_a_kept_page_a_name_and_no_cards(): void
+    {
+        $waiting = $this->viewedRecentlyBesideOtherTabs();
+
+        // Somebody else opened the page first.
+        $this->newVisitor();
+        $this->assertSame('stored', $this->cache($this->get($this->url($this->kettle))));
+
+        // Their first product: nothing to look back at.
+        $this->newVisitor();
+        $fresh = $this->get($this->url($this->kettle));
+        $this->assertSame('hit', $this->cache($fresh));
+        $fresh->assertDontSee('<span>Seen before</span>', false);
+
+        // A guest who came from the teapot's page.
+        $this->newVisitor();
+        $this->get($this->url($this->teapot));
+
+        DB::flushQueryLog();
+        DB::enableQueryLog();
+        $theirs = $this->get($this->url($this->kettle));
+        $queries = array_column(DB::getQueryLog(), 'query');
+        DB::disableQueryLog();
+
+        $this->assertSame('hit', $this->cache($theirs), 'a history does not cost anybody a kept page');
+        $theirs->assertSee('<span>Seen before</span>', false);
+        $theirs->assertDontSee('Other teapot');
+        $this->assertSame([], array_values(array_filter($queries, fn (string $sql) => str_contains($sql, '"media"'))), 'no card was drawn');
+
+        // Which arrive when the tab is opened: an htmx request, nobody's copy.
+        $opened = $this->withHeaders(['HX-Request' => 'true'])->get('http://localhost/blocks/'.$waiting->id.'/later?product='.$this->kettle->id);
+        $opened->assertOk()->assertSee('Other teapot')->assertDontSee('Kept kettle');
+        $this->assertNull($opened->headers->get('X-Torgash-Cache'));
+    }
+
+    /** The name is theirs, and the page around it is the same copy whoever drew it. */
+    public function test_a_copy_drawn_for_someone_with_a_history_shows_nobody_else_their_tab(): void
+    {
+        $this->viewedRecentlyBesideOtherTabs();
+
+        $this->newVisitor();
+        $this->get($this->url($this->teapot));
+        $drawer = $this->get($this->url($this->kettle));
+        $this->assertSame('stored', $this->cache($drawer));
+        $drawer->assertSee('<span>Seen before</span>', false);
+
+        $this->newVisitor();
+        $next = $this->get($this->url($this->kettle));
+        $this->assertSame('hit', $this->cache($next));
+        $next->assertDontSee('<span>Seen before</span>', false);
     }
 
     public function test_a_view_is_counted_for_every_guest_served_from_a_copy(): void

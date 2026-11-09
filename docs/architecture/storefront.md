@@ -329,6 +329,19 @@ this file is the reasoning. Read it before changing anything it covers.
   ONE `kind:arg` value; a source whose argument means nothing any more narrows
   to NOTHING, and every query starts at `Product::listed()`. A select's
   `options` may be a closure — registration runs on every request.
+- **A block that is the visitor's own can WAIT** (PLAN §61.9, `later` on a
+  block type: `when` — does this block? asked of its settings, never of the
+  visitor; `has` — has this visitor anything for it? asked on every page they
+  open, so cheap; `context` — what of the zone's context it needs again, by
+  key). Today a `products` block with the source `viewed`. The page holds a
+  personal part with only the tab's name (or, standing alone, its place), and
+  the block is drawn by `GET blocks.later` when its panel is shown:
+  `hx-trigger="intersect once"` on a hidden tab panel fires when the tab is
+  opened, on a block when it is scrolled to. A row of tabs with one that waits
+  is ALWAYS drawn as a row — only some visitors get a second name — and app.css
+  draws a row with one name as the heading a lone tab is given. Not a member
+  of a `row`, not a block with display rules (a rule asks about the page, and
+  that request is not the page): those are drawn where they stand.
 - **A menu is DATA; where it stands is a BLOCK; how it looks is a LOOK**
   (`torgash.menus`, PLAN §39). An item is a KIND from `menus.item_kinds`
   (`link`, `page`, `category`, `heading`, `divider`); a shop's own page is

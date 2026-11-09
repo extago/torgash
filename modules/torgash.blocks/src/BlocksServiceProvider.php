@@ -2,6 +2,7 @@
 
 namespace Torgash\Blocks;
 
+use App\Core\Storefronts\StorefrontRoutes;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\ServiceProvider;
 use Throwable;
@@ -32,6 +33,8 @@ class BlocksServiceProvider extends ServiceProvider
             ->prefix('admin/blocks')
             ->name('admin.blocks.')
             ->group(dirname(__DIR__).'/routes-admin.php');
+
+        StorefrontRoutes::group(dirname(__DIR__).'/routes.php');
     }
 
     /**

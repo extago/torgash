@@ -32,6 +32,16 @@ class PriceHistory
         $at ??= now();
         $price = $product->publicPrice();
 
+        // Looked at without a lock first. The hourly sweep finds nothing moved
+        // for nearly every product, and a locked look is a commit the disk has
+        // to confirm even when it changes nothing: 800 of them in a row at the
+        // top of every hour on a live shop. The lock below decides.
+        $known = DB::table('m_catalog_price_history')->where('product_id', $product->id)->whereNull('ends_at')->value('price');
+
+        if ($known !== null && (int) $known === $price) {
+            return false;
+        }
+
         $moved = DB::transaction(function () use ($product, $price, $at) {
             $open = DB::table('m_catalog_price_history')->where('product_id', $product->id)->whereNull('ends_at')->lockForUpdate()->first();
 

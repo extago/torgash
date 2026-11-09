@@ -48,6 +48,17 @@ class CartServiceProvider extends ServiceProvider
             ->personal(session: ['cart_token', 'cart', 'cart_coupon'])
             ->unseen('m_cart_carts');
 
+        // A manager looking through a customer's eyes (PLAN §70) works on that
+        // customer's basket, never on the one in their own session. None yet:
+        // a token nobody holds, and the first thing added makes their row.
+        hook_listen('core.impersonation.entered', function (array $context) {
+            $token = Models\Cart::where('user_id', $context['customer']->getKey())
+                ->orderByRaw('last_active_at desc nulls last')->value('token');
+
+            app(CartManager::class)->useToken($token ?? Models\Cart::newToken());
+        });
+        hook_listen('core.impersonation.writes', fn (array $routes) => [...$routes, 'cart.*']);
+
         hook_listen('core.schedule', $this->schedule(...));
 
         // A cart is one visitor's, changes on every click and means nothing to

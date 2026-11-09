@@ -79,7 +79,30 @@ class PageCacheTest extends TestCase
                 return view('pctest::page');
             });
             Route::get('/pc-test/cookie', fn () => response(view('pctest::page'))->cookie('pctest_cookie', 'x'));
+            Route::get('/pc-test/flushes', function () {
+                page_cache()->flush('while it was drawn');
+
+                return view('pctest::page');
+            });
         });
+
+        // Outside the page cache: what is true when the response is ready to
+        // leave, and something thrown away at that very moment.
+        $this->app['router']->aliasMiddleware('pctest.leaving', function ($request, $next) {
+            $response = $next($request);
+            app('pctest.draws')->copies = (int) DB::table('page_cache')->count();
+
+            return $response;
+        });
+        $this->app['router']->aliasMiddleware('pctest.late-flush', function ($request, $next) {
+            $response = $next($request);
+            page_cache()->flush('while the response was on its way');
+
+            return $response;
+        });
+
+        Route::middleware(['web', 'pctest.leaving', 'page.cache:pctest'])->get('/pc-test/leaving', fn () => view('pctest::page'));
+        Route::middleware(['web', 'pctest.late-flush', 'page.cache:pctest'])->get('/pc-test/late-flush', fn () => view('pctest::page'));
 
         Route::middleware(['web', 'page.cache:pctest,page'])->get('/pc-test/list', fn () => view('pctest::page', ['body' => 'page '.request('page', 1)]));
 
@@ -130,6 +153,36 @@ class PageCacheTest extends TestCase
         $second->assertSee('<div id="body">plain</div>', false);
         $this->assertDoesNotMatchRegularExpression('/pc-[0-9a-f]{16}-/', $second->getContent(), 'no placeholder or marker is left in a served page');
         $this->assertSame(1, (int) DB::table('page_cache')->count());
+    }
+
+    /** Nobody waits for the copy: it is written after the response, and it is there for the next visitor. */
+    public function test_a_copy_is_written_after_the_response(): void
+    {
+        $this->draws()->copies = -1;
+
+        $response = $this->get('/pc-test/leaving');
+
+        $this->assertSame(0, $this->draws()->copies, 'nothing written while the visitor waits');
+        $this->assertSame('stored', $this->cache($response));
+        $this->assertSame(1, (int) DB::table('page_cache')->count(), 'written once the response has gone');
+
+        $this->newVisitor();
+        $this->assertSame('hit', $this->cache($this->get('/pc-test/leaving')));
+    }
+
+    public function test_a_page_changed_while_it_was_drawn_is_not_kept_and_says_so(): void
+    {
+        $this->assertSame('miss', $this->cache($this->get('/pc-test/flushes')));
+        $this->assertSame(0, (int) DB::table('page_cache')->count());
+    }
+
+    /** The header has already gone, the check has not: a late copy of a changed page is refused all the same. */
+    public function test_something_thrown_away_after_the_page_was_drawn_still_refuses_the_copy(): void
+    {
+        $response = $this->get('/pc-test/late-flush');
+
+        $this->assertSame('stored', $this->cache($response), 'what was asked for when the header left');
+        $this->assertSame(0, (int) DB::table('page_cache')->count());
     }
 
     public function test_the_form_token_and_the_script_nonce_are_each_visitors_own(): void

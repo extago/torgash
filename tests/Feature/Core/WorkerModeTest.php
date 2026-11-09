@@ -3,6 +3,7 @@
 namespace Tests\Feature\Core;
 
 use App\Core\Hooks\HookBus;
+use App\Core\PageCache\PageCache;
 use App\Core\Settings\SettingsManager;
 use App\Core\Support\WebWorkers;
 use App\Core\Themes\ThemeManager;
@@ -68,6 +69,25 @@ class WorkerModeTest extends TestCase
 
         $this->assertSame(200, $responses[0]->getStatusCode());
         $this->assertSame(1, (int) DB::table('m_catalog_products')->where('id', $product->id)->value('views_count'));
+    }
+
+    /** The copy is written after the response, by the same ending of the request. */
+    public function test_a_page_kept_after_the_response_is_there_for_the_next_request(): void
+    {
+        app(SettingsManager::class)->set('core', PageCache::ENABLED, true);
+        page_cache()->flush('a test begins');
+
+        Product::create([
+            'sku' => 'WORKER-KEPT', 'name' => ['en' => 'Kept'], 'slug' => 'worker-kept',
+            'price' => 100_00, 'stock' => 5, 'status' => 'active',
+        ]);
+
+        $responses = $this->serveInWorker([
+            $this->workerGet('http://localhost/product/worker-kept'),
+            $this->workerGet('http://localhost/product/worker-kept'),
+        ]);
+
+        $this->assertSame(['stored', 'hit'], array_map(fn ($r) => strtok((string) $r->headers->get('X-Torgash-Cache'), ';'), $responses));
     }
 
     public function test_a_hook_listener_added_by_a_request_does_not_outlive_it(): void
@@ -354,6 +374,41 @@ class WorkerModeTest extends TestCase
         $this->assertNotNull($row, 'the request was measured');
         $this->assertLessThan(60_000, (float) $row->total_ms, 'timed from the worker\'s start');
         $this->assertEquals(0, (float) $row->boot_ms, 'starting the worker is no part of what a page cost');
+    }
+
+    /**
+     * A manager looking through a customer's eyes (PLAN §70): the guard, the
+     * note of who is who and the basket all answer for one request. The next
+     * visitor of the same worker must be nobody.
+     */
+    public function test_a_customer_looked_through_is_gone_by_the_next_request(): void
+    {
+        $manager = \App\Models\User::role('admin')->firstOrFail();
+        $customer = \App\Models\User::factory()->create();
+        \Torgash\Cart\Models\Cart::create(['token' => \Torgash\Cart\Models\Cart::newToken(), 'user_id' => $customer->id, 'items' => [], 'last_active_at' => now()]);
+
+        $this->workerRoute('/__worker/look', function () use ($manager, $customer) {
+            $request = request();
+            $request->setLaravelSession($session = app('session')->driver());
+            $session->put(\App\Core\Access\Impersonation::SESSION, ['manager' => $manager->id, 'customer' => $customer->id]);
+            auth()->setUser($manager);
+
+            return app(\App\Core\Access\Impersonation::class)->enter($request) ? (string) auth()->id() : 'refused';
+        });
+
+        $this->workerRoute('/__worker/who', fn () => json_encode([
+            'user' => auth()->id(),
+            'looking' => app(\App\Core\Access\Impersonation::class)->active(),
+            'basket' => (new \ReflectionProperty(\Torgash\Cart\CartManager::class, 'token'))->getValue(app(\Torgash\Cart\CartManager::class)),
+        ]));
+
+        [$looked, $next] = $this->serveInWorker([
+            $this->workerGet('http://localhost/__worker/look'),
+            $this->workerGet('http://localhost/__worker/who'),
+        ]);
+
+        $this->assertSame((string) $customer->id, $looked->getContent());
+        $this->assertSame('{"user":null,"looking":false,"basket":null}', $next->getContent());
     }
 
     /** A route on the worker's own application — its router is shared by every request, as in production. */

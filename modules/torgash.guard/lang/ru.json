@@ -1,5 +1,7 @@
 {
     "Guard": "Охрана",
+    "Entered as a customer": "Вход как покупатель",
+    "Left the customer view": "Выход из режима покупателя",
     "Errors": "Ошибки",
     "Dealt with": "Разобрано",
     "Delete them": "Удалить их",

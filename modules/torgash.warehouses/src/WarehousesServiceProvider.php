@@ -252,6 +252,9 @@ class WarehousesServiceProvider extends ServiceProvider
      */
     protected function registerStorefrontPoint(): void
     {
+        // The pickup point is the browser's, and a delivery needs one (PLAN §70).
+        hook_listen('core.impersonation.writes', fn (array $routes) => [...$routes, 'warehouses.point.*']);
+
         // The shop a visitor chose changes what a card says about stock and,
         // with `only`, which products are listed at all: every page kept
         // ready for guests is filed under it (PLAN §61). A sale moves a

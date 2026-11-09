@@ -56,6 +56,12 @@ class CoreSettings
                 'label' => 'Manage customers and customer groups',
             ],
             [
+                // Seeing the shop as one of its customers and ordering in
+                // their name is more than being able to read their card.
+                'name' => \App\Core\Access\Impersonation::PERMISSION,
+                'label' => 'Enter the storefront as a customer',
+            ],
+            [
                 // A storefront's domains decide which site a visitor reaches
                 // and its default currency is what every stored amount MEANS,
                 // so it is not simply "in the admin" either.

@@ -1,5 +1,6 @@
 {
     "Build": "Сборка",
+    "Placed by :name on behalf of the customer": "Оформлено менеджером :name от имени покупателя",
     "Change the build": "Изменить сборку",
     "nothing": "ничего",
     "The product keeps the price this order sold it at; the answers are priced as they are today.": "Товар сохраняет цену, по которой продан в этом заказе; ответы считаются по сегодняшним правилам.",

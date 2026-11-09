@@ -63,7 +63,7 @@
 
                 <select name="action" class="select select-sm w-auto" data-submit-on-change aria-label="{{ __('Action') }}">
                     <option value="">{{ __('Any action') }}</option>
-                    @foreach (['created', 'updated', 'deleted', 'restored', 'installed', 'uninstalled', 'enabled', 'disabled', 'signed_in'] as $action)
+                    @foreach (['created', 'updated', 'deleted', 'restored', 'installed', 'uninstalled', 'enabled', 'disabled', 'signed_in', 'entered_as', 'left_as'] as $action)
                         <option value="{{ $action }}" @selected($filters['action'] === $action)>{{ AuditEntry::labelFor($action) }}</option>
                     @endforeach
                 </select>

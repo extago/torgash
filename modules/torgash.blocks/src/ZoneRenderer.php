@@ -6,6 +6,7 @@ use App\Core\Content\Fragment;
 use App\Core\Display\RuleKinds;
 use App\Core\PageCache\Capture;
 use App\Core\PageCache\Holes;
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Route;
 use Torgash\Blocks\Models\Block;
@@ -45,6 +46,19 @@ use Torgash\Blocks\Models\Block;
  * "viewed recently"), or its type or a rule's kind says so — as a personal
  * part, drawn again for every visitor; a row or tabs with one such member as
  * one part, since the others close up around it.
+ *
+ * That redraw is the price of a block being personal, and for a list of cards
+ * it is most of what the visitor waits for: a kept page in 12 ms for a guest
+ * and in 440 for one with a browsing history, because "Viewed recently" stood
+ * in a row of tabs and took the row's 36 cards with it. So a block whose type
+ * says it can (`later`, BlockTypes) WAITS: the page says only whether there is
+ * anything to see — the name of its tab, or the place it will fill — and the
+ * block itself is drawn by its own request (`blocks.later`), when its tab is
+ * opened or it is scrolled to. Never a member of a row, nor a block with
+ * display rules: a rule asks about the page the block stands on, and that
+ * request is not that page. Tabs with one that waits are always drawn as a
+ * row of tabs, since only some visitors get a second name in it: app.css
+ * makes a row with one name look like the heading a lone tab is given.
  */
 class ZoneRenderer
 {
@@ -71,7 +85,7 @@ class ZoneRenderer
             $key = self::groupKey($block);
 
             if ($key !== $groupKey) {
-                $out .= $this->personalPart($members, $context, $this->flush($groupKey, $group, $groupFirst), $personal, $read);
+                $out .= $this->personalPart($members, $context, $this->flush($groupKey, $group, $groupFirst, $context), $personal, $read);
                 $group = [];
                 $members = [];
                 $personal = false;
@@ -81,14 +95,29 @@ class ZoneRenderer
             }
 
             if ($key === null) {
+                if ($this->waits($block)) {
+                    $out .= $this->waitingBlock($block, $context);
+
+                    continue;
+                }
+
                 $drawn = $this->drawn($block, $context);
                 $out .= $this->personalPart([$block], $context, Section::wrap($block->section, $drawn['html']), $drawn['personal'], $drawn['read']);
 
                 continue;
             }
 
-            $drawn = $this->drawn($block, $context, inTabs: str_starts_with($key, 'tabs:'));
+            $inTabs = str_starts_with($key, 'tabs:');
             $members[] = $block;
+
+            // Drawn by its own request; all the row needs is where it stands.
+            if ($inTabs && $this->waits($block)) {
+                $group[] = ['block' => $block, 'html' => null];
+
+                continue;
+            }
+
+            $drawn = $this->drawn($block, $context, inTabs: $inTabs);
             $personal = $personal || $drawn['personal'];
             $read = Capture::together($read, $drawn['read']);
 
@@ -97,7 +126,106 @@ class ZoneRenderer
             }
         }
 
-        return $out.$this->personalPart($members, $context, $this->flush($groupKey, $group, $groupFirst), $personal, $read);
+        return $out.$this->personalPart($members, $context, $this->flush($groupKey, $group, $groupFirst, $context), $personal, $read);
+    }
+
+    /** May this block be drawn after the page? Asks nothing about the visitor. */
+    public function waits(Block $block): bool
+    {
+        $when = BlockTypes::find($block->type)['later']['when'] ?? null;
+
+        return is_callable($when) && empty($block->rules) && $when((array) ($block->settings ?? []));
+    }
+
+    /**
+     * A block that waited, drawn for whoever asked — what `blocks.later`
+     * answers. Its heading is the tab's when it stands in one.
+     *
+     * @param  array<string, mixed>  $keys  what the address says: the keys laterKeys() gave it
+     */
+    public function drawLater(Block $block, array $keys): string
+    {
+        $inTabs = self::groupKey($block) !== null;
+        $context = [];
+
+        foreach ((array) (BlockTypes::find($block->type)['later']['context'] ?? []) as $name => $class) {
+            $key = (int) ($keys[$name] ?? 0);
+
+            if ($key > 0 && ($found = $class::query()->find($key))) {
+                $context[$name] = $found;
+            }
+        }
+
+        $html = $this->block($block, $context, $inTabs);
+
+        return $inTabs ? $html : Section::wrap($block->section, $html);
+    }
+
+    /**
+     * The things of the page's context a block that waits needs again, by
+     * key — and only those its type named, so what the address may ask for
+     * is the type's to say.
+     *
+     * @return array<string, int>
+     */
+    protected function laterKeys(Block $block, array $context): array
+    {
+        $keys = [];
+
+        foreach (array_keys((array) (BlockTypes::find($block->type)['later']['context'] ?? [])) as $name) {
+            if (($context[$name] ?? null) instanceof Model) {
+                $keys[$name] = (int) $context[$name]->getKey();
+            }
+        }
+
+        return $keys;
+    }
+
+    /**
+     * What the visitor's own part of a waiting block needs — plain values:
+     * a personal part keeps them in the copy, and fetching the block and the
+     * product back on every visit is what waiting is meant to save.
+     *
+     * @return array{waitingType: string, waitingSettings: array<string, mixed>, waitingKeys: array<string, int>}
+     */
+    protected function waitingData(Block $block, array $keys): array
+    {
+        return ['waitingType' => (string) $block->type, 'waitingSettings' => (array) ($block->settings ?? []), 'waitingKeys' => $keys];
+    }
+
+    /** A block that waits, standing alone: its place, for a visitor with something to put in it. */
+    protected function waitingBlock(Block $block, array $context): string
+    {
+        $keys = $this->laterKeys($block, $context);
+
+        return app(Holes::class)->render('torgash.blocks::waiting-block', [
+            ...$this->waitingData($block, $keys),
+            'waitingUrl' => route('blocks.later', ['block' => $block->id, ...$keys]),
+        ], reusable: true);
+    }
+
+    /**
+     * A tab that waits: its name, for a visitor with something to find under
+     * it, and a panel that asks for the block once it is shown — hidden, and
+     * so inert, for everybody else.
+     *
+     * @return array{waits: true, bar: string, html: string}
+     */
+    protected function waitingTab(Block $block, array $context, string $name, int $value, bool $open): array
+    {
+        $keys = $this->laterKeys($block, $context);
+
+        return [
+            'waits' => true,
+            'bar' => app(Holes::class)->render('torgash.blocks::waiting-tab', [
+                ...$this->waitingData($block, $keys),
+                'waitingName' => $name,
+                'waitingValue' => $value,
+                'waitingOpen' => $open,
+                'waitingLabel' => $this->label($block),
+            ], reusable: true),
+            'html' => view('torgash.blocks::waiting', ['waitingUrl' => route('blocks.later', ['block' => $block->id, ...$keys])])->render(),
+        ];
     }
 
     /**
@@ -178,15 +306,15 @@ class ZoneRenderer
         return $tabs !== '' ? 'tabs:'.$tabs : null;
     }
 
-    /** @param  list<array{block: Block, html: string}>  $group */
-    protected function flush(?string $key, array $group, ?Block $first = null): string
+    /** @param  list<array{block: Block, html: ?string}>  $group */
+    protected function flush(?string $key, array $group, ?Block $first = null, array $context = []): string
     {
         if ($key === null || $group === []) {
             return '';
         }
 
         // Blocks drawn together stand in one band: the first one's.
-        return Section::wrap(($first ?? $group[0]['block'])->section, str_starts_with($key, 'row:') ? $this->row($group) : $this->tabs($group));
+        return Section::wrap(($first ?? $group[0]['block'])->section, str_starts_with($key, 'row:') ? $this->row($group) : $this->tabs($group, $context));
     }
 
     /**
@@ -280,24 +408,29 @@ class ZoneRenderer
         );
     }
 
-    /** @param  list<array{block: Block, html: string}>  $group */
-    protected function tabs(array $group): string
+    /** @param  list<array{block: Block, html: ?string}>  $group */
+    protected function tabs(array $group, array $context = []): string
     {
         if ($group === []) {
             return '';
         }
 
-        $tabs = array_map(fn (array $member) => [
-            'label' => $this->label($member['block']),
-            'html' => $member['html'],
-        ], $group);
+        // The radio group's name: one per row of tabs on the page, and the
+        // first block's id is already unique.
+        $name = 'block-tabs-'.$group[0]['block']->id;
 
-        return view('torgash.blocks::tabs', [
-            'tabs' => $tabs,
-            // The radio group's name: one per row of tabs on the page, and the
-            // first block's id is already unique.
-            'name' => 'block-tabs-'.$group[0]['block']->id,
-        ])->render();
+        // Open at the start: the first tab there for everybody. One that
+        // waits only when none is, or a visitor could find nothing open.
+        $open = array_key_first(array_filter($group, fn (array $member) => $member['html'] !== null)) ?? 0;
+
+        $tabs = array_map(fn (array $member, int $n) => $member['html'] === null
+            ? $this->waitingTab($member['block'], $context, $name, $n, $n === $open)
+            : ['label' => $this->label($member['block']), 'html' => $member['html']],
+            $group,
+            array_keys($group),
+        );
+
+        return view('torgash.blocks::tabs', ['tabs' => $tabs, 'name' => $name, 'open' => $open])->render();
     }
 
     /** The word on a tab: the block's heading, else what the admin calls it. */

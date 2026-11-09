@@ -92,6 +92,8 @@ class AuditEntry extends Model
             'enabled' => __('Switched on'),
             'disabled' => __('Switched off'),
             'signed_in' => __("Signed in on a storefront's address"),
+            'entered_as' => __('Entered as a customer'),
+            'left_as' => __('Left the customer view'),
             'truncated' => __('Not recorded'),
             default => ucfirst($action),
         };

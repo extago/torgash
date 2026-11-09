@@ -2,6 +2,7 @@
 
 namespace Tests\Feature\Catalog;
 
+use App\Core\PageCache\PageCache;
 use App\Core\Settings\SettingsManager;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
@@ -31,6 +32,25 @@ class PriceHistoryTest extends TestCase
         $this->assertNotNull($rows[0]->ends_at, 'the old price closed');
         $this->assertNull($rows[1]->ends_at, 'the new one is open');
         $this->assertSame(90_00, (int) $rows[1]->price);
+    }
+
+    /** The hourly sweep finds nothing moved for nearly every product: that must cost no locked commit. */
+    public function test_a_price_that_has_not_moved_takes_no_lock(): void
+    {
+        $product = $this->product('PH-LOCK', 100_00);
+        $history = app(PriceHistory::class);
+        $locks = 0;
+        DB::listen(function ($query) use (&$locks) {
+            $locks += str_contains($query->sql, 'for update') && str_contains($query->sql, 'm_catalog_price_history') ? 1 : 0;
+        });
+
+        $this->assertFalse($history->record($product->fresh()));
+        $this->assertSame(0, $locks, 'nothing moved, nothing locked');
+
+        DB::table('m_catalog_products')->where('id', $product->id)->update(['price' => 90_00]);
+
+        $this->assertTrue($history->record($product->fresh()));
+        $this->assertSame(1, $locks, 'a price that moved is decided under the lock');
     }
 
     /** The lowest of the window BEFORE the current price began — not today's window. */
@@ -120,6 +140,27 @@ class PriceHistoryTest extends TestCase
         app(PriceHistory::class)->prune();
 
         $this->assertSame([150_00, 100_00], DB::table('m_catalog_price_history')->where('product_id', $product->id)->orderBy('starts_at')->pluck('price')->map(fn ($p) => (int) $p)->all());
+    }
+
+    /** Every night, of rows no page reads: it was throwing away every page kept for guests. */
+    public function test_pruning_throws_no_kept_page_away_and_a_price_that_moved_still_does(): void
+    {
+        $product = $this->product('PH-10', 100_00);
+        $this->history($product, [
+            [300_00, '-200 days', '-125 days'],
+            [100_00, '-90 days', null],
+        ]);
+
+        app(SettingsManager::class)->set('core', PageCache::ENABLED, true);
+        $journal = page_cache()->flushes();
+
+        $this->assertSame(1, app(PriceHistory::class)->prune());
+        $this->assertSame($journal, page_cache()->flushes());
+
+        // The reference pages do print is on the product's own row.
+        DB::table('m_catalog_products')->where('id', $product->id)->update(['price' => 90_00]);
+        $this->assertTrue(app(PriceHistory::class)->record($product->fresh()));
+        $this->assertStringContainsString('prior_lowest_price', page_cache()->flushes()[0]['why']);
     }
 
     public function test_a_copy_does_not_inherit_a_reference(): void

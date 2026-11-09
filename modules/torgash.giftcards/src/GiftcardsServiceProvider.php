@@ -41,6 +41,10 @@ class GiftcardsServiceProvider extends ServiceProvider
         // Issued cards and what they paid for are on no guest's page (PLAN §61).
         page_cache()->unseen(['m_giftcards_cards', 'm_giftcards_ledger']);
 
+        // Paying for a customer's order with their card (PLAN §70). Not taking
+        // a card into their account: that is the customer's to do.
+        hook_listen('core.impersonation.writes', fn (array $routes) => [...$routes, 'giftcards.use', 'giftcards.cart.*']);
+
         StorefrontRoutes::group(dirname(__DIR__).'/routes.php');
 
         Route::middleware(['web', 'auth', 'can:giftcards.manage'])

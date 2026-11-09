@@ -2,6 +2,7 @@
 
 namespace Torgash\Wishlist;
 
+use App\Core\Access\Impersonation;
 use App\Models\User;
 use Illuminate\Support\Facades\DB;
 use Torgash\Catalog\Models\Product;
@@ -50,7 +51,9 @@ class Wishlists
             // Signed in without passing through the login event this request
             // (remembered cookie, a session that started as a guest): the
             // guest's list still becomes theirs.
-            if ($token && ($guest = WishList::where('token', $token)->whereNull('user_id')->first())) {
+            // Not while a manager looks through a customer's eyes: that guest
+            // list belongs to the manager's browser, not to this customer.
+            if ($token && ! app(Impersonation::class)->active() && ($guest = WishList::where('token', $token)->whereNull('user_id')->first())) {
                 $this->list = $this->merge($guest, $this->list, $user);
                 session()->forget(self::SESSION);
             }

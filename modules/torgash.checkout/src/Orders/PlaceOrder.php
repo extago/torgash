@@ -2,6 +2,7 @@
 
 namespace Torgash\Checkout\Orders;
 
+use App\Core\Access\Impersonation;
 use App\Core\Support\Currencies;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Facades\DB;
@@ -385,6 +386,11 @@ class PlaceOrder
         // The identity half, resolved once so the row below reads the same way
         // whoever is placing it.
         $userId = array_key_exists('user_id', $as) ? $as['user_id'] : auth()->id();
+
+        // A manager looking through the customer's eyes (PLAN §70): the order
+        // is the customer's, but it came by a manager's hand and from a
+        // browser that says nothing about the customer.
+        $impersonating = app(Impersonation::class)->active();
         $charge = array_key_exists('charge_currency', $as)
             ? array_filter([
                 'charge_currency' => $as['charge_currency'],
@@ -394,7 +400,7 @@ class PlaceOrder
 
         $order = DB::transaction(function () use (
             $validated, $quote, $shippingCost, $surcharge, $option, $shippingDetails, $paymentMethod,
-            $items, $basketLines, $status, $deductsStock, $appliedCoupon, $total, $prepaid, $deposit, $location, $as, $userId, $charge, $coupons, $cart, $source,
+            $items, $basketLines, $status, $deductsStock, $appliedCoupon, $total, $prepaid, $deposit, $location, $as, $userId, $charge, $coupons, $cart, $source, $impersonating,
         ) {
             // The shelf, asked again with its rows locked: the basket may have
             // waited while the last unit went to somebody else. A manager
@@ -419,7 +425,7 @@ class PlaceOrder
                 // from — the address above all, since "five orders, five names,
                 // one address" cannot be asked later of a row that never wrote
                 // it down. Nothing for an order placed on somebody's behalf.
-                ...app(ClientFacts::class)->capture(array_key_exists('user_id', $as) ? null : request()),
+                ...app(ClientFacts::class)->capture($impersonating || array_key_exists('user_id', $as) ? null : request()),
                 'currency_code' => shop_currency(),
                 // What the customer was quoted in when that is not the shop's
                 // own, at the rate they were quoted at. Frozen: an invoice
@@ -432,7 +438,7 @@ class PlaceOrder
                     $charge['charge_currency'] ?? shop_currency(),
                 ),
                 'locale' => $as['locale'] ?? app()->getLocale(),
-                'source' => $source ?? ($as === [] ? OrderSource::CHECKOUT : OrderSource::ADMIN),
+                'source' => $impersonating ? OrderSource::ADMIN : ($source ?? ($as === [] ? OrderSource::CHECKOUT : OrderSource::ADMIN)),
                 'subtotal' => $quote->subtotal,
                 'coupon_code' => $appliedCoupon?->code,
                 'discount_amount' => $quote->discount,

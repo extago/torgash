@@ -129,7 +129,7 @@
                 'count' => $products->count(),
             ]);
         @endphp
-        @include('torgash.catalog::partials.product-grid', ['products' => $products, 'gridLayout' => $listing['layout'], 'gridCols' => (int) theme_setting('catalog_columns', 4), 'gridInserts' => $listingInserts])
+        @include('torgash.catalog::partials.product-grid', ['products' => $products, 'gridLayout' => $listing['layout'], 'gridCols' => (int) theme_setting('catalog_columns', 4), 'gridEager' => (int) theme_setting('catalog_columns', 4), 'gridInserts' => $listingInserts])
     </div>
 </div>
 
