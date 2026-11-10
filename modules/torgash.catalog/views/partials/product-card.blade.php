@@ -55,10 +55,14 @@
                  SEO template gets to answer for a photo nobody
                  captioned. --}}
             @php
-                $cardMedia = $product->getFirstMedia('gallery');
+                // A plate in place of the photos (Product::pictureCover():
+                // goods for adults, torgash.age) is the only picture — none
+                // of the others to flip through under the pointer.
+                $cardCovered = $product->pictureCover() !== null;
+                $cardMedia = $cardCovered ? null : $product->getFirstMedia('gallery');
                 // Loaded already (withCardData), so the rest of the gallery is
                 // free to ask for; how many a card flips through is the shop's.
-                $cardPhotos = $product->galleryImages()->take(max(0, (int) setting('torgash.catalog', 'card_photos_max')))->values();
+                $cardPhotos = $cardCovered ? collect() : $product->galleryImages()->take(max(0, (int) setting('torgash.catalog', 'card_photos_max')))->values();
                 $cardAlt = $cardMedia
                     ? (\Torgash\Media\Gallery::altFor($cardMedia, $product) ?: $product->t('name'))
                     : $product->t('name');

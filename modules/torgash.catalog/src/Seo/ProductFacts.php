@@ -215,6 +215,12 @@ class ProductFacts
      */
     public function images(int $minWidth = 800): array
     {
+        // What the page shows is what it tells a search engine or a
+        // messenger's preview: the plate, not the photos behind it.
+        if ($cover = $this->product->pictureCover()) {
+            return [['url' => $cover, 'alt' => $this->name()]];
+        }
+
         $images = [];
 
         foreach ($this->product->galleryImages()->values() as $index => $media) {

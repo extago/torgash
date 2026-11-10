@@ -199,6 +199,7 @@ class CustomerImpersonationTest extends TestCase
 
         $this->assertSame([
             'account.addresses.*',
+            'age.confirm',
             'cart.*',
             'checkout.one_click',
             'checkout.quote',

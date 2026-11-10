@@ -12,6 +12,11 @@
     if ($quickImages === []) {
         $quickImages = collect($product->externalImageUrls())->map(fn ($u) => ['stage' => $u, 'thumb' => $u])->all();
     }
+    // One plate instead of every picture when a module covers them for this
+    // visitor (Product::pictureCover()) — as the product page does.
+    if ($quickCover = $product->pictureCover()) {
+        $quickImages = [['stage' => $quickCover, 'thumb' => $quickCover]];
+    }
     $quickShort = app(\Torgash\Catalog\Support\ShortDescription::class)->for($product);
 @endphp
 <div data-dialog-wide>

@@ -75,6 +75,11 @@
         // which the gallery puts on the page only when play is pressed. The
         // catalogue never learns what plays it.
         $galleryUrls = collect(hook_filter('catalog.product.gallery', $galleryUrls->all(), ['product' => $product]))->values();
+        // One plate for the whole strip, clips included, when a module covers
+        // this product's pictures for this visitor (Product::pictureCover()).
+        if ($galleryCover = $product->pictureCover()) {
+            $galleryUrls = collect([['thumb' => $galleryCover, 'stage' => $galleryCover, 'full' => $galleryCover, 'width' => 800, 'height' => 800, 'alt' => $product->t('name')]]);
+        }
         // See the note in partials/product-grid.blade.php: display price, which
         // only differs from the stored one where a module adds tax to it.
         $effectivePrice = hook_filter('catalog.price.display', $product->effectivePrice(), ['product' => $product]);

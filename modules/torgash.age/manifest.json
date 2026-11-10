@@ -1,0 +1,73 @@
+{
+    "id": "torgash.age",
+    "name": "Age limits",
+    "version": "1.0.0",
+    "icon": "shield-alert",
+    "section": "sales",
+    "description": "Goods for adults: an age on a category (with everything under it), on a product or on the whole shop. A visitor who has not said they are old enough sees such goods with their photos covered, or does not find them in lists and search at all; an order of them asks for a tick and tells the manager to check an ID on delivery. A tick proves nothing — the document at the door does.",
+    "provider": "Torgash\\Age\\AgeServiceProvider",
+    "autoload": {
+        "Torgash\\Age\\": "src/"
+    },
+    "requires": {
+        "core": ">=0.1",
+        "modules": [
+            "torgash.catalog",
+            "torgash.cart",
+            "torgash.checkout"
+        ]
+    },
+    "settings": [
+        {
+            "key": "_link_overview",
+            "type": "link",
+            "url": "/admin/age",
+            "label": "Where an age is set",
+            "help": "Every category and product with an age, in one list. An age is set on the category's or the product's own form, beside \"Who sees it\"."
+        },
+        {
+            "key": "display",
+            "type": "select",
+            "default": "cover",
+            "options": {
+                "show": "Shown as usual",
+                "cover": "Photos covered",
+                "hide": "Not in lists or search"
+            },
+            "label": "A visitor who has not confirmed their age sees",
+            "help": "For every age rule that does not choose its own. Photos covered: every photo of such goods becomes a plate saying 18+, in lists, on the product's page, in the basket, in the sitemap and in what the page tells search engines. Not in lists or search: the goods open only by their own address, and their category's page asks for the age first; a category's place in the menu is its status. Either way the page of such a product, and of its category, carries a strip with \"I am 18 or older\", and the goods are shown once it is pressed. Shown as usual: the age is asked only with the order.",
+            "keywords": {
+                "en": "adult goods 18+ tobacco alcohol cover photos hide",
+                "ru": "товары для взрослых 18+ табак алкоголь закрыть фото скрыть"
+            }
+        },
+        {
+            "key": "site_age",
+            "type": "number",
+            "default": 0,
+            "label": "Age for the whole shop",
+            "help": "0 — only the categories and products that have an age on their form. A number — every product of the shop is for that age and older, shown as chosen above: a shop of alcohol or of goods for adults."
+        },
+        {
+            "key": "window",
+            "type": "select",
+            "default": "off",
+            "options": {
+                "off": "Never",
+                "restricted": "On the pages of goods and categories with an age",
+                "everywhere": "On every page, until the visitor answers"
+            },
+            "label": "The window \"Are you 18 or older?\"",
+            "help": "A window over the page that asks before showing it. It is a courtesy, not a check: anybody can press it, and the page behind it is still there for search engines. The answer is kept in the browser for 30 days."
+        },
+        {
+            "key": "confirm_at_checkout",
+            "type": "checkbox",
+            "default": true,
+            "label": "A tick at checkout",
+            "help": "\"I am 18 or older\", required for an order of goods with an age, at checkout and in one click. The order then carries a note for the manager to check a document when it is handed over. An order a manager creates in the admin, through the API or from 1C carries the note without a tick."
+        }
+    ],
+    "permissions": [],
+    "admin_menu": []
+}

@@ -753,5 +753,6 @@
     "≈ :amount, paid to the carrier on receipt": "≈ :amount, оплата перевозчику при получении",
     "Delivery paid to the carrier": "Доставка оплачивается перевозчику",
     "Delivery estimate": "Доставка, ориентир",
-    "Too many codes tried. Please wait a minute.": "Слишком много попыток ввести код. Подождите минуту."
+    "Too many codes tried. Please wait a minute.": "Слишком много попыток ввести код. Подождите минуту.",
+    "no order matches it, and an import does not create orders": "такого заказа нет, а импорт заказы не создаёт"
 }

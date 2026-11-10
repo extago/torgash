@@ -541,6 +541,26 @@ still holding one, unless a manager places on somebody's behalf. The forms'
 hidden `customer_groups_set` marker, so a form without the field keeps what is
 stored.
 
+**Every picture of a product asks ONE question: `Product::pictureCover()`**
+(2026-11-10, PLAN §71). A module answers `catalog.product.picture_cover` with
+an ADDRESS to show instead of the photos — `torgash.age`'s 18+ plate — or
+null. `primaryImageUrl()` asks it first (cards, basket lines, suggestions,
+comparison, kits, blog cards, checkout), and the places that read the gallery
+themselves ask it too: the product page's strip (after
+`catalog.product.gallery`, so clips and 3D go with the photos), the quick view,
+`ProductFacts::images()` (og:image, JSON-LD) and the card's photos under the
+pointer. A new template that reads `galleryImages()` or `getFirstMedia()` for
+the storefront asks `pictureCover()` first, or it shows the photo the module
+covered. Who is asking is the module's business — the admin, a feed, a job's
+letter get null. The sitemap has no visitor, so it asks
+`catalog.sitemap.covered_pictures` for the ids among its set whose photos stay
+out of it (the page stays). The rest of the module's seams are the
+assortment's kind: `catalog.products.listed_query` (left out of lists),
+`catalog.category.view` / `catalog.product.view` (the page's subject, for a
+strip), `catalog.category.visibility_extra` / `catalog.product.visibility_extra`
+beside "Who sees it" with `catalog.category.saved` / `catalog.product.saved`,
+and `checkout.one_click.consents` beside `checkout.form.consents`.
+
 ### The category list beside the catalogue (`CategoryNav`)
 
 `Support\CategoryNav::rows()` decides the sidebar's rows; the view only draws

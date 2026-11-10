@@ -164,6 +164,10 @@
                             @endforeach
                             <p class="label text-xs opacity-60 whitespace-normal">{{ __('Nothing ticked — everybody. Ticked — only them: others do not find it in the catalogue, search or the sitemap.') }}</p>
                         </fieldset>
+
+                        {{-- Who else may see it, by a module's rule (torgash.age:
+                             an age) — saved on catalog.category.saved. --}}
+                        {!! hook_filter('catalog.category.visibility_extra', '', ['category' => $category]) !!}
                     </div>
                 </section>
 

@@ -604,7 +604,12 @@ class CheckoutServiceProvider extends ServiceProvider
      * installed. `items` (line items) is export-only for now: reconstructing
      * an order's cart-like state, stock impact and totals from an imported
      * row is a materially bigger feature than round-tripping scalar fields,
-     * deliberately not attempted here.
+     * deliberately not attempted here (PLAN §72: a module's job, if ever).
+     *
+     * So an import UPDATES orders and never makes one: a row that matches no
+     * order is refused, whatever "create new" says. It used to become an
+     * order with no goods, written past PlaceOrder — no number from the
+     * shop's sequence, no stock, no source (orders.md: one place creates).
      */
     protected function registerEximHooks(): void
     {
@@ -625,13 +630,11 @@ class CheckoutServiceProvider extends ServiceProvider
             }
 
             $orderNumber = $ctx['row']['order_number'] ?? null;
-            if (! $orderNumber) {
-                return ['model' => new Order, 'matchedBy' => null];
-            }
+            $existing = $orderNumber ? Order::where('order_number', $orderNumber)->first() : null;
 
-            $existing = Order::where('order_number', $orderNumber)->first();
-
-            return ['model' => $existing ?? new Order, 'matchedBy' => $existing ? 'order_number' : null];
+            return $existing
+                ? ['model' => $existing, 'matchedBy' => 'order_number']
+                : ['model' => new Order, 'matchedBy' => null, 'refused' => 'no order matches it, and an import does not create orders'];
         });
 
         hook_listen('exim.schema.order', fn (array $fields) => [...$fields,

@@ -75,6 +75,11 @@
 
     <x-contact-verify form="one_click" :values="['phone' => $oneClickPhone]" />
 
+    {{-- What a module asks the buyer to confirm with this order (torgash.age:
+         "I am 18 or older"). A field, so a filter rather than an isolated
+         render; `values` is what came back with a refused form. --}}
+    {!! hook_filter('checkout.one_click.consents', '', ['product' => $product ?? null, 'values' => $oneClickValues]) !!}
+
     <button type="submit" class="btn btn-primary">{{ __('Order now') }}</button>
 
     <p class="text-xs opacity-60">

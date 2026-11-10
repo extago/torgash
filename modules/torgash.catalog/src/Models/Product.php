@@ -189,6 +189,10 @@ class Product extends Model implements HasMedia, PageSubject
      */
     public function primaryImageUrl(int $minWidth = 0): ?string
     {
+        if ($cover = $this->pictureCover()) {
+            return $cover;
+        }
+
         $media = $this->getFirstMedia('gallery');
 
         if ($media) {
@@ -198,6 +202,26 @@ class Product extends Model implements HasMedia, PageSubject
         // A size with no photos shows its colour's (contentFrom()).
         return $this->externalImageUrls()[0]
             ?? ($this->hasOwnPhotos() ? null : $this->contentFrom()?->primaryImageUrl($minWidth));
+    }
+
+    /**
+     * A picture to show IN PLACE OF this product's own, to the visitor of this
+     * request — a plate saying "18+" for goods a visitor has not said they are
+     * old enough for (torgash.age) — or null, the photos as they are.
+     *
+     * The one question every picture of a product asks: the first photo above
+     * (cards, basket lines, suggestions, comparison, kits), the product page's
+     * gallery, the quick view and what the page tells search engines and
+     * messengers (ProductFacts). A module answers it on `catalog.product.picture_cover`
+     * with an ADDRESS, so a template that prints the answer cannot print the
+     * photo instead. Who is asking is the module's business: the admin, a feed
+     * or a letter built by a job must get null.
+     */
+    public function pictureCover(): ?string
+    {
+        $cover = hook_filter('catalog.product.picture_cover', null, ['product' => $this]);
+
+        return is_string($cover) && $cover !== '' ? $cover : null;
     }
 
     /**

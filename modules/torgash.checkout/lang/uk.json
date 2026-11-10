@@ -753,5 +753,6 @@
     "≈ :amount, paid to the carrier on receipt": "≈ :amount, оплата перевізнику при отриманні",
     "Delivery paid to the carrier": "Доставка оплачується перевізнику",
     "Delivery estimate": "Доставка, орієнтир",
-    "Too many codes tried. Please wait a minute.": "Забагато спроб ввести код. Зачекайте хвилину."
+    "Too many codes tried. Please wait a minute.": "Забагато спроб ввести код. Зачекайте хвилину.",
+    "no order matches it, and an import does not create orders": "такого замовлення немає, а імпорт замовлень не створює"
 }

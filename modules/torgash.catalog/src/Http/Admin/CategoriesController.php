@@ -139,6 +139,11 @@ class CategoriesController extends Controller
      */
     protected function afterSave(Request $request, Category $category, string $message)
     {
+        // The one funnel both store() and update() come through, as the
+        // product form's: a module that added its own field to the form
+        // (`catalog.category.visibility_extra`) saves it here, once.
+        hook_action('catalog.category.saved', ['category' => $category, 'request' => $request]);
+
         return ($request->input('after_save') === 'close'
             ? redirect()->route('admin.catalog.categories.index')
             : redirect()->route('admin.catalog.categories.edit', $category))->with('status', $message);

@@ -117,12 +117,20 @@ class SitemapController extends Controller
         // noindex: inviting a crawler to a page that sends it elsewhere is a
         // contradiction (Support\VariationCards::indexable()).
         $cards = app(\Torgash\Catalog\Support\VariationCards::class);
-        foreach ($cards->onlyHeads($cards->indexable())->with('media')->get() as $product) {
+        $products = $cards->onlyHeads($cards->indexable())->with('media')->get();
+
+        // Photos a module keeps from a visitor who has said nothing (goods
+        // for adults, covered until an age is confirmed — torgash.age) are
+        // kept from a picture search too: it is a list of photos for
+        // everybody. The page stays; asked of the whole set at once.
+        $unpictured = array_flip(array_map('intval', (array) hook_filter('catalog.sitemap.covered_pictures', [], ['products' => $products])));
+
+        foreach ($products as $product) {
             $urls[] = $this->url(route('catalog.product', $product->slug), [
                 'lastmod' => $product->updated_at->toAtomString(),
                 'changefreq' => 'weekly',
                 'priority' => '0.6',
-                'images' => $this->images($product),
+                'images' => isset($unpictured[(int) $product->id]) ? [] : $this->images($product),
             ], $product);
         }
 

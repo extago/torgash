@@ -260,6 +260,10 @@ class StorefrontController extends Controller
             return $this->listing->countAnswer($this->listing->applyFilters($this->listing->productsQuery($category), $request));
         }
 
+        // Other modules learn which category this page is, as with a product
+        // (`catalog.product.view`) — an age set on it asks the visitor first.
+        $category = hook_filter('catalog.category.view', $category);
+
         $products = within_pages($this->listing->sorted($this->listing->applyFilters($this->listing->productsQuery($category), $request), $request)
             ->withCardData()->paginate(app(ListingView::class)->perPage($request))->withQueryString());
 
@@ -316,6 +320,9 @@ class StorefrontController extends Controller
         }
 
         $page->setRelation('category', $found);
+
+        // A filter page is its category's page under another address.
+        $found = hook_filter('catalog.category.view', $found);
 
         // A city page is a visitor saying where they are — they typed it into
         // a search engine and clicked it. Announced rather than written: the
