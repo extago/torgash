@@ -297,9 +297,11 @@ class PageMeta
 
         ksort($params);
 
-        // Request::url() drops the query and the trailing slash; the root would
-        // otherwise come out as a bare host, which is not an address.
-        $url = rtrim($request->url(), '/');
+        // current() drops the query and the trailing slash, and on a host the
+        // shop does not know (a mirror pointed at its IP) it names the shop's
+        // own address; the root would otherwise come out as a bare host,
+        // which is not an address.
+        $url = rtrim(url()->current(), '/');
         $url = $request->path() === '/' ? $url.'/' : $url;
 
         return $params === [] ? $url : $url.'?'.http_build_query($params);
@@ -400,7 +402,7 @@ class PageMeta
         }
 
         $request = request();
-        $url = rtrim($request->url(), '/');
+        $url = rtrim(url()->current(), '/');
 
         return Alternates::forUrl($request->path() === '/' ? $url.'/' : $url, null, $default)[$target] ?? null;
     }

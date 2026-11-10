@@ -65,7 +65,7 @@ class AppServiceProvider extends ServiceProvider
                 return ['model' => new User, 'matchedBy' => null];
             }
 
-            $existing = User::where('email', $email)->first();
+            $existing = User::where('email', User::normalEmail($email))->first();
 
             return ['model' => $existing ?? new User, 'matchedBy' => $existing ? 'email' : null];
         });

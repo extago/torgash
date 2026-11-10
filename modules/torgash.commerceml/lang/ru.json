@@ -171,5 +171,8 @@
     "1C has already taken these orders as merged.": "1С уже приняла эти заказы как объединённые.",
     "Payment surcharge service identifier": "Идентификатор услуги «наценка за оплату»",
     "A payment method's surcharge goes into the document as a service line too, under this 1C nomenclature id. Empty — under the engine's own id, which 1C is told about once.": "Наценка способа оплаты тоже попадает в документ строкой-услугой — с этим идентификатором номенклатуры 1С. Пусто — с собственным идентификатором движка, о котором 1С узнаёт один раз.",
-    "The CommerceML door 1C knocks on: the catalogue in, orders out. Write only.": "Дверь CommerceML, в которую стучится 1С: каталог внутрь, заказы наружу. Только запись."
+    "The CommerceML door 1C knocks on: the catalogue in, orders out. Write only.": "Дверь CommerceML, в которую стучится 1С: каталог внутрь, заказы наружу. Только запись.",
+    "That piece is larger than the limit the shop announced.": "Эта часть файла больше лимита, который объявил магазин.",
+    "There is not enough free disk space for this file.": "На диске не хватает места для этого файла.",
+    "There is not enough free disk space to unpack this archive.": "На диске не хватает места, чтобы распаковать этот архив."
 }

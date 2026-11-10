@@ -442,6 +442,12 @@ class PageCache
             return 'not a GET';
         }
 
+        // Copies are filed by host: one made up per request would be a way
+        // round the cache and a way to fill it.
+        if ($request->attributes->get(\App\Core\Http\ForeignHost::ATTRIBUTE)) {
+            return 'a host the shop does not know';
+        }
+
         // A piece of a page (htmx), an answer for a script, the filter
         // panel's count — each its own answer, and none of them a page.
         if ($request->hasHeader('HX-Request') || $request->ajax() || $request->hasHeader('X-Catalog-Count') || $request->expectsJson()) {

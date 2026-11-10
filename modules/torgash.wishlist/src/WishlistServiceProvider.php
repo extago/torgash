@@ -172,9 +172,12 @@ class WishlistServiceProvider extends ServiceProvider
         // Outside StorefrontRoutes: a signature covers one exact address, and
         // a locale prefix would be a second one.
         Route::middleware(['web', 'signed'])
-            ->get('/wishlist/unsubscribe/{list}/{what}', [Http\WishlistController::class, 'unsubscribe'])
+            ->get('/wishlist/unsubscribe/{list}/{what}', [Http\WishlistController::class, 'unsubscribePage'])
             ->whereIn('what', ['price', 'stock', 'all'])
             ->name('wishlist.unsubscribe');
+        Route::middleware(['web', 'signed'])
+            ->post('/wishlist/unsubscribe/{list}/{what}', [Http\WishlistController::class, 'unsubscribe'])
+            ->whereIn('what', ['price', 'stock', 'all']);
     }
 
     /** What the shop learns from it: numbers and products, never people. */

@@ -12,6 +12,7 @@ use App\Models\BackgroundTask;
 use App\Models\BackupPlan;
 use App\Models\BackupRun;
 use App\Models\User;
+use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Storage;
 use Tests\TestCase;
@@ -82,6 +83,79 @@ class BackupHealthTest extends TestCase
         $this->assertCount(0, app(BackupHealth::class)->attention(), 'a plan switched off is not watched');
     }
 
+    /**
+     * A check killed half way never reaches its `finally`, and each check is
+     * named after its own run, so no later one would ever look at that copy of
+     * the shop, customers and all. Nor at the dump it had unpacked.
+     */
+    public function test_the_next_check_clears_what_a_killed_one_left(): void
+    {
+        $this->needsTools();
+        Mail::fake();
+
+        $work = storage_path('app/backup-tmp/test-killed-'.uniqid());
+        File::ensureDirectoryExists($work);
+        file_put_contents($work.'/database.dump', 'the shop in the clear');
+        touch($work, time() - 3 * 86400);
+        $this->superuser(function ($pdo) {
+            $pdo->exec('drop database if exists torgash_test_check_999999 with (force)');
+            $pdo->exec('create database torgash_test_check_999999');
+        });
+
+        try {
+            $run = app(Backups::class)->runNow($this->plan());
+            $checked = app(Backups::class)->verify($run);
+
+            $this->assertSame('passed', $checked->verify_status, (string) $checked->verify_error);
+            $this->assertNoCheckDatabaseLeft();
+            $this->assertDirectoryDoesNotExist($work);
+        } finally {
+            $this->superuser(fn ($pdo) => $pdo->exec('drop database if exists torgash_test_check_999999 with (force)'));
+            File::deleteDirectory($work);
+        }
+    }
+
+    /** A job still working, and a database that merely looks like a check, stay. */
+    public function test_what_is_not_a_forgotten_check_is_left_alone(): void
+    {
+        $this->needsTools();
+        Mail::fake();
+
+        $working = storage_path('app/backup-tmp/test-working-'.uniqid());
+        File::ensureDirectoryExists($working);
+        $names = ['torgash_test_check_888888', 'torgash_test_check_notes', 'torgash_tests_check_7'];
+
+        $this->superuser(function ($pdo) use ($names) {
+            foreach ($names as $name) {
+                $pdo->exec('drop database if exists '.$name.' with (force)');
+                $pdo->exec('create database '.$name);
+            }
+        });
+
+        // Somebody is connected to the first: a check that has not finished.
+        $busy = $this->superuser(fn ($pdo) => $pdo, $names[0]);
+
+        try {
+            $run = app(Backups::class)->runNow($this->plan());
+            $checked = app(Backups::class)->verify($run);
+
+            $this->assertSame('passed', $checked->verify_status, (string) $checked->verify_error);
+            $left = $this->superuser(fn ($pdo) => $pdo->query('select datname from pg_database')->fetchAll(\PDO::FETCH_COLUMN));
+            foreach ($names as $name) {
+                $this->assertContains($name, $left);
+            }
+            $this->assertDirectoryExists($working);
+        } finally {
+            $busy = null;
+            $this->superuser(function ($pdo) use ($names) {
+                foreach ($names as $name) {
+                    $pdo->exec('drop database if exists '.$name.' with (force)');
+                }
+            });
+            File::deleteDirectory($working);
+        }
+    }
+
     public function test_a_backup_is_checked_by_restoring_it(): void
     {
         $this->needsTools();
@@ -106,6 +180,9 @@ class BackupHealthTest extends TestCase
         $manifest['rows']['users'] += 7;
         $zip->addFromString('manifest.json', json_encode($manifest));
         $zip->close();
+        // The journal told as well: otherwise the checksum refuses the file
+        // before anything is counted (BackupTamperingTest).
+        $run->update(['sha256' => hash_file('sha256', $file)]);
 
         $checked = app(Backups::class)->verify($run->fresh());
         $this->assertSame('failed', $checked->verify_status);

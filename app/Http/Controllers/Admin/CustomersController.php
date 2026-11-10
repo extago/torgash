@@ -268,7 +268,7 @@ class CustomersController extends Controller
             'email' => array_values(array_filter([
                 $contact->requires('email') ? 'required' : 'nullable',
                 $either ? 'required_without:phone' : null,
-                'email', 'max:255', Rule::unique('users', 'email')->ignore($customer->id),
+                'email', 'max:255', new \App\Core\Access\EmailIsFree($customer->id),
             ])),
             'phone' => array_values(array_filter([
                 $contact->requires('phone') ? 'required' : 'nullable',

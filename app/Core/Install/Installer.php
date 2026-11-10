@@ -103,7 +103,10 @@ class Installer
         try {
             $found = \Illuminate\Support\Facades\Schema::hasTable('modules') && DB::table('modules')->exists();
         } catch (Throwable) {
-            return false;
+            // A database that does not answer says nothing about the shop.
+            // One with a key has been installed, and sending all its visitors
+            // to the wizard for the length of an outage is the wrong answer.
+            return (string) config('app.key') !== '';
         }
 
         if ($found) {

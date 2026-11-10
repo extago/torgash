@@ -162,7 +162,32 @@ class CodeController extends Controller
     }
 
     /**
-     * The button in the letter: the row and its code, on whatever device the
+     * The page the letter's button opens: what it is for, and a button that
+     * does it. Looking spends nothing — a mail filter opens every address in
+     * a letter before the person does, and a code used up by one would be
+     * dead on arrival.
+     */
+    public function open(VerificationCode $code, string $secret)
+    {
+        $this->assertLinked($code);
+
+        if ($code->purpose !== 'email_change' && auth()->check()) {
+            return redirect()->route('account.dashboard');
+        }
+
+        return view('account.code-link', [
+            'purpose' => $code->purpose,
+            'action' => route('account.code.link.use', ['code' => $code->id, 'secret' => $secret]),
+        ]);
+    }
+
+    protected function assertLinked(VerificationCode $code): void
+    {
+        abort_unless($code->user_id && in_array($code->purpose, Verifier::LINKED_PURPOSES, true), 404);
+    }
+
+    /**
+     * That button pressed: the row and its code, on whatever device the
      * letter was opened. The same check as typing it, attempts included.
      *
      * Signing in and getting back in log the holder in, so a visitor already
@@ -174,9 +199,7 @@ class CodeController extends Controller
      */
     public function link(Request $request, VerificationCode $code, string $secret)
     {
-        if (! $code->user_id || ! in_array($code->purpose, Verifier::LINKED_PURPOSES, true)) {
-            abort(404);
-        }
+        $this->assertLinked($code);
 
         if ($code->purpose === 'email_change') {
             return $this->confirmEmail($request, $code, $secret);
@@ -186,7 +209,7 @@ class CodeController extends Controller
             return redirect()->route('account.dashboard');
         }
 
-        if ($error = $this->verifier->check($code, $secret)) {
+        if ($error = $this->verifier->checkLink($code, $secret)) {
             return redirect()->route('account.code', ['for' => $code->purpose])->withErrors(['login' => $error]);
         }
 
@@ -198,7 +221,7 @@ class CodeController extends Controller
         $mine = $request->user()?->id === $code->user_id;
         $back = $mine ? route('account.dashboard') : route('account.login');
 
-        if ($error = $this->verifier->check($code, $secret)) {
+        if ($error = $this->verifier->checkLink($code, $secret)) {
             return redirect()->to($back)->withErrors(['login' => $error]);
         }
 

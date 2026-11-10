@@ -752,5 +752,6 @@
     "at the carrier's rates, paid on receipt": "по тарифам перевозчика, оплата при получении",
     "≈ :amount, paid to the carrier on receipt": "≈ :amount, оплата перевозчику при получении",
     "Delivery paid to the carrier": "Доставка оплачивается перевозчику",
-    "Delivery estimate": "Доставка, ориентир"
+    "Delivery estimate": "Доставка, ориентир",
+    "Too many codes tried. Please wait a minute.": "Слишком много попыток ввести код. Подождите минуту."
 }

@@ -145,6 +145,11 @@ column (searched, counted, a link to the guard's block), the rest the jsonb
 with `checkout.order.client_facts`. A later message captures nothing. Both
 expire after the shop's retention (`enquiry_ip`) and go on erasure.
 
+**The page it came from** (`page_url`) is what the visitor's browser says, and
+the manager's screen prints it as a link. `Submit::pageAddress()` keeps only an
+`http(s)://` address cut to the column's 255 (a long Referer was a 500); the
+screen checks again for rows older than that.
+
 ## Returns (torgash.rma)
 
 A return is a KIND of enquiry, and this module is the half an enquiry cannot

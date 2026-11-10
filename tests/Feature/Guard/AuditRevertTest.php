@@ -114,6 +114,31 @@ class AuditRevertTest extends TestCase
         $this->assertSame('g', app(SettingsManager::class)->get('core', 'weight_unit'));
     }
 
+    public function test_a_value_another_row_now_holds_is_said_and_not_a_500(): void
+    {
+        $page = $this->page();
+        $old = $page->slug;
+        $entry = $this->changeInAdmin(fn () => Page::find($page->id)->update(['slug' => 'renamed-'.uniqid()]));
+
+        Page::create(['title' => ['en' => 'Holder'], 'slug' => $old, 'body' => ['en' => '<p>x</p>'], 'enabled' => true]);
+
+        $this->actingAs($this->admin());
+        $this->from('http://localhost/admin/guard/audit')
+            ->post('http://localhost/admin/guard/audit/'.$entry->id.'/revert')
+            ->assertRedirect('http://localhost/admin/guard/audit')
+            ->assertSessionHas('error');
+
+        $this->assertNotSame($old, $page->fresh()->slug);
+    }
+
+    public function test_a_word_for_a_user_is_not_a_500(): void
+    {
+        $this->actingAs($this->admin());
+
+        $this->get('http://localhost/admin/guard/audit?user=abc')->assertOk();
+        $this->get('http://localhost/admin/guard/audit?user=99999999999999999999999')->assertOk();
+    }
+
     public function test_it_takes_a_permission_of_its_own(): void
     {
         $page = $this->page();

@@ -63,3 +63,21 @@ this file is the reasoning. Read it before changing anything it covers.
   scopes from `TokenScopes::all()` (read fresh — the registry is lazy and a
   module may come later); a write-ticked read is held, and since a disabled
   box is not submitted, the stored list may say `write` alone.
+
+### Who may knock (report of 2026-11-09)
+
+- **The limiter** gives an allowance of its own only to a token this shop ISSUED;
+  anything else, a made-up token included, counts against the address. Keyed on
+  the string as sent, every request with a new random token had one of its own.
+- **`X-Storefront`** is an enabled storefront, by code, or by id when it is
+  digits (the database refuses to compare a word with a number: a 500). Anything
+  else is answered by the default storefront.
+- **`complete`** asks what the checkout page asks: the CAPTCHA check
+  (`FormGuard::checkAdded`) and the confirmation of a contact. A code is proved
+  in a browser and the API cannot ask for one, so a shop that confirms contacts
+  answers 422 and takes such an order only on its site. In the controller, not
+  in `PlaceOrder`, which also serves callers with no visitor (the exchange, one
+  click).
+- **A code at the checkout** (`CouponManager`) counts wrong codes per client, 10
+  a minute, at both doors. A code is money to whoever guesses it, and nobody is
+  slowed down for using a right one.

@@ -357,7 +357,9 @@ final class XmlFile extends ImportFile
 
     private static function reader(string $path): XMLReader
     {
-        $reader = XMLReader::open($path, null, LIBXML_NONET | LIBXML_COMPACT | LIBXML_PARSEHUGE);
+        // Not LIBXML_PARSEHUGE: a feed of any length is read piece by piece
+        // without it, and all it adds is a pass for one enormous text.
+        $reader = XMLReader::open($path, null, LIBXML_NONET | LIBXML_COMPACT);
 
         if (! $reader) {
             throw new RuntimeException(__('This XML file cannot be read.'));

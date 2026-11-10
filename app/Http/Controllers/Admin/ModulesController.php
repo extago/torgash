@@ -119,7 +119,12 @@ class ModulesController extends Controller
         $file = (new ModuleDocs($manifest))->media($path);
         abort_unless($file, 404);
 
-        return response()->file($file);
+        // What logo() says, for the same reason: an SVG opened by itself is a
+        // page in the admin's origin, and this file is whatever a zip held.
+        return response()->file($file, [
+            'Content-Security-Policy' => "default-src 'none'; style-src 'unsafe-inline'; sandbox",
+            'X-Content-Type-Options' => 'nosniff',
+        ]);
     }
 
     /**

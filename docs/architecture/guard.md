@@ -263,3 +263,14 @@ blocking counts per address.
 pressed the button and saw nothing happen. Typed values are passed to the view
 explicitly — there was no redirect, so `old()` is empty, and a wrong sum must not
 cost somebody the question they wrote.
+
+### Two details from the report of 2026-11-09
+
+**One list of scripts.** `App\Core\Support\ServerScripts::EXTENSIONS` is what
+uploads refuse and what the file check looks for (`Documents`, `Library`,
+`Options\Files`, `Guard\Files\Uploads`): the module that refuses an upload and
+the one that goes looking afterwards have to mean the same thing.
+
+**Putting a change back is all its fields or none** (`AuditController`, one
+transaction). The value may have been taken by another row since, which is a
+sentence for the manager and not a 500.

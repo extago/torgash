@@ -14,6 +14,39 @@ use Tests\TestCase;
  */
 class OutboundUrlTest extends TestCase
 {
+    /**
+     * `Http::fake` drops the transport options, so a stubbed test passes with
+     * any of them, including ones Guzzle refuses in production. What actually
+     * goes to the transport is read off the stub and tried on the real thing.
+     */
+    public function test_what_is_handed_to_the_transport_is_accepted_and_stops_at_the_limit(): void
+    {
+        $seen = [];
+        Http::fake(function ($request, array $options) use (&$seen) {
+            $seen = $options;
+
+            return Http::response('x');
+        });
+
+        (new class(app(\App\Core\Http\HostResolver::class)) extends OutboundUrl
+        {
+            public function check(string $url): array
+            {
+                return ['example.com', 443, '93.184.216.34'];
+            }
+        })->get('https://example.com/picture.png', maxBytes: 10);
+
+        $this->assertArrayHasKey('sink', $seen);
+        $this->assertSame(10, $seen['sink']->write(str_repeat('a', 10)), 'up to the limit it is taken');
+        $this->assertSame(0, $seen['sink']->write('b'), 'one byte more and the transfer stops');
+
+        // Throws for an option Guzzle does not let through, as production did.
+        (new \GuzzleHttp\Handler\CurlFactory(1))->create(
+            new \GuzzleHttp\Psr7\Request('GET', 'https://example.com/'),
+            array_intersect_key($seen, array_flip(['curl', 'allow_redirects', 'sink']))
+        );
+    }
+
     public function test_private_loopback_and_reserved_addresses_are_not_public(): void
     {
         foreach (['127.0.0.1', '10.1.2.3', '172.16.0.1', '192.168.1.1', '169.254.169.254', '0.0.0.0', '100.64.0.1', '::1', 'fe80::1', 'fd00::1', '::ffff:127.0.0.1'] as $ip) {

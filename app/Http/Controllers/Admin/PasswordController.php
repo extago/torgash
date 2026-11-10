@@ -7,7 +7,6 @@ use App\Http\Controllers\Controller;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Password;
-use Illuminate\Support\Str;
 use Illuminate\Validation\Rules\Password as PasswordRule;
 
 /**
@@ -61,7 +60,7 @@ class PasswordController extends Controller
             // A customer's address with a reset token is not a way into the admin.
             abort_unless($user->roles()->exists(), 403);
 
-            $user->forceFill(['password' => $password, 'remember_token' => Str::random(60)])->save();
+            $user->forceFill(['password' => $password])->save();
 
             if (! $user->email_verified_at) {
                 $user->forceFill(['email_verified_at' => now()])->save();

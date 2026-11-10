@@ -26,7 +26,7 @@ class AuthController extends Controller
         $throttle->check($request, $credentials['email']);
         InstallPassword::refuse($request, $throttle, $credentials['email'], $credentials['password']);
 
-        if (! Auth::attempt($credentials, $request->boolean('remember'))) {
+        if (! Auth::attempt(['email' => \App\Models\User::normalEmail($credentials['email'])] + $credentials, $request->boolean('remember'))) {
             $throttle->failed($request, $credentials['email']);
 
             throw ValidationException::withMessages(['email' => __('Invalid credentials.')]);

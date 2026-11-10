@@ -156,6 +156,18 @@ class PageCacheTest extends TestCase
     }
 
     /** Nobody waits for the copy: it is written after the response, and it is there for the next visitor. */
+    /** Copies are filed by host, and a host is whatever the sender wrote. */
+    public function test_a_host_the_shop_does_not_know_gets_no_copy(): void
+    {
+        config(['app.url' => 'https://shop.example']);
+
+        $response = $this->get('http://evil.example/pc-test/page');
+
+        $response->assertOk();
+        $this->assertSame('bypass', $this->cache($response));
+        $this->assertSame(0, (int) DB::table('page_cache')->count());
+    }
+
     public function test_a_copy_is_written_after_the_response(): void
     {
         $this->draws()->copies = -1;

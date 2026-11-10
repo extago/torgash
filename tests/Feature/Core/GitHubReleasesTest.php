@@ -72,6 +72,20 @@ class GitHubReleasesTest extends TestCase
         Http::assertNotSent(fn ($request) => str_contains($request->url(), 'uds.test'));
     }
 
+    public function test_a_package_of_a_release_comes_from_github(): void
+    {
+        config(['torgash.updates.github' => 'extago/torgash', 'torgash.updates.url' => '']);
+        $sha = hash('sha256', 'PK-body');
+        app(\App\Core\Settings\SettingsManager::class)->set('core', UpdateServer::SETTING, ['source' => 'https://github.com/extago/torgash']);
+
+        Http::fake(['*' => Http::response('PK-body')]);
+
+        $file = app(UpdateServer::class)->download(['version' => '0.2.9', 'sha256' => $sha, 'download' => 'https://api.github.com/repos/extago/torgash/releases/assets/1']);
+
+        $this->assertFileExists($file);
+        @unlink($file);
+    }
+
     public function test_a_download_with_no_announced_sum_is_refused(): void
     {
         Http::fake(['*' => Http::response('PK…')]);

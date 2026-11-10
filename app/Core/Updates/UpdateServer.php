@@ -165,6 +165,8 @@ class UpdateServer
         @mkdir(dirname($target), 0755, true);
 
         $url = (string) $offer['download'];
+        $this->assertFromSource($url);
+
         app(GitHubReleases::class)->prepare($this->http(), $url)->timeout(600)->withOptions(['sink' => $target])->get($url)->throw();
 
         // A sum nobody announced checks nothing: refused, not skipped.
@@ -174,6 +176,22 @@ class UpdateServer
         }
 
         return $target;
+    }
+
+    /**
+     * A package comes from where the offer came from. The sum and the signature
+     * keep a wrong file from being installed, but not from being fetched: this
+     * server would otherwise knock on whatever address the answer named.
+     */
+    protected function assertFromSource(string $url): void
+    {
+        $source = (string) ($this->last()['source'] ?? '');
+        $hosts = GitHubReleases::repository($source) ? ['github.com', 'api.github.com'] : [strtolower((string) parse_url($source, PHP_URL_HOST))];
+        $host = strtolower((string) parse_url($url, PHP_URL_HOST));
+
+        if ($host === '' || ! in_array($host, $hosts, true) || ! preg_match('#^https?://#i', $url)) {
+            throw new RuntimeException('The update server offered a package at another address.');
+        }
     }
 
     /** From the developer's machine: puts a built package on the server. */

@@ -48,12 +48,21 @@ class GalleryController extends Controller
         return $this->items($model, $owner, $errors);
     }
 
+    /** Each link is fetched inside the request, one after another. */
+    public const MAX_LINKS = 20;
+
     public function fromUrl(Request $request, string $owner, int|string $id): JsonResponse
     {
         $model = $this->authorized($owner, $id);
         $errors = [];
+        $links = $this->urlLines($request->input('urls', ''));
 
-        foreach ($this->limit($owner, $this->urlLines($request->input('urls', ''))) as $url) {
+        if (count($links) > self::MAX_LINKS) {
+            $errors[] = __('Only the first :count links were taken. Add the rest in the next go.', ['count' => self::MAX_LINKS]);
+            $links = array_slice($links, 0, self::MAX_LINKS);
+        }
+
+        foreach ($this->limit($owner, $links) as $url) {
             try {
                 $this->keepOnly($model, $owner, $this->processor->addFromUrl($model, $url, $this->collection($owner)));
             } catch (Throwable $e) {

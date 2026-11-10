@@ -2,6 +2,7 @@
 
 namespace Torgash\Api;
 
+use App\Core\Support\ClientAddress;
 use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\RateLimiter;
@@ -9,6 +10,7 @@ use Illuminate\Support\Facades\Route;
 use Illuminate\Support\ServiceProvider;
 use Torgash\Api\Http\Authenticate;
 use Torgash\Api\Http\ResolveContext;
+use Torgash\Api\Models\ApiToken;
 
 class ApiServiceProvider extends ServiceProvider
 {
@@ -68,20 +70,22 @@ class ApiServiceProvider extends ServiceProvider
      * limiter under that name would be this module deciding something for
      * everybody.
      *
-     * Keyed by the TOKEN and not the caller's address — the limiter runs before
-     * authentication, so it keys on the bearer string itself (hashed, never
-     * logged in the key) and falls back to the address for callers with no
-     * token at all. Two integrations behind one office NAT must not throttle
-     * each other, and one runaway script must not take the others down with it.
+     * A token this shop ISSUED has its allowance to itself: two integrations
+     * behind one office NAT must not throttle each other, and one runaway
+     * script must not take the others down with it. Anything else counts
+     * against the caller's address, a made-up token included. The limiter runs
+     * before authentication, and keying it on the string as sent gave every
+     * request with a new random token an allowance of its own.
      */
     protected function throttle(): void
     {
         RateLimiter::for('torgash-api', function (Request $request) {
             $perMinute = max(1, (int) setting('torgash.api', 'rate_limit', 120));
+            $hash = $request->bearerToken() ? ApiToken::hash($request->bearerToken()) : null;
 
-            $key = $request->bearerToken()
-                ? 'token:'.hash('sha256', $request->bearerToken())
-                : 'ip:'.$request->ip();
+            $key = $hash !== null && ApiToken::where('token_hash', $hash)->exists()
+                ? 'token:'.$hash
+                : 'ip:'.ClientAddress::subject($request->ip());
 
             return Limit::perMinute($perMinute)->by($key);
         });

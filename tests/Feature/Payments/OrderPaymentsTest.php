@@ -15,6 +15,7 @@ use Torgash\Payments\Jobs\ReconcilePayments;
 use Torgash\Payments\Models\Binding;
 use Torgash\Payments\Models\Payment;
 use Torgash\Payments\Models\Transaction;
+use Torgash\Payments\PaymentActions;
 
 /**
  * An order's payments are units of their own (PLAN §40.10/4): "200 now, the
@@ -162,6 +163,108 @@ class OrderPaymentsTest extends TestCase
         $this->assertCount(1, $payments);
         $this->assertSame('pi_1', $payments[0]->external_id);
         $this->assertSame('cs_1', $payments[0]->started_as);
+    }
+
+    public function test_an_amount_sent_to_the_refund_button_must_be_one_the_payment_can_give(): void
+    {
+        $admin = User::role('admin')->firstOrFail();
+
+        foreach ([0, -500, 999999] as $i => $amount) {
+            $order = $this->order();
+            $this->notify($order, ['status' => 'success', 'invoiceId' => 'inv-'.$i, 'amount' => 100_00, 'messageId' => 'm-'.$i]);
+            $payment = Payment::where('external_id', 'inv-'.$i)->firstOrFail();
+            FakeGateway::$acted = [];
+
+            $this->actingAs($admin)
+                ->post('http://localhost/admin/payments/orders/'.$order->order_number.'/refund', ['payment' => $payment->id, 'amount' => $amount])
+                ->assertSessionHasErrors('amount');
+
+            $this->assertSame([], FakeGateway::$acted, "{$amount} must not reach the bank");
+            $this->assertSame(100_00, $order->fresh()->paid_total);
+        }
+
+        $order = $this->order();
+        $this->notify($order, ['status' => 'success', 'invoiceId' => 'inv-ok', 'amount' => 100_00, 'messageId' => 'm-ok']);
+        $payment = Payment::where('external_id', 'inv-ok')->firstOrFail();
+        FakeGateway::$acted = [];
+
+        $this->actingAs($admin)
+            ->post('http://localhost/admin/payments/orders/'.$order->order_number.'/refund', ['payment' => $payment->id, 'amount' => 25_00])
+            ->assertSessionHasNoErrors();
+
+        $this->assertSame(25_00, FakeGateway::$acted[0]['params']['amount']);
+    }
+
+    public function test_a_refund_the_bank_refused_is_not_written_down_as_done(): void
+    {
+        FakeGateway::$refundAnswer = 'refuse';
+        $order = $this->order();
+        $this->notify($order, ['status' => 'success', 'invoiceId' => 'inv-1', 'amount' => 100_00, 'messageId' => 'm-1']);
+
+        $result = app(Refund::class)->refund($order->fresh(), 100_00);
+
+        $this->assertFalse($result->done, 'the money is still with the shop');
+        $order->refresh();
+        $this->assertSame(PaymentState::PAID, $order->payment_state);
+        $this->assertSame(100_00, $order->paid_total);
+    }
+
+    public function test_a_refund_the_bank_has_not_finished_is_not_done_yet(): void
+    {
+        FakeGateway::$refundAnswer = 'processing';
+        $order = $this->order();
+        $this->notify($order, ['status' => 'success', 'invoiceId' => 'inv-1', 'amount' => 100_00, 'messageId' => 'm-1']);
+
+        $result = app(Refund::class)->refund($order->fresh(), 100_00);
+
+        $this->assertFalse($result->done);
+        $this->assertTrue($result->viaGateway);
+        $this->assertStringContainsString('has not sent it back yet', $result->summary);
+        $this->assertSame(100_00, $order->fresh()->paid_total);
+    }
+
+    public function test_part_returned_and_part_refused_is_not_a_finished_refund(): void
+    {
+        $order = $this->order(['deposit_amount' => 20_00]);
+        $this->notify($order, ['status' => 'success', 'invoiceId' => 'inv-dep', 'amount' => 20_00, 'messageId' => 'm-1']);
+        $this->notify($order, ['status' => 'success', 'invoiceId' => 'inv-rest', 'amount' => 80_00, 'messageId' => 'm-2']);
+
+        // The first refund the bank answers, the second it does not.
+        FakeGateway::$refundAnswer = 'refuse-second';
+
+        $result = app(Refund::class)->refund($order->fresh(), 90_00);
+
+        $this->assertFalse($result->done, 'ten of the ninety never left');
+        $this->assertSame(20_00, $order->fresh()->paid_total, 'what did go back is on the order');
+    }
+
+    public function test_an_order_of_no_gateway_is_still_refunded_by_hand(): void
+    {
+        Binding::query()->delete();
+        $order = $this->order(['payment_state' => PaymentState::PAID, 'paid_total' => 100_00, 'paid_at' => now()]);
+
+        $result = app(Refund::class)->refund($order->fresh(), 100_00);
+
+        $this->assertTrue($result->done);
+        $this->assertFalse($result->viaGateway);
+        $this->assertSame(0, $order->fresh()->paid_total);
+    }
+
+    public function test_the_same_click_twice_moves_the_money_once(): void
+    {
+        $order = $this->order();
+        $this->notify($order, ['status' => 'success', 'invoiceId' => 'inv-1', 'amount' => 100_00, 'messageId' => 'm-1']);
+        $payment = Payment::where('external_id', 'inv-1')->firstOrFail();
+        FakeGateway::$acted = [];
+        $actions = app(PaymentActions::class);
+
+        $this->assertNotNull($actions->act($payment, 'refund', 25_00));
+        $this->assertNull($actions->act($payment->fresh(), 'refund', 25_00), 'a double click is one refund');
+        $this->assertCount(1, FakeGateway::$acted);
+
+        $this->assertNotNull($actions->act($payment->fresh(), 'refund', 30_00), 'a different sum is a different decision');
+        $this->assertNotNull($actions->act($payment->fresh(), 'refresh'));
+        $this->assertNotNull($actions->act($payment->fresh(), 'refresh'), 'asking again costs nothing');
     }
 
     protected function notify(Order $order, array $body): void

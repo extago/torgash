@@ -61,7 +61,7 @@ class Auditor
         'm_guard_audit', 'm_guard_errors', 'm_guard_findings', 'm_guard_checks',
         'background_tasks', 'jobs', 'job_batches', 'failed_jobs',
         'sessions', 'cache', 'cache_locks', 'notifications',
-        'password_reset_tokens', 'personal_access_tokens',
+        'password_reset_tokens', 'password_invite_tokens', 'personal_access_tokens',
     ];
 
     /**

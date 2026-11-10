@@ -126,7 +126,7 @@ class Submit
             'user_id' => auth()->id(),
             'storefront_id' => current_storefront()?->id,
             'locale' => app()->getLocale(),
-            'page_url' => $context['page_url'] ?? $request->headers->get('referer'),
+            'page_url' => $this->pageAddress($context['page_url'] ?? $request->headers->get('referer')),
             ...app(ClientFacts::class)->capture($request),
         ]);
 
@@ -391,6 +391,16 @@ class Submit
      *
      * @return list<array<string, mixed>>|null
      */
+    /**
+     * Where it was asked from, as the visitor's own browser says. It is printed
+     * as a link on the manager's screen, so it is kept only when it is an
+     * address, and cut to what the column holds: a long Referer was a 500.
+     */
+    protected function pageAddress(mixed $address): ?string
+    {
+        return is_string($address) && preg_match('#^https?://\S+$#i', $address) === 1 ? mb_substr($address, 0, 255) : null;
+    }
+
     protected function cartSnapshot(): ?array
     {
         if (! class_exists(CartManager::class)) {

@@ -384,7 +384,8 @@
                         @if ($enquiry->locale)
                             <div><span class="opacity-60">{{ __('Language') }}:</span> {{ strtoupper($enquiry->locale) }}</div>
                         @endif
-                        @if ($enquiry->page_url)
+                        {{-- Only an address: a row written before Submit checked it can hold anything, and this is an href. --}}
+                        @if (preg_match('#^https?://#i', (string) $enquiry->page_url))
                             <div class="break-all">
                                 <span class="opacity-60">{{ __('Page') }}:</span>
                                 <a href="{{ $enquiry->page_url }}" class="link" target="_blank" rel="noopener">{{ $enquiry->page_url }}</a>

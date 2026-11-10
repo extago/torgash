@@ -41,6 +41,9 @@ return Application::configure(basePath: dirname(__DIR__))
         // the database, and before any route, so no controller has to know.
         $middleware->append(\App\Core\Http\ValidUtf8::class);
 
+        // A link is written on the shop's own address, whatever Host said.
+        $middleware->append(\App\Core\Http\ForeignHost::class);
+
         // One page, one address: a 301 off /page/, //page and /Page. GLOBAL
         // rather than in the `web` group, because group middleware runs only
         // after a route has matched — and `//catalog` or `/Catalog` matches
@@ -49,7 +52,18 @@ return Application::configure(basePath: dirname(__DIR__))
         // it is off until the shop switches it on.
         $middleware->append(NormaliseUrl::class);
 
+        $middleware->alias(['throttle' => \App\Core\Http\ThrottlePerRoute::class]);
+
+        // Before `auth` by the priority list, which reorders a route's `auth`
+        // ahead of everything in the group: a session ended after `auth` had
+        // let it through reached the controller with nobody signed in.
+        $middleware->prependToPriorityList(
+            \Illuminate\Contracts\Auth\Middleware\AuthenticatesRequests::class,
+            \App\Core\Access\PasswordSessions::class,
+        );
+
         $middleware->web(append: [
+            \App\Core\Access\PasswordSessions::class,
             ResolveStorefront::class,
             // Global (not just routes/admin.php) — module admin panels (catalog,
             // checkout, ...) register their own routes/middleware per ServiceProvider

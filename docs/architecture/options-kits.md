@@ -162,3 +162,9 @@ this file is the reasoning. Read it before changing anything it covers.
   `Invariants\KitInvariants` answers `guard.invariants` with "every slot has
   goods behind it" and "every kit written for a product is shown on it", the
   second asked of `Offer::for()` itself rather than reasoned about.
+
+### How many files one visitor may send (report of 2026-11-09)
+
+`Files::UPLOADS_PER_HOUR` (60 per address, counted in `absorb()`, refused
+attempts included). Each file always had a size limit; their number had none, and
+they wait 30 days for the sweep.

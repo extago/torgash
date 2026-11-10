@@ -39,8 +39,12 @@ class FakeGateway implements Gateway
     /** @var list<array{capability: string, params: array}> every act() call, in order */
     public static array $acted = [];
 
+    /** How a refund ends: 'refuse' answers nothing ('refuse-second': from the second on), 'processing' leaves the money where it is. */
+    public static ?string $refundAnswer = null;
+
     public static function reset(): void
     {
+        self::$refundAnswer = null;
         self::$started = [];
         self::$pageUrl = 'https://pay.example.test/invoice/1';
         self::$failWith = null;
@@ -131,6 +135,7 @@ class FakeGateway implements Gateway
             raw: $body,
             // From the signed payload, never from the URL.
             orderId: isset($body['reference']) ? (int) $body['reference'] : null,
+            currency: $body['currency'] ?? null,
         );
     }
 
@@ -149,6 +154,14 @@ class FakeGateway implements Gateway
         $id = $params['external_id'] ?? 'inv-1';
         $held = $params['held'] ?? null;
         $amount = $params['amount'] ?? null;
+
+        if ($capability === 'refund' && (self::$refundAnswer === 'refuse' || (self::$refundAnswer === 'refuse-second' && count(self::$acted) > 1))) {
+            return null;
+        }
+
+        if ($capability === 'refund' && self::$refundAnswer === 'processing') {
+            return new PaymentEvent(PaymentState::PAID, $held ?? $order->total, $id, null, 'refund in processing');
+        }
 
         return match ($capability) {
             // An unpaid invoice was made for what was left to pay then.

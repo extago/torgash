@@ -39,6 +39,45 @@ class EnquiryTest extends TestCase
     }
 
     /** @param array<string, mixed> $overrides */
+    /** Printed as a link on the manager's screen, and said by the visitor's browser. */
+    public function test_the_page_it_came_from_is_kept_only_when_it_is_an_address(): void
+    {
+        $this->post('http://localhost/enquiry', $this->payload(['page_url' => 'javascript:alert(document.domain)']));
+
+        $this->assertNull(Enquiry::latest('id')->first()->page_url);
+    }
+
+    /** A row from before the check: on the manager's screen it must not become a link. */
+    public function test_an_older_row_is_not_printed_as_a_link(): void
+    {
+        $this->post('http://localhost/enquiry', $this->payload());
+        $enquiry = Enquiry::latest('id')->first();
+        $enquiry->forceFill(['page_url' => 'javascript:alert(1)'])->save();
+
+        $admin = \App\Models\User::factory()->create();
+        $admin->assignRole('admin');
+
+        $this->actingAs($admin)->get('http://localhost/admin/enquiries/'.$enquiry->id)
+            ->assertOk()
+            ->assertDontSee('javascript:alert', false);
+    }
+
+    public function test_the_page_it_came_from_is_kept(): void
+    {
+        $this->post('http://localhost/enquiry', $this->payload(['page_url' => 'https://shop.example/product/lamp']));
+
+        $this->assertSame('https://shop.example/product/lamp', Enquiry::latest('id')->first()->page_url);
+    }
+
+    public function test_a_very_long_address_is_not_an_error(): void
+    {
+        $this->withHeader('Referer', 'https://shop.example/'.str_repeat('a', 900))
+            ->post('http://localhost/enquiry', $this->payload())
+            ->assertRedirect();
+
+        $this->assertSame(255, mb_strlen((string) Enquiry::latest('id')->first()->page_url));
+    }
+
     protected function payload(array $overrides = []): array
     {
         return array_merge([

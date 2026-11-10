@@ -51,10 +51,7 @@ use Throwable;
 class Uploads
 {
     /** Segments that a web server may hand to an interpreter. */
-    public const EXECUTABLE = [
-        'php', 'php3', 'php4', 'php5', 'php7', 'php8', 'phps', 'phtml', 'phar',
-        'htaccess', 'cgi', 'pl', 'py', 'sh',
-    ];
+    public const EXECUTABLE = \App\Core\Support\ServerScripts::EXTENSIONS;
 
     /**
      * Extensions whose CONTENT is not read.

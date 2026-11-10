@@ -115,5 +115,8 @@
     "Hidden": "Приховано",
     "Price": "Ціна",
     "Period": "Період",
-    "Wishlist prices": "Ціни в обраному"
+    "Wishlist prices": "Ціни в обраному",
+    "Stop the letters about price drops?": "Більше не надсилати листи про зниження цін?",
+    "Stop the letters about returns?": "Більше не надсилати листи про надходження?",
+    "Stop the letters about your wishlist?": "Більше не надсилати листи про обране?"
 }

@@ -97,6 +97,13 @@ class Refund
             return new RefundResult(true, trim(implode(' ', $said).' '.$summary), true);
         }
 
+        // A gateway was asked and the money did not come back all the way:
+        // whatever did is already on the order, and writing the rest down
+        // here would be a refund the customer never received.
+        if ($summary instanceof RefundResult) {
+            return new RefundResult($summary->done, trim(implode(' ', $said).' '.$summary->summary), $summary->viaGateway);
+        }
+
         $remaining = (int) $order->paid_total - $amount;
 
         $this->manual->record(

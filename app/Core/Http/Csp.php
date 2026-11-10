@@ -73,8 +73,12 @@ class Csp
             }
 
             $tag = substr($html, $start, $tagEnd - $start + 1);
+
+            // An attribute named `nonce`: not `data-nonce`, and not those
+            // letters inside some other attribute's value.
+            $names = preg_replace('~"[^"]*"|\'[^\']*\'~', '""', $tag);
             $out .= substr($html, $at, $start - $at)
-                .(preg_match('~\bnonce=~i', $tag) ? $tag : '<script nonce="'.$this->nonce().'"'.substr($tag, 7));
+                .(preg_match('~[\s/]nonce\s*=~i', $names) ? $tag : '<script nonce="'.$this->nonce().'"'.substr($tag, 7));
 
             // The body is the script's own text up to its closing tag.
             $close = stripos($html, '</script', $tagEnd + 1);

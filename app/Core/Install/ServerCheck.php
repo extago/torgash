@@ -4,6 +4,7 @@ namespace App\Core\Install;
 
 use App\Core\System\SystemFacts;
 use PDO;
+use RuntimeException;
 use Throwable;
 
 /**
@@ -56,11 +57,11 @@ class ServerCheck
 
         foreach (self::WRITABLE as $path) {
             $absolute = base_path($path);
-            $checks[] = $this->row(__('Writable: :path', ['path' => $path]), is_dir($absolute) && is_writable($absolute), true, $absolute);
+            $checks[] = $this->row(__('Writable: :path', ['path' => $path]), is_dir($absolute) && is_writable($absolute), true);
         }
 
         $envWritable = is_file(base_path('.env')) ? is_writable(base_path('.env')) : is_writable(base_path());
-        $checks[] = $this->row(__('Writable: :path', ['path' => '.env']), $envWritable, true, base_path('.env'));
+        $checks[] = $this->row(__('Writable: :path', ['path' => '.env']), $envWritable, true);
 
         // The stylesheet builder, backups and updates start processes.
         $procOpen = function_exists('proc_open') && ! in_array('proc_open', array_map('trim', explode(',', (string) ini_get('disable_functions'))), true);
@@ -141,6 +142,12 @@ class ServerCheck
     /** @param  array{host: string, port: int|string, username: string, password: ?string}  $db */
     public static function connect(array $db, string $database): PDO
     {
+        // Both go into one line of `key=value;` pairs, where a semicolon starts
+        // another setting: the database's address would be whatever was typed.
+        if (! preg_match('/^[A-Za-z0-9._:\[\]-]+$/', (string) $db['host']) || ! preg_match('/^[A-Za-z0-9_]+$/', $database)) {
+            throw new RuntimeException(__('The database address may hold Latin letters, digits, dots and dashes, and its name letters, digits and underscores.'));
+        }
+
         return new PDO(
             sprintf('pgsql:host=%s;port=%d;dbname=%s', $db['host'], (int) $db['port'], $database),
             $db['username'],

@@ -4,8 +4,11 @@ namespace Torgash\Payments\Http;
 
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\RateLimiter;
+use Throwable;
 use Torgash\Checkout\Models\Order;
 use Torgash\Payments\AnswersCallback;
+use Torgash\Payments\Gateway;
 use Torgash\Payments\Gateways;
 use Torgash\Payments\Models\Binding;
 use Torgash\Payments\Models\Transaction;
@@ -27,6 +30,11 @@ use Torgash\Payments\Starter;
  */
 class CallbackController extends Controller
 {
+    /** Unsigned messages kept per gateway and hour, and how much of each. */
+    protected const UNVERIFIED_KEPT = 60;
+
+    protected const UNVERIFIED_BYTES = 4096;
+
     public function __construct(
         protected Gateways $gateways,
         protected PaymentApplier $applier,
@@ -49,23 +57,31 @@ class CallbackController extends Controller
             return response()->json(['error' => 'unknown gateway'], 404);
         }
 
-        $binding = Binding::where('gateway', $gateway)->first();
+        $binding = $this->accountOf($request, $gateway, $handler);
         $config = $binding?->gatewayConfig() ?? [];
 
-        $verified = $handler->verify($request, $config);
+        // Nothing below the signature is read until it checks out: everything a
+        // message says, its order included, is only as true as the signature.
+        // No account means no secret, and an empty secret is one anybody knows.
+        if (! $binding || ! $handler->verify($request, $config)) {
+            $this->keepUnverified($request, $gateway);
+
+            return response()->json(['ok' => true]);
+        }
+
         $event = $handler->parse($request, $config);
 
         if (! $event) {
             Transaction::create([
                 'gateway' => $gateway,
-                'verified' => $verified,
+                'verified' => true,
                 'applied' => false,
                 'summary' => __('Nothing to act on'),
                 'raw' => ['body' => $request->getContent()],
                 'created_at' => now(),
             ]);
 
-            return $this->answer($handler, $request, null, $config, $verified);
+            return $this->answer($handler, $request, null, $config);
         }
 
         // The order comes from the SIGNED payload where the gateway names one.
@@ -79,33 +95,109 @@ class CallbackController extends Controller
                 'gateway' => $gateway,
                 'external_id' => $event->externalId,
                 'state' => $event->state,
-                'verified' => $verified,
+                'verified' => true,
                 'applied' => false,
                 'summary' => __('No such order'),
                 'raw' => $event->raw,
                 'created_at' => now(),
             ]);
 
-            return $this->answer($handler, $request, $event, $config, $verified);
+            return $this->answer($handler, $request, $event, $config);
         }
 
-        $this->applier->apply($gateway, $order, $event, $verified);
+        $this->applier->apply($gateway, $order, $event);
 
-        return $this->answer($handler, $request, $event, $config, $verified);
+        return $this->answer($handler, $request, $event, $config);
     }
 
     /**
-     * What the gateway is told back. The ordinary `{"ok": true}` for most; the
-     * gateway's own acknowledgement for one whose protocol retries until it
-     * gets a particular signed answer (AnswersCallback) — but only when the
-     * callback verified, since a signed reply to a forgery would teach its
-     * sender what our signature looks like.
+     * The account whose secret this message has to be signed with.
+     *
+     * A gateway can be wired to several payment methods, each with an account
+     * of its own: a live one and a test one, two legal entities. A message has
+     * to check out against the account its ORDER was placed through. The first
+     * row's secret used to decide for all of them, which refused every message
+     * meant for the others and let a message signed with a test account's
+     * secret pay a live order.
+     *
+     * Which order it is can only be read from the message, before anybody
+     * knows it is true. That is safe here because the claim only chooses which
+     * secret is asked: a message lying about its order then has to be signed
+     * by that order's own account. With one account nothing is read at all,
+     * and whatever an unsigned body does to `parse()` stays this method's.
+     *
+     * Trying every account until one fits is the mistake this avoids: the test
+     * account's secret would go on verifying messages about live orders.
+     */
+    protected function accountOf(Request $request, string $gateway, Gateway $handler): ?Binding
+    {
+        $accounts = Binding::where('gateway', $gateway)->orderBy('id')->get();
+
+        if ($accounts->count() < 2) {
+            return $accounts->first();
+        }
+
+        try {
+            $claimed = $handler->parse($request, $accounts->first()->gatewayConfig())?->orderId;
+        } catch (Throwable) {
+            $claimed = null;
+        }
+
+        $order = $claimed ? Order::find($claimed) : null;
+
+        // Naming no order it can do nothing, so any account will do to say so.
+        if (! $order) {
+            return $accounts->first();
+        }
+
+        $own = Binding::forOrder($order);
+
+        return $own?->gateway === $gateway ? $own : null;
+    }
+
+    /**
+     * A message whose signature does not check out says one true thing: that
+     * somebody is knocking, perhaps the bank with a secret this shop has wrong.
+     * So the person reading the log gets the text that arrived, and NOTHING is
+     * lifted out of it onto the row. An order, an invoice id, "paid" and an
+     * amount on a row are believed by whatever reads this table next: that is
+     * how a forged callback became a real payment (`Ledger::started`), used up
+     * the key of the genuine message, and could hand a gateway's own lookups a
+     * forged id.
+     *
+     * Bounded, because anybody can post here and a row per post is a free way
+     * to fill the table. The bound is on keeping them, so it can never cost a
+     * genuine callback anything.
+     */
+    protected function keepUnverified(Request $request, string $gateway): void
+    {
+        RateLimiter::attempt('payments.unverified:'.$gateway, self::UNVERIFIED_KEPT, function () use ($request, $gateway) {
+            $arrived = substr($request->getContent() ?: (string) $request->getQueryString(), 0, self::UNVERIFIED_BYTES);
+
+            Transaction::create([
+                'gateway' => $gateway,
+                'verified' => false,
+                'applied' => false,
+                'summary' => __('Signature did not verify — ignored'),
+                // jsonb refuses a broken sequence and a NUL; this text is anybody's.
+                'raw' => ['body' => str_replace("\0", '', mb_scrub($arrived, 'UTF-8'))],
+                'created_at' => now(),
+            ]);
+        }, 3600);
+    }
+
+    /**
+     * What the gateway is told back after a message that verified. The ordinary
+     * `{"ok": true}` for most; the gateway's own acknowledgement for one whose
+     * protocol retries until it gets a particular signed answer
+     * (AnswersCallback). A forgery never comes this way, since a signed reply
+     * would teach its sender what our signature looks like.
      *
      * @param  array<string, mixed>  $config
      */
-    protected function answer($handler, Request $request, ?\Torgash\Payments\PaymentEvent $event, array $config, bool $verified)
+    protected function answer($handler, Request $request, ?\Torgash\Payments\PaymentEvent $event, array $config)
     {
-        if ($verified && $handler instanceof AnswersCallback) {
+        if ($handler instanceof AnswersCallback) {
             $response = $handler->callbackResponse($request, $event, $config);
 
             if ($response !== null) {

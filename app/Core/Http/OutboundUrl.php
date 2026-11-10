@@ -2,9 +2,13 @@
 
 namespace App\Core\Http;
 
+use GuzzleHttp\Psr7\FnStream;
+use GuzzleHttp\Psr7\Utils;
 use Illuminate\Http\Client\Response;
 use Illuminate\Support\Facades\Http;
+use Psr\Http\Message\StreamInterface;
 use RuntimeException;
+use Throwable;
 
 /**
  * A request to an address somebody TYPED — a picture by its link — that may
@@ -26,16 +30,37 @@ class OutboundUrl
 {
     public function __construct(protected HostResolver $resolver) {}
 
-    /** @param  array<string, string>  $headers */
-    public function get(string $url, int $timeout = 15, array $headers = [], int $redirects = 3): Response
+    /**
+     * @param  array<string, string>  $headers
+     * @param  ?int  $maxBytes  Stops the transfer as it passes this: asked of the
+     *                          bytes arriving, because a Content-Length that lies,
+     *                          or none at all, would otherwise be read to the end
+     *                          into this process's memory first.
+     */
+    public function get(string $url, int $timeout = 15, array $headers = [], int $redirects = 3, ?int $maxBytes = null): Response
     {
         for ($hop = 0; ; $hop++) {
             [$host, $port, $ip] = $this->check($url);
+            $tooLarge = false;
 
-            $response = Http::timeout($timeout)->withHeaders($headers)->withOptions([
+            $options = [
                 'allow_redirects' => false,
                 'curl' => [CURLOPT_RESOLVE => [$host.':'.$port.':'.(str_contains($ip, ':') ? '['.$ip.']' : $ip)]],
-            ])->get($url);
+            ];
+
+            if ($maxBytes !== null) {
+                $options['sink'] = $this->cappedSink($maxBytes, $tooLarge);
+            }
+
+            try {
+                $response = Http::timeout($timeout)->withHeaders($headers)->withOptions($options)->get($url);
+            } catch (Throwable $e) {
+                throw $tooLarge ? new RuntimeException(__('The file at this link is too large.')) : $e;
+            }
+
+            if ($maxBytes !== null && strlen($response->body()) > $maxBytes) {
+                throw new RuntimeException(__('The file at this link is too large.'));
+            }
 
             $location = $response->header('Location');
             if (! $response->redirect() || $location === '') {
@@ -47,6 +72,26 @@ class OutboundUrl
 
             $url = $this->absolute($location, $url);
         }
+    }
+
+    /**
+     * Where the body goes while it arrives. A write that takes nothing is how
+     * curl is told to stop; Guzzle will not pass a progress callback that
+     * could, and one that throws only speaks up after the whole transfer.
+     */
+    protected function cappedSink(int $maxBytes, bool &$tooLarge): StreamInterface
+    {
+        $buffer = Utils::streamFor(Utils::tryFopen('php://temp', 'r+'));
+
+        return FnStream::decorate($buffer, ['write' => function (string $chunk) use ($buffer, $maxBytes, &$tooLarge): int {
+            if ((int) $buffer->getSize() + strlen($chunk) > $maxBytes) {
+                $tooLarge = true;
+
+                return 0;
+            }
+
+            return $buffer->write($chunk);
+        }]);
     }
 
     /**

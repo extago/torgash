@@ -30,7 +30,8 @@ or write — the price feed's key reads products and nothing else, the CRM's key
 reads orders and cannot touch the catalogue, the 1C exchange has a door of its
 own. A call outside the key's rooms is a 403 that names the resource. "Write"
 carries "read" of the same resource. The plaintext is shown once, at issue:
-the database keeps only a hash, so a stolen dump cannot be replayed.
+the database keeps only a hash, so a stolen dump cannot be replayed. A call with
+a token the shop did not issue counts against the caller's address.
 
 ## Addressing a row
 
@@ -89,7 +90,8 @@ would have looked like it worked and done none of it.
     X-Storefront: main          (id or code; the default storefront otherwise)
     Accept-Language: ru
 
-Prices, currencies and translations follow those two headers.
+Prices, currencies and translations follow those two headers. A storefront that
+is switched off or does not exist is the same as not sending the header.
 
 ## The shop half
 
@@ -164,7 +166,11 @@ checkout comes back as a `422` naming the fields:
     { "message": "The checkout is not complete.",
       "errors": { "email": ["The email field is required."] } }
 
-and a placed one as a `201`:
+A shop that confirms a customer's contact with a code at checkout answers the
+same `422`, naming that field: a code is proved in a browser and the API has no
+way of asking for one, so such a shop takes these orders only on its site.
+
+A placed one comes back as a `201`:
 
     { "data": { "order": { "number": "TG-000123", "status": "awaiting_payment",
                            "total": 4500, "currency": "UAH",

@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Account;
 
 use App\Core\Access\AccountContact;
+use App\Core\Access\EmailIsFree;
 use App\Core\Support\Phones;
 use App\Core\Verification\FormVerification;
 use App\Http\Controllers\Controller;
@@ -10,7 +11,6 @@ use App\Models\CustomerGroup;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Validation\Rule;
 use Illuminate\Validation\Rules\Password;
 use Illuminate\Validation\ValidationException;
 
@@ -45,7 +45,7 @@ class RegisterController extends Controller
             'email' => array_values(array_filter([
                 $contact->requires('email') ? 'required' : 'nullable',
                 $either ? 'required_without:phone' : null,
-                'email', 'max:190', Rule::unique('users', 'email'),
+                'email', 'max:190', new EmailIsFree,
             ])),
             'phone' => array_values(array_filter([
                 $contact->asks('phone') ? ($contact->requires('phone') ? 'required' : 'nullable') : 'prohibited',

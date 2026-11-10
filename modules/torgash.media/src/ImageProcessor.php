@@ -20,6 +20,9 @@ use Spatie\MediaLibrary\MediaCollections\Models\Media;
  */
 class ImageProcessor
 {
+    /** Where a shop with no size limit of its own still stops reading a link: the bytes are held in memory. */
+    protected const REMOTE_CEILING = 64 * 1024 * 1024;
+
     public const ALLOWED_MIME = [
         'image/jpeg' => 'jpg',
         'image/pjpeg' => 'jpg',
@@ -67,7 +70,7 @@ class ImageProcessor
 
         // Only the public internet: a pasted link must not make the shop's
         // server knock on 127.0.0.1 or the office network (audit 2026-10-15).
-        $response = app(\App\Core\Http\OutboundUrl::class)->get($url, ImageSettings::remoteTimeout(), ['Accept' => 'image/*']);
+        $response = app(\App\Core\Http\OutboundUrl::class)->get($url, ImageSettings::remoteTimeout(), ['Accept' => 'image/*'], maxBytes: ImageSettings::uploadMaxBytes() ?? self::REMOTE_CEILING);
 
         if (! $response->successful()) {
             throw new RuntimeException(__('Could not download :url (HTTP :status).', [

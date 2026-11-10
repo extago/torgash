@@ -98,6 +98,8 @@ class ModuleDocsTest extends TestCase
 
         $response = $this->get('http://localhost/admin/modules/torgash.hello/docs/media/images/example.png')->assertOk();
         $this->assertStringStartsWith('image/', (string) $response->headers->get('content-type'));
+        $this->assertStringContainsString('sandbox', (string) $response->headers->get('Content-Security-Policy'), 'an SVG opened on its own is a page in the admin\'s origin');
+        $response->assertHeader('X-Content-Type-Options', 'nosniff');
 
         $this->get('http://localhost/admin/modules/torgash.hello/docs/media/../manifest.json')
             ->assertNotFound();

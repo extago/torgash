@@ -2035,5 +2035,12 @@
     "Languages of the browser": "Мови браузера",
     "Installed: :version": "Встановлено: :version",
     "fixed in :version": "виправлено в :version",
-    "Known vulnerabilities: :count. Libraries affected: :packages.": "Відомих вразливостей: :count. Зачеплено бібліотек: :packages."
+    "Known vulnerabilities: :count. Libraries affected: :packages.": "Відомих вразливостей: :count. Зачеплено бібліотек: :packages.",
+    "The database address may hold Latin letters, digits, dots and dashes, and its name letters, digits and underscores.": "В адресі бази дозволені латинські літери, цифри, крапки й дефіси, а в її назві — літери, цифри та підкреслення.",
+    "The file at this link is too large.": "Файл за цим посиланням завеликий.",
+    "Confirm your new email": "Підтвердьте нову пошту",
+    "Get back into your account": "Вхід до особистого кабінету",
+    "Press the button to confirm this address.": "Натисніть кнопку, щоб підтвердити цю адресу.",
+    "Press the button to continue and choose a new password.": "Натисніть кнопку, щоб продовжити й задати новий пароль.",
+    "Press the button to sign in to your account.": "Натисніть кнопку, щоб увійти до особистого кабінету."
 }

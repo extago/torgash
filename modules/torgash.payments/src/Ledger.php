@@ -68,11 +68,13 @@ class Ledger
 
     /**
      * A gateway wrote down that it began a payment (the row every gateway
-     * writes when it makes an invoice): that is a payment, waiting.
+     * writes when it makes an invoice): that is a payment, waiting. Never a
+     * row nobody vouched for: this is the one place a line in the log turns
+     * into money the order is counted as holding.
      */
     public function started(Transaction $transaction): void
     {
-        if (! $transaction->order_id || $transaction->external_id === null || $transaction->payment_id) {
+        if (! $transaction->verified || ! $transaction->order_id || $transaction->external_id === null || $transaction->payment_id) {
             return;
         }
 
@@ -118,7 +120,7 @@ class Ledger
             return;
         }
 
-        $order->update(\Torgash\Checkout\Orders\Settlement::afterReport($order, $this->state($payments), $this->held($payments)));
+        $order->update(\Torgash\Checkout\Orders\Settlement::afterReport($order, $this->state($payments, null, $order->gatewayDue()), $this->held($payments)));
     }
 
     /**
@@ -128,9 +130,13 @@ class Ledger
      * with nothing held the state is "refunded" if anything ever was, else
      * whatever the payment that just spoke said.
      *
+     * A payment that came up short leaves the order partly paid until the
+     * others make `$due` up (`PaymentApplier`).
+     *
      * @param  Collection<int, Payment>  $payments
+     * @param  int|null  $due  what the gateways are to bring for this order
      */
-    public function state(Collection $payments, ?Payment $latest = null): string
+    public function state(Collection $payments, ?Payment $latest = null, ?int $due = null): string
     {
         $holding = $payments->filter(fn (Payment $payment) => $payment->held() > 0);
         $returned = $payments->contains(fn (Payment $payment) => in_array($payment->state, [PaymentState::PARTIALLY_REFUNDED, PaymentState::REFUNDED], true));
@@ -142,6 +148,8 @@ class Ledger
         return match (true) {
             $holding->contains(fn (Payment $payment) => $payment->isHold()) => PaymentState::AUTHORIZED,
             $returned => PaymentState::PARTIALLY_REFUNDED,
+            $due !== null && $this->held($payments) < $due
+                && $holding->contains(fn (Payment $payment) => $payment->state === PaymentState::PARTIALLY_PAID) => PaymentState::PARTIALLY_PAID,
             default => PaymentState::PAID,
         };
     }

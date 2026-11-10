@@ -397,6 +397,24 @@ whose protocol dictates the reply to a callback (WayForPay retries for days
 until it gets a signed `accept`) implements `Torgash\Payments\AnswersCallback`
 — asked after the event is applied, and only for a callback that verified.
 
+**A callback whose signature fails stops at the door** (third-party review of
+0.5.9, 2026-11-09). `CallbackController` does not `parse()` it, and what it
+keeps is the text that arrived and nothing else: `verified = false`, 4 KB of
+the body, at most 60 rows per gateway and hour (a bound on keeping, never on a
+genuine callback). No order, invoice id, state, amount or event key goes on the
+row, because this table is read as fact: `Ledger::started` made a payment of
+such a row and the next recalculation counted it, even the 15-minute check
+hearing "still unpaid"; the dedup took its key; each gateway's own id lookups
+read it. `PaymentApplier::apply` has no `$verified` any more: only what a
+gateway vouched for reaches it. `ForgedPayments` (run once by a migration)
+takes away what got through before: a payment whose MAKING row was unverified
+(`payment_id` and the same `created_at`) and that nothing verified ever spoke
+for. "No verified row" alone would condemn old real payments once the log is
+swept. The order's money columns are worked out again, its status and stock are
+left to a person, and its history says why. monobank refreshes its key after a
+bad signature at most once per ten minutes: anybody can post one, and each is a
+request on the merchant's token.
+
 **The split is in the code, not on the screen — nor in the URL.** Payment
 methods live under `/admin/payments/methods` (checkout's controller and table,
 checkout's route names) and the log under `/admin/payments/log`: two modules,
@@ -416,6 +434,34 @@ namespaced `gateway_config[<key>][…]`), because making checkout's form submit
 itself to reveal a field would save a half-filled method. A stored credential is
 never rendered back: the empty box carries a "saved — leave blank to keep it"
 placeholder, and a blank password on save means keep.
+
+### What a signed message does not prove (report of 2026-11-09)
+
+A signature says the bank wrote the message, not that it is about the sum this
+shop wanted: an account shared with another site, a payment made by hand in the
+bank's own screen and a form changed on the way all arrive correctly signed.
+
+- **The answer is compared with the invoice** (`PaymentApplier`), in the
+  invoice's currency and at its rate, with whole units of tolerance for a sum
+  worked out through a rate. A "paid" for less is the money that came and the
+  order partly paid; the goods wait for the rest; a hold stays a hold. A number
+  in a currency nobody asked for has no value in the books
+  (`PaymentEvent::$currency` says which).
+- **An order edited up after its invoice** still counts as paid what was asked;
+  the balance shows the gap.
+- **The secret is the ORDER's account** (`CallbackController::accountOf`): one
+  gateway can serve several methods, each with an account of its own, and the
+  first row's secret used to decide for all of them. No account means no secret,
+  and the message is refused: an empty secret is one anybody knows.
+- **monobank** answers only for an invoice this shop made
+  (`MonobankGateway::isOurs`: a verified transaction with that id and order). The
+  webhook key is not the merchant's alone.
+- **`checkout.order.refund`:** `null` means "not mine" and checkout records the
+  refund by hand; a `RefundResult` that is not done means a gateway WAS asked and
+  the money is not back, and nothing is written down. Those two used to read as
+  "not mine" and as "handled".
+- **The same action on a payment within 15 seconds is one action**
+  (`PaymentActions::SAME_CLICK`): a double click refunded twice.
 
 ## Taxes
 

@@ -111,15 +111,154 @@ class VerificationCodeTest extends TestCase
         $this->assertGuest();
     }
 
+    /** The address of the button in the letter. */
+    protected function sentLink(): string
+    {
+        $link = null;
+        Mail::assertSent(EventMail::class, function (EventMail $mail) use (&$link) {
+            $link = $mail->payload['link'] ?? null;
+
+            return true;
+        });
+
+        return (string) $link;
+    }
+
     public function test_the_letters_button_signs_in_on_any_device(): void
+    {
+        $this->ask();
+        $link = $this->sentLink();
+
+        $this->flushSession();
+        $this->get($link)->assertOk();
+        $this->assertGuest();
+
+        $this->post($link)->assertRedirect(route('account.password.new'));
+        $this->assertAuthenticatedAs($this->customer);
+    }
+
+    /** A mail filter opens every link of a letter before the person does; a code it spent would be dead on arrival. */
+    public function test_opening_the_button_spends_nothing(): void
+    {
+        $this->ask();
+        $row = VerificationCode::latest('id')->first();
+        $link = $this->sentLink();
+
+        $this->flushSession();
+        $this->get($link)->assertOk()->assertSee('method="POST"', false);
+        $this->get($link)->assertOk();
+
+        $this->assertGuest();
+        $this->assertNull($row->fresh()->verified_at);
+        $this->assertSame(0, $row->fresh()->attempts);
+
+        $this->post($link)->assertRedirect(route('account.password.new'));
+        $this->assertAuthenticatedAs($this->customer);
+    }
+
+    public function test_the_button_of_something_else_opens_nothing(): void
+    {
+        $this->ask();
+        $row = VerificationCode::latest('id')->first();
+        $row->forceFill(['purpose' => 'contact_form'])->save();
+
+        $this->get($this->sentLink())->assertNotFound();
+    }
+
+    /** Row ids go up by one, and a button that counted wrong secrets let anyone close anyone's code. */
+    public function test_a_stranger_cannot_close_somebody_elses_code(): void
+    {
+        $this->ask();
+        $row = VerificationCode::latest('id')->first();
+        $link = $this->sentLink();
+
+        $this->flushSession();
+
+        for ($i = 0; $i < Verifier::MAX_ATTEMPTS + 1; $i++) {
+            $this->post('http://localhost/account/code/'.$row->id.'/00000'.$i);
+        }
+
+        $this->assertSame(0, $row->fresh()->attempts);
+        $this->assertGuest();
+
+        $this->post($link)->assertRedirect(route('account.password.new'));
+        $this->assertAuthenticatedAs($this->customer);
+    }
+
+    public function test_the_six_digits_do_not_open_the_button(): void
     {
         $this->ask();
         $row = VerificationCode::latest('id')->first();
         $code = $this->sentCode();
 
         $this->flushSession();
-        $this->get('http://localhost/account/code/'.$row->id.'/'.$code)->assertRedirect(route('account.password.new'));
-        $this->assertAuthenticatedAs($this->customer);
+        $this->post('http://localhost/account/code/'.$row->id.'/'.$code);
+
+        $this->assertGuest();
+        $this->assertNull($row->fresh()->verified_at);
+    }
+
+    public function test_a_new_code_retires_the_button_of_the_old_one(): void
+    {
+        $this->ask();
+        $row = VerificationCode::latest('id')->first();
+        $old = $this->sentLink();
+
+        $this->travel(2)->minutes();
+        $this->post('http://localhost/account/code/resend', ['for' => 'password_reset'])->assertSessionHasNoErrors();
+
+        $this->assertSame(2, $row->fresh()->sends);
+        $this->flushSession();
+        $this->post($old);
+
+        $this->assertGuest();
+    }
+
+    public function test_the_button_has_a_limit_of_its_own(): void
+    {
+        $seen = [];
+
+        for ($i = 0; $i < 40; $i++) {
+            $seen[] = $this->post('http://localhost/account/code/999999/x')->status();
+        }
+
+        $this->assertContains(429, $seen);
+    }
+
+    /** What every request of a parallel burst holds: the row as it was before any of them counted. */
+    public function test_a_burst_gets_five_tries_and_no_more(): void
+    {
+        $this->ask();
+        $id = VerificationCode::latest('id')->value('id');
+        $right = $this->sentCode();
+        $wrong = $right === '000000' ? '111111' : '000000';
+        $verifier = app(Verifier::class);
+
+        $copies = VerificationCode::whereKey($id)->get()->all();
+        $late = VerificationCode::find($id);
+
+        for ($i = 0; $i < Verifier::MAX_ATTEMPTS; $i++) {
+            $verifier->check(VerificationCode::find($id), $wrong);
+        }
+
+        $this->assertSame(0, $late->attempts, 'still what it read');
+        $this->assertNotNull($verifier->check($late, $right), 'the count is the table\'s');
+        $this->assertNull(VerificationCode::find($id)->verified_at);
+        $this->assertCount(1, $copies);
+    }
+
+    public function test_a_right_code_works_once_for_two_requests_at_once(): void
+    {
+        $this->ask();
+        $id = VerificationCode::latest('id')->value('id');
+        $right = $this->sentCode();
+        $verifier = app(Verifier::class);
+
+        $first = VerificationCode::find($id);
+        $second = VerificationCode::find($id);
+
+        $this->assertNull($verifier->check($first, $right));
+        $this->assertNotNull($verifier->check($second, $right));
     }
 
     public function test_a_new_code_waits_for_the_pause(): void
@@ -215,7 +354,9 @@ class VerificationCodeTest extends TestCase
         $this->actingAs($customer)->post('http://localhost/account/contact/email', ['address' => $customer->email])
             ->assertRedirect(route('account.contact.enter', 'email'));
         $this->assertNotSame('', (string) $mail()['link'], 'the letter carries the button');
-        $this->actingAs($customer)->get($mail()['link'])
+        $this->actingAs($customer)->get($mail()['link'])->assertOk()->assertSee('method="POST"', false);
+        $this->assertNull($customer->fresh()->email_verified_at, 'opening it decides nothing');
+        $this->actingAs($customer)->post($mail()['link'])
             ->assertRedirect(route('account.dashboard'))->assertSessionHas('status');
         $this->assertNotNull($customer->fresh()->email_verified_at);
 
@@ -225,12 +366,12 @@ class VerificationCodeTest extends TestCase
         $link = (string) $mail()['link'];
         auth()->logout();
         $this->flushSession();
-        $this->get($link)->assertRedirect(route('account.login'))->assertSessionHas('status');
+        $this->post($link)->assertRedirect(route('account.login'))->assertSessionHas('status');
         $this->assertGuest();
         $this->assertSame($new, $customer->fresh()->email);
 
         // Used once.
-        $this->get($link)->assertRedirect(route('account.login'))->assertSessionHasErrors('login');
+        $this->post($link)->assertRedirect(route('account.login'))->assertSessionHasErrors('login');
     }
 
     /** A form's code is waited for on the page that asked: its letter has no button to go elsewhere. */

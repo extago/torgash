@@ -72,6 +72,12 @@ class Backups
     /** What the manifest's `key_check` decrypts to under the same APP_KEY. */
     public const KEY_CHECK = 'torgash-backup-key';
 
+    /** The minor version of each older PostgreSQL that brought psql's `\restrict`. */
+    protected const RESTRICT_SINCE = [17 => 6, 16 => 10, 15 => 14];
+
+    /** Seconds a work folder lies untouched before its job is taken to be dead. */
+    protected const WORK_FORGOTTEN_AFTER = 2 * 86400;
+
     /**
      * The pause before a storage that refused the file is tried once more
      * (seconds). A test that wants a refusal to be quick sets it to 0.
@@ -178,7 +184,14 @@ class Backups
 
             if ($format === 'folder') {
                 $bytes = array_sum(array_map(fn (array $entry) => (int) filesize($entry[1]), $staged['entries']));
+                // No one file to hash: the journal vouches for the dump, the
+                // part of a folder that a check by restoring runs unattended.
                 $sha256 = null;
+                foreach ($staged['entries'] as [$entry, $source]) {
+                    if ($entry === 'database.dump' || $entry === 'database.sql') {
+                        $sha256 = hash_file('sha256', $source) ?: null;
+                    }
+                }
                 $send = fn (Store $store, string $path) => $this->uploadFolder($store, $path, $staged['entries']);
             } else {
                 $say('Packing', []);
@@ -309,6 +322,7 @@ class Backups
 
         try {
             $pdo = $this->pdo();
+            $this->dropForgottenChecks($pdo, $temp);
             $pdo->exec('drop database if exists "'.$temp.'" with (force)');
             $pdo->exec('create database "'.$temp.'" template template0 encoding \'UTF8\' '.$this->localeClause($pdo));
             $made = true;
@@ -346,7 +360,10 @@ class Backups
             if ($made) {
                 try {
                     $this->pdo()->exec('drop database if exists "'.$temp.'" with (force)');
-                } catch (Throwable) {
+                } catch (Throwable $e) {
+                    // The next check tries again, but a copy of the shop with
+                    // its customers is lying there: somebody should hear of it.
+                    logger()->error('A backup check could not drop its database '.$temp.': '.$e->getMessage());
                 }
             }
         }
@@ -364,6 +381,30 @@ class Backups
         }
 
         return $run->refresh();
+    }
+
+    /**
+     * What earlier checks left. One killed half way (a restart during an
+     * update, a timeout) never reaches its `finally`, and each check is named
+     * after its own run, so no later one would otherwise look at that copy of
+     * the shop again. Checks run one at a time; and without FORCE a database
+     * somebody is connected to is refused, which is the answer wanted.
+     */
+    protected function dropForgottenChecks(\PDO $pdo, string $temp): void
+    {
+        $prefix = substr($temp, 0, strrpos($temp, '_') + 1);
+
+        foreach ($pdo->query('select datname from pg_database')->fetchAll(\PDO::FETCH_COLUMN) as $name) {
+            if ($name === $temp || ! str_starts_with($name, $prefix) || ! ctype_digit(substr($name, strlen($prefix)))) {
+                continue;
+            }
+
+            try {
+                $pdo->exec('drop database "'.$name.'"');
+            } catch (Throwable) {
+                // Somebody is in it, so it is not forgotten.
+            }
+        }
     }
 
     /**
@@ -1097,9 +1138,10 @@ class Backups
         $say ??= fn () => null;
         $work = $this->workDir();
         $reader = null;
+        $run = null;
 
         try {
-            $reader = $this->open($name, $file, $password, $work, $say, $from);
+            $reader = $this->open($name, $file, $password, $work, $say, $from, $run);
 
             // The head: manifest, .env, database. Everything after it is
             // files and code — not read now.
@@ -1127,9 +1169,15 @@ class Backups
                 throw new RuntimeException('The backup holds no database.');
             }
 
+            // `open()` compared a file as a whole; a folder is many files, and
+            // this one is about to be run.
+            if ($run?->isFolder()) {
+                $this->assertAsMade($run, $dump);
+            }
+
             $say('Restoring the database');
             $target = $database ?: $this->connection()['database'];
-            str_ends_with($dump, '.sql') ? $this->restoreSql($dump, $target) : $this->restoreDump($dump, $target);
+            str_ends_with($dump, '.sql') ? $this->restoreSql($dump, $target, $run?->sha256 !== null) : $this->restoreDump($dump, $target);
 
             $files = $withFiles && $database === null && in_array('files', $manifest['contents'] ?? [], true);
             $code = $withCode && $database === null && in_array('code', $manifest['contents'] ?? [], true);
@@ -1400,8 +1448,9 @@ class Backups
      * The backup as a reader: a file or folder named by its path, or found
      * through the journal (a folder copy is read where it is kept; a file is
      * fetched first). An encrypted tar is decrypted into the work folder.
+     * `$run` is set to the journal's row, when the journal knows this backup.
      */
-    protected function open(string $name, ?string $file, ?string $password, string $work, callable $say, ?BackupDestination $from = null): Archive\Reader
+    protected function open(string $name, ?string $file, ?string $password, string $work, callable $say, ?BackupDestination $from = null, ?BackupRun &$run = null): Archive\Reader
     {
         if ($file !== null) {
             if (is_dir($file)) {
@@ -1427,7 +1476,9 @@ class Backups
             $password = $run->plan->password() ?: null;
         }
 
-        if ($run?->isFolder() || $store->exists($path.'/manifest.json')) {
+        // The journal says which it is. Asking the storage would let objects
+        // laid beside a file (on S3 a name can be both) pass for a folder.
+        if ($run ? $run->isFolder() : $store->exists($path.'/manifest.json')) {
             return new Archive\FolderReader($store, $path);
         }
 
@@ -1439,7 +1490,28 @@ class Backups
             fclose($read);
         }
 
+        $this->assertAsMade($run, $local);
+
         return $this->fileReader($local, $password, $work);
+    }
+
+    /**
+     * What restoring runs must be what this shop made. A backup lies in a
+     * bucket or on somebody's SFTP, and whoever can write there must not get to
+     * choose what happens here: pg_restore and psql both run what they are
+     * given, and the check by restoring does it with nobody watching. The
+     * journal is in the shop's own database, out of that person's reach.
+     *
+     * Compared before the file is opened, so a password protects something: an
+     * encrypted backup swapped for a plain archive fails here too. A backup the
+     * journal does not know (a file named by its path on a new server) has
+     * nothing to be compared with, and the person naming it answers for it.
+     */
+    protected function assertAsMade(?BackupRun $run, string $file): void
+    {
+        if ($run?->sha256 !== null && ! hash_equals($run->sha256, (string) hash_file('sha256', $file))) {
+            throw new RuntimeException("The backup {$run->name} is not the file that was made: its checksum differs from the journal's, so it was changed where it is kept. Nothing has been restored. If you know this file and trust it, restore it by its path with --file.");
+        }
     }
 
     protected function fileReader(string $path, ?string $password, string $work): Archive\Reader
@@ -1473,15 +1545,61 @@ class Backups
      * A plain-SQL dump through psql, in one transaction. Its extension lines
      * are left out for the same reason as in `withoutExtensions()` — `DROP
      * EXTENSION` is the superuser's — and the extensions created first.
+     *
+     * psql gets SQL and nothing else. It obeys a backslash command wherever a
+     * statement could begin (`\!` starts a program as the shop's system user),
+     * so filtering lines cannot do this: `SELECT 1; \! …` passes any such
+     * filter, and a real dump HAS backslash lines. `\restrict` with a key made
+     * here, as the first line, turns all of them off but `\unrestrict`.
+     * pg_dump's own pair of those lines goes, or psql would refuse them. The
+     * extension filter skips COPY data: that is the shop's text, and a value
+     * may begin with any of these words.
+     *
+     * `\unrestrict` wants the key, but psql before 18.6, 17.11, 16.15 and 15.19
+     * evaluates its argument first, so a backtick there starts a program
+     * (CVE-2026-18408). A dump nobody vouches for must not hold that word
+     * except as pg_dump's own last line. Here a search of the text is enough:
+     * it is the only command left, and nothing can assemble its name. Every
+     * line is searched, because which lines are COPY data is only this loop's
+     * reading of the file, and a comment can mislead it.
+     *
+     * `$vouched`: the journal has confirmed this is the dump the shop made,
+     * the only case a psql without `\restrict` may be trusted with.
      */
-    protected function restoreSql(string $sql, string $target): void
+    protected function restoreSql(string $sql, string $target, bool $vouched = false): void
     {
+        $restrict = $this->psqlCanRestrict();
+
+        if (! $restrict && ! $vouched) {
+            throw new RuntimeException('This psql ('.(self::toolVersion('psql') ?? 'unknown').') cannot be told to run SQL and nothing else, so a plain-SQL dump the journal cannot vouch for is refused: it could start programs on this server. Use the client tools of PostgreSQL 15.19, 16.15, 17.11, 18.6 or newer.');
+        }
+
         $in = fopen($sql, 'rb');
         $filtered = dirname($sql).DIRECTORY_SEPARATOR.'restore.sql';
         $out = fopen($filtered, 'wb');
         $extensions = [];
+        $copying = false;
+
+        if ($restrict) {
+            fwrite($out, '\\restrict '.bin2hex(random_bytes(32))."\n");
+        }
 
         while (($line = fgets($in)) !== false) {
+            if (! $vouched && $this->mentionsUnrestrict($line)) {
+                throw new RuntimeException('This plain-SQL dump holds a \\unrestrict that pg_dump did not write, and psql evaluates what that command is given before it looks at the key (CVE-2026-18408). The dump is refused; nothing has been restored.');
+            }
+
+            if ($copying) {
+                $copying = rtrim($line, "\r\n") !== '\\.';
+                fwrite($out, $line);
+
+                continue;
+            }
+
+            if (preg_match('/^\\\\(un)?restrict\s/', $line) === 1) {
+                continue;
+            }
+
             if (preg_match('/^CREATE EXTENSION IF NOT EXISTS ("?)([A-Za-z0-9_]+)\1/', $line, $m)) {
                 $extensions[] = $m[2];
 
@@ -1492,6 +1610,7 @@ class Backups
                 continue;
             }
 
+            $copying = preg_match('/^COPY\s.*\sFROM stdin;\s*$/', $line) === 1;
             fwrite($out, $line);
         }
         fclose($in);
@@ -1718,9 +1837,40 @@ class Backups
         }
     }
 
+    /**
+     * Whether psql could read this line as `\unrestrict`, pg_dump's own last
+     * line apart. Only an odd run of backslashes can be that command: COPY
+     * doubles a backslash in somebody's text, so a customer typing the word
+     * costs nothing. A pattern that gives up counts as a yes.
+     */
+    protected function mentionsUnrestrict(string $line): bool
+    {
+        return stripos($line, 'unrestrict') !== false
+            && preg_match('/^\\\\unrestrict [A-Za-z0-9]+\s*$/', $line) !== 1
+            && preg_match('/(?<!\\\\)(?:\\\\\\\\)*\\\\unrestrict/i', $line) !== 0;
+    }
+
+    /** psql understands `\restrict` from 18, and from these minor versions of the older ones. */
+    protected function psqlCanRestrict(): bool
+    {
+        if (preg_match('/\)\s*(\d+)(?:\.(\d+))?/', (string) self::toolVersion('psql'), $version) !== 1) {
+            return false;
+        }
+
+        $major = (int) $version[1];
+
+        return $major >= 18 || (int) ($version[2] ?? 0) >= (self::RESTRICT_SINCE[$major] ?? PHP_INT_MAX);
+    }
+
     /** @param  list<string>  $arguments */
     protected function pg(string $tool, array $arguments): void
     {
+        // A startup file is somebody's settings, and a restore is not the
+        // place to discover them.
+        if ($tool === 'psql') {
+            array_unshift($arguments, '-X');
+        }
+
         $c = $this->connection();
 
         // Messages in English and the client in UTF-8: a Russian Windows
@@ -1799,7 +1949,19 @@ class Backups
 
     protected function workDir(): string
     {
-        $dir = storage_path('app/backup-tmp/'.Str::uuid());
+        $root = storage_path('app/backup-tmp');
+
+        // A job killed half way leaves its folder here, and in it the shop's
+        // database in the clear, even that of an encrypted backup.
+        if (File::isDirectory($root)) {
+            foreach (File::directories($root) as $left) {
+                if ((int) @filemtime($left) < time() - self::WORK_FORGOTTEN_AFTER) {
+                    File::deleteDirectory($left);
+                }
+            }
+        }
+
+        $dir = $root.DIRECTORY_SEPARATOR.Str::uuid();
         File::ensureDirectoryExists($dir);
 
         return $dir;

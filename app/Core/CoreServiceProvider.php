@@ -439,10 +439,17 @@ class CoreServiceProvider extends ServiceProvider
             }
         });
 
+        // The password that opened this session is the one it goes on with.
+        \Illuminate\Support\Facades\Event::listen(\Illuminate\Auth\Events\Login::class, function (\Illuminate\Auth\Events\Login $login) {
+            if ($login->user instanceof \App\Models\User) {
+                \App\Core\Access\PasswordSessions::keep($login->user);
+            }
+        });
+
         page_cache()
             // The language is the address's; the ResolveStorefront writes it
             // on every request.
-            ->harmless(session: ['locale'])
+            ->harmless(session: ['locale', \App\Core\Access\PasswordSessions::SESSION])
             ->personal(
                 session: ['verification', 'code_pending', \App\Http\Controllers\Account\NewPasswordController::SESSION, \App\Core\Access\Impersonation::SESSION, \App\Core\Access\Impersonation::REFUSED],
                 cookies: [\App\Core\Verification\FormVerification::COOKIE],
@@ -450,7 +457,7 @@ class CoreServiceProvider extends ServiceProvider
             ->vary('currency', fn () => current_currency(), session: ['currency'])
             ->unseen([
                 'sessions', 'cache', 'cache_locks', 'jobs', 'job_batches', 'failed_jobs', 'migrations',
-                'page_cache', 'background_tasks', 'password_reset_tokens', 'verification_codes', 'demo_records',
+                'page_cache', 'background_tasks', 'password_reset_tokens', 'password_invite_tokens', 'verification_codes', 'demo_records',
                 // Who has which role, and the accounts themselves: a guest's
                 // page shows neither (a review keeps its author's name).
                 'users', 'addresses', 'roles', 'permissions', 'model_has_roles', 'model_has_permissions', 'role_has_permissions',

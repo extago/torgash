@@ -60,6 +60,13 @@ class InstallController extends Controller
         $this->guard();
         $this->locale($request);
 
+        // The address, the user and the password are the visitor's: without
+        // the code this button tried any port of any machine this server can
+        // reach, and said how it answered.
+        if (! $this->keyMatches($request)) {
+            return $this->problem(__('The install code does not match the one in :path.', ['path' => 'storage/app/install-key']));
+        }
+
         $checks = app(ServerCheck::class);
 
         return view('install.checks', ['rows' => [...$checks->server(), ...$checks->database($this->db($request))]]);
@@ -162,7 +169,7 @@ class InstallController extends Controller
         } elseif (trim((string) $request->input('backup_path')) !== '') {
             $file = trim((string) $request->input('backup_path'));
         } elseif (array_key_exists((string) $request->input('backup_found'), $this->foundBackups())) {
-            $file = (string) $request->input('backup_found');
+            $file = base_path((string) $request->input('backup_found'));
         }
 
         if ($file === null) {
@@ -201,20 +208,22 @@ class InstallController extends Controller
 
     /**
      * Backups already on this server: put by FTP into `storage/app/restore`,
-     * or left in the backups' own folder by a shop that stood here.
+     * or left in the backups' own folder by a shop that stood here. Named
+     * from the site's own folder: this page is open to anyone until the
+     * install, and where the server keeps its files is not theirs to read.
      *
-     * @return array<string, string> path => what the list shows
+     * @return array<string, string> path from the site's folder => what the list shows
      */
     protected function foundBackups(): array
     {
         $found = [];
 
-        foreach ([storage_path(Installer::UPLOADS), storage_path('app/private/'.\App\Core\Backups\Backups::DIR)] as $dir) {
-            foreach (glob($dir.'/*') ?: [] as $path) {
+        foreach ([Installer::UPLOADS, 'app/private/'.\App\Core\Backups\Backups::DIR] as $dir) {
+            foreach (glob(storage_path($dir).'/*') ?: [] as $path) {
                 $base = basename($path);
                 $backup = is_dir($path) ? is_file($path.'/manifest.json') : (bool) preg_match('/\.(zip|tar|tar\.gz|enc)$/', $base);
                 if ($backup) {
-                    $found[$path] = $base.(is_file($path) ? ' · '.number_format(filesize($path) / 1048576, 1).' MB' : '');
+                    $found['storage/'.$dir.'/'.$base] = $base.(is_file($path) ? ' · '.number_format(filesize($path) / 1048576, 1).' MB' : '');
                 }
             }
         }

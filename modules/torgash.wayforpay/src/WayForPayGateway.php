@@ -297,6 +297,7 @@ class WayForPayGateway implements AnswersCallback, Gateway
             summary: trim($status.' '.($body['reason'] ?? '')),
             raw: $body,
             orderId: $reference !== null && preg_match('/^(\d+)-/', $reference, $m) ? (int) $m[1] : null,
+            currency: isset($body['currency']) ? (string) $body['currency'] : null,
         );
     }
 

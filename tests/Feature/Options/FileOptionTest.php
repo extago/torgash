@@ -138,6 +138,20 @@ class FileOptionTest extends TestCase
         $this->assertSame(0, OptionFile::count());
     }
 
+    /** Each file has a size limit; how many of them one visitor could send had none. */
+    public function test_one_visitor_cannot_fill_the_disk(): void
+    {
+        for ($i = 0; $i < Files::UPLOADS_PER_HOUR; $i++) {
+            $this->addWith(UploadedFile::fake()->image('layout-'.$i.'.png'));
+        }
+
+        $this->assertSame(Files::UPLOADS_PER_HOUR, OptionFile::count());
+
+        $this->addWith(UploadedFile::fake()->image('one-more.png'));
+
+        $this->assertSame(Files::UPLOADS_PER_HOUR, OptionFile::count());
+    }
+
     /** A required file question refuses the purchase when nothing was attached. */
     public function test_a_required_file_question_refuses_an_empty_answer(): void
     {

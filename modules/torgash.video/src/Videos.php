@@ -77,7 +77,7 @@ class Videos
         try {
             // The poster's address came from a platform's answer, not from the
             // engine: it goes only to the public internet, like a pasted link.
-            $response = app(\App\Core\Http\OutboundUrl::class)->get($url, 10);
+            $response = app(\App\Core\Http\OutboundUrl::class)->get($url, 10, maxBytes: 16 * 1024 * 1024);
 
             if (! $response->successful()) {
                 return false;

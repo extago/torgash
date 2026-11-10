@@ -84,5 +84,6 @@
     "As uploaded, transliterated": "Как загружено, транслитом",
     "A short random code": "Короткий случайный код",
     "Names of stored files": "Имена сохранённых файлов",
-    "What the picture's address ends in: red-boot.jpg or k3f9x2qa7m1b.jpg. The uploaded name helps image search a little; a code tells nobody what the file was called. New uploads only — pictures already stored keep their addresses.": "Чем заканчивается адрес картинки: red-boot.jpg или k3f9x2qa7m1b.jpg. Исходное имя немного помогает поиску по картинкам; код никому не говорит, как файл назывался. Только для новых загрузок — уже сохранённые картинки свои адреса сохраняют."
+    "What the picture's address ends in: red-boot.jpg or k3f9x2qa7m1b.jpg. The uploaded name helps image search a little; a code tells nobody what the file was called. New uploads only — pictures already stored keep their addresses.": "Чем заканчивается адрес картинки: red-boot.jpg или k3f9x2qa7m1b.jpg. Исходное имя немного помогает поиску по картинкам; код никому не говорит, как файл назывался. Только для новых загрузок — уже сохранённые картинки свои адреса сохраняют.",
+    "Only the first :count links were taken. Add the rest in the next go.": "Взяты только первые ссылки (:count). Остальные добавьте следующим заходом."
 }

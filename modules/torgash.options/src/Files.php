@@ -3,6 +3,7 @@
 namespace Torgash\Options;
 
 use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\Str;
 use Torgash\Options\Models\OptionFile;
 use Torgash\Options\Models\OptionGroup;
@@ -48,6 +49,9 @@ class Files
     /** What the shop takes unless a question says otherwise. */
     public const DEFAULT_TYPES = 'jpg,jpeg,png,webp,pdf';
 
+    /** Each file has a size limit; how many of them one visitor sent had none. */
+    public const UPLOADS_PER_HOUR = 60;
+
     /**
      * Extensions this engine will never take, whatever a shop types.
      *
@@ -58,8 +62,8 @@ class Files
      * carries a script.
      */
     public const NEVER = [
-        'php', 'phar', 'phtml', 'php3', 'php4', 'php5', 'php7', 'php8', 'pht',
-        'htaccess', 'html', 'htm', 'xhtml', 'svg', 'js', 'mjs', 'exe', 'sh', 'bat', 'cmd',
+        ...\App\Core\Support\ServerScripts::EXTENSIONS,
+        'html', 'htm', 'xhtml', 'svg', 'js', 'mjs', 'exe', 'bat', 'cmd',
     ];
 
     /**
@@ -156,6 +160,16 @@ class Files
             if (! $uploaded instanceof UploadedFile) {
                 continue;
             }
+
+            $limit = 'option-files:'.request()->ip();
+
+            if (RateLimiter::tooManyAttempts($limit, self::UPLOADS_PER_HOUR)) {
+                $errors['options.'.$group->id][] = __('Too many files in a short time. Try again in an hour.');
+
+                continue;
+            }
+
+            RateLimiter::hit($limit, 3600);
 
             $result = $this->store($group, $uploaded, $cartToken);
 

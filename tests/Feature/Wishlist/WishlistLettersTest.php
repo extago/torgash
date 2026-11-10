@@ -125,7 +125,16 @@ class WishlistLettersTest extends TestCase
 
         $this->get('http://localhost/wishlist/unsubscribe/'.$list->id.'/price')->assertForbidden();
 
-        $this->get(URL::signedRoute('wishlist.unsubscribe', ['list' => $list->id, 'what' => 'price']))->assertOk();
+        $link = URL::signedRoute('wishlist.unsubscribe', ['list' => $list->id, 'what' => 'price']);
+
+        // A mail filter opening the letter's links says nothing for the person.
+        $this->get($link)->assertOk()->assertSee('signature=', false);
+        $this->assertTrue($list->fresh()->notify_price);
+
+        $this->post('http://localhost/wishlist/unsubscribe/'.$list->id.'/price')->assertForbidden();
+        $this->assertTrue($list->fresh()->notify_price);
+
+        $this->post($link)->assertOk();
         $this->assertFalse($list->fresh()->notify_price);
         $this->assertTrue($list->fresh()->notify_stock);
     }

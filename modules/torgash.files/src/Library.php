@@ -27,9 +27,9 @@ use Torgash\Files\Models\StoredFile;
 class Library
 {
     public const NEVER = [
-        'php', 'phar', 'phtml', 'php3', 'php4', 'php5', 'php7', 'php8', 'pht',
-        'htaccess', 'html', 'htm', 'xhtml', 'shtml', 'svgz', 'xml', 'js', 'mjs',
-        'exe', 'msi', 'dll', 'com', 'scr', 'sh', 'bat', 'cmd', 'ps1', 'vbs', 'jar',
+        ...\App\Core\Support\ServerScripts::EXTENSIONS,
+        'html', 'htm', 'xhtml', 'shtml', 'svgz', 'xml', 'js', 'mjs',
+        'exe', 'msi', 'dll', 'com', 'scr', 'bat', 'cmd', 'ps1', 'vbs', 'jar',
     ];
 
     /** Longer side of the grid's thumbnail. */

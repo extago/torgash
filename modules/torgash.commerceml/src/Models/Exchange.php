@@ -5,6 +5,7 @@ namespace Torgash\CommerceMl\Models;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Support\Facades\File;
 use Illuminate\Support\Str;
 
 /**
@@ -44,6 +45,31 @@ class Exchange extends Model
     public static function newToken(): string
     {
         return Str::random(48);
+    }
+
+    /** Long enough to look at what a failed night sent; the row stays as the log. */
+    public const KEEP_FILES_DAYS = 7;
+
+    /**
+     * Nothing else ever removed them: each night's catalogue, photographs and
+     * order files stayed on the disk for good. Only under the exchange's own
+     * folder, whatever a row (say, one from a restored backup) may name.
+     */
+    public static function clearOldFiles(): void
+    {
+        $root = realpath(storage_path('app/commerceml'));
+
+        if ($root === false) {
+            return;
+        }
+
+        self::where('updated_at', '<', now()->subDays(self::KEEP_FILES_DAYS))->each(function (self $exchange) use ($root) {
+            $path = realpath((string) $exchange->path);
+
+            if ($path !== false && str_starts_with($path, $root.DIRECTORY_SEPARATOR)) {
+                File::deleteDirectory($path);
+            }
+        });
     }
 
     /** Where this exchange's files land — one directory each, never shared. */

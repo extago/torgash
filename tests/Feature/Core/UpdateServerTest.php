@@ -103,6 +103,27 @@ class UpdateServerTest extends TestCase
         $this->assertFileDoesNotExist(storage_path('app/update/downloads/torgash-0.2.0.zip'));
     }
 
+    public function test_a_package_offered_from_somewhere_else_is_not_fetched(): void
+    {
+        foreach (['http://169.254.169.254/latest/meta-data', 'https://other.example/torgash.zip', 'file:///etc/passwd'] as $elsewhere) {
+            Http::fake(['uds.test/*' => Http::response([
+                'product' => 'torgash', 'current' => '0.1.0', 'latest' => '0.2.0',
+                'updates' => [['version' => '0.2.0', 'notes' => 'x', 'size' => 3, 'sha256' => 'abc', 'download' => $elsewhere]],
+            ]), '*' => Http::response('PK')]);
+
+            app(UpdateServer::class)->check();
+
+            try {
+                app(UpdateServer::class)->download(app(UpdateServer::class)->offer());
+                $this->fail('fetched '.$elsewhere);
+            } catch (RuntimeException $e) {
+                $this->assertStringContainsString('another address', $e->getMessage());
+            }
+
+            Http::assertNotSent(fn ($request) => $request->url() === $elsewhere);
+        }
+    }
+
     public function test_install_is_refused_when_nothing_newer_is_on_offer(): void
     {
         $this->actingAs(User::role('admin')->firstOrFail());

@@ -49,6 +49,31 @@ class OrderLimitTest extends TestCase
         $this->assertSame(2, app(CartManager::class)->count());
     }
 
+    /** A product with no shelf to cap it: past the integer, price × quantity is whatever a float rounds to. */
+    public function test_a_quantity_stays_a_number_the_books_can_hold(): void
+    {
+        $product = $this->product('LIM-HUGE', stock: 0, availability: 'preorder');
+
+        $this->post('http://localhost/cart/add/'.$product->slug, ['qty' => PHP_INT_MAX], $this->fromBuyBox($product))->assertOk();
+
+        $cart = app(CartManager::class);
+        $this->assertSame(CartManager::MAX_QTY, $cart->count());
+
+        $this->post('http://localhost/cart/add/'.$product->slug, ['qty' => PHP_INT_MAX], $this->fromBuyBox($product))->assertOk();
+        $this->assertSame(CartManager::MAX_QTY, $cart->count());
+    }
+
+    public function test_a_line_cannot_be_stepped_past_it(): void
+    {
+        $product = $this->product('LIM-STEP', stock: 0, availability: 'preorder');
+        $cart = app(CartManager::class);
+        $key = $cart->add($product->id, 1);
+
+        $this->patch('http://localhost/cart/items/'.$key, ['qty' => PHP_INT_MAX, 'step' => PHP_INT_MAX])->assertRedirect();
+
+        $this->assertSame(CartManager::MAX_QTY, $cart->count());
+    }
+
     public function test_a_preorder_is_not_capped_by_the_shelf(): void
     {
         $product = $this->product('LIM-PRE', stock: 0, availability: 'preorder');

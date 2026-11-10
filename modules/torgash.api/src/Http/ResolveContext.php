@@ -26,9 +26,15 @@ class ResolveContext
     public function handle(Request $request, Closure $next)
     {
         $asked = $request->header('X-Storefront') ?: $request->query('storefront');
+        $asked = is_string($asked) ? $asked : '';
 
-        $storefront = $asked
-            ? Storefront::query()->where('code', $asked)->orWhere('id', $asked)->first()
+        // By id only when it can be one: the database refuses to compare a
+        // word with a number, and a storefront's name is what the docs show.
+        // One switched off is not a storefront anybody may be served as.
+        $storefront = $asked !== ''
+            ? Storefront::query()->where('enabled', true)->where(fn ($query) => $query
+                ->where('code', $asked)
+                ->when(ctype_digit($asked), fn ($query) => $query->orWhere('id', (int) $asked)))->first()
             : null;
 
         $storefront ??= Storefront::query()->orderByDesc('is_default')->orderBy('id')->first();

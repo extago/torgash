@@ -8,11 +8,14 @@ use Illuminate\Support\Facades\Mail;
 use Tests\TestCase;
 use Torgash\Catalog\Models\Product;
 use Torgash\Checkout\Models\Order;
+use Torgash\Checkout\Models\OrderStatus;
 use Torgash\Checkout\Models\PaymentMethod;
 use Torgash\Checkout\Orders\PaymentState;
 use Torgash\Monobank\MonobankGateway;
+use Torgash\Payments\Jobs\ReconcilePayments;
 use Torgash\Payments\Models\Binding;
 use Torgash\Payments\Charge;
+use Torgash\Payments\Models\Payment;
 use Torgash\Payments\Models\Transaction;
 use Torgash\Payments\PaymentFailed;
 
@@ -209,6 +212,48 @@ class MonobankGatewayTest extends TestCase
         $this->assertSame(100_00, $order->paid_total);
     }
 
+    /**
+     * Signed by the bank and exact to the kopeck, and about an invoice somebody
+     * made in an account of their own with this shop's address and this order's
+     * id. The key comes from one endpoint, and nothing says it is this shop's alone.
+     */
+    public function test_an_invoice_this_shop_never_made_pays_nothing(): void
+    {
+        $order = $this->order();
+        $body = json_encode(['status' => 'success', 'amount' => 100_00, 'ccy' => 980, 'invoiceId' => 'someone-elses', 'reference' => (string) $order->id]);
+
+        $this->fakePubkey();
+        $this->postCallback($body, $this->sign($body))->assertOk();
+
+        $order->refresh();
+        $this->assertSame(PaymentState::PENDING, $order->payment_state);
+        $this->assertSame(0, (int) $order->paid_total);
+        $this->assertSame(0, Payment::where('order_id', $order->id)->count());
+    }
+
+    public function test_an_invoice_of_another_order_does_not_pay_this_one(): void
+    {
+        $order = $this->order();
+        $this->invoiced($this->order(), 'inv-of-the-other');
+        $body = json_encode(['status' => 'success', 'amount' => 100_00, 'ccy' => 980, 'invoiceId' => 'inv-of-the-other', 'reference' => (string) $order->id]);
+
+        $this->fakePubkey();
+        $this->postCallback($body, $this->sign($body))->assertOk();
+
+        $this->assertSame(PaymentState::PENDING, $order->refresh()->payment_state);
+    }
+
+    public function test_the_currency_is_read_from_its_number(): void
+    {
+        $order = $this->order();
+        $body = $this->body($order, ['status' => 'success', 'amount' => 100_00, 'ccy' => 840]);
+
+        $this->fakePubkey();
+        $this->postCallback($body, $this->sign($body))->assertOk();
+
+        $this->assertSame(PaymentState::PENDING, $order->refresh()->payment_state, 'dollars, on an invoice in hryvnia');
+    }
+
     public function test_one_changed_byte_stops_the_payment(): void
     {
         $order = $this->order();
@@ -240,6 +285,53 @@ class MonobankGatewayTest extends TestCase
         $this->postCallback($body, $this->sign($body))->assertOk();
 
         $this->assertSame(PaymentState::PAID, $order->fresh()->payment_state);
+    }
+
+    /**
+     * The forgery end to end against the real gateway: one unsigned "success",
+     * then the check every 15 minutes hears from the bank that the invoice is
+     * not paid and recalculates the order. Nobody even tried to pay.
+     */
+    public function test_an_unsigned_success_is_not_counted_when_the_bank_says_unpaid(): void
+    {
+        Http::fake([
+            '*merchant/pubkey' => Http::response(['key' => base64_encode($this->pem)]),
+            '*merchant/invoice/status*' => Http::response(['invoiceId' => 'inv-real', 'status' => 'created', 'amount' => 100_00, 'ccy' => 980]),
+        ]);
+
+        $order = $this->order(['status' => OrderStatus::AWAITING_PAYMENT]);
+        Transaction::create([
+            'gateway' => 'monobank', 'order_id' => $order->id, 'external_id' => 'inv-real',
+            'state' => PaymentState::PENDING, 'amount' => 100_00,
+            'verified' => true, 'applied' => false, 'created_at' => now(),
+        ]);
+
+        $body = json_encode(['status' => 'success', 'amount' => 100_00, 'invoiceId' => 'forged-1', 'reference' => (string) $order->id, 'ccy' => 980]);
+        $this->postCallback($body, base64_encode('not a signature'))->assertOk();
+
+        $this->assertSame(['inv-real'], Payment::where('order_id', $order->id)->pluck('external_id')->all());
+
+        ReconcilePayments::dispatchSync();
+
+        $order->refresh();
+        $this->assertSame(PaymentState::PENDING, $order->payment_state);
+        $this->assertSame(0, (int) $order->paid_total);
+        $this->assertSame(OrderStatus::AWAITING_PAYMENT, $order->status);
+        $this->assertFalse($order->stock_deducted);
+    }
+
+    /** Anybody can post a bad signature; each forced refresh is a request on the merchant's token. */
+    public function test_bad_signatures_do_not_each_ask_the_bank_for_the_key(): void
+    {
+        $this->fakePubkey();
+        $body = $this->body($this->order(), ['status' => 'success', 'amount' => 100_00]);
+
+        for ($i = 0; $i < 5; $i++) {
+            $this->postCallback($body, base64_encode('not a signature'))->assertOk();
+        }
+
+        // One to learn the key, one refresh in case it rotated, and no more.
+        Http::assertSentCount(2);
     }
 
     // ------------------------------------------------------------- the states
@@ -385,11 +477,22 @@ class MonobankGatewayTest extends TestCase
     /** @param  array<string, mixed>  $fields */
     protected function body(Order $order, array $fields): string
     {
+        $this->invoiced($order, $fields['invoiceId'] ?? 'inv-1', (int) ($fields['amount'] ?? 100_00));
+
         return json_encode($fields + [
             'invoiceId' => 'inv-1',
             'reference' => (string) $order->id,
             'ccy' => 980,
         ]);
+    }
+
+    /** The row `start()` writes when the bank gives an invoice its id. */
+    protected function invoiced(Order $order, string $invoice, int $amount = 100_00): void
+    {
+        Transaction::firstOrCreate(
+            ['gateway' => 'monobank', 'external_id' => $invoice, 'order_id' => $order->id],
+            ['state' => PaymentState::PENDING, 'amount' => $amount, 'verified' => true, 'applied' => false, 'summary' => 'Invoice created', 'created_at' => now()],
+        );
     }
 
     protected function postCallback(string $body, string $signature)

@@ -70,7 +70,7 @@ class CartController extends Controller
 
         return response()->view('torgash.cart::partials.added', [
             'product' => $product,
-            'qty' => max(1, (int) $request->input('qty', 1)),
+            'qty' => min(CartManager::MAX_QTY, max(1, (int) $request->input('qty', 1))),
             'line' => $items->firstWhere('key', $key),
             'mode' => $mode,
             'basketCount' => $cart->count(),
@@ -143,7 +143,7 @@ class CartController extends Controller
      */
     public function updateItem(Request $request, CartManager $cart, string $line)
     {
-        $qty = max(1, (int) $request->input('qty', 1) + (int) $request->input('step', 0));
+        $qty = min(CartManager::MAX_QTY, max(1, (int) $request->input('qty', 1) + (int) $request->input('step', 0)));
 
         // Never past what may be bought: a number typed beyond the shelf
         // becomes the shelf, and the line itself says why if it still cannot

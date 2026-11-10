@@ -177,6 +177,15 @@ class WishlistController extends Controller
     }
 
     /**
+     * What the letter's "stop these letters" opens. It only asks: a mail
+     * filter opens every address in a letter, and must not unsubscribe anybody.
+     */
+    public function unsubscribePage(WishList $list, string $what)
+    {
+        return view('torgash.wishlist::unsubscribe', ['what' => $what]);
+    }
+
+    /**
      * "Stop these letters", from inside one: a signature names the list and
      * the letter, so nobody has to sign in on the device they read mail on.
      */

@@ -168,7 +168,7 @@ class AdministratorsController extends Controller
     {
         return $request->validate([
             'name' => 'required|string|max:255',
-            'email' => ['required', 'email', 'max:255', Rule::unique('users', 'email')->ignore($administrator)],
+            'email' => ['required', 'email', 'max:255', new \App\Core\Access\EmailIsFree($administrator->id)],
             // A new manager needs a password — unless a letter lets them choose
             // it themselves (PasswordLinks::staffInvite).
             'password' => [Rule::requiredIf(! $administrator->exists && ! $request->boolean('send_invite')), 'nullable', 'string', 'min:8', 'confirmed'],

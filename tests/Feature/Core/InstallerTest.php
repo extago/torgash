@@ -4,6 +4,7 @@ namespace Tests\Feature\Core;
 
 use App\Core\Install\Installer;
 use App\Core\Install\ServerCheck;
+use App\Http\Controllers\InstallController;
 use RuntimeException;
 use Tests\TestCase;
 
@@ -138,6 +139,102 @@ class InstallerTest extends TestCase
         $database = (new ServerCheck)->database(['host' => '127.0.0.1', 'port' => 1, 'database' => 'x', 'username' => 'x', 'password' => 'x']);
 
         $this->assertFalse(ServerCheck::passes($database));
+    }
+
+    public function test_a_password_is_read_back_from_env_as_it_was_typed(): void
+    {
+        $dir = storage_path('framework/testing-env-'.uniqid());
+        mkdir($dir);
+
+        try {
+            foreach (["it's\${APP_KEY}", "a'b\$c", "don't \"quote\" \\ me", 'plain$dollar', "it's ok"] as $typed) {
+                file_put_contents($dir.DIRECTORY_SEPARATOR.'.env', "APP_KEY=secret\nMAIL_PASSWORD=".\App\Core\Support\EnvFile::quote($typed)."\n");
+
+                $this->assertSame($typed, \Dotenv\Dotenv::createArrayBacked($dir)->load()['MAIL_PASSWORD']);
+            }
+        } finally {
+            @unlink($dir.DIRECTORY_SEPARATOR.'.env');
+            @rmdir($dir);
+        }
+    }
+
+    public function test_a_word_cannot_be_spliced_into_the_address_of_the_database(): void
+    {
+        foreach ([['127.0.0.1;sslmode=disable', 'x'], ['127.0.0.1', 'x;host=10.0.0.1']] as [$host, $database]) {
+            try {
+                ServerCheck::connect(['host' => $host, 'port' => 1, 'username' => 'x', 'password' => 'x'], $database);
+                $this->fail('connected with '.$host.' / '.$database);
+            } catch (RuntimeException $refused) {
+                $this->assertStringNotContainsString('SQLSTATE', $refused->getMessage(), 'refused before any connection is tried');
+            }
+        }
+
+        $this->assertFalse(ServerCheck::passes((new ServerCheck)->database(['host' => '127.0.0.1;a=b', 'port' => 1, 'database' => 'x', 'username' => 'x', 'password' => 'x'])));
+    }
+
+    public function test_the_database_check_answers_only_to_the_install_code(): void
+    {
+        $this->beforeInstalling(function () {
+            $form = ['db_host' => '127.0.0.1', 'db_port' => 1, 'db_username' => 'x', 'db_password' => 'x', 'db_database' => 'x'];
+
+            $refused = $this->post('http://localhost/install/check', $form);
+            $refused->assertHeader('HX-Retarget', '#install-problem');
+            $this->assertStringNotContainsString('SQLSTATE', $refused->getContent(), 'how a port answered is for the owner only');
+
+            $allowed = $this->post('http://localhost/install/check', $form + ['key' => 'code1234']);
+            $allowed->assertOk()->assertHeaderMissing('HX-Retarget');
+        });
+    }
+
+    public function test_the_first_page_names_no_folder_of_the_server(): void
+    {
+        $this->beforeInstalling(function () {
+            $page = $this->get('http://localhost/install?mode=restore')->assertOk()->getContent();
+            $root = base_path();
+
+            foreach ([$root, str_replace('\\', '/', $root), str_replace('\\', '\\\\', $root)] as $spelling) {
+                $this->assertStringNotContainsString($spelling, $page);
+            }
+        });
+    }
+
+    public function test_a_shop_whose_database_is_down_is_not_a_new_shop(): void
+    {
+        $lock = storage_path(Installer::LOCK);
+        $saved = is_file($lock) ? file_get_contents($lock) : null;
+        @unlink($lock);
+
+        \Illuminate\Support\Facades\Schema::shouldReceive('hasTable')->andThrow(new RuntimeException('connection refused'));
+
+        try {
+            $this->assertTrue(Installer::installed(), 'it has its key; the database is only away');
+
+            config(['app.key' => '']);
+            $this->assertFalse(Installer::installed(), 'no key, nothing has ever been installed here');
+        } finally {
+            $saved === null ? @unlink($lock) : file_put_contents($lock, $saved);
+        }
+    }
+
+    /** The shop as the wizard sees it half way, with the code on the disk. */
+    protected function beforeInstalling(\Closure $run): void
+    {
+        $saved = [];
+        foreach ([Installer::LOCK, Installer::INSTALLING, InstallController::KEY] as $name) {
+            $saved[$name] = is_file(storage_path($name)) ? file_get_contents(storage_path($name)) : null;
+            @unlink(storage_path($name));
+        }
+
+        file_put_contents(storage_path(Installer::INSTALLING), json_encode(['started_at' => now()->toIso8601String(), 'answers' => []]));
+        file_put_contents(storage_path(InstallController::KEY), "CODE1234\n");
+
+        try {
+            $run();
+        } finally {
+            foreach ($saved as $name => $content) {
+                $content === null ? @unlink(storage_path($name)) : file_put_contents(storage_path($name), $content);
+            }
+        }
     }
 
     public function test_the_web_installer_does_not_exist_on_an_installed_shop(): void

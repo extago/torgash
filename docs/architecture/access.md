@@ -227,3 +227,33 @@ whoever puts fetched HTML into one replaces its nonces with the page's own
 A pasted link goes only to the public internet: `App\Core\Http\OutboundUrl`
 resolves the host, refuses private addresses, pins the request to the checked
 IP, and checks each redirect hop.
+
+### Accounts and passwords (report of 2026-11-09)
+
+**An e-mail has one spelling.** `User::normalEmail()` (trimmed, lower case) runs
+in the model's mutator, so every door writes the same thing, and the unique index
+is on `lower(email)`. A form checks with `App\Core\Access\EmailIsFree`, never
+`Rule::unique`: that compares the text as typed, and a capital went through to
+the database's own refusal, a 500. A lookup by address goes through
+`normalEmail()` too. Where two accounts held one address in different capitals,
+the migration left it to staff, then to an address someone proved, then to the
+oldest account; the other loses only the address, and the Errors screen names it.
+
+**A changed password ends everything opened with the old one, from any door**
+(the account's form, a code, a manager's screen, `torgash:admin`), because what
+is compared is the row:
+
+- a session: `App\Core\Access\PasswordSessions`, in `web` and ahead of `auth` by
+  the priority list. A stamp of the password per account, written only at a
+  sign-in and at a change. Not the framework's `AuthenticateSession`, which
+  stamps whoever `$request->user()` is when the response leaves: while a manager
+  looks through a customer's eyes that is the customer, and the manager would be
+  thrown out on the next request.
+- a remembered browser: `User` replaces `remember_token` with the password.
+- a link: `PasswordLinks::forget()` clears the waiting reset and the waiting
+  invitation.
+
+**A reset link and an invitation live in separate tables**
+(`password_reset_tokens`, `password_invite_tokens`, two brokers in
+`config/auth.php`). In one table a one-hour link could be read through the
+week-long broker.

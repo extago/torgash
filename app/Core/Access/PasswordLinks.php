@@ -11,14 +11,23 @@ use Illuminate\Support\Facades\Password;
  * theirs, a manager just added, a customer whose account was made in the
  * admin. Never a password in a letter — a mailbox keeps letters for years.
  *
- * Laravel's own reset tokens (hashed in `password_reset_tokens`, one per
- * address, used once): the `users` broker for a lost password (an hour),
- * `invites` for an invitation (a week). A manager's link lands in the admin,
- * where the second factor is asked as always after signing in; a
- * customer's lands on the storefront and signs them in.
+ * Laravel's own reset tokens (hashed, one per address, used once): the
+ * `users` broker for a lost password (an hour, `password_reset_tokens`),
+ * `invites` for an invitation (a week, `password_invite_tokens`). Two tables,
+ * because a broker's lifetime is read when the token is checked: in one table,
+ * `invite=1` added to a reset link made it good for a week. A manager's link
+ * lands in the admin, where the second factor is asked as always after
+ * signing in; a customer's lands on the storefront and signs them in.
  */
 class PasswordLinks
 {
+    /** A link sent before the password was set again opens nothing. */
+    public static function forget(User $user): void
+    {
+        Password::broker('users')->deleteToken($user);
+        Password::broker('invites')->deleteToken($user);
+    }
+
     public static function staffReset(User $user): bool
     {
         $token = Password::broker('users')->createToken($user);

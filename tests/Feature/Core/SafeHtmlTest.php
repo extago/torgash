@@ -30,6 +30,18 @@ class SafeHtmlTest extends TestCase
         $this->assertStringContainsString('src="/a.jpg"', $clean);
     }
 
+    /**
+     * `style` and `class` stay, for an HTML block's own looks, and `fixed
+     * inset-0` is a class the theme has. So the box says it, not the cleaner.
+     */
+    public function test_a_text_cannot_reach_outside_its_own_box(): void
+    {
+        $css = (string) file_get_contents(resource_path('css/app.css'));
+
+        $this->assertMatchesRegularExpression('/\.torgash-rich\s*\{[^}]*contain:\s*layout/', $css);
+        $this->assertMatchesRegularExpression('/\.torgash-rich\s*\{[^}]*overflow:\s*auto hidden/', $css);
+    }
+
     /** Alpine and HTMX run on every storefront page, so their attributes are code too. */
     public function test_alpine_and_htmx_attributes_are_removed(): void
     {

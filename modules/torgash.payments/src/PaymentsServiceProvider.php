@@ -8,6 +8,7 @@ use Illuminate\Support\Facades\Route;
 use Illuminate\Support\ServiceProvider;
 use Torgash\Checkout\Models\Order;
 use Torgash\Checkout\Orders\PaymentState;
+use Torgash\Checkout\Orders\RefundResult;
 use Torgash\Payments\Admin\MethodGatewaySection;
 use Torgash\Payments\Http\CallbackController;
 use Torgash\Payments\Jobs\ReconcilePayments;
@@ -219,11 +220,15 @@ class PaymentsServiceProvider extends ServiceProvider
      *
      * Answering with a summary means "handled": the applier has already moved
      * the payment state, and checkout must not also stamp it. Answering with
-     * null means "not mine", and checkout records the refund by hand.
+     * null means "not mine", and checkout records the refund by hand. Answering
+     * with a `RefundResult` that is not done means a gateway WAS asked and the
+     * money is not back: refused, or the bank still working on it. Those two
+     * used to read as "not mine" and as "handled", and either way the shop
+     * wrote down a refund the customer never got.
      */
     protected function refunds(): void
     {
-        hook_listen('checkout.order.refund', function (?string $value, array $context) {
+        hook_listen('checkout.order.refund', function ($value, array $context) {
             if ($value !== null) {
                 return $value;
             }
@@ -233,6 +238,8 @@ class PaymentsServiceProvider extends ServiceProvider
             $actions = app(PaymentActions::class);
             $left = (int) ($context['amount'] ?? 0);
             $said = [];
+            $refused = false;
+            $waiting = 0;
 
             // An order no payment is recorded for — its money was marked by
             // hand, or it was paid before payments were kept one by one — is
@@ -262,20 +269,28 @@ class PaymentsServiceProvider extends ServiceProvider
                 // A whole payment is asked for as a whole — a release takes
                 // no amount, and "all of it" is what a partial amount equal to
                 // the payment would mean anyway.
-                $event = $actions->act($payment, $capability, $part < $payment->held() ? $part : null, $context['source'] ?? null);
+                $before = $payment->held();
+                $event = $actions->act($payment, $capability, $part < $before ? $part : null, $context['source'] ?? null);
 
                 if (! $event) {
+                    $refused = true;
+
                     break;
                 }
 
                 $left -= $part;
                 $said[] = $event->summary ?: $event->state;
+
+                // The applier has written the bank's answer on this payment.
+                if ($payment->held() >= $before) {
+                    $waiting += $part;
+                }
             }
 
             // Nothing reached a gateway: not ours, and checkout records it by
             // hand. Part of it did: what went back is already on the order,
             // and the rest is said, not invented.
-            if ($said === []) {
+            if ($said === [] && ! $refused) {
                 return null;
             }
 
@@ -285,12 +300,23 @@ class PaymentsServiceProvider extends ServiceProvider
                 ]);
             }
 
-            return implode(' ', $said);
+            if ($waiting > 0) {
+                $said[] = $this->stillAtTheBank($order, $waiting);
+            }
+
+            return $left > 0 || $waiting > 0 ? new RefundResult(false, implode(' ', $said), true) : implode(' ', $said);
         });
     }
 
+    protected function stillAtTheBank(Order $order, int $amount): string
+    {
+        return __('The bank took the request for :amount and has not sent it back yet. The order changes when it does: do not repeat the refund.', [
+            'amount' => format_price($amount, $order->currency_code),
+        ]);
+    }
+
     /** The order's gateway asked about the order itself (no payment rows). */
-    protected function refundWholeOrder(Order $order, array $context): ?string
+    protected function refundWholeOrder(Order $order, array $context): string|RefundResult|null
     {
         $found = app(Gateways::class)->forOrder($order);
 
@@ -305,16 +331,22 @@ class PaymentsServiceProvider extends ServiceProvider
             return null;
         }
 
+        $before = (int) $order->paid_total;
+
         $event = $found['gateway']->act($capability, $order, $found['binding']->gatewayConfig(), [
             'amount' => $context['amount'] ?? null,
             'reason' => $context['source'] ?? null,
         ]);
 
         if (! $event) {
-            return null;
+            return new RefundResult(false, __('The gateway did not return this money — see the payment log.'), true);
         }
 
         app(PaymentApplier::class)->apply($found['binding']->gateway, $order, $event);
+
+        if ((int) $order->fresh()->paid_total >= $before) {
+            return new RefundResult(false, $this->stillAtTheBank($order, (int) ($context['amount'] ?? $before)), true);
+        }
 
         return $event->summary ?: $event->state;
     }

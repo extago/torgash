@@ -212,6 +212,22 @@ class WayForPayGatewayTest extends TestCase
 
     // ------------------------------------------------------------ the admin
 
+    public function test_a_refund_still_in_processing_is_not_a_refund_yet(): void
+    {
+        $order = $this->order();
+        $this->postCallback($this->statusDocument($order, 'Approved'))->assertOk();
+
+        Http::fake(['api.wayforpay.com/*' => Http::sequence()
+            ->push(['transactionStatus' => 'RefundInProcessing', 'reason' => 'Low balance'])
+            ->push($this->statusDocument($order, 'RefundInProcessing', ['processingDate' => 1700000900]))]);
+
+        $result = app(\Torgash\Checkout\Orders\Refund::class)->refund($order->fresh(), 100_00, 'test');
+
+        $this->assertFalse($result->done, 'the money is still with the shop');
+        $this->assertSame(PaymentState::PAID, $order->fresh()->payment_state);
+        $this->assertSame(100_00, $order->fresh()->paid_total);
+    }
+
     public function test_a_refund_is_signed_over_its_own_fields_and_then_believes_check_status(): void
     {
         $order = $this->order(['payment_state' => PaymentState::PAID, 'paid_total' => 100_00]);

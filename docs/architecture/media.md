@@ -265,3 +265,14 @@ come out smaller (a PNG sometimes), or a type it does not re-encode
 sees it). The plain file field a NEW product shows before its first save
 sends the original: the server's downscale covers it. The order of photos
 is changed with arrows under a finger (`move()`), beside dragging.
+
+## Pictures by link: how many and how big (report of 2026-11-09)
+
+`GalleryController::MAX_LINKS` (20 a go; the rest are named back).
+`OutboundUrl::get(maxBytes:)` stops a transfer while it arrives, through a sink
+whose `write` answers 0 past the limit, which is what makes curl give up: a
+Content-Length that lies, or none at all, would otherwise be read to the end
+(measured: 400 MB against a 5 MB limit stopped with 20 MB of peak memory).
+`Http::fake` never looks at transport options, so `OutboundUrlTest` reads them
+off the stub and tries them on Guzzle's real handler factory, which is what
+refuses `CURLOPT_NOPROGRESS`.

@@ -171,6 +171,83 @@ class ExchangeTest extends TestCase
         $this->assertFileDoesNotExist(dirname(Exchange::firstOrFail()->path).DIRECTORY_SEPARATOR.'escaped.xml');
     }
 
+    public function test_an_exchange_belongs_to_the_account_that_opened_it(): void
+    {
+        $this->open();
+
+        $stranger = User::factory()->create();
+        $stranger->assignRole('admin');
+        [, $theirs] = ApiToken::issue($stranger, '1C of somebody else');
+
+        // Holding its address does not make it yours,
+        $this->exchange('type=catalog&mode=file&filename=a.xml', 'x', $theirs)->assertSee('failure');
+
+        // and "the latest open one" is the latest of your own.
+        $this->unencryptedCookies = [];
+        $this->exchange('type=catalog&mode=file&filename=a.xml', 'x', $theirs)->assertSee('failure');
+        $this->exchange('type=sale&mode=success', null, $theirs);
+
+        $exchange = Exchange::firstOrFail();
+        $this->assertFileDoesNotExist($exchange->file('a.xml'));
+        $this->assertSame('open', $exchange->state);
+    }
+
+    public function test_a_piece_larger_than_the_shop_announced_is_refused(): void
+    {
+        $this->set(['file_limit' => 65536]);
+        $this->open();
+
+        $this->exchange('type=catalog&mode=file&filename=big.xml', str_repeat('x', 65537))->assertSee('failure');
+
+        $this->assertFileDoesNotExist(Exchange::firstOrFail()->file('big.xml'));
+    }
+
+    public function test_an_archive_the_disk_cannot_hold_is_not_unpacked(): void
+    {
+        $path = tempnam(sys_get_temp_dir(), 'cml');
+        $zip = new \ZipArchive;
+        $zip->open($path, \ZipArchive::OVERWRITE);
+        $zip->addFromString('import.xml', str_repeat("\0", 64 << 20));
+        $zip->close();
+        $packed = (string) file_get_contents($path);
+        @unlink($path);
+
+        $this->open();
+
+        // Room for the archive as sent, and none for what is inside it.
+        config(['torgash.commerceml.disk_reserve' => (int) disk_free_space(storage_path()) - (32 << 20)]);
+
+        $this->exchange('type=catalog&mode=file&filename=pack.zip', $packed)->assertSee('failure');
+
+        $exchange = Exchange::firstOrFail();
+        $this->assertFileDoesNotExist($exchange->file('import.xml'));
+        $this->assertFileDoesNotExist($exchange->file('pack.zip'), 'its space is given back');
+    }
+
+    public function test_the_files_of_an_old_exchange_are_cleared_and_its_row_stays(): void
+    {
+        $this->open();
+        $this->send('import.xml', '<a/>');
+        $exchange = Exchange::firstOrFail();
+
+        Exchange::whereKey($exchange->id)->update(['updated_at' => now()->subDays(Exchange::KEEP_FILES_DAYS + 1)]);
+        Exchange::clearOldFiles();
+
+        $this->assertDirectoryDoesNotExist($exchange->path);
+        $this->assertNotNull($exchange->fresh());
+    }
+
+    public function test_a_recent_exchange_keeps_its_files(): void
+    {
+        $this->open();
+        $this->send('import.xml', '<a/>');
+        $exchange = Exchange::firstOrFail();
+
+        Exchange::clearOldFiles();
+
+        $this->assertFileExists($exchange->file('import.xml'));
+    }
+
     // -------------------------------------------------------------- catalogue
 
     public function test_a_catalogue_arrives_as_categories_and_products(): void

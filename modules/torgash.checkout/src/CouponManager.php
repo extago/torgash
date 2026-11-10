@@ -2,6 +2,8 @@
 
 namespace Torgash\Checkout;
 
+use App\Core\Support\ClientAddress;
+use Illuminate\Support\Facades\RateLimiter;
 use Torgash\Cart\CartManager;
 use Torgash\Checkout\Models\Coupon;
 
@@ -11,6 +13,11 @@ use Torgash\Checkout\Models\Coupon;
  */
 class CouponManager
 {
+    /** Wrong codes one client may try, and the seconds they are held against it. */
+    protected const WRONG_CODES = 10;
+
+    protected const WRONG_CODES_FOR = 60;
+
     public function __construct(protected CartManager $cart) {}
 
     /**
@@ -27,8 +34,32 @@ class CouponManager
         return max(0, (int) hook_filter('checkout.coupon.base', (int) $this->cart->total(), ['cart' => $this->cart]));
     }
 
-    /** @return array{ok: bool, message: string} */
+    /**
+     * One box for every code, a gift card's included, and a code is money to
+     * whoever guesses it. Only a wrong code counts, from whichever door it came
+     * (the page and the API meet here): nobody is slowed down for using one.
+     *
+     * @return array{ok: bool, message: string}
+     */
     public function apply(string $code): array
+    {
+        $client = 'checkout.code:'.ClientAddress::subject(request()->ip());
+
+        if (RateLimiter::tooManyAttempts($client, self::WRONG_CODES)) {
+            return ['ok' => false, 'message' => __('Too many codes tried. Please wait a minute.')];
+        }
+
+        $result = $this->tryCode($code);
+
+        if (! $result['ok']) {
+            RateLimiter::hit($client, self::WRONG_CODES_FOR);
+        }
+
+        return $result;
+    }
+
+    /** @return array{ok: bool, message: string} */
+    protected function tryCode(string $code): array
     {
         // Codes are stored in capitals (the admin form writes them so), and a
         // customer typing "summer10" from a newsletter means SUMMER10.

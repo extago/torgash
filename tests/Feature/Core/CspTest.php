@@ -20,6 +20,19 @@ class CspTest extends TestCase
         return $m[1];
     }
 
+    public function test_only_a_nonce_attribute_counts_as_a_nonce(): void
+    {
+        $csp = app(Csp::class);
+
+        foreach (['<script data-nonce="x">1</script>', '<script src="/a.js?nonce=1"></script>', "<script title='a nonce=x'>1</script>"] as $html) {
+            $this->assertStringContainsString('<script nonce="'.csp_nonce().'"', $csp->sign($html), $html);
+        }
+
+        foreach (['<script nonce="mine">1</script>', '<script NONCE = "mine">1</script>', '<script async nonce=mine>1</script>'] as $html) {
+            $this->assertSame($html, $csp->sign($html));
+        }
+    }
+
     public function test_every_script_on_a_page_carries_the_nonce_its_policy_names(): void
     {
         $this->get('http://localhost/');
@@ -82,6 +95,13 @@ class CspTest extends TestCase
         }
 
         $this->assertSame([], $offenders, 'Use x-on: (Alpine) or a data-* action from assets/js/actions.js.');
+    }
+
+    /** A report is whatever was posted: a list where a string belongs is not an error on the Errors screen. */
+    public function test_a_malformed_report_is_only_ignored(): void
+    {
+        $this->postJson('http://localhost/csp-report', ['csp-report' => ['violated-directive' => 'x', 'document-uri' => ['a']]])
+            ->assertNoContent();
     }
 
     public function test_a_report_is_written_once_a_day_per_violation(): void

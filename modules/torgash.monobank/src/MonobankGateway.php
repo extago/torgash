@@ -217,7 +217,13 @@ class MonobankGateway implements Gateway
         }
 
         // Merchants can rotate. One forced refresh, then it really is a bad
-        // signature.
+        // signature; and one every ten minutes at most, because anybody can
+        // post a bad signature and each would be a request on this merchant's
+        // token that the bank may start refusing.
+        if (! Cache::add('monobank.pubkey.refreshed.'.sha1((string) ($config['token'] ?? '')), true, now()->addMinutes(10))) {
+            return false;
+        }
+
         return $this->check($body, $signature, $this->publicKey($config, fresh: true));
     }
 
@@ -258,7 +264,29 @@ class MonobankGateway implements Gateway
             return null;
         }
 
-        return $this->event($body);
+        $event = $this->event($body);
+
+        return $this->isOurs($event) ? $event : null;
+    }
+
+    /**
+     * Did this shop make this invoice, for this order?
+     *
+     * The webhook is signed with a key the bank hands out from one endpoint,
+     * and nothing promises that key is this merchant's alone. The address and
+     * the `reference` are the invoice maker's to write: an invoice made in an
+     * account of somebody else's, for the exact sum, with this shop's address
+     * and this order's id would arrive correctly signed. An id is only known
+     * here if our own `start()` was given it by the bank.
+     */
+    protected function isOurs(PaymentEvent $event): bool
+    {
+        return $event->externalId !== null && $event->orderId !== null
+            && Transaction::where('gateway', self::key())
+                ->where('external_id', $event->externalId)
+                ->where('order_id', $event->orderId)
+                ->where('verified', true)
+                ->exists();
     }
 
     /**
@@ -303,6 +331,8 @@ class MonobankGateway implements Gateway
             summary: trim($status.' '.($body['failureReason'] ?? '')),
             raw: $body,
             orderId: isset($body['reference']) ? (int) $body['reference'] : null,
+            // A number here, and one we do not know is still not the invoice's.
+            currency: isset($body['ccy']) ? (array_flip(self::CURRENCIES)[(int) $body['ccy']] ?? (string) $body['ccy']) : null,
         );
     }
 

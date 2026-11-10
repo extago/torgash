@@ -101,11 +101,13 @@ return [
         ],
 
         // "Set your password" in an invitation (a new manager, a customer
-        // created in the admin): the same tokens, living a week — a letter
-        // read on Monday about an account made on Friday must still work.
+        // created in the admin): tokens living a week — a letter read on Monday
+        // about an account made on Friday must still work. A table of their
+        // own: a broker's lifetime is applied when the token is checked, so in
+        // one table a lost-password link could be read as an invitation.
         'invites' => [
             'provider' => 'users',
-            'table' => env('AUTH_PASSWORD_RESET_TOKEN_TABLE', 'password_reset_tokens'),
+            'table' => 'password_invite_tokens',
             'expire' => 60 * 24 * 7,
             'throttle' => 0,
         ],

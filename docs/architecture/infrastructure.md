@@ -279,7 +279,12 @@ database's own locale, every table's rows are compared with `rows` in the
 manifest — counted inside the very snapshot pg_dump was handed
 (`--snapshot`), so the numbers are exact on a shop taking orders — and the
 database is dropped, whatever happened; the shop's own database and files
-are not touched. It needs CREATEDB for the shop's database user. Without it
+are not touched. A check KILLED half way (a restart, a timeout) never reaches
+that `finally`, and each check is named after its own run, so the next check
+drops any `<db>_check_<digits>` nobody is connected to (no FORCE: one still
+working is refused) and any job asking for a work folder deletes those
+untouched for two days (`backup-tmp` holds the dump in the clear, even of an
+encrypted backup). It needs CREATEDB for the shop's database user. Without it
 the check does not begin and the run says `blocked`, never `failed`: nothing
 is known about the backup. The plan's form warns beforehand, the bell clears
 as soon as the right is given, and the task ends through `TaskRefused`
@@ -291,6 +296,36 @@ restores one — the journal of a restored or new database does not know
 them. The option that puts the backup's .env in place is `--with-env`:
 `--env` is Laravel's own global option, and a command declaring it does
 not even start (tests calling the command directly never noticed).
+
+**What a restore runs must be what the shop made** (third-party review of
+0.5.9, 2026-11-09). A backup lies in somebody's bucket or SFTP account, and
+restoring it runs it, with nobody watching in a check by restoring.
+`assertAsMade()` compares the journal's `sha256` before the file is opened, so
+an encrypted backup swapped for a plain archive fails too. A folder is no one
+file, so there `sha256` is its dump's (a folder made before this has none): the
+check by restoring reads only the database, but the files and code in a folder
+are compared with nothing, and whoever restores a folder's code from a storage
+others can write to takes that on. A backup the journal does not know (`--file`,
+`--destination`, the installer) has nothing to compare with, and the person
+naming it answers for it: that is also the way round a refusal for a file
+somebody trusts. The journal, not the storage, says whether a backup is a folder.
+
+psql gets SQL only: `-X`, and as the first line `\restrict` with a key made for
+this restore. pg_dump's own `\restrict`/`\unrestrict` come out, and the
+extension filter leaves COPY data alone (it used to eat rows beginning with
+those words). `\restrict` leaves one command open, `\unrestrict`, and psql before
+18.6, 17.11, 16.15 and 15.19 evaluates its argument BEFORE comparing the key
+(CVE-2026-18408): `` \unrestrict `cmd` `` ran on 18.3 with a wrong key. So a dump
+the journal cannot vouch for is refused when that word stands anywhere but on
+pg_dump's own closing line. Every line is searched: which lines are COPY data is
+only the loop's reading, and a comment can mislead it. Only an odd run of
+backslashes counts; COPY doubles a backslash in somebody's text, so a customer
+typing that word cannot make a backup unrestorable. A psql without `\restrict`
+at all (before 15.14, 16.10, 17.6, 18) refuses a dump the journal cannot vouch
+for. Never "reject lines that begin with a backslash": a real dump has them, and
+`SELECT 1; \! x` has none. `\restrict` does not stop SQL: `COPY … FROM PROGRAM`
+still runs for a superuser, which is why the checksum comes first and why a
+shop's database user must not be one.
 
 **The installer's other door: a shop from a backup** (PLAN §67.8, stage 6,
 `Installer::beginRestore()`, `torgash:install --restore=`, the wizard's
@@ -577,3 +612,33 @@ signed by the makers, newer than this code) and installed by the same
 it after a successful install. Nothing about the checks depends on how a
 package arrived.
 
+## What a request may not decide (report of 2026-11-09)
+
+**A host nobody named** (`App\Core\Http\ForeignHost`, global). `Host` is a line
+the sender writes, and every absolute address starts from it: "I lost my
+password" posted with somebody else's domain mailed a genuine letter whose button
+led there. A host is the shop's when APP_URL or a storefront names it, as a
+subdomain of such a name, as the bare name of a `www.` one, or this machine. Any
+other is still answered (a shop opened by its IP goes on working), but `url()`
+and `route()` write APP_URL, the canonical says so, and the page cache keeps no
+copy (copies are filed by host). `$request->url()` and `getSchemeAndHttpHost()`
+go on repeating what was sent: fine for a redirect back to where the visitor
+stands, never for what leaves the page. Nothing is forced while APP_URL is this
+machine, which has no better address to offer. Not the framework's
+`trustHosts()`: that answers 400 to a shop opened by its IP.
+
+**A limit is per door** (`App\Core\Http\ThrottlePerRoute`, the `throttle` alias).
+Laravel's key for `throttle:N,M` is the visitor alone, so every plain limit in
+the engine added to one counter: a few CSP reports from a browser (`/csp-report`,
+120 a minute) closed "I lost my password" (5 in 10 minutes). The door goes into
+the key, by action, so a page's copies per language are one door. A named limiter
+has its own key and is not touched.
+
+**The installer** answers the database test only to whoever holds the install
+code (`check()`), shows no folder of the server, and refuses a host or database
+name that would add a setting to the DSN (`ServerCheck::connect`: a `;` starts
+one). **A backup folder** (`Destinations::folderError`) is a full path and never
+where the web server hands files out: `public/`, the public disk, modules,
+themes. **An update's package** comes from the host the update source is on
+(`UpdateServer::assertFromSource`; a GitHub source: GitHub's). **`EnvFile::quote`**
+escapes `$` too: `it's${APP_KEY}` was read back with the key spliced in.

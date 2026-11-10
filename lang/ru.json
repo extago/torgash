@@ -2035,5 +2035,12 @@
     "Languages of the browser": "Языки браузера",
     "Installed: :version": "Установлена: :version",
     "fixed in :version": "исправлено в :version",
-    "Known vulnerabilities: :count. Libraries affected: :packages.": "Известных уязвимостей: :count. Затронуто библиотек: :packages."
+    "Known vulnerabilities: :count. Libraries affected: :packages.": "Известных уязвимостей: :count. Затронуто библиотек: :packages.",
+    "The database address may hold Latin letters, digits, dots and dashes, and its name letters, digits and underscores.": "В адресе базы допустимы латинские буквы, цифры, точки и дефисы, а в её имени — буквы, цифры и подчёркивания.",
+    "The file at this link is too large.": "Файл по этой ссылке слишком большой.",
+    "Confirm your new email": "Подтвердите новую почту",
+    "Get back into your account": "Вход в личный кабинет",
+    "Press the button to confirm this address.": "Нажмите кнопку, чтобы подтвердить этот адрес.",
+    "Press the button to continue and choose a new password.": "Нажмите кнопку, чтобы продолжить и задать новый пароль.",
+    "Press the button to sign in to your account.": "Нажмите кнопку, чтобы войти в личный кабинет."
 }

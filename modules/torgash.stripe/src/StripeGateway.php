@@ -238,6 +238,7 @@ class StripeGateway implements Gateway
             summary: trim($event['type'].' '.($object['last_payment_error']['message'] ?? '')),
             raw: $event,
             orderId: $this->orderOf($object),
+            currency: isset($object['currency']) ? (string) $object['currency'] : null,
         );
     }
 

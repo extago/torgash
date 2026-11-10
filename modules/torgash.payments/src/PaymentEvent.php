@@ -21,6 +21,9 @@ class PaymentEvent
      *     callbacks with the same one are the same event redelivered, and the
      *     second must change nothing
      * @param  array<string, mixed>  $raw
+     * @param  string|null  $currency  the currency `amount` is in, where the
+     *     gateway says: a sum in another one than the invoice was raised in is
+     *     not that payment, whatever its digits
      */
     public function __construct(
         public string $state,
@@ -30,5 +33,6 @@ class PaymentEvent
         public ?string $summary = null,
         public array $raw = [],
         public ?int $orderId = null,
+        public ?string $currency = null,
     ) {}
 }

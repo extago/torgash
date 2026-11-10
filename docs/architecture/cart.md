@@ -195,3 +195,11 @@ this file is the reasoning. Read it before changing anything it covers.
   whatever shows the basket outside the out-of-band parts — listen with
   `hx-trigger="torgash:cart-changed from:body"`. A new way of changing the
   basket raises it as well.
+
+### How many (report of 2026-11-09)
+
+`CartManager::MAX_QTY` (1,000,000) caps a line at `add` and `update`. For goods
+on a shelf `orderLimit()` says less, but a preorder has no shelf: past the
+integer, price × quantity became a float and the basket a 500. The controllers
+clamp their inputs as well, because `qty + step` of two huge numbers overflows
+before the basket sees it.

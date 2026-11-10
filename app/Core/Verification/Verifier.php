@@ -6,7 +6,9 @@ use App\Core\Support\ClientAddress;
 use App\Models\User;
 use App\Models\VerificationCode;
 use Illuminate\Auth\Events\Failed;
+use Closure;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\Str;
 
@@ -176,17 +178,13 @@ class Verifier
      */
     public function check(VerificationCode $row, string $code): ?string
     {
-        if ($row->verified_at) {
-            return __('This code has already been used.');
-        }
+        return $this->answer($row, function () use ($row, $code) {
+            $code = preg_replace('/\D/', '', $code);
 
-        if (! $row->isOpen() || $row->attempts >= self::MAX_ATTEMPTS) {
-            return __('The code has expired. Ask for a new one.');
-        }
+            if ($row->code_hash !== '' && hash_equals($row->code_hash, $this->hash($row, $code))) {
+                return null;
+            }
 
-        $code = preg_replace('/\D/', '', $code);
-
-        if ($row->code_hash === '' || ! hash_equals($row->code_hash, $this->hash($row, $code))) {
             $row->increment('attempts');
 
             event(new Failed('web', $row->user, [$row->kind => $row->address]));
@@ -194,11 +192,49 @@ class Verifier
             return $row->attempts >= self::MAX_ATTEMPTS
                 ? __('Too many wrong codes. Ask for a new one.')
                 : __('That is not the code we sent.');
-        }
+        });
+    }
 
-        $row->forceFill(['verified_at' => now(), 'status' => 'verified'])->save();
+    /**
+     * The button in a letter: a secret far too long to guess, so a wrong one
+     * is not an attempt. It used to be the six digits, and then row ids that
+     * go up by one and five wrong guesses let anybody close anybody's code.
+     */
+    public function checkLink(VerificationCode $row, string $secret): ?string
+    {
+        return $this->answer($row, fn () => $row->code_hash !== '' && hash_equals($this->linkSecret($row), $secret)
+            ? null
+            : __('That is not the code we sent.'));
+    }
 
-        return null;
+    /**
+     * One answer at a time for one code. Without the lock every request of a
+     * parallel burst read the same count, and two requests with the right
+     * code both got in where "works once" had promised otherwise.
+     *
+     * @param  Closure(): ?string  $compare  null when what was presented is right
+     */
+    protected function answer(VerificationCode $row, Closure $compare): ?string
+    {
+        return DB::transaction(function () use ($row, $compare) {
+            $row->setRawAttributes(VerificationCode::whereKey($row->getKey())->lockForUpdate()->firstOrFail()->getAttributes(), true);
+
+            if ($row->verified_at) {
+                return __('This code has already been used.');
+            }
+
+            if (! $row->isOpen() || $row->attempts >= self::MAX_ATTEMPTS) {
+                return __('The code has expired. Ask for a new one.');
+            }
+
+            if ($error = $compare()) {
+                return $error;
+            }
+
+            $row->forceFill(['verified_at' => now(), 'status' => 'verified'])->save();
+
+            return null;
+        });
     }
 
     /** The code this browser is in the middle of for a purpose, if any. */
@@ -276,7 +312,7 @@ class Verifier
             // its own sentence and no two channels word it differently.
             'text' => self::text($code),
             'purpose' => $row->purpose,
-            'link' => $this->link($row, $code),
+            'link' => $this->link($row),
             'locale' => app()->getLocale(),
             'user' => $row->user,
         ]);
@@ -306,7 +342,7 @@ class Verifier
      * Not a signed route — every storefront address exists once per locale,
      * and a signature over one of them breaks in the other (see OrderKey).
      */
-    protected function link(VerificationCode $row, string $code): ?string
+    protected function link(VerificationCode $row): ?string
     {
         // Only where opening it finishes the job (CodeController::link). A
         // form's code, a checkout's, a test send: the page waiting for it is
@@ -318,8 +354,14 @@ class Verifier
         }
 
         return \Illuminate\Support\Facades\Route::has('account.code.link')
-            ? route('account.code.link', ['code' => $row->id, 'secret' => $code])
+            ? route('account.code.link', ['code' => $row->id, 'secret' => $this->linkSecret($row)])
             : null;
+    }
+
+    /** From the code's own hash: a new code retires the old button by itself. */
+    protected function linkSecret(VerificationCode $row): string
+    {
+        return substr(hash_hmac('sha256', 'link:'.$row->code_hash, (string) config('app.key')), 0, 40);
     }
 
     protected function hash(VerificationCode $row, string $code): string

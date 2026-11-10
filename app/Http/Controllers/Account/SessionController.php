@@ -32,7 +32,7 @@ class SessionController extends Controller
         $phone = str_contains($data['email'], '@') ? null : Phones::parse($data['email']);
         $credentials = $phone
             ? ['phone' => $phone['e164'], 'password' => $data['password'], fn ($q) => $q->whereNotNull('phone_verified_at')]
-            : ['email' => $data['email'], 'password' => $data['password']];
+            : ['email' => \App\Models\User::normalEmail($data['email']), 'password' => $data['password']];
 
         if (! Auth::attempt($credentials, $request->boolean('remember'))) {
             $throttle->failed($request, $data['email']);

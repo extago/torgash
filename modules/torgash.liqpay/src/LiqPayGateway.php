@@ -231,6 +231,7 @@ class LiqPayGateway implements Gateway
             summary: trim($status.' '.($body['err_description'] ?? '')),
             raw: $body,
             orderId: $reference !== null && preg_match('/^(\d+)-/', $reference, $m) ? (int) $m[1] : null,
+            currency: isset($body['currency']) ? (string) $body['currency'] : null,
         );
     }
 

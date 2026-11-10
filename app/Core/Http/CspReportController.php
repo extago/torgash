@@ -28,7 +28,7 @@ class CspReportController
         $line = array_map(fn ($value) => mb_substr(is_scalar($value) ? (string) $value : '', 0, 300), [
             'directive' => $report['violated-directive'] ?? $report['effective-directive'] ?? '',
             'blocked' => $report['blocked-uri'] ?? '',
-            'page' => preg_replace('~\?.*$~', '', (string) ($report['document-uri'] ?? '')),
+            'page' => preg_replace('~\?.*$~', '', is_scalar($report['document-uri'] ?? null) ? (string) $report['document-uri'] : ''),
             'source' => $report['source-file'] ?? '',
             'line' => $report['line-number'] ?? '',
             'sample' => $report['script-sample'] ?? '',

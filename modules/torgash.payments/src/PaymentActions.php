@@ -2,6 +2,7 @@
 
 namespace Torgash\Payments;
 
+use Illuminate\Support\Facades\Cache;
 use Torgash\Checkout\Models\Order;
 use Torgash\Payments\Models\Payment;
 
@@ -19,6 +20,9 @@ use Torgash\Payments\Models\Payment;
  */
 class PaymentActions
 {
+    /** Seconds in which the same act on the same payment for the same sum is the same click. */
+    protected const SAME_CLICK = 15;
+
     public function __construct(protected Gateways $gateways, protected PaymentApplier $applier) {}
 
     /** What can be done to this payment now, from what its gateway can do at all. */
@@ -53,6 +57,14 @@ class PaymentActions
             return null;
         }
 
+        // A button pressed twice is two requests, each of which finds the money
+        // still there, and the bank will do a partial refund as often as it is
+        // asked. Asking again what has happened costs nothing; everything else
+        // moves money or ends a payment.
+        if ($capability !== 'refresh' && ! Cache::add('payments.act:'.$payment->id.':'.$capability.':'.$amount, true, self::SAME_CLICK)) {
+            return null;
+        }
+
         $event = $found['gateway']->act($capability, $order, $found['binding']->gatewayConfig(), array_filter([
             'amount' => $amount,
             'reason' => $reason,
@@ -64,9 +76,16 @@ class PaymentActions
             return null;
         }
 
+        // Taking part of a hold is the shop asking for less: the bank's "paid"
+        // for that part is the whole of what the invoice now wants, here and
+        // in the callback that follows it.
+        if ($capability === 'capture' && $amount !== null) {
+            $payment->update(['requested' => $amount]);
+        }
+
         // A gateway asked about THIS payment answers about it, whatever id it
         // happens to put on the answer.
-        $this->applier->apply($payment->gateway, $order, $event, true, $payment);
+        $this->applier->apply($payment->gateway, $order, $event, $payment);
 
         return $event;
     }

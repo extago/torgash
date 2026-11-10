@@ -43,7 +43,13 @@ class GatewaysController extends Controller
             return $this->actOnOrder($order, $capability);
         }
 
-        $amount = $request->filled('amount') ? (int) $request->input('amount') : null;
+        // Blank means all of it. Anything else has to be a sum this payment can
+        // give: a nought used to mean "everything" and more than it holds was
+        // quietly obeyed with a different number.
+        $amount = $request->filled('amount')
+            ? (int) $request->validate(['amount' => ['integer', 'min:1', 'max:'.$payment->held()]])['amount']
+            : null;
+
         $event = $actions->act($payment, $capability, $amount && $amount < $payment->held() ? $amount : null);
 
         if (! $event) {

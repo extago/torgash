@@ -32,7 +32,8 @@ Route::middleware('guest')->group(function () {
 
 // The button in a code letter — opened signed in or not, on any device
 // (CodeController::link says what each purpose does with it).
-Route::get('code/{code}/{secret}', [CodeController::class, 'link'])->whereNumber('code')->name('code.link');
+Route::get('code/{code}/{secret}', [CodeController::class, 'open'])->whereNumber('code')->middleware('throttle:30,1')->name('code.link');
+Route::post('code/{code}/{secret}', [CodeController::class, 'link'])->whereNumber('code')->middleware('throttle:30,1')->name('code.link.use');
 
 Route::middleware('auth')->group(function () {
     Route::post('logout', [SessionController::class, 'destroy'])->name('logout');

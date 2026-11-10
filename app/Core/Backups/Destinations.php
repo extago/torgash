@@ -477,12 +477,18 @@ class Destinations
         }
 
         // Never where the web server hands files out: a backup is every
-        // customer's data in one file.
-        $real = realpath($path) ?: $path;
-        $public = realpath(public_path()) ?: public_path();
-        $norm = fn (string $p) => strtolower(rtrim(str_replace('\\', '/', $p), '/')).'/';
+        // customer's data in one file. The public disk and the assets of
+        // modules and themes are served as surely as the public folder is.
+        $real = $this->resolved($path);
+        $served = [public_path(), storage_path('app/public'), base_path('modules'), base_path('themes')];
 
-        if (str_starts_with($norm($real), $norm($public)) || $norm($real) === $norm(base_path())) {
+        foreach ($served as $place) {
+            if (str_starts_with($real, $this->resolved($place))) {
+                return __('Not inside the site\'s public folder or the site itself: a backup there could be downloaded by anyone.');
+            }
+        }
+
+        if ($real === $this->resolved(base_path())) {
             return __('Not inside the site\'s public folder or the site itself: a backup there could be downloaded by anyone.');
         }
 
@@ -491,6 +497,36 @@ class Destinations
         }
 
         return null;
+    }
+
+    /**
+     * Where a path really leads, for comparing, whether or not its end exists
+     * yet. As far up as the disk has it the disk answers, which sees through
+     * links; `..` in what is left is worked out by hand. A folder not made yet
+     * has no `realpath()`, and `storage/../public/new` compared as typed is
+     * not inside the public folder.
+     */
+    protected function resolved(string $path): string
+    {
+        $path = rtrim(str_replace('\\', '/', $path), '/');
+        $missing = [];
+
+        while (($real = realpath($path)) === false && ($parent = dirname($path)) !== $path) {
+            array_unshift($missing, basename($path));
+            $path = $parent;
+        }
+
+        $parts = explode('/', str_replace('\\', '/', $real !== false ? $real : $path));
+
+        foreach ($missing as $part) {
+            if ($part === '..') {
+                count($parts) > 1 && array_pop($parts);
+            } elseif ($part !== '.') {
+                $parts[] = $part;
+            }
+        }
+
+        return strtolower(rtrim(implode('/', $parts), '/')).'/';
     }
 
     protected function cleanFolder(string $folder): string

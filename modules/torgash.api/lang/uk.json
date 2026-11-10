@@ -139,5 +139,6 @@
     "read and write everything": "читати й писати все",
     "read everything": "читати все",
     "read and write": "читати й писати",
-    "A token may be narrowed to one resource (“read products”, “read and write orders”): a call outside it is 403.": "Токен можна звузити до одного ресурсу («читати товари», «читати й писати замовлення»): виклик поза ним — 403."
+    "A token may be narrowed to one resource (“read products”, “read and write orders”): a call outside it is 403.": "Токен можна звузити до одного ресурсу («читати товари», «читати й писати замовлення»): виклик поза ним — 403.",
+    "This shop confirms the contact of an order by a code, which the API cannot do. Place this order on the site.": "Цей магазин підтверджує контакт у замовленні кодом, а через API це неможливо. Оформіть замовлення на сайті."
 }

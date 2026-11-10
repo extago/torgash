@@ -26,6 +26,9 @@ use Torgash\Catalog\Support\Measurements;
  */
 class CartManager implements Basket
 {
+    /** More than one line of any shop holds, and far below where price × quantity stops being an integer. */
+    public const MAX_QTY = 1_000_000;
+
     /** Where the browser keeps the token. The contents used to live here. */
     protected string $sessionKey = 'cart_token';
 
@@ -128,7 +131,7 @@ class CartManager implements Basket
 
         foreach ($lines as $i => $line) {
             if ($line['key'] === $key) {
-                $lines[$i]['qty'] = max(1, $line['qty'] + $qty);
+                $lines[$i]['qty'] = min(self::MAX_QTY, max(1, $line['qty'] + $qty));
                 $found = true;
 
                 break;
@@ -136,7 +139,7 @@ class CartManager implements Basket
         }
 
         if (! $found) {
-            $lines[] = ['key' => $key, 'product_id' => $productId, 'qty' => max(1, $qty), 'config' => $config];
+            $lines[] = ['key' => $key, 'product_id' => $productId, 'qty' => min(self::MAX_QTY, max(1, $qty)), 'config' => $config];
         }
 
         $this->guardQuantity($productId, $lines);
@@ -197,7 +200,7 @@ class CartManager implements Basket
             }
 
             if ($qty > 0) {
-                $line['qty'] = $qty;
+                $line['qty'] = min(self::MAX_QTY, $qty);
                 $lines[] = $line;
                 $productId = $line['product_id'];
             }

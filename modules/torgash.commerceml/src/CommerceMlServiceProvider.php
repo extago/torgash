@@ -41,6 +41,14 @@ class CommerceMlServiceProvider extends ServiceProvider implements ModuleLifecyc
 
     public function boot(): void
     {
+        hook_listen('core.schedule', function (array $context) {
+            $context['schedule']
+                ->call(fn () => Models\Exchange::clearOldFiles())
+                ->dailyAt('04:40')
+                ->name('commerceml:clear-old-files')
+                ->withoutOverlapping();
+        });
+
         // The exchange's own bookkeeping is on no guest's page (PLAN §61).
         page_cache()->unseen(['m_commerceml_exchanges', 'm_commerceml_links', 'm_commerceml_order_sync']);
 

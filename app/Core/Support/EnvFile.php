@@ -81,7 +81,8 @@ class EnvFile
     /**
      * Bare when it is plainly safe, single quotes otherwise (literal in
      * phpdotenv — no `${…}` expansion inside a password), double quotes only
-     * for a value that itself holds a single quote.
+     * for a value that itself holds a single quote. There a `$` is escaped
+     * too: `it's${APP_KEY}` was read back with the key spliced in.
      */
     public static function quote(string|int|null $value): string
     {
@@ -99,6 +100,6 @@ class EnvFile
             return "'".$value."'";
         }
 
-        return '"'.str_replace(['\\', '"'], ['\\\\', '\\"'], $value).'"';
+        return '"'.str_replace(['\\', '"', '$'], ['\\\\', '\\"', '\\$'], $value).'"';
     }
 }

@@ -30,6 +30,33 @@ class SecurityHeadersTest extends TestCase
         $this->get('https://shop.example.com/')->assertHeader('Strict-Transport-Security', SecurityHeaders::HSTS);
     }
 
+    /**
+     * `SESSION_SECURE_COOKIE` left EMPTY is what does this: the framework then
+     * marks a cookie by the request it answers. Written as `false` it would
+     * carry the session in the clear; written as `true`, http would lose it.
+     */
+    public function test_a_cookie_given_over_https_never_goes_back_over_plain_http(): void
+    {
+        $response = $this->get('https://localhost/account/login');
+
+        $this->assertTrue($response->getCookie(config('session.cookie'), false)->isSecure());
+        $this->assertTrue($response->getCookie('XSRF-TOKEN', false)->isSecure());
+    }
+
+    public function test_the_cookie_of_a_remembered_browser_is_marked_too(): void
+    {
+        $user = \App\Models\User::factory()->create(['password' => 'password-one']);
+
+        $response = $this->post('https://localhost/account/login', ['email' => $user->email, 'password' => 'password-one', 'remember' => 1]);
+
+        $this->assertTrue($response->getCookie(\Illuminate\Support\Facades\Auth::guard()->getRecallerName(), false)->isSecure());
+    }
+
+    public function test_plain_http_gets_a_cookie_it_can_send_back(): void
+    {
+        $this->assertFalse($this->get('http://localhost/account/login')->getCookie(config('session.cookie'), false)->isSecure());
+    }
+
     public function test_an_error_page_carries_them_too(): void
     {
         $this->get('http://localhost/no-such-page-anywhere')->assertNotFound()->assertHeader('X-Frame-Options', 'SAMEORIGIN');

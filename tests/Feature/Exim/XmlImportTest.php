@@ -29,6 +29,29 @@ class XmlImportTest extends TestCase
         $this->actingAs(User::role('admin')->firstOrFail());
     }
 
+    /** The parser's own limits stay on: nothing in a real feed needs them off. */
+    public function test_a_text_too_long_for_the_parser_is_refused(): void
+    {
+        $path = tempnam(sys_get_temp_dir(), 'xml');
+        $feed = fn (int $bytes) => '<yml_catalog><shop><offers><offer id="1"><name>a</name></offer><offer id="2"><name>'.str_repeat('x', $bytes).'</name></offer></offers></shop></yml_catalog>';
+
+        file_put_contents($path, $feed(3 << 20));
+        $this->assertCount(2, iterator_to_array(XmlFile::open($path, 'offer')->rows()), 'a long text is still a text');
+
+        file_put_contents($path, $feed(11 << 20));
+
+        try {
+            iterator_to_array(XmlFile::open($path, 'offer')->rows());
+            $this->fail('an eleven-megabyte text was read');
+        } catch (\PHPUnit\Framework\AssertionFailedError $e) {
+            throw $e;
+        } catch (\Throwable) {
+            $this->addToAssertionCount(1);
+        } finally {
+            @unlink($path);
+        }
+    }
+
     protected function yml(string $encoding = 'UTF-8'): string
     {
         $xml = <<<'XML'

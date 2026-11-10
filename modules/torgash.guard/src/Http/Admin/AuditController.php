@@ -37,7 +37,7 @@ class AuditController extends Controller
         ];
 
         $entries = AuditEntry::with('user')
-            ->when($filters['user'] !== '', fn ($q) => $q->where('user_id', $filters['user']))
+            ->when(ctype_digit($filters['user']), fn ($q) => $q->where('user_id', (int) $filters['user']))
             ->when($filters['action'] !== '', fn ($q) => $q->where('action', $filters['action']))
             // Everything one background task wrote (its row on an entry links here).
             ->when(ctype_digit($filters['task']), fn ($q) => $q->where('task_id', (int) $filters['task']))
@@ -95,7 +95,13 @@ class AuditController extends Controller
      */
     public function revert(AuditEntry $entry, Revert $revert)
     {
-        $result = $revert->apply($entry);
+        // All its fields or none. The value may have been taken by another
+        // row since, which is a sentence for the manager and not a 500.
+        try {
+            $result = \Illuminate\Support\Facades\DB::transaction(fn () => $revert->apply($entry));
+        } catch (\Illuminate\Database\UniqueConstraintViolationException) {
+            return back()->with('error', __('Nothing was put back: another record already holds that value.'));
+        }
 
         if ($result['gone'] ?? false) {
             return back()->with('error', __('The record no longer exists, so there is nothing to put back.'));

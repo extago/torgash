@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 use Illuminate\Support\Facades\File;
+use RuntimeException;
 use Throwable;
 use Torgash\Api\Models\ApiToken;
 use Torgash\Catalog\Stock\StockMoves;
@@ -103,9 +104,25 @@ class ExchangeController extends Controller
     protected function init(): Response
     {
         $zip = class_exists(\ZipArchive::class) ? 'yes' : 'no';
-        $limit = max(65536, (int) setting('torgash.commerceml', 'file_limit', 8388608));
 
-        return $this->answer("zip={$zip}\nfile_limit={$limit}");
+        return $this->answer("zip={$zip}\nfile_limit=".$this->chunkLimit());
+    }
+
+    protected function chunkLimit(): int
+    {
+        return max(65536, (int) setting('torgash.commerceml', 'file_limit', 8388608));
+    }
+
+    /**
+     * Whether the disk keeps what the shop itself needs after taking this.
+     * Not a size of its own for an exchange: a real catalogue with its
+     * photographs is gigabytes, and what must not happen is a full disk.
+     */
+    protected function roomFor(int $bytes, string $directory): bool
+    {
+        $free = @disk_free_space($directory);
+
+        return $free === false || $free - $bytes >= (int) config('torgash.commerceml.disk_reserve', self::DISK_RESERVE);
     }
 
     /**
@@ -129,9 +146,19 @@ class ExchangeController extends Controller
             return $this->answer("failure\n".__('That file name is not acceptable.'));
         }
 
+        $body = $request->getContent();
+
+        if (strlen($body) > $this->chunkLimit()) {
+            return $this->answer("failure\n".__('That piece is larger than the limit the shop announced.'));
+        }
+
+        if (! $this->roomFor(strlen($body), $exchange->path)) {
+            return $this->answer("failure\n".__('There is not enough free disk space for this file.'));
+        }
+
         $path = $exchange->file($name);
         File::ensureDirectoryExists(dirname($path));
-        file_put_contents($path, $request->getContent(), FILE_APPEND);
+        file_put_contents($path, $body, FILE_APPEND);
 
         if (str_ends_with(strtolower($name), '.zip')) {
             $this->unzip($path, $exchange->path);
@@ -226,6 +253,9 @@ class ExchangeController extends Controller
     /** The cookie name handed to 1C. Ours, not the framework's — we have no session here. */
     protected const COOKIE = 'torgash_commerceml';
 
+    /** What an exchange must leave free. */
+    protected const DISK_RESERVE = 1024 * 1024 * 1024;
+
     /**
      * Basic authentication, with an API TOKEN as the password.
      *
@@ -268,13 +298,17 @@ class ExchangeController extends Controller
         return $token;
     }
 
+    /**
+     * The open exchange of the account this request signed in as. Its address
+     * alone is not enough, and "the latest one" means the latest of your own:
+     * a key for one 1C could add to, or finish, the exchange of another.
+     */
     protected function current(Request $request): ?Exchange
     {
         $token = $request->cookie(self::COOKIE) ?: $request->header('X-Exchange');
+        $own = Exchange::where('user_id', auth()->id())->where('state', 'open');
 
-        return $token
-            ? Exchange::where('token', $token)->where('state', 'open')->first()
-            : Exchange::where('state', 'open')->latest('id')->first();
+        return $token ? $own->where('token', $token)->first() : $own->latest('id')->first();
     }
 
     /**
@@ -308,6 +342,21 @@ class ExchangeController extends Controller
 
         if ($zip->open($archive) !== true) {
             return;
+        }
+
+        // What it says it holds, before any of it is written: a few kilobytes
+        // can unpack into all the disk there is.
+        $unpacked = 0;
+
+        for ($i = 0; $i < $zip->numFiles; $i++) {
+            $unpacked += (int) ($zip->statIndex($i)['size'] ?? 0);
+        }
+
+        if (! $this->roomFor($unpacked, $into)) {
+            $zip->close();
+            @unlink($archive);
+
+            throw new RuntimeException(__('There is not enough free disk space to unpack this archive.'));
         }
 
         // Entry names get the same treatment as an uploaded name: a zip is the

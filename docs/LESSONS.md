@@ -938,3 +938,47 @@ said 310 ms; counted on the live shop it was 581 products of 638 — categories
 there hold one model's variations, and "Similar" leaves those out. Before a
 speed fix keeps the old path for "the unusual case", count that case on real
 data: here the fallback would have been the fix's whole effect on most pages.
+
+## A row marked "not verified" is still a row
+
+An unsigned payment callback was parsed and logged with `verified = false`, on
+the reasoning that the flag says what it is. The flag was read in one place. A
+listener made a payment of the row, the dedup took its event key, each
+gateway's lookup by invoice id found it, and the next recalculation paid the
+order. When something is refused, keep the text that arrived and none of the
+columns other code reads as fact: a filter added to every reader is one reader
+away from the same bug.
+
+## A defence from a release note has a later release note
+
+`\restrict` was tried, worked, and went into the fix: `\!` refused, a wrong key
+refused, all on 18.3. Searching for the versions that have it turned up
+CVE-2026-18408: `\unrestrict`, the one command it leaves open, evaluates a
+backtick in its argument before comparing the key. Tried on the same 18.3, it
+ran. The test had asked "does a wrong key get in", not "what does the door
+itself do with what it is handed". Before relying on a security feature of a
+tool, read that feature's own advisories, and attack the exception it makes.
+
+## A limit is a counter, and a counter has a key
+
+`throttle:5,10` reads as "five in ten minutes on this route". Laravel's key is
+the visitor alone, so every plain `throttle:` in the engine counted into one
+number, and a door's ten-minute window lasted as long as the window of whichever
+route was hit first. Nothing fails: the tightest door just closes for no reason
+anyone can see. When a limit is added, ask what its key is.
+
+## A stub does not read what it is not given
+
+`Http::fake` drops the transport options. A download cap written as a curl
+option passed every test and threw on the first real transfer, because Guzzle
+refuses that option. What a stub ignores is not tested by a test that uses it:
+read the options off the stub and hand them to the real thing, or run one real
+transfer.
+
+## A config line is not an answer
+
+`'secure' => env('SESSION_SECURE_COOKIE')`, unset, read as "the session cookie is
+not Secure", and the owner was told so. Empty means the framework decides per
+request, and the live answer had `secure` on it all along. The test written first
+passed on the old code, which is what showed it. A finding is a measured
+response, not a line that looks wrong.

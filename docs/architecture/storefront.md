@@ -792,3 +792,11 @@ newsletter campaign's deliveries take it before the subscription's own.
   (`{storefront, request}`) as that storefront's settings — only when the
   request carried its section (a hidden marker), never on any save.
   `torgash.locations`' popular towns are the worked example.
+
+### A text stays in its box (report of 2026-11-09)
+
+`.torgash-rich { contain: layout; overflow: auto hidden; }`. `safe_html()` leaves
+`class` and `style` on purpose, and `class="fixed inset-0"` in a description laid
+a link over the whole page. Layout containment makes the box the containing block
+of anything fixed or absolute inside it, and the overflow keeps it there; a wide
+table scrolls by itself.

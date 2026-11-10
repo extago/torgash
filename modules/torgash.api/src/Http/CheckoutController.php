@@ -2,12 +2,15 @@
 
 namespace Torgash\Api\Http;
 
+use App\Core\Support\FormGuard;
+use App\Core\Verification\FormVerification;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
 use Torgash\Cart\CartManager;
 use Torgash\Cart\Models\Cart;
 use Torgash\Checkout\CouponManager;
+use Torgash\Checkout\Http\CheckoutController as WebCheckout;
 use Torgash\Checkout\Orders\PlaceOrder;
 use Torgash\Checkout\Shipping\Location;
 use Torgash\Checkout\Shipping\Quote;
@@ -127,6 +130,14 @@ class CheckoutController extends Controller
                 'message' => __('The checkout is not complete.'),
                 'errors' => $validator->errors()->toArray(),
             ], 422);
+        }
+
+        // What the checkout page asks before it takes an order is asked here,
+        // or a shop that confirms contacts could be walked round by anyone
+        // who found the API. Here, not in `PlaceOrder`, which also serves
+        // callers with no visitor behind them (the exchange, one click).
+        if ($refusal = $this->refusal($request, $validator->validated())) {
+            return response()->json(['message' => __('The checkout is not complete.'), 'errors' => $refusal], 422);
         }
 
         $order = $placer->place(
@@ -264,6 +275,31 @@ class CheckoutController extends Controller
                 app(\Torgash\Checkout\Totals::class)->prepaidLines($cart, $grand, $quote->shippingCost()))),
             'to_pay' => api_money(max(0, $grand - array_sum(array_column($prepaid, 'amount')))),
         ];
+    }
+
+    /**
+     * Why this order may not be placed, field by field, or null.
+     *
+     * A code is proved in a browser (an encrypted cookie the page's widget
+     * sets) and the API has no way of asking for one, so a shop that confirms
+     * contacts takes such an order only on its site.
+     *
+     * @param  array<string, mixed>  $answers
+     * @return array<string, list<string>>|null
+     */
+    protected function refusal(Request $request, array $answers): ?array
+    {
+        if ($refused = app(FormGuard::class)->checkAdded($request, WebCheckout::FORM)) {
+            return ['captcha' => [$refused['message']]];
+        }
+
+        $verification = app(FormVerification::class);
+
+        if ($verification->refusal($request, WebCheckout::FORM, ['phone' => $answers['phone'] ?? null, 'email' => $answers['email'] ?? null], $answers['country'] ?? null) === null) {
+            return null;
+        }
+
+        return [$verification->kindFor(WebCheckout::FORM) ?? 'email' => [__('This shop confirms the contact of an order by a code, which the API cannot do. Place this order on the site.')]];
     }
 
     /** @return list<array{code: string, label: string, amount: int}> */

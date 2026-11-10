@@ -83,5 +83,10 @@
     "A line of its own": "Отдельной строкой",
     "Spread over the goods": "Распределить по товарам",
     "Name of the surcharge line": "Название позиции наценки",
-    "Empty — the surcharge's own title, as the customer saw it.": "Пусто — название наценки, как его видел покупатель."
+    "Empty — the surcharge's own title, as the customer saw it.": "Пусто — название наценки, как его видел покупатель.",
+    "A payment no gateway confirmed was removed (:gateway, :id)": "Удалён платёж, который не подтвердил ни один шлюз (:gateway, :id)",
+    "The bank reports less than the invoice asked for: :paid of :asked. The order waits for the rest.": "Банк сообщает о сумме меньше счёта: :paid из :asked. Заказ ждёт остаток.",
+    "The bank reports a payment in another currency (:currency) than the invoice (:asked). Nothing was changed: check it by hand.": "Банк сообщает об оплате в другой валюте (:currency), счёт был в :asked. Заказ не изменён: проверьте вручную.",
+    "The bank took the request for :amount and has not sent it back yet. The order changes when it does: do not repeat the refund.": "Банк принял запрос на :amount и ещё не вернул деньги. Заказ изменится, когда вернёт: не повторяйте возврат.",
+    "The gateway did not return this money — see the payment log.": "Шлюз не вернул эти деньги — см. журнал платежей."
 }

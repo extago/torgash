@@ -123,3 +123,19 @@ contact (`either`), because an account may have no email.
   takes a pasted full number, and backspace over a literal removes the digit
   before it. The server never trusts it — `Phones` still reads the number.
   A field opts out with `data-phone-mask="off"`.
+
+### The button in a code letter (report of 2026-11-09)
+
+**Opening it spends nothing.** `GET account/code/{code}/{secret}`
+(`CodeController::open`) shows one button; the POST on the same address (`link`)
+does what the code is for. A mail filter opens every address in a letter before
+the person does, and a code it used up was dead on arrival. Every one-use link
+in a letter has these two steps (the wishlist's "stop these letters", the
+newsletter's confirmation).
+
+**One answer at a time.** `Verifier::answer()` takes the row's lock for both
+doors, the typed code and the button. Without it every request of a parallel
+burst read the same count, and two with the right code got in where "works once"
+had promised otherwise. The button's secret is `linkSecret()`, derived from the
+code's hash: a new code retires the old button, and the six digits do not open
+it.

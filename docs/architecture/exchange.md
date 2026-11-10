@@ -226,3 +226,14 @@ this file is the reasoning. Read it before changing anything it covers.
   out the same day (the owner: the rarest need there is) — on the branch
   `shelf/exim-dictionaries` should a module ever want it. Editor: core's
   `/assets/js/code-editor.js` (`data-code-editor`, format/compact buttons). A CSV is RFC 4180 both ways — no escape character.
+
+### The 1C door (report of 2026-11-09)
+
+An exchange belongs to the signed-in account (`ExchangeController::current()`
+looks among that user's own, the cookie only says which). A piece is refused over
+`chunkLimit()`, the size `init` told 1C (the `file_limit` setting). `roomFor()`
+refuses what would leave the disk under `DISK_RESERVE` (1 GB): not a size of its
+own for an exchange, because a real catalogue with its photographs is gigabytes.
+`unzip()` adds up the archive's unpacked sizes first. `Exchange::clearOldFiles`
+(scheduled) removes an exchange's files after `KEEP_FILES_DAYS` (7); they used to
+stay on the disk forever.

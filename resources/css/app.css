@@ -194,6 +194,12 @@
 /* Storefront rendering of rich-text fields authored in the admin editor.
    The markup comes from ProseMirror at runtime, so there is nothing in a
    template for Tailwind to scan — these have to be real CSS rules. */
+/* A text the staff wrote stays in its own box, whatever it asks for. `style`
+   and `class` are kept for an HTML block's own looks, and `fixed inset-0` is a
+   class this very file has: with `contain: layout` the box, not the window, is
+   what such an element is placed against, and what still sticks out is cut, or
+   scrolled sideways when it is a wide table. */
+.torgash-rich { contain: layout; overflow: auto hidden; }
 .torgash-rich > * + * { margin-top: 0.7em; }
 /* A listing's introduction (a filter page's own text, catalog index): three
    lines, folded by CSS from the first paint — `torgash-js` is on <html>

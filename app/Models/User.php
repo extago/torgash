@@ -3,15 +3,20 @@
 namespace App\Models;
 
 // use Illuminate\Contracts\Auth\MustVerifyEmail;
+use App\Core\Access\PasswordLinks;
+use App\Core\Access\PasswordSessions;
 use Database\Factories\UserFactory;
 use Illuminate\Contracts\Translation\HasLocalePreference;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Attributes\Hidden;
+use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Str;
 use Spatie\Permission\Traits\HasRoles;
 
 #[Fillable(['name', 'email', 'password', 'customer_group_id'])]
@@ -55,6 +60,24 @@ class User extends Authenticatable implements HasLocalePreference
     }
 
     /**
+     * An address is one spelling. `Victim@example.com` and `victim@example.com`
+     * were two accounts to the unique index and one to a sign-in by code, which
+     * could land the real owner in an account a stranger held the password of.
+     * Written here, so every door is covered; compared by `EmailIsFree`.
+     */
+    public static function normalEmail(?string $email): ?string
+    {
+        $email = trim((string) $email);
+
+        return $email === '' ? null : mb_strtolower($email);
+    }
+
+    protected function email(): Attribute
+    {
+        return Attribute::set(fn (?string $value) => self::normalEmail($value));
+    }
+
+    /**
      * `core.user.deleting` — a module whose rows point at an account WITHOUT a
      * foreign key (a review keeps `user_id` bare) lets go of them here. Rows
      * with one are the constraint's business. Fired for staff and customers
@@ -63,6 +86,27 @@ class User extends Authenticatable implements HasLocalePreference
     protected static function booted(): void
     {
         static::deleting(fn (User $user) => hook_action('core.user.deleting', ['user' => $user]));
+
+        // A new password, from whichever door: whoever was in with the old one
+        // is out. Here, because the doors are many and a screen added later
+        // would not know. Sessions follow by themselves (`PasswordSessions`).
+        static::updating(function (User $user) {
+            if ($user->isDirty('password')) {
+                $user->remember_token = Str::random(60);
+            }
+        });
+
+        static::updated(function (User $user) {
+            if (! $user->wasChanged('password')) {
+                return;
+            }
+
+            PasswordLinks::forget($user);
+
+            if (Auth::id() === $user->getKey()) {
+                PasswordSessions::keep($user);
+            }
+        });
     }
 
     /**

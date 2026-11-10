@@ -8,7 +8,6 @@ use Illuminate\Auth\Events\PasswordReset;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Password;
-use Illuminate\Support\Str;
 use Illuminate\Validation\Rules\Password as PasswordRule;
 
 /**
@@ -43,7 +42,6 @@ class SetPasswordController extends Controller
 
             $user->forceFill([
                 'password' => $password,
-                'remember_token' => Str::random(60),
                 'email_verified_at' => $user->email_verified_at ?? now(),
             ])->save();
 

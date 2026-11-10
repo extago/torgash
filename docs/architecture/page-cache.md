@@ -195,6 +195,12 @@ The columns are still declared `unseen`, so the late write throws nothing away.
 - Scheduled blog posts: `Post::listed()`/`reachable()` keep the page only
   until the next publication.
 
+## A host the shop does not know
+
+Copies are filed by host, and a host is whatever the sender wrote: one made up
+per request would be a way round the cache and a way to fill it. `ForeignHost`
+marks such a request and `bypassReason()` has it drawn afresh (infrastructure.md).
+
 ## Tests
 
 `tests/Feature/Core/PageCacheTest.php` (fixture views in

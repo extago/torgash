@@ -140,6 +140,20 @@ class BackupPlansTest extends TestCase
         $this->assertNotNull(app(Destinations::class)->folderError('relative/path'));
         $this->assertNull(app(Destinations::class)->folderError(sys_get_temp_dir()));
 
+        // A way round each of them, for a folder not made yet.
+        $d = DIRECTORY_SEPARATOR;
+        foreach ([
+            storage_path("..{$d}public{$d}new-backups"),
+            storage_path("app{$d}public{$d}new-backups"),
+            base_path("modules{$d}torgash.hello{$d}assets{$d}new-backups"),
+            base_path("themes{$d}default{$d}assets{$d}new-backups"),
+            storage_path("no-such{$d}..{$d}..{$d}public{$d}new-backups"),
+        ] as $served) {
+            $this->assertNotNull(app(Destinations::class)->folderError($served), $served);
+        }
+
+        $this->assertNull(app(Destinations::class)->folderError(storage_path("app{$d}private{$d}new-backups")), 'the private disk is nobody\'s to download');
+
         $admin = User::role('admin')->firstOrFail();
         $server = BackupDestination::where('system', true)->firstOrFail();
 
