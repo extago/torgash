@@ -43,7 +43,8 @@ class CheckoutController extends Controller
             $prefill = [
                 'customer_name' => $address->full_name ?? $user->name,
                 'email' => $user->email,
-                'phone' => $address->phone ?? null,
+                // The address's own number, else the account's.
+                'phone' => ($address->phone ?? null) ?: \App\Core\Support\Phones::display($user->phoneToCall()),
                 'address_line' => $address->address_line ?? null,
                 'city' => $address->city ?? null,
                 'postal_code' => $address->postal_code ?? null,

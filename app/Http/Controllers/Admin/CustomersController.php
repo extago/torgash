@@ -44,13 +44,13 @@ class CustomersController extends Controller
             ->when($filters['q'] !== '', function ($q) use ($filters) {
                 $needle = '%'.$filters['q'].'%';
 
-                // The account's own phone (digits only, the way it is kept)
-                // and any phone typed on its addresses.
+                // The account's own phones (digits only, the way they are
+                // kept) and any phone typed on its addresses.
                 $digits = preg_replace('/\D+/', '', $filters['q']);
                 $q->where(fn ($w) => $w
                     ->where('name', 'ilike', $needle)
                     ->orWhere('email', 'ilike', $needle)
-                    ->when(strlen($digits) >= 4, fn ($w) => $w->orWhere('phone', 'like', '%'.$digits.'%'))
+                    ->when(strlen($digits) >= 4, fn ($w) => $w->orWhere('phone', 'like', '%'.$digits.'%')->orWhere('contact_phone', 'like', '%'.$digits.'%'))
                     ->orWhere('external_id', $filters['q'])
                     ->orWhereHas('addresses', fn ($a) => $a->where('phone', 'ilike', $needle)));
             });

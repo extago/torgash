@@ -99,6 +99,24 @@
                             @endif
                         </div>
                     @endif
+                    {{-- The number to ring, for whoever has no proven one: no code,
+                         and it opens nothing (User::phoneToCall). A first order
+                         fills it in by itself. --}}
+                    @unless ($user->phone)
+                        <form method="POST" action="{{ route('account.contact_phone.update') }}" class="flex items-start gap-4 px-6 py-4 border-t border-base-300/60">
+                            @csrf @method('PUT')
+                            <span class="w-10 h-10 rounded-box bg-base-200 grid place-items-center shrink-0"><x-icon name="phone-call" /></span>
+                            <div class="flex-1 min-w-0 flex flex-col gap-1 max-w-2xl">
+                                <div class="flex flex-col sm:flex-row sm:items-end gap-3">
+                                    <label class="fieldset p-0 flex-1"><span class="fieldset-legend">{{ __('Phone for calls') }}</span>
+                                        <input type="tel" name="contact_phone" value="{{ old('contact_phone', \App\Core\Support\Phones::display($user->contact_phone)) }}" autocomplete="tel" class="input w-full">
+                                    </label>
+                                    <button class="btn btn-primary">{{ __('Save') }}</button>
+                                </div>
+                                <p class="text-xs opacity-60">{{ __('We fill it in for you in orders and callback requests.') }}</p>
+                            </div>
+                        </form>
+                    @endunless
                 </div>
             </section>
 

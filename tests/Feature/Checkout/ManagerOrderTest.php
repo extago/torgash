@@ -2,6 +2,7 @@
 
 namespace Tests\Feature\Checkout;
 
+use App\Core\Settings\SettingsManager;
 use App\Models\User;
 use Spatie\Permission\PermissionRegistrar;
 use Tests\TestCase;
@@ -119,6 +120,30 @@ class ManagerOrderTest extends TestCase
         $this->assertSame(6, $this->product->fresh()->stock, 'two left the shelf');
         $this->assertTrue(OrderLog::where('order_id', $order->id)->where('description', 'Created from the admin by :manager')->exists());
         $this->assertSame(0, Cart::count(), 'the throwaway basket is gone');
+    }
+
+    /** The manager writes down what was said on the phone: either contact will do. */
+    public function test_the_shops_rule_for_a_contact_is_not_held_against_a_manager(): void
+    {
+        app(SettingsManager::class)->set('torgash.checkout', 'order_contact', 'phone');
+        $offer = $this->offerId();
+
+        $form = [
+            'customer_name' => 'Walk-in Buyer',
+            'email' => 'walkin@example.test',
+            'phone' => '',
+            'country' => 'UA', 'city' => 'Kyiv', 'address_line' => '1 Khreshchatyk', 'postal_code' => '01001',
+            'lines' => [['product_id' => $this->product->id, 'qty' => 1, 'unit_price' => '']],
+            'shipping_method_id' => $offer,
+            'payment_method_id' => $this->payment->id,
+        ];
+
+        $this->actingAs($this->admin)->post('http://localhost/admin/orders', $form)
+            ->assertRedirect()->assertSessionHasNoErrors();
+        $this->assertSame('walkin@example.test', Order::latest('id')->value('email'));
+
+        $this->actingAs($this->admin)->post('http://localhost/admin/orders', ['email' => ''] + $form)
+            ->assertSessionHasErrors(['email', 'phone']);
     }
 
     public function test_an_order_without_goods_is_refused(): void

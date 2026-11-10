@@ -2042,5 +2042,10 @@
     "Get back into your account": "Вход в личный кабинет",
     "Press the button to confirm this address.": "Нажмите кнопку, чтобы подтвердить этот адрес.",
     "Press the button to continue and choose a new password.": "Нажмите кнопку, чтобы продолжить и задать новый пароль.",
-    "Press the button to sign in to your account.": "Нажмите кнопку, чтобы войти в личный кабинет."
+    "Press the button to sign in to your account.": "Нажмите кнопку, чтобы войти в личный кабинет.",
+    "Phone for calls": "Телефон для звонков",
+    "We fill it in for you in orders and callback requests.": "Подставим его в заказы и заявки на звонок, вводить заново не придётся.",
+    "Phone saved.": "Телефон сохранён.",
+    "Phone removed.": "Телефон удалён.",
+    "Left by the customer for calls, not confirmed: :number": "Покупатель оставил для звонков, не подтверждён: :number"
 }

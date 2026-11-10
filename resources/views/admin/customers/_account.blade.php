@@ -25,6 +25,9 @@
     @if ($accountContact->eitherWillDo())
         <p class="label text-xs opacity-60 whitespace-normal">{{ __('An email or a phone — either will do.') }}</p>
     @endif
+    @if ($customer->contact_phone && ! $customer->phone)
+        <p class="label text-xs opacity-60 whitespace-normal">{{ __('Left by the customer for calls, not confirmed: :number', ['number' => \App\Core\Support\Phones::display($customer->contact_phone)]) }}</p>
+    @endif
 </fieldset>
 
 <fieldset class="fieldset p-0"><legend class="fieldset-legend">{{ __('Customer group') }}</legend>

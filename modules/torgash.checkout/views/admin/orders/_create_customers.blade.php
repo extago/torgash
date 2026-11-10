@@ -11,7 +11,7 @@
                     'name' => $address?->full_name ?: $customer->name,
                     'fields' => [
                         'email' => $customer->email,
-                        'phone' => $customer->phone ?: $address?->phone,
+                        'phone' => $customer->phoneToCall() ?: $address?->phone,
                         'address_line' => $address?->address_line,
                         'city' => $address?->city,
                         'postal_code' => $address?->postal_code,

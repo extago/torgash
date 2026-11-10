@@ -5,6 +5,7 @@ namespace App\Models;
 // use Illuminate\Contracts\Auth\MustVerifyEmail;
 use App\Core\Access\PasswordLinks;
 use App\Core\Access\PasswordSessions;
+use App\Core\Support\Phones;
 use Database\Factories\UserFactory;
 use Illuminate\Contracts\Translation\HasLocalePreference;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
@@ -146,6 +147,29 @@ class User extends Authenticatable implements HasLocalePreference
     public function defaultAddress(): ?Address
     {
         return $this->addresses->firstWhere('is_default', true) ?? $this->addresses->first();
+    }
+
+    /**
+     * The number to ring this customer on: the proven one, else the one they
+     * left for calls (`contact_phone`). What a form starts with and what a
+     * manager's "Call" dials. Nothing here signs in or counts as confirmed:
+     * that is `phone` alone.
+     */
+    public function phoneToCall(): ?string
+    {
+        return $this->phone ?: $this->contact_phone;
+    }
+
+    /**
+     * Keeps the number of this customer's order for their next form, only
+     * while the account has none: the next parcel may be somebody else's, and
+     * a number chosen in the profile is theirs to change.
+     */
+    public function rememberPhoneToCall(?string $typed, ?string $country = null): void
+    {
+        if (! $this->phoneToCall() && ($phone = Phones::parse($typed, $country))) {
+            $this->forceFill(['contact_phone' => $phone['e164']])->save();
+        }
     }
 
     public function customerGroup(): BelongsTo

@@ -73,6 +73,50 @@ class OrderContactTest extends TestCase
         $this->assertSame($customer->id, Order::latest('id')->value('user_id'));
     }
 
+    public function test_a_signed_in_customer_is_under_the_shops_rule(): void
+    {
+        $customer = User::factory()->create(['email' => 'oc-rule@example.test']);
+        $this->mode('phone');
+
+        $this->actingAs($customer)->get('http://localhost/checkout')->assertOk()->assertSee(__('Phone').' *');
+
+        $this->actingAs($customer)
+            ->post('http://localhost/checkout', $this->form(['email' => $customer->email, 'phone' => '']))
+            ->assertSessionHasErrors('phone');
+        $this->assertSame(0, Order::count());
+
+        $this->actingAs($customer)
+            ->post('http://localhost/checkout', $this->form(['email' => $customer->email, 'phone' => '+380935550107']))
+            ->assertRedirect();
+        $this->assertSame($customer->id, Order::latest('id')->value('user_id'));
+    }
+
+    public function test_the_default_rule_asks_a_signed_in_customer_for_the_email_too(): void
+    {
+        $customer = User::factory()->create(['email' => 'oc-default@example.test']);
+
+        $this->actingAs($customer)
+            ->post('http://localhost/checkout', $this->form(['email' => '', 'phone' => '+380935550107']))
+            ->assertSessionHasErrors('email');
+        $this->assertSame(0, Order::count());
+    }
+
+    public function test_an_account_with_no_email_is_not_asked_for_one_even_where_the_shop_wants_both(): void
+    {
+        $customer = User::factory()->create(['email' => null, 'phone' => '+380935550199', 'phone_verified_at' => now()]);
+        $this->mode('both');
+
+        $this->actingAs($customer)
+            ->post('http://localhost/checkout', $this->form(['email' => '', 'phone' => '']))
+            ->assertSessionHasErrors('phone')
+            ->assertSessionDoesntHaveErrors('email');
+
+        $this->actingAs($customer)
+            ->post('http://localhost/checkout', $this->form(['email' => '', 'phone' => '+380935550199']))
+            ->assertRedirect();
+        $this->assertSame($customer->id, Order::latest('id')->value('user_id'));
+    }
+
     protected function mode(string $mode): void
     {
         app(SettingsManager::class)->set('torgash.checkout', 'order_contact', $mode);

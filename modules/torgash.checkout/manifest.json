@@ -33,7 +33,7 @@
                 "both": "Both email and phone"
             },
             "label": "An order must have",
-            "help": "What a guest must give at checkout. \"Phone\" lets somebody order with a number alone — no email, no letters, the shop rings them. No code is asked for either unless \"Confirm the contact by a code\" includes checkout. A signed-in customer's account already says who they are.",
+            "help": "What every order from the storefront must carry. \"Phone\" lets somebody order with a number alone — no email, no letters, the shop rings them. No code is asked for either unless \"Confirm the contact by a code\" includes checkout. For a signed-in customer the form starts with what the account knows, and an account with no email is not asked for one.",
             "keywords": {
                 "en": "checkout required email phone guest contact",
                 "ru": "оформление обязательный email телефон гость контакт почта"

@@ -66,8 +66,22 @@ An ORDER has its own rule, checkout's `order_contact` (same four words,
 `email` by default; `PlaceOrder::orderContact()` / `contactRequired()`):
 with `phone` a guest orders with a number alone — no email, no letter, no
 code unless `verify_forms` includes checkout — and a phone that must do
-the job has to parse (`Phones`). A signed-in customer needs any one
-contact (`either`), because an account may have no email.
+the job has to parse (`Phones`). The rule is the ORDER's, so a signed-in
+customer is under it like anybody (it used to be `either` for them, and a
+shop that rings every buyer did not get a registered one's number); all an
+account changes is that nobody is asked for an email it has not got
+(`email` → `either`, `both` → `phone`). A manager's order stays `either`
+(`$restricted = false`).
+- **The number to ring is not the number that signs in.**
+  `users.contact_phone` (E.164) is what a customer left for calls: typed in
+  the profile, on any shop whatever it can send, or kept from an order they
+  placed by their own hand (`User::rememberPhoneToCall()`, only while the
+  account has no number at all: the next parcel may be somebody else's). It
+  has proven nothing, so it is not unique, signs in to nothing and counts as
+  confirmed nowhere — `users.phone` stays what a code came back from. What
+  starts a form is `User::phoneToCall()` (`phone`, else this): the checkout
+  (after the default address's own number), one click, an enquiry's folded
+  contacts, a manager's "Call".
 - **Every letter is an EVENT in core's registry, written in one frame**
   (`App\Core\Mail`, PLAN §41): a module answers `core.mail.events` with
   `key => [label, group, audience customer|shop, required?, subject, heading,

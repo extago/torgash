@@ -50,7 +50,7 @@ class OrderCreateController extends Controller
             ->where(fn ($w) => $w
                 ->where('name', 'ilike', '%'.$needle.'%')
                 ->orWhere('email', 'ilike', '%'.$needle.'%')
-                ->when(strlen($digits) >= 4, fn ($w) => $w->orWhere('phone', 'like', '%'.$digits.'%'))
+                ->when(strlen($digits) >= 4, fn ($w) => $w->orWhere('phone', 'like', '%'.$digits.'%')->orWhere('contact_phone', 'like', '%'.$digits.'%'))
                 ->orWhereHas('addresses', fn ($a) => $a->where('phone', 'ilike', '%'.$needle.'%')))
             ->orderByDesc('id')
             ->limit(8)

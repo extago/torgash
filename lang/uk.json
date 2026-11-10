@@ -2042,5 +2042,10 @@
     "Get back into your account": "Вхід до особистого кабінету",
     "Press the button to confirm this address.": "Натисніть кнопку, щоб підтвердити цю адресу.",
     "Press the button to continue and choose a new password.": "Натисніть кнопку, щоб продовжити й задати новий пароль.",
-    "Press the button to sign in to your account.": "Натисніть кнопку, щоб увійти до особистого кабінету."
+    "Press the button to sign in to your account.": "Натисніть кнопку, щоб увійти до особистого кабінету.",
+    "Phone for calls": "Телефон для дзвінків",
+    "We fill it in for you in orders and callback requests.": "Підставимо його в замовлення та заявки на дзвінок, вводити знову не доведеться.",
+    "Phone saved.": "Телефон збережено.",
+    "Phone removed.": "Телефон видалено.",
+    "Left by the customer for calls, not confirmed: :number": "Покупець залишив для дзвінків, не підтверджено: :number"
 }

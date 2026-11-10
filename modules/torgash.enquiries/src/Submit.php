@@ -59,7 +59,7 @@ class Submit
         foreach ($fields as $field) {
             $key = (string) ($field['key'] ?? '');
 
-            if (in_array($key, ['name', 'phone', 'email'], true) && ($value = trim((string) $user->{$key})) !== '') {
+            if (in_array($key, ['name', 'phone', 'email'], true) && ($value = trim((string) ($key === 'phone' ? $user->phoneToCall() : $user->{$key}))) !== '') {
                 $known[$key] = $value;
             }
         }

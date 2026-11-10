@@ -29,8 +29,8 @@
                 @if ($customer->email)
                     <li><a href="mailto:{{ $customer->email }}"><x-icon name="mail" /> {{ __('Write an email') }}</a></li>
                 @endif
-                @if ($customer->phone)
-                    <li><a href="tel:{{ $customer->phone }}"><x-icon name="phone" /> {{ __('Call') }}</a></li>
+                @if ($customer->phoneToCall())
+                    <li><a href="tel:{{ $customer->phoneToCall() }}"><x-icon name="phone" /> {{ __('Call') }}</a></li>
                 @endif
                 <li class="menu-title p-0 my-1"><span class="h-px bg-base-300 block"></span></li>
                 <li><button type="button" class="text-error" data-open-dialog="customer-delete"><x-icon name="trash-2" /> {{ __('Delete the customer') }}</button></li>

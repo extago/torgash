@@ -83,6 +83,9 @@ class PlaceOrder
         $needsAddress = $needsDelivery && ($quote->option($shippingMethodId)?->needs_address ?? true);
         $shippingActive = $needsDelivery && $this->shippingIsActive();
         $postal = (string) setting('torgash.checkout', 'postal_code', 'optional');
+        // The shop's rule holds whoever is buying. A manager only writes down
+        // what the customer said on the phone, and judges what is enough.
+        $contact = $restricted ? $this->orderContact() : 'either';
 
         return [
             // A company is asked only where the shop takes such orders; its
@@ -100,8 +103,8 @@ class PlaceOrder
             // with a number and nothing else. A phone that must do the job is
             // one a person can ring — read by its country's rules.
             'email' => array_values(array_filter([
-                $this->contactRequired('email') ? 'required' : 'nullable',
-                $this->orderContact() === 'either' ? 'required_without:phone' : null,
+                in_array($contact, ['email', 'both'], true) ? 'required' : 'nullable',
+                $contact === 'either' ? 'required_without:phone' : null,
                 'email', 'max:190',
                 function (string $attribute, $value, $fail) {
                     if ($this->emailNeedsSignIn((string) $value)) {
@@ -110,10 +113,10 @@ class PlaceOrder
                 },
             ])),
             'phone' => array_values(array_filter([
-                $this->contactRequired('phone') ? 'required' : 'nullable',
-                $this->orderContact() === 'either' ? 'required_without:email' : null,
+                in_array($contact, ['phone', 'both'], true) ? 'required' : 'nullable',
+                $contact === 'either' ? 'required_without:email' : null,
                 'string', 'max:40',
-                $this->orderContact() === 'email' ? null : function (string $attribute, $value, $fail) {
+                $contact === 'email' ? null : function (string $attribute, $value, $fail) {
                     if (filled($value) && ! \App\Core\Support\Phones::parse((string) $value, request()->input('country') ?: \App\Core\Support\Phones::defaultCountry())) {
                         $fail(__('This does not look like a phone number. Type it with the country code, like :example.', ['example' => \App\Core\Support\Phones::callingCode(\App\Core\Support\Phones::defaultCountry()).' …']));
                     }
@@ -138,15 +141,22 @@ class PlaceOrder
     /** What an order must carry to be placed: `email`, `phone`, `either` or `both`. */
     public function orderContact(): string
     {
-        // Signed in, the account already says who is ordering — and it may be
-        // an account without an email (PLAN §44, 3b): any one contact will do.
-        if (auth()->check()) {
-            return 'either';
+        $mode = (string) setting('torgash.checkout', 'order_contact', 'email');
+        $mode = in_array($mode, ['email', 'phone', 'either', 'both'], true) ? $mode : 'email';
+
+        // The rule is the order's, so an account does not lift it: a shop that
+        // rings every buyer needs the number of a registered one too. All an
+        // account changes is that nobody is asked for an email it has not got
+        // (PLAN §44, 3b).
+        if (($user = auth()->user()) && blank($user->email)) {
+            return match ($mode) {
+                'email' => 'either',
+                'both' => 'phone',
+                default => $mode,
+            };
         }
 
-        $mode = (string) setting('torgash.checkout', 'order_contact', 'email');
-
-        return in_array($mode, ['email', 'phone', 'either', 'both'], true) ? $mode : 'email';
+        return $mode;
     }
 
     public function contactRequired(string $kind): bool
@@ -525,6 +535,12 @@ class PlaceOrder
                 'postal_code' => $validated['postal_code'] ?? null,
                 'is_default' => $addresses->count() === 0,
             ]);
+        }
+
+        // What the customer gave here starts their next form. Their own hand
+        // only: a manager may type anybody's number.
+        if ($as === [] && ! $impersonating) {
+            auth()->user()?->rememberPhoneToCall($validated['phone'] ?? null, $validated['country'] ?? null);
         }
 
         hook_action('checkout.order_placed', ['order' => $order]);

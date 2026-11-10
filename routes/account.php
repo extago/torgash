@@ -40,6 +40,8 @@ Route::middleware('auth')->group(function () {
 
     Route::get('/', [AccountController::class, 'index'])->name('dashboard');
     Route::put('profile', [AccountController::class, 'updateProfile'])->name('profile.update');
+    // The number to ring: no code, because it opens nothing (User::phoneToCall).
+    Route::put('profile/phone', [AccountController::class, 'updateContactPhone'])->name('contact_phone.update');
     Route::put('password', [AccountController::class, 'updatePassword'])->name('password.update');
     // A new email or phone, proven by a code sent to it (PLAN §44).
     Route::delete('contact/phone', [ContactController::class, 'destroy'])->name('contact.phone.destroy');

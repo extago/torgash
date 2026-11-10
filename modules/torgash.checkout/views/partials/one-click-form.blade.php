@@ -11,6 +11,10 @@
     // scope, so a shared partial must never default an ordinarily-named one.
     $oneClickError = $oneClickError ?? null;
     $oneClickValues = $oneClickValues ?? [];
+    // What the account knows is not asked again. Never in a page kept for
+    // guests: a signed-in visitor's page is not kept.
+    $oneClickName = $oneClickValues['customer_name'] ?? old('customer_name') ?? auth()->user()?->name;
+    $oneClickPhone = $oneClickValues['phone'] ?? old('phone') ?? \App\Core\Support\Phones::display(auth()->user()?->phoneToCall());
     // The buy box this dialog was opened from: its answers and quantity ride
     // along (`hx-include`), so "buy in one click" orders the build on screen.
     // Only a plain id — it is written into a selector.
@@ -55,21 +59,21 @@
              it is fresh: a form sent back with a problem keeps focus where
              <x-form-problems> puts it. --}}
         <input type="text" name="customer_name" autocomplete="name"
-               value="{{ $oneClickValues['customer_name'] ?? old('customer_name') }}"
+               value="{{ $oneClickName }}"
                class="input input-bordered w-full" @if (empty($oneClickValues)) autofocus @endif>
     </label>
 
     <fieldset class="fieldset p-0">
         <legend class="fieldset-legend text-xs">{{ __('Phone') }} <span class="text-error">*</span></legend>
         <input aria-label="{{ __('Phone') }}" type="tel" name="phone" required autocomplete="tel"
-               value="{{ $oneClickValues['phone'] ?? old('phone') }}"
+               value="{{ $oneClickPhone }}"
                class="input input-bordered w-full @if ($errors->first('phone')) input-error @endif">
         @if ($errors->first('phone'))
             <p class="label text-error text-xs">{{ $errors->first('phone') }}</p>
         @endif
     </fieldset>
 
-    <x-contact-verify form="one_click" :values="['phone' => $oneClickValues['phone'] ?? old('phone')]" />
+    <x-contact-verify form="one_click" :values="['phone' => $oneClickPhone]" />
 
     <button type="submit" class="btn btn-primary">{{ __('Order now') }}</button>
 

@@ -143,7 +143,7 @@ class OneClickController extends Controller
                 [
                     // No name typed is stored as none, never as words in this
                     // buyer's language (Order::customerLabel() says it on screen).
-                    'customer_name' => $validated['customer_name'] ?: auth()->user()?->name,
+                    'customer_name' => ($validated['customer_name'] ?? null) ?: auth()->user()?->name,
                     // An order has to be addressable somehow, and this buyer gave a
                     // phone. CustomerRef makes the phone the identity; the email
                     // column stays empty rather than being filled with something

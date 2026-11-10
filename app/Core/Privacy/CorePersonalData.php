@@ -25,6 +25,7 @@ class CorePersonalData
                 'name' => $s->user->name,
                 'email' => $s->user->email,
                 'phone' => $s->user->phone,
+                'contact_phone' => $s->user->contact_phone,
                 'created_at' => $s->user->created_at?->toIso8601String(),
             ]] : [],
         ]);
