@@ -70,6 +70,27 @@ class Consent
     }
 
     /**
+     * Third-party code of this category as the current visitor may have it:
+     * running, or waiting inside a template until they agree (ConsentGate).
+     */
+    public static function gate(string $category, string $code): string
+    {
+        return app(ConsentGate::class)->wrap($category, $code);
+    }
+
+    /**
+     * Are Google's tags told what the visitor allowed — Consent Mode's
+     * defaults before any tag, its update on their answer? The privacy
+     * module's to say (`core.consent.google`); with none nobody is asked and
+     * nothing needs telling. A Google tag that may load before consent leans
+     * on this, and waits when it is false (torgash.google-analytics).
+     */
+    public static function tellsGoogle(): bool
+    {
+        return (bool) hook_filter('core.consent.google', false);
+    }
+
+    /**
      * Somebody agreed to something — a form's "I agree" box, a choice in a
      * cookie banner. Announced, not stored: keeping the record is a privacy
      * module's job, and a shop without one has no record to keep.

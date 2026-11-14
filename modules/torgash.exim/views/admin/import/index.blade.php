@@ -61,7 +61,7 @@
                                             <td class="font-medium max-w-64">
                                                 <a href="{{ route('admin.exim.import.map', ['token' => $draft->token]) }}" class="link link-hover block truncate" title="{{ $draft->file_name }}">{{ $draft->file_name }}</a>
                                             </td>
-                                            <td>{{ __($entities[$draft->entity] ?? $draft->entity) }}</td>
+                                            <td>{{ __($labels[$draft->entity] ?? $draft->entity) }}</td>
                                             <td class="text-xs opacity-70 whitespace-nowrap">{{ $draft->column_count !== null ? $draft->mappedCount().' / '.$draft->column_count : '—' }}</td>
                                             <td class="text-xs opacity-70">{{ $draft->row_count ?? '—' }}</td>
                                             <td class="text-xs">{{ $draft->user?->name ?? '—' }}</td>
@@ -103,7 +103,7 @@
                                     @foreach ($presets as $preset)
                                         <tr>
                                             <td class="font-medium">{{ $preset->name }}</td>
-                                            <td>{{ __($entities[$preset->entity] ?? $preset->entity) }}</td>
+                                            <td>{{ __($labels[$preset->entity] ?? $preset->entity) }}</td>
                                             <td class="text-xs opacity-70">{{ count(array_filter((array) $preset->mapping)) }} / {{ count((array) $preset->columns) }}</td>
                                             <td class="text-xs opacity-60 whitespace-nowrap">{{ $preset->last_used_at?->diffForHumans() ?? '—' }}</td>
                                             <td class="text-end">

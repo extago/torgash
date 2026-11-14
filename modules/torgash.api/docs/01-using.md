@@ -85,6 +85,20 @@ This runs the same code the admin panel's own select runs: the stock moves, the
 change is logged, the customer's email goes out. A `PATCH` setting `status`
 would have looked like it worked and done none of it.
 
+The money is a second axis with a door of its own — the payment control on the
+order's page:
+
+    POST /api/v2/admin/orders/TG-000123/actions/payment   {"state": "paid"}
+    POST /api/v2/admin/orders/TG-000123/actions/payment   {"state": "partially_paid", "paid_total": "1500.00"}
+    POST /api/v2/admin/orders/TG-000123/actions/payment   {"state": "pending"}
+
+`paid` when the money arrived; `pending` takes a payment back off an order
+marked paid by mistake; `refunded` says the money was returned outside any
+gateway. `paid_total` is everything the order now holds, a gift card included;
+left out, it is all of it. The order's history names the token that said so.
+Sending what the order already says changes nothing and logs nothing, so a CRM
+may send its whole state as often as it likes.
+
 ## Storefront and language
 
     X-Storefront: main          (id or code; the default storefront otherwise)

@@ -143,7 +143,12 @@ column (searched, counted, a link to the guard's block), the rest the jsonb
 `client` bag; a module adds a fact to both kinds of row with `core.client_facts`
 (no `column` there — only `ip_address` exists on every table) and to orders alone
 with `checkout.order.client_facts`. A later message captures nothing. Both
-expire after the shop's retention (`enquiry_ip`) and go on erasure.
+expire after the shop's retention (`enquiry_ip`) and go on erasure. An
+order's facts are handed on as they are: the API's `client` (by key) and an
+export column `client_<key>` per declared fact — a counter's id of the
+visitor (`metrika_client_id`, torgash.metrika) is what a CRM matches calls
+and sales to advertising by. A fact a module declares is offered for
+ticking, never ticked for the shop.
 
 **The page it came from** (`page_url`) is what the visitor's browser says, and
 the manager's screen prints it as a link. `Submit::pageAddress()` keeps only an

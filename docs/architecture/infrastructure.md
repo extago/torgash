@@ -212,6 +212,33 @@ days, which the module's docs say. The connect buttons sit inside the
 storage's own form and leave it with `formaction`, so the routes take PUT
 as well as POST (the form's `_method` rides along).
 
+**Volumes, written one at a time** (PLAN §67.12, a plan's
+`options.volume_mb`, tar and tar.gz only — a zip is finished only when
+closed): `TarWriter` writes into an `Archive\Output` chain — `GzipOutput`,
+`CipherOutput` (byte for byte `Cipher::encryptFile`'s form), `VolumeOutput`
+— and each full volume is stored in EVERY storage of the plan and deleted
+before the next is begun, so the server holds the dump and one volume
+whatever the site weighs. Names are `<name>.001`… (`Volumes::file`): one
+file's bytes cut apart, `cat`/`copy /b`/7-Zip put them together. Beside
+them `<name>-volumes.json`, written LAST — a set without it never finished
+and `listIn()` does not see it. A hyphen, never a dot: the join command is
+`cat <name>.* > <name>`, and a list named `<name>.volumes.json` was caught
+by that glob and appended to the archive (gzip: "trailing garbage"; an
+encrypted set: openssl's "bad decrypt") — measured before 0.5.13 shipped it. The journal's `backup_runs.volumes` (size
+and sha256 of each) is what a restore compares every fetched volume with
+before reading a byte of it; without a journal the set file only tells a
+damaged one. A storage that refuses a volume takes no more and what it took
+is deleted (`takeBack`); nobody taking one stops the run. Reading is a chain
+too (`Archive\Input`: `VolumeInput` → `DecipherInput` → `GunzipInput` →
+`TarReader`), a volume fetched when the one before is read through and
+deleted — a check by restoring fetches only the head's volumes; an
+encrypted single tar is decrypted as it is read as well, never into a second
+file. Before packing, `assertRoom()` refuses in words what the disk cannot
+hold (a file: all it packs; volumes: one) and says to cut it. `remove()`,
+`locate()`, `resend()` (volume by volume), the download (`?volume=n`),
+`--file=` and the installer know a set by any of its files. An update's
+backup stays one zip.
+
 **A backup's FORM is the plan's** (§67.3, `backup_plans.format/options/secret`,
 `backup_runs.format/encrypted`): zip, tar, tar.gz, or `folder` ("without an
 archive"). `stage()` lays the entries out once in ONE order — manifest,

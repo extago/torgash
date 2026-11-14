@@ -5,8 +5,6 @@ namespace Tests\Feature\Exim;
 use App\Models\User;
 use Tests\TestCase;
 use Torgash\Catalog\Models\Product;
-use Torgash\Checkout\Models\Order;
-use Torgash\Checkout\Orders\PaymentState;
 
 /**
  * What the OTHER system calls a row, and why it is matched on first.
@@ -70,23 +68,6 @@ class ExternalIdTest extends TestCase
 
         $this->assertFalse($match['model']->exists);
         $this->assertNull($match['matchedBy']);
-    }
-
-    /** An order's own number stays ours; theirs goes in external_id. */
-    public function test_an_order_is_matched_by_the_other_systems_number(): void
-    {
-        $order = Order::create([
-            'order_number' => 'TG-EX01', 'external_id' => 'doc-77',
-            'customer_name' => 'Buyer', 'email' => 'buyer@example.test',
-            'address_line' => '1 Test Street', 'city' => 'Testville',
-            'currency_code' => 'USD', 'subtotal' => 100, 'shipping_cost' => 0, 'total' => 100,
-            'status' => 'open', 'payment_state' => PaymentState::PENDING, 'items' => [],
-        ]);
-
-        $match = hook_filter('exim.match.order', null, ['row' => ['order_number' => 'TG-SOMETHING-ELSE', 'external_id' => 'doc-77']]);
-
-        $this->assertSame($order->id, $match['model']->id);
-        $this->assertSame('external_id', $match['matchedBy']);
     }
 
     /** A customer's email moves; their id in the other system does not. */

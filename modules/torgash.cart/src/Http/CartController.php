@@ -5,6 +5,7 @@ namespace Torgash\Cart\Http;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use Illuminate\Validation\ValidationException;
+use Torgash\Cart\CartEvents;
 use Torgash\Cart\CartManager;
 use Torgash\Cart\ListBuy;
 use Torgash\Catalog\Models\Product;
@@ -64,18 +65,20 @@ class CartController extends Controller
 
         app(ListBuy::class)->forgetCart();
         $mode = self::afterAdd($request);
-        // Priced by the basket itself (the configuration, a quantity break),
-        // and only when somebody is going to be shown it.
-        $items = $mode === 'nothing' ? collect() : $cart->items();
+        $qty = min(CartManager::MAX_QTY, max(1, (int) $request->input('qty', 1)));
+        // Priced by the basket itself (the configuration, a quantity break) —
+        // the page is told what went in at the price it went in at.
+        $items = $cart->items();
+        $line = $items->firstWhere('key', $key);
 
         return response()->view('torgash.cart::partials.added', [
             'product' => $product,
-            'qty' => min(CartManager::MAX_QTY, max(1, (int) $request->input('qty', 1))),
-            'line' => $items->firstWhere('key', $key),
+            'qty' => $qty,
+            'line' => $line,
             'mode' => $mode,
             'basketCount' => $cart->count(),
             'basketTotal' => (int) $items->sum('line_total'),
-        ])->header('HX-Trigger', self::CHANGED);
+        ])->header('HX-Trigger', CartEvents::header($line ? [CartEvents::line($line->product, (int) $line->unit_price, $qty)] : []));
     }
 
     /**
@@ -152,13 +155,15 @@ class CartController extends Controller
             $qty = min($qty, max(1, $limit));
         }
 
+        $before = $this->priced($cart, $line);
+
         try {
             $cart->update($line, $qty);
         } catch (ValidationException) {
             // The shelf moved between the two reads; the line explains it.
         }
 
-        return $this->answer($request, $cart);
+        return $this->answer($request, $cart, CartEvents::between($before, $this->priced($cart, $line)));
     }
 
     /**
@@ -173,31 +178,46 @@ class CartController extends Controller
         $target = Product::query()->visible()->find((int) $request->input('product_id'));
         $from = $current ? Product::find($current['product_id']) : null;
 
+        $moved = [];
+
         if ($current && $from && $target && $current['config'] === []
             && $from->variation_group && $target->variation_group === $from->variation_group && $target->isOrderable()) {
+            $before = $this->priced($cart, $line);
+
             try {
-                $cart->swap($line, $target->id);
+                $after = $this->priced($cart, $cart->swap($line, $target->id));
+
+                // One product out of the basket and another in, as far as
+                // anybody counting is concerned.
+                if ($before && $after && (int) $after->product->id !== (int) $before->product->id) {
+                    $moved = [
+                        [CartEvents::line($after->product, (int) $after->unit_price, (int) $before->qty)],
+                        [CartEvents::line($before->product, (int) $before->unit_price, (int) $before->qty)],
+                    ];
+                }
             } catch (ValidationException) {
                 // Not enough of the new one on the shelf: the line stays as it was.
             }
         }
 
-        return $this->answer($request, $cart);
+        return $this->answer($request, $cart, $moved);
     }
 
     public function removeItem(Request $request, CartManager $cart, string $line)
     {
+        $before = $this->priced($cart, $line);
         $cart->remove($line);
 
-        return $this->answer($request, $cart);
+        return $this->answer($request, $cart, CartEvents::between($before, null));
     }
 
     /** "Clear the cart": everything out at once — the lines, the coupon, the checkout answers. */
     public function clear(Request $request, CartManager $cart)
     {
+        $removed = CartEvents::lines($cart->items());
         $cart->clear();
 
-        return $this->answer($request, $cart);
+        return $this->answer($request, $cart, [[], $removed]);
     }
 
     /**
@@ -248,13 +268,22 @@ class CartController extends Controller
     }
 
     /**
-     * HTMX gets the contents to swap in; a browser with no script posted a
-     * real form and goes back to the page it was on.
+     * HTMX gets the contents to swap in, and the page is told what moved
+     * (CartEvents); a browser with no script posted a real form and goes back
+     * to the page it was on.
+     *
+     * @param  array{0?: list<array<string, mixed>>, 1?: list<array<string, mixed>>}  $moved  [added, removed]
      */
-    protected function answer(Request $request, CartManager $cart)
+    protected function answer(Request $request, CartManager $cart, array $moved = [])
     {
         return $request->header('HX-Request')
-            ? response()->view('torgash.cart::partials.contents', ['cart' => $cart])->header('HX-Trigger', self::CHANGED)
+            ? response()->view('torgash.cart::partials.contents', ['cart' => $cart])->header('HX-Trigger', CartEvents::header($moved[0] ?? [], $moved[1] ?? []))
             : redirect()->route('cart.index');
+    }
+
+    /** One line of the basket as it is priced now, or null. */
+    protected function priced(CartManager $cart, string $key): ?object
+    {
+        return $cart->items()->firstWhere('key', $key);
     }
 }

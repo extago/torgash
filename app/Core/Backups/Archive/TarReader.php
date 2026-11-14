@@ -2,19 +2,58 @@
 
 namespace App\Core\Backups\Archive;
 
+use Closure;
 use RuntimeException;
 
+/**
+ * Reads a tar the engine made — plain or gzip, and since PLAN §67.12 also
+ * encrypted or cut into volumes, as it comes: a file on this disk, or a
+ * `Closure(): Input` that opens the bytes from the beginning every time
+ * `each()` is called (volumes are fetched again for a second pass; the head
+ * of a backup lies in the first of them).
+ */
 class TarReader extends Reader
 {
-    public function __construct(protected string $path) {}
+    /** @param  string|Closure(): Input  $source */
+    public function __construct(protected string|Closure $source) {}
+
+    /**
+     * The chain that undoes a writer: the cipher when the bytes begin with
+     * "Salted__" (a password needed), gzip when they begin with its magic.
+     */
+    public static function unwrap(Input $raw, ?string $password = null): Input
+    {
+        [$head, $raw] = PrefixedInput::peek($raw, 8);
+
+        if ($head === 'Salted__') {
+            if ($password === null || $password === '') {
+                $raw->close();
+
+                throw new RuntimeException('The backup is encrypted: give its password (--password).');
+            }
+
+            $raw = new DecipherInput($raw, $password);
+            $damaged = 'Wrong password for the backup (or the file is damaged).';
+            [$head, $raw] = PrefixedInput::peek($raw, 263);
+
+            // What a wrong key gives is noise: neither gzip nor a tar header.
+            if (! str_starts_with($head, "\x1f\x8b") && substr($head, 257, 5) !== 'ustar') {
+                $raw->close();
+
+                throw new RuntimeException($damaged);
+            }
+        }
+
+        return str_starts_with($head, "\x1f\x8b")
+            ? new GunzipInput($raw, $damaged ?? 'The backup is damaged: its gzip cannot be read.')
+            : $raw;
+    }
 
     public function each(callable $entry): void
     {
-        // gzopen reads a plain file as it is, so one way for tar and tar.gz.
-        $in = gzopen($this->path, 'rb');
-        if (! $in) {
-            throw new RuntimeException('Cannot open '.$this->path);
-        }
+        $in = is_string($this->source)
+            ? self::unwrap(new FileInput($this->source))
+            : ($this->source)();
 
         try {
             $longName = null;
@@ -27,6 +66,9 @@ class TarReader extends Reader
                 }
                 if (strlen($header) < 512) {
                     throw new RuntimeException('The backup is cut short (a damaged or unfinished tar).');
+                }
+                if (! $this->checksumFits($header)) {
+                    throw new RuntimeException('The backup is not a tar the engine can read: damaged, or the password is wrong.');
                 }
 
                 $type = $header[156];
@@ -70,8 +112,23 @@ class TarReader extends Reader
                 }
             }
         } finally {
-            gzclose($in);
+            $in->close();
         }
+    }
+
+    /** The header's own sum, counted with its checksum field as spaces. */
+    protected function checksumFits(string $header): bool
+    {
+        $field = trim(substr($header, 148, 8), "\0 ");
+
+        if (preg_match('/^[0-7]+$/', $field) !== 1) {
+            return false;
+        }
+
+        $blank = substr_replace($header, str_repeat(' ', 8), 148, 8);
+        $sum = array_sum(array_map('ord', str_split($blank)));
+
+        return $sum === (int) octdec($field);
     }
 
     protected function name(string $header): string
@@ -98,13 +155,12 @@ class TarReader extends Reader
         return (int) octdec(trim($field, "\0 "));
     }
 
-    /** @param  resource  $in */
-    protected function read($in, int $bytes): string
+    protected function read(Input $in, int $bytes): string
     {
         $data = '';
         while (strlen($data) < $bytes) {
-            $chunk = gzread($in, $bytes - strlen($data));
-            if ($chunk === false || $chunk === '') {
+            $chunk = $in->read($bytes - strlen($data));
+            if ($chunk === '') {
                 break;
             }
             $data .= $chunk;
@@ -113,8 +169,7 @@ class TarReader extends Reader
         return $data;
     }
 
-    /** @param  resource  $in */
-    protected function skip($in, int $size): void
+    protected function skip(Input $in, int $size): void
     {
         $left = $size;
         while ($left > 0) {
@@ -127,8 +182,7 @@ class TarReader extends Reader
         $this->skipPadding($in, $size);
     }
 
-    /** @param  resource  $in */
-    protected function skipPadding($in, int $size): void
+    protected function skipPadding(Input $in, int $size): void
     {
         if ($size % 512 !== 0) {
             $this->read($in, 512 - $size % 512);

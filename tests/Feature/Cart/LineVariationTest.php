@@ -47,9 +47,14 @@ class LineVariationTest extends TestCase
         $this->assertStringContainsString(route('cart.variation', (string) $black->id), $html);
         $this->assertMatchesRegularExpression('/<option value="'.$red->id.'"\s+disabled/', $html, 'a sold-out variation cannot be chosen');
 
-        $this->withHeader('HX-Request', 'true')
+        $swapped = $this->withHeader('HX-Request', 'true')
             ->post('http://localhost/cart/items/'.$black->id.'/variation', ['product_id' => $white->id])
-            ->assertOk()->assertHeader('HX-Trigger', 'torgash:cart-changed');
+            ->assertOk();
+
+        // One colour out of the basket and the other in, for anybody counting.
+        $detail = json_decode((string) $swapped->headers->get('HX-Trigger'), true)['torgash:cart-changed'];
+        $this->assertSame([(string) $white->id, 2], [$detail['added'][0]['id'], $detail['added'][0]['quantity']]);
+        $this->assertSame([(string) $black->id, 2], [$detail['removed'][0]['id'], $detail['removed'][0]['quantity']]);
 
         $lines = app(CartManager::class)->reload()->raw();
         $this->assertSame([[(int) $white->id, 2]], array_map(fn ($line) => [(int) $line['product_id'], (int) $line['qty']], $lines), 'the same quantity, the other colour');

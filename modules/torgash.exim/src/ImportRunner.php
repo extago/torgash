@@ -39,6 +39,23 @@ class ImportRunner
     public function __construct(protected SchemaRegistry $schema) {}
 
     /**
+     * What a file can be imported as: the entities with a column that writes
+     * something. One whose every column is export-only (`'set' => null`) is
+     * exported and never offered here — the screen's choice and the console's
+     * answer are this one list.
+     *
+     * @return array<string, string> key => English label
+     */
+    public function importable(): array
+    {
+        return array_filter(
+            $this->schema->entities(),
+            fn ($label, $key) => $this->fields((string) $key) !== [],
+            ARRAY_FILTER_USE_BOTH,
+        );
+    }
+
+    /**
      * The entity's import columns, by key: the ones that write something.
      * An export-only column (a computed price) is left out, or a file's
      * "Price" would map onto it and import nothing.

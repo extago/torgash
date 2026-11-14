@@ -209,7 +209,13 @@ answer it sends `App\Core\Http\Csp::policy()` as a strict policy:
 - `script-src` is this request's nonce plus `strict-dynamic` (a nonced loader may
   load what it loads, so tag managers work), with `unsafe-eval` for Alpine and
   htmx;
-- `object-src 'none'`, `base-uri 'self'`, `frame-ancestors 'self'`.
+- `object-src 'none'`, `base-uri 'self'`, `frame-ancestors 'self'` — plus the
+  `https://` hosts a module names on `core.csp.frame_ancestors` (Metrica's
+  click map and Webvisor draw the storefront inside Metrica,
+  `Csp::frameAncestors()`), never on an admin address. While the policy is
+  ENFORCED such a page goes without X-Frame-Options, which can only say "same
+  origin" (a browser obeys frame-ancestors over it); report-only or off, the
+  old header stays and the frame is refused.
 
 The nonce is scoped and forgotten per request. `Csp::sign()` adds it to the
 shop's own code (Code snippets) and never touches a tag written inside a
@@ -222,7 +228,11 @@ No inline handlers: `public/assets/js/actions.js` gives `data-confirm`,
 `data-submit-on-change`, anything else is Alpine `x-on:` (CspTest fails on
 an `on*=""` attribute). A `srcdoc` frame runs under its PARENT's policy:
 whoever puts fetched HTML into one replaces its nonces with the page's own
-(the banner template preview).
+(the banner template preview). A `<script>` inside an HTMX answer does NOT
+run: htmx copies it with the ANSWER's nonce, which is not the page's — so an
+answer tells the page through `HX-Trigger` (an event with its detail) and a
+script already on the page acts on it (the basket's `torgash:cart-changed`,
+checkout's `torgash:order-placed`).
 
 A pasted link goes only to the public internet: `App\Core\Http\OutboundUrl`
 resolves the host, refuses private addresses, pins the request to the checked

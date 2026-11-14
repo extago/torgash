@@ -348,7 +348,9 @@ class OneClickTest extends TestCase
     {
         $this->get('http://localhost/product/'.$this->product->slug)
             ->assertOk()
-            ->assertSee('Buy in one click');
+            ->assertSee('Buy in one click')
+            // The dialog says it was opened, for a counter's goal (PLAN §73).
+            ->assertSee('data-opened-event="one-click-opened"', false);
 
         $this->configure(on: false);
 

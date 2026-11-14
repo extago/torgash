@@ -23,6 +23,9 @@ class Csp
 
     protected ?string $nonce = null;
 
+    /** @var list<string>|null */
+    protected ?array $ancestors = null;
+
     /** The response header to send the policy in, or null when it is off. */
     public function header(): ?string
     {
@@ -49,9 +52,39 @@ class Csp
             "script-src 'nonce-".$this->nonce()."' 'strict-dynamic' 'unsafe-eval' 'unsafe-inline' https:",
             "object-src 'none'",
             "base-uri 'self'",
-            "frame-ancestors 'self'",
+            'frame-ancestors '.implode(' ', $this->frameAncestors()),
             'report-uri '.route('csp.report', [], false),
         ]);
+    }
+
+    /**
+     * Who may draw this page inside their own: the shop, and whoever a module
+     * names on `core.csp.frame_ancestors` — a counter's click map and its
+     * recordings of visits are the shop's pages shown inside the counter's
+     * own interface (torgash.metrika). Only `https://` hosts, a `*.` at the
+     * front at most; anything else a listener returns is dropped. Never the
+     * admin: it is drawn inside nobody's page, whatever a module asks.
+     *
+     * @return list<string>
+     */
+    public function frameAncestors(): array
+    {
+        if ($this->ancestors !== null) {
+            return $this->ancestors;
+        }
+
+        $request = request();
+        $named = $request->is('admin', 'admin/*') ? [] : (array) hook_filter('core.csp.frame_ancestors', [], ['request' => $request]);
+        $hosts = array_filter($named, fn ($source) => is_string($source)
+            && preg_match('~^https://(\*\.)?[a-z0-9-]+(\.[a-z0-9-]+)*$~i', $source) === 1);
+
+        return $this->ancestors = ["'self'", ...array_values(array_unique($hosts))];
+    }
+
+    /** Does a site other than the shop draw this page in a frame? */
+    public function framedElsewhere(): bool
+    {
+        return count($this->frameAncestors()) > 1;
     }
 
     /**

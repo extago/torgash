@@ -38,7 +38,7 @@ class InstallCommand extends Command
         {--no-styles : Keep the shipped stylesheet instead of building one}
         {--demo : Fill the shop with the demo data — products, sales, pages, a blog; System removes it in one go}
         {--check : Only check the server and the database, write nothing}
-        {--restore= : Raise the shop from this backup (a file, or the folder of one made without an archive) instead of installing a new one}
+        {--restore= : Raise the shop from this backup (a file, the folder of one made without an archive, or the .001 of one cut into volumes) instead of installing a new one}
         {--password= : The password of an encrypted backup}
         {--app-key= : The old shop\'s APP_KEY (from its .env): what it encrypted opens again}
         {--with-env : Take the .env an encrypted backup carries (its key, mail, storage) — this server\'s database and address are written over it}
@@ -192,6 +192,16 @@ class InstallCommand extends Command
 
     protected function encrypted(string $file): bool
     {
+        // Volumes (PLAN §67.12): the first of them says it.
+        try {
+            $set = \App\Core\Backups\Volumes::onDisk($file);
+        } catch (\Throwable) {
+            $set = null;
+        }
+        if ($set !== null) {
+            return (string) file_get_contents($set['files'][0], false, null, 0, 8) === 'Salted__';
+        }
+
         if (! is_file($file)) {
             return false;
         }

@@ -25,6 +25,9 @@ use Torgash\Wishlist\Wishlists;
  */
 class WishlistController extends Controller
 {
+    /** What the page hears when a heart is ticked or unticked — with the product (ProductsEvent). */
+    public const CHANGED = 'torgash:wishlist-changed';
+
     public function index(Request $request, Wishlists $wishlists, CategoryTree $tree)
     {
         $ids = array_keys($wishlists->ids());
@@ -76,11 +79,15 @@ class WishlistController extends Controller
     {
         abort_unless(Product::reachable()->whereKey($product->id)->exists(), 404);
 
-        $wishlists->toggle($product);
+        $added = $wishlists->toggle($product);
 
         if (! $request->header('HX-Request')) {
             return back();
         }
+
+        // The page is told what moved, as the basket tells it (PLAN §73): a
+        // counter's "added to the wishlist" goal hears it.
+        $item = [(new \Torgash\Catalog\Seo\ProductFacts($product))->item()];
 
         return response()->view('torgash.wishlist::toggled', [
             'wishProduct' => $product,
@@ -89,7 +96,7 @@ class WishlistController extends Controller
             // Only an answer to a click plays the little pop; the same heart
             // drawn with the page stays still.
             'wishJust' => true,
-        ]);
+        ])->header('HX-Trigger', \Torgash\Catalog\Seo\ProductsEvent::header(self::CHANGED, $added ? $item : [], $added ? [] : $item));
     }
 
     /** The × on a row of the list: the row goes, the counter follows. */

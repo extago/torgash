@@ -30,7 +30,23 @@ class BackupRun extends Model
         'finished_at' => 'datetime',
         'verified_at' => 'datetime',
         'files_since' => 'datetime',
+        'volumes' => 'array',
     ];
+
+    /**
+     * Kept as volumes, `<name>.001`… (PLAN §67.12): every copy is that many
+     * files plus `<name>-volumes.json`, and `volumes` lists their sizes and
+     * checksums.
+     */
+    public function isVolumes(): bool
+    {
+        return ! empty($this->volumes);
+    }
+
+    public function volumeCount(): int
+    {
+        return count((array) $this->volumes);
+    }
 
     /**
      * Holds only the files changed since `files_since` (PLAN §67.10): the

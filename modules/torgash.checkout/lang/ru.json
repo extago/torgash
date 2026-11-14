@@ -754,5 +754,7 @@
     "Delivery paid to the carrier": "Доставка оплачивается перевозчику",
     "Delivery estimate": "Доставка, ориентир",
     "Too many codes tried. Please wait a minute.": "Слишком много попыток ввести код. Подождите минуту.",
-    "no order matches it, and an import does not create orders": "такого заказа нет, а импорт заказы не создаёт"
+    "There is no order status \":status\".": "Статуса заказа «:status» нет.",
+    "A paid amount cannot be negative.": "Оплаченная сумма не может быть отрицательной.",
+    "Order :number was merged into another — its payment is recorded there.": "Заказ :number объединён с другим — оплату отмечают там."
 }

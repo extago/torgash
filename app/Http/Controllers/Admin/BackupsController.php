@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Core\Backups\Backups;
+use App\Core\Backups\Volumes;
 use App\Http\Controllers\Controller;
 use App\Models\BackgroundTask;
 use App\Models\BackupCopy;
@@ -50,16 +51,26 @@ class BackupsController extends Controller
             : __('A backup by the plan ":plan" is already waiting or being made.', ['plan' => $plan->name]));
     }
 
-    public function download(Backups $backups, BackupCopy $copy)
+    public function download(Request $request, Backups $backups, BackupCopy $copy)
     {
         abort_unless($copy->status === BackupCopy::STORED && $copy->destination && $copy->run?->name, 404);
         // A folder is not one file to hand over: it is taken from the storage itself.
         abort_if($copy->run->isFolder(), 404);
 
+        // Volumes (PLAN §67.12) are handed one by one: `?volume=n`.
+        $path = (string) $copy->path;
+        $fileName = (string) $copy->run->name;
+        if ($copy->run->isVolumes()) {
+            $volume = (int) $request->query('volume', 0);
+            abort_unless($volume >= 1 && $volume <= $copy->run->volumeCount(), 404);
+            $path = Volumes::file($path, $volume);
+            $fileName = Volumes::file($fileName, $volume);
+        }
+
         try {
             $store = $backups->store($copy->destination);
-            abort_unless($store->exists((string) $copy->path), 404);
-            $stream = $store->read((string) $copy->path);
+            abort_unless($store->exists($path), 404);
+            $stream = $store->read($path);
         } catch (\Symfony\Component\HttpKernel\Exception\HttpException $e) {
             throw $e;
         } catch (Throwable $e) {
@@ -71,7 +82,7 @@ class BackupsController extends Controller
             if (is_resource($stream)) {
                 fclose($stream);
             }
-        }, (string) $copy->run->name, ['Content-Type' => $copy->run->format === 'zip' ? 'application/zip' : 'application/octet-stream']);
+        }, $fileName, ['Content-Type' => $copy->run->format === 'zip' ? 'application/zip' : 'application/octet-stream']);
     }
 
     /** "Check by restoring" from the list: a background task (PLAN §67.6). */

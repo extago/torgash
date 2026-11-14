@@ -271,9 +271,13 @@
             {{-- In what form (PLAN §67.3). The password is never printed back. --}}
             @php
                 $formOptions = (array) ($plan->options ?? []);
+                // Volumes (PLAN §67.12): a preset, or a size of its own.
+                $volumeMb = (int) old('options.volume_mb', $formOptions['volume_mb'] ?? 0);
+                $volumeChoice = (string) old('options.volume', $volumeMb <= 0 ? '' : (in_array($volumeMb, \App\Core\Backups\Volumes::PRESETS, true) ? (string) $volumeMb : 'custom'));
                 $formState = [
                     'format' => old('format', $plan->format ?: 'zip'),
                     'encrypt' => (bool) old('options.encrypt', $formOptions['encrypt'] ?? false),
+                    'volume' => $volumeChoice,
                 ];
             @endphp
             <section class="card bg-base-100 border border-base-300" x-data="@js($formState)">
@@ -304,6 +308,26 @@
                         </fieldset>
                     </div>
                     <p class="text-xs opacity-60">{{ __('Plain SQL is read by eye and moves to another version of PostgreSQL more easily; the dump is smaller and quicker to restore.') }}</p>
+
+                    <fieldset class="fieldset p-0" :disabled="format !== 'tar' && format !== 'tar.gz'"><legend class="fieldset-legend">{{ __('Volumes') }}</legend>
+                        <div class="flex flex-wrap items-center gap-2">
+                            <select name="options[volume]" class="select select-bordered w-auto" x-model="volume">
+                                <option value="">{{ __('One file') }}</option>
+                                @foreach (\App\Core\Backups\Volumes::PRESETS as $preset)
+                                    <option value="{{ $preset }}">{{ __(':size MB each', ['size' => $preset]) }}</option>
+                                @endforeach
+                                <option value="custom">{{ __('My own size') }}</option>
+                            </select>
+                            <label class="input input-bordered w-36" x-show="volume === 'custom'" x-cloak>
+                                <input type="number" name="options[volume_mb]" min="{{ \App\Core\Backups\Volumes::MIN_MB }}" max="{{ \App\Core\Backups\Volumes::MAX_MB }}" step="1"
+                                       value="{{ $volumeChoice === 'custom' ? $volumeMb : '' }}" :disabled="volume !== 'custom'" class="tabular-nums">
+                                <span class="opacity-60">MB</span>
+                            </label>
+                        </div>
+                        @error('options.volume_mb') <p class="label text-error whitespace-normal">{{ $message }}</p> @enderror
+                        <p class="label whitespace-normal" x-show="format === 'tar' || format === 'tar.gz'">{{ __('Each volume is stored as soon as it is full and deleted from the server before the next one: the server needs room for one volume, not for the whole backup, and a dropped connection costs one volume. Put together with cat name.tar.gz.* > name.tar.gz (Windows: copy /b), or open the .001 in 7-Zip.') }}</p>
+                        <p class="label whitespace-normal" x-show="format !== 'tar' && format !== 'tar.gz'" x-cloak>{{ __('Only a tar or tar.gz is cut into volumes: it is written as it goes, a zip is finished only when it is closed.') }}</p>
+                    </fieldset>
 
                     <div class="flex flex-col gap-3" x-show="format !== 'folder'">
                         <label class="flex items-center gap-3 cursor-pointer">

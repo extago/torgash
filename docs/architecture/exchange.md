@@ -124,6 +124,22 @@ this file is the reasoning. Read it before changing anything it covers.
   shipped nine of ten is a document with different lines, and importing it
   changes the total of an order the customer already agreed to; anything more is
   a rule in `torgash.automations`.
+- **Orders are exported, never imported** (PLAN §72): every `exim.schema.order`
+  column is `'set' => null`, and an entity with no column that writes is not
+  offered — `ImportRunner::importable()` is the import screen's list and the
+  console's answer, and a draft of such an entity is dropped when opened.
+  Whatever changes an order has a door of its own — the status and the payment
+  on the order's page and in the list, `actions/status` / `actions/payment`,
+  1C's exchange; the contents and the money in the order editor (OrderTotals,
+  which works the money out of the lines and terms). Written from a file they
+  broke orders, measured: the morning's export loaded in the evening put its
+  total over a line added at noon, a blank cell made the total 0 and erased the
+  number and the email, "1500.00" became 15.00, a currency was relabelled with
+  no conversion, a coupon was put on with no discount and no use counted.
+  What an order wrote down about the browser is a column per declared fact,
+  `client_<key>` (the address, the browser, a counter's id of the visitor —
+  `client_metrika_client_id`, `client_ga_client_id`), from `ClientFacts::all()`,
+  so a module's fact is exported without exim knowing it (enquiries-returns.md).
 - **An import reads ANY system's file through a mapping** (PLAN §58): the
   file's column → one of our fields, or skipped, chosen on a screen and kept as
   a preset (`m_exim_import_presets`, recognised by the header). Exim knows no

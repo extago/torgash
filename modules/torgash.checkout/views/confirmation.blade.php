@@ -6,7 +6,9 @@
     "thank you" over it.
 
     $inAccount  — the signed-in owner: the account's menu and a way back to the orders
-    $justPlaced — just out of checkout
+    $justPlaced — just out of checkout; the page then hears
+                  `torgash:order-placed` and `checkout.order.just_placed` is
+                  rendered — once per order (JustPlaced: a counter's purchase)
     $products   — the lines' products by id (pictures, pages), one query
     $history    — [{label, at}] what the customer is told of the order's way
 --}}
@@ -36,6 +38,7 @@
                         </div>
                     </div>
                 </div>
+                {!! \Torgash\Checkout\Orders\JustPlaced::announce($order) !!}
             @endif
 
             {{-- The heading: number (copied with one click), date, where it is.

@@ -26,7 +26,7 @@ class Placements
     /** @var Collection<int, Snippet>|null */
     protected $all = null;
 
-    /** Did this page print anything that may wait — for consent or for a click? */
+    /** Did this page print anything that waits for a click? */
     protected bool $waiting = false;
 
     public function render(string $placement): string
@@ -61,8 +61,9 @@ class Placements
             }
         }
 
-        // The few lines that switch waiting code on — once, at the end, and
-        // only on a page that has something waiting.
+        // The few lines that switch code waiting for a click on — once, at
+        // the end, and only on a page that has some. Code waiting for
+        // consent is core's to switch on (ConsentGate).
         if ($placement === 'footer' && $this->waiting) {
             $out[] = '<script nonce="'.csp_nonce().'" src="'.e(module_asset('torgash.snippets', 'consent.js')).'" defer></script>';
         }
@@ -76,10 +77,9 @@ class Placements
      * is not (PLAN §53).
      *
      * "Necessary", or no privacy module answering, prints it exactly as it
-     * always was. Anything else depends on the visitor (the `gated` view),
-     * so it is a personal part of the page: one copy of it serves those who
-     * agreed and those who did not (PLAN §61). Its code is kept with the copy
-     * unsigned — the nonce is each visitor's, and the part signs it itself.
+     * always was. Anything else depends on the visitor — core's
+     * `Consent::gate()`, a personal part of the page: one copy of it serves
+     * those who agreed and those who did not (PLAN §61).
      */
     protected function gate(Snippet $snippet, string $code): string
     {
@@ -96,15 +96,7 @@ class Placements
                 ])->render();
         }
 
-        $category = $snippet->category ?: Consent::NECESSARY;
-
-        if (! Consent::isAsked($category)) {
-            return $csp->sign($code);
-        }
-
-        $this->waiting = true;
-
-        return personal('torgash.snippets::gated', ['category' => $category, 'code' => $code]);
+        return Consent::gate($snippet->category ?: Consent::NECESSARY, $code);
     }
 
     /** @return Collection<int, Snippet> */

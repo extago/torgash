@@ -17,7 +17,9 @@ use Symfony\Component\HttpFoundation\Response;
  *   page (an order's address carries its key).
  * - frame-ancestors / X-Frame-Options: the shop is not drawn inside somebody
  *   else's page (clickjacking the buy button or the admin). Its own frames —
- *   the theme preview, a letter's preview — are the same origin.
+ *   the theme preview, a letter's preview — are the same origin; a site a
+ *   module names (`core.csp.frame_ancestors`, a counter's click map) is let
+ *   in by the policy alone, never into the admin (Csp::frameAncestors).
  * - Permissions-Policy: no camera, microphone or USB; location only for the
  *   shop itself (the "your town" window asks for it).
  * - HSTS: only over https and never on a development host, where a year of
@@ -41,8 +43,18 @@ class SecurityHeaders
     public function handle(Request $request, Closure $next): Response
     {
         $response = $next($request);
+        $page = str_contains((string) $response->headers->get('Content-Type'), 'text/html');
+        $policy = $page ? app(Csp::class)->header() : null;
 
         foreach (self::HEADERS as $name => $value) {
+            // "Same origin" is all X-Frame-Options can say. A page a module
+            // lets another site draw (a counter's click map) says who in an
+            // ENFORCED frame-ancestors, which a browser obeys over this
+            // header; report-only or off, the old header keeps guarding it.
+            if ($name === 'X-Frame-Options' && $policy === 'Content-Security-Policy' && app(Csp::class)->framedElsewhere()) {
+                continue;
+            }
+
             if (! $response->headers->has($name)) {
                 $response->headers->set($name, $value);
             }
@@ -54,11 +66,11 @@ class SecurityHeaders
 
         // Which scripts a PAGE may run (PLAN §53): enforced, report-only or
         // off, as the shop chose (Core → Content).
-        if (str_contains((string) $response->headers->get('Content-Type'), 'text/html')
+        if ($page
             && ! $response->headers->has('Content-Security-Policy')
             && ! $response->headers->has('Content-Security-Policy-Report-Only')
-            && ($header = app(Csp::class)->header()) !== null) {
-            $response->headers->set($header, app(Csp::class)->policy());
+            && $policy !== null) {
+            $response->headers->set($policy, app(Csp::class)->policy());
         }
 
         // Which PHP answers is nobody's business; PHP adds it at the SAPI.

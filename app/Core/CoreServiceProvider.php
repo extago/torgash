@@ -92,10 +92,12 @@ class CoreServiceProvider extends ServiceProvider
 
         // Who is looking at the storefront as whom, for this request alone.
         $this->app->scoped(\App\Core\Access\Impersonation::class);
+        // Whether this page printed code that waits for consent.
+        $this->app->scoped(\App\Core\Privacy\ConsentGate::class);
 
         // ...and actually forgotten when the next request begins. `scoped()`
         // declares the intent; only Octane enforces it. See PerRequest.
-        PerRequest::forget($this->app, PageMeta::class, Breadcrumbs::class, StructuredData::class, \App\Core\Themes\ThemeSettings::class, \App\Core\Themes\ShopPalette::class, \App\Core\Support\GrammaticalCases::class, \App\Core\Content\SafeHtml::class, \App\Core\Assets\AssetVersions::class, \App\Core\Http\Csp::class, \App\Core\Access\Impersonation::class);
+        PerRequest::forget($this->app, PageMeta::class, Breadcrumbs::class, StructuredData::class, \App\Core\Themes\ThemeSettings::class, \App\Core\Themes\ShopPalette::class, \App\Core\Support\GrammaticalCases::class, \App\Core\Content\SafeHtml::class, \App\Core\Assets\AssetVersions::class, \App\Core\Http\Csp::class, \App\Core\Access\Impersonation::class, \App\Core\Privacy\ConsentGate::class);
         $this->app->singleton(ModuleManager::class, fn ($app) => new ModuleManager($app));
 
         // Pages kept ready for guests (PLAN §61): the registry every module
@@ -303,6 +305,10 @@ class CoreServiceProvider extends ServiceProvider
         // Printed through the page's own slot rather than by the theme, so a
         // theme written without it still gets its notices.
         hook_listen('core.footer', fn (string $html) => $html.view('components.notices')->render(), 1);
+
+        // Code that waits for consent is switched on by one script, printed
+        // last and only on a page that has some (Privacy\ConsentGate).
+        hook_listen('core.footer', fn (string $html) => $html.app(\App\Core\Privacy\ConsentGate::class)->script(), 1000);
 
         // The phone mask (Support\PhoneMask): one script for every phone field
         // of the storefront, its pattern in the tag's own attributes.

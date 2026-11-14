@@ -24,6 +24,16 @@ not found** is off, and then it is skipped. A new product needs a name: a row
 without one is skipped and named in the result, and the rest of the file goes
 in.
 
+## Orders
+
+Orders are exported, not imported. A status and a payment are changed on the
+order's page (or for many orders at once in the list), by a CRM through the
+API, or by the 1C exchange — always by the same code as in the admin, so the
+stock, the order's history and the customer's letter follow. An order's money
+is worked out from its goods, which a file does not carry, and a file is a
+snapshot: loaded back, it would put the morning's numbers over whatever
+changed since.
+
 ## Columns
 
 Each column of the file goes to one of the shop's fields, or is skipped. The

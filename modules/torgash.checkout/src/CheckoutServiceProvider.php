@@ -274,7 +274,7 @@ class CheckoutServiceProvider extends ServiceProvider
             // Nothing reads the town before a page is drawn: a visitor who
             // named one still gives copies.
             ->personal(session: ['checkout_location'], copies: true)
-            ->personal(session: ['last_order_number'])
+            ->personal(session: ['last_order_number', Orders\JustPlaced::SESSION])
             ->unseen(['m_checkout_orders', 'm_checkout_order_logs', 'm_checkout_order_merges', 'm_checkout_coupons']);
 
         // ...and the other direction: a visitor who names a town somewhere else
@@ -601,15 +601,21 @@ class CheckoutServiceProvider extends ServiceProvider
     /**
      * torgash.exim never appears in this module's manifest requires — same
      * as catalog's own registerEximHooks(), harmless no-op if exim isn't
-     * installed. `items` (line items) is export-only for now: reconstructing
-     * an order's cart-like state, stock impact and totals from an imported
-     * row is a materially bigger feature than round-tripping scalar fields,
-     * deliberately not attempted here (PLAN §72: a module's job, if ever).
+     * installed.
      *
-     * So an import UPDATES orders and never makes one: a row that matches no
-     * order is refused, whatever "create new" says. It used to become an
-     * order with no goods, written past PlaceOrder — no number from the
-     * shop's sequence, no stock, no source (orders.md: one place creates).
+     * Orders are EXPORTED, never imported (PLAN §72): every column is
+     * `'set' => null`, so the import screen and the console do not offer
+     * them at all. Whatever changes an order is a decision with a door of
+     * its own — the status and the payment on the order's page (one or many),
+     * `actions/status` / `actions/payment` on the API, 1C's exchange; the
+     * contents and the money in the order editor, which works the money out
+     * of the lines and the terms (OrderTotals). A file is a snapshot, and
+     * written back it broke orders — measured: the morning's export loaded in
+     * the evening put its total over a line added at noon, a blank cell made
+     * the total 0 and erased the number and the email, "1500.00" became
+     * 15.00, a currency was relabelled without a conversion. Making orders was
+     * refused before that (one place creates them, orders.md); bringing a whole
+     * history over from another engine is left for a module.
      */
     protected function registerEximHooks(): void
     {
@@ -617,59 +623,48 @@ class CheckoutServiceProvider extends ServiceProvider
 
         hook_listen('exim.query.order', fn () => Order::query());
 
-        hook_listen('exim.match.order', function ($v, array $ctx) {
-            // The accounting system's own number first: `order_number` is ours,
-            // printed on the invoice, and must not be the key somebody else's
-            // database points at. Same order as the catalogue's matching.
-            if ($externalId = $ctx['row']['external_id'] ?? null) {
-                $linked = Order::where('external_id', $externalId)->first();
-
-                if ($linked) {
-                    return ['model' => $linked, 'matchedBy' => 'external_id'];
-                }
-            }
-
-            $orderNumber = $ctx['row']['order_number'] ?? null;
-            $existing = $orderNumber ? Order::where('order_number', $orderNumber)->first() : null;
-
-            return $existing
-                ? ['model' => $existing, 'matchedBy' => 'order_number']
-                : ['model' => new Order, 'matchedBy' => null, 'refused' => 'no order matches it, and an import does not create orders'];
-        });
-
         hook_listen('exim.schema.order', fn (array $fields) => [...$fields,
-            ['key' => 'order_number', 'label' => 'Order number', 'get' => fn (Order $o) => $o->order_number, 'set' => fn (Order $o, $v) => $o->order_number = $v],
-            ['key' => 'external_id', 'label' => 'External ID', 'get' => fn (Order $o) => $o->external_id, 'set' => fn (Order $o, $v) => $o->external_id = ($v ?: null)],
-            ['key' => 'status', 'label' => 'Status', 'get' => fn (Order $o) => $o->status, 'set' => fn (Order $o, $v) => $o->status = $v],
-            ['key' => 'payment_state', 'label' => 'Payment state', 'get' => fn (Order $o) => $o->payment_state, 'set' => fn (Order $o, $v) => $o->payment_state = $v],
-            ['key' => 'paid_total', 'label' => 'Paid', 'get' => fn (Order $o) => $o->paid_total, 'set' => fn (Order $o, $v) => $o->paid_total = (int) $v],
-            ['key' => 'customer_name', 'label' => 'Customer name', 'get' => fn (Order $o) => $o->customer_name, 'set' => fn (Order $o, $v) => $o->customer_name = $v],
-            ['key' => 'company_name', 'label' => 'Company name', 'get' => fn (Order $o) => $o->company_name, 'set' => fn (Order $o, $v) => $o->company_name = ($v ?: null)],
-            ['key' => 'company_tax_id', 'label' => 'Tax code', 'get' => fn (Order $o) => $o->company_tax_id, 'set' => fn (Order $o, $v) => $o->company_tax_id = ($v ?: null)],
-            ['key' => 'email', 'label' => 'Email', 'get' => fn (Order $o) => $o->email, 'set' => fn (Order $o, $v) => $o->email = $v],
-            ['key' => 'phone', 'label' => 'Phone', 'get' => fn (Order $o) => $o->phone, 'set' => fn (Order $o, $v) => $o->phone = $v],
-            ['key' => 'address_line', 'label' => 'Address', 'get' => fn (Order $o) => $o->address_line, 'set' => fn (Order $o, $v) => $o->address_line = $v],
-            ['key' => 'city', 'label' => 'City', 'get' => fn (Order $o) => $o->city, 'set' => fn (Order $o, $v) => $o->city = $v],
-            ['key' => 'country', 'label' => 'Country', 'get' => fn (Order $o) => $o->country, 'set' => fn (Order $o, $v) => $o->country = $v],
-            ['key' => 'postal_code', 'label' => 'Postal code', 'get' => fn (Order $o) => $o->postal_code, 'set' => fn (Order $o, $v) => $o->postal_code = $v],
-            ['key' => 'notes', 'label' => 'Notes', 'get' => fn (Order $o) => $o->notes, 'set' => fn (Order $o, $v) => $o->notes = $v],
-            // The shop's own checkout questions answered: read, never written
-            // back — an answer belongs to the moment the order was placed.
+            ['key' => 'order_number', 'label' => 'Order number', 'get' => fn (Order $o) => $o->order_number, 'set' => null],
+            ['key' => 'external_id', 'label' => 'External ID', 'get' => fn (Order $o) => $o->external_id, 'set' => null],
+            ['key' => 'status', 'label' => 'Status', 'get' => fn (Order $o) => $o->status, 'set' => null],
+            ['key' => 'payment_state', 'label' => 'Payment state', 'get' => fn (Order $o) => $o->payment_state, 'set' => null],
+            ['key' => 'paid_total', 'label' => 'Paid', 'get' => fn (Order $o) => $o->paid_total, 'set' => null],
+            ['key' => 'customer_name', 'label' => 'Customer name', 'get' => fn (Order $o) => $o->customer_name, 'set' => null],
+            ['key' => 'company_name', 'label' => 'Company name', 'get' => fn (Order $o) => $o->company_name, 'set' => null],
+            ['key' => 'company_tax_id', 'label' => 'Tax code', 'get' => fn (Order $o) => $o->company_tax_id, 'set' => null],
+            ['key' => 'email', 'label' => 'Email', 'get' => fn (Order $o) => $o->email, 'set' => null],
+            ['key' => 'phone', 'label' => 'Phone', 'get' => fn (Order $o) => $o->phone, 'set' => null],
+            ['key' => 'address_line', 'label' => 'Address', 'get' => fn (Order $o) => $o->address_line, 'set' => null],
+            ['key' => 'city', 'label' => 'City', 'get' => fn (Order $o) => $o->city, 'set' => null],
+            ['key' => 'country', 'label' => 'Country', 'get' => fn (Order $o) => $o->country, 'set' => null],
+            ['key' => 'postal_code', 'label' => 'Postal code', 'get' => fn (Order $o) => $o->postal_code, 'set' => null],
+            ['key' => 'notes', 'label' => 'Notes', 'get' => fn (Order $o) => $o->notes, 'set' => null],
+            // The shop's own checkout questions as answered.
             ['key' => 'fields', 'label' => 'Checkout fields', 'get' => fn (Order $o) => \Torgash\Checkout\Orders\CheckoutFields::text($o, '; '), 'set' => null],
-            ['key' => 'currency_code', 'label' => 'Currency', 'get' => fn (Order $o) => $o->currency_code, 'set' => fn (Order $o, $v) => $o->currency_code = $v],
-            ['key' => 'coupon_code', 'label' => 'Coupon code', 'get' => fn (Order $o) => $o->coupon_code, 'set' => fn (Order $o, $v) => $o->coupon_code = $v],
+            ['key' => 'currency_code', 'label' => 'Currency', 'get' => fn (Order $o) => $o->currency_code, 'set' => null],
+            ['key' => 'coupon_code', 'label' => 'Coupon code', 'get' => fn (Order $o) => $o->coupon_code, 'set' => null],
             // Raw minor units, same convention as Product's own base_price
-            // field — exact round-trip, no float-formatting surprises.
-            ['key' => 'subtotal', 'label' => 'Subtotal', 'get' => fn (Order $o) => $o->subtotal, 'set' => fn (Order $o, $v) => $o->subtotal = (int) $v],
-            ['key' => 'discount_amount', 'label' => 'Discount', 'get' => fn (Order $o) => (int) $o->discount_amount, 'set' => fn (Order $o, $v) => $o->discount_amount = (int) $v],
-            ['key' => 'shipping_cost', 'label' => 'Shipping', 'get' => fn (Order $o) => $o->shipping_cost, 'set' => fn (Order $o, $v) => $o->shipping_cost = (int) $v],
+            // field — no float-formatting surprises.
+            ['key' => 'subtotal', 'label' => 'Subtotal', 'get' => fn (Order $o) => $o->subtotal, 'set' => null],
+            ['key' => 'discount_amount', 'label' => 'Discount', 'get' => fn (Order $o) => (int) $o->discount_amount, 'set' => null],
+            ['key' => 'shipping_cost', 'label' => 'Shipping', 'get' => fn (Order $o) => $o->shipping_cost, 'set' => null],
             // PLAN §66: a delivery paid to the carrier (`shipping_cost` 0, the
             // estimate beside it) and the payment method's surcharge.
-            ['key' => 'shipping_to_carrier', 'label' => 'Delivery paid to the carrier', 'get' => fn (Order $o) => $o->shipping_to_carrier ? 1 : 0, 'set' => fn (Order $o, $v) => $o->shipping_to_carrier = filter_var($v, FILTER_VALIDATE_BOOLEAN)],
-            ['key' => 'shipping_carrier_cost', 'label' => 'Delivery estimate', 'get' => fn (Order $o) => $o->shipping_carrier_cost, 'set' => fn (Order $o, $v) => $o->shipping_carrier_cost = ($v === null || $v === '') ? null : (int) $v],
-            ['key' => 'payment_surcharge', 'label' => 'Payment surcharge', 'get' => fn (Order $o) => (int) $o->payment_surcharge, 'set' => fn (Order $o, $v) => $o->payment_surcharge = (int) $v],
-            ['key' => 'total', 'label' => 'Total', 'get' => fn (Order $o) => $o->total, 'set' => fn (Order $o, $v) => $o->total = (int) $v],
+            ['key' => 'shipping_to_carrier', 'label' => 'Delivery paid to the carrier', 'get' => fn (Order $o) => $o->shipping_to_carrier ? 1 : 0, 'set' => null],
+            ['key' => 'shipping_carrier_cost', 'label' => 'Delivery estimate', 'get' => fn (Order $o) => $o->shipping_carrier_cost, 'set' => null],
+            ['key' => 'payment_surcharge', 'label' => 'Payment surcharge', 'get' => fn (Order $o) => (int) $o->payment_surcharge, 'set' => null],
+            ['key' => 'total', 'label' => 'Total', 'get' => fn (Order $o) => $o->total, 'set' => null],
             ['key' => 'placed_at', 'label' => 'Placed at', 'get' => fn (Order $o) => $o->created_at?->toDateTimeString(), 'set' => null],
+            // What the order wrote down about the browser it came from
+            // (ClientFacts), a column per fact the engine or a module declares
+            // — the address, the browser, a counter's id of the visitor for a
+            // CRM to match its own records against.
+            ...collect(app(ClientFacts::class)->all())->map(fn (array $fact, string $key) => [
+                'key' => 'client_'.$key, 'label' => $fact['label'], 'set' => null,
+                'get' => fn (Order $o) => $fact['column'] !== null
+                    ? $o->{$fact['column']}
+                    : (is_scalar($o->client[$key] ?? null) ? (string) $o->client[$key] : null),
+            ])->values()->all(),
             [
                 'key' => 'items', 'label' => 'Items', 'set' => null,
                 'get' => fn (Order $o) => collect($o->items ?? [])

@@ -122,6 +122,50 @@ class ProductFacts
             ->filter()->values()->all();
     }
 
+    /**
+     * The categories a counter files the product under, root first — the
+     * first listed one with what is above it, five levels at most (Metrika's
+     * limit, and GA4's item_category … item_category5).
+     *
+     * @return list<string>
+     */
+    public function categoryPath(): array
+    {
+        $category = $this->product->categories->first(fn ($category) => $category->isListed());
+
+        if (! $category) {
+            return [];
+        }
+
+        $names = array_map(fn ($ancestor) => (string) $ancestor->t('name'), $category->ancestors());
+        $names[] = (string) $category->t('name');
+
+        return array_slice(array_values(array_filter($names, fn (string $name) => $name !== '')), -5);
+    }
+
+    /**
+     * The product as an analytics counter is told of it (PLAN §73):
+     * torgash.metrika and torgash.google-analytics both read this and write
+     * it in their own words, so the two cannot describe one product
+     * differently. The price is per unit, in the shop's books as a major-unit
+     * number — the price this visitor saw when one is given (a basket line's),
+     * otherwise the public one.
+     *
+     * @return array{id: string, sku: ?string, name: string, brand: ?string, categories: list<string>, price: float, quantity: int}
+     */
+    public function item(?int $unitPrice = null, int $quantity = 1): array
+    {
+        return [
+            'id' => (string) $this->product->id,
+            'sku' => $this->product->sku !== null && $this->product->sku !== '' ? (string) $this->product->sku : null,
+            'name' => $this->name(),
+            'brand' => $this->brand(),
+            'categories' => $this->categoryPath(),
+            'price' => round(price_scale()->toMajor($unitPrice ?? app(ShownPrice::class)->publicMinimum($this->product)), 2),
+            'quantity' => max(1, $quantity),
+        ];
+    }
+
     public function description(): string
     {
         return Markdown::fromHtml($this->product->t('description'));

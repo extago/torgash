@@ -47,10 +47,14 @@ class PrivacyServiceProvider extends ServiceProvider
         // must find the consent defaults already set. This visitor's own, so
         // a part of the page; whether there are any is the shop's.
         hook_listen('core.head', function (string $html) {
-            return setting('torgash.privacy', 'google_consent_mode', true) && setting('torgash.privacy', 'consent_mode', 'opt_in') !== 'off'
+            return app(ConsentState::class)->tellsGoogle()
                 ? $html.personal('torgash.privacy::consent-defaults')
                 : $html;
         }, 1);
+
+        // ...and said to a Google tag that would load before consent and
+        // lean on them (Consent::tellsGoogle(), torgash.google-analytics).
+        hook_listen('core.consent.google', fn (bool $told) => $told || app(ConsentState::class)->tellsGoogle());
 
         // What the visitor allowed — their choice, or the browser's "do not
         // sell" where the shop listens to it — is printed only inside parts

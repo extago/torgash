@@ -12,22 +12,17 @@ use RuntimeException;
  */
 class TarWriter
 {
-    /** @var resource */
-    protected $out;
+    protected Output $out;
 
-    protected bool $gzip;
-
-    /** @param  int|null  $level  gzip level 1–9; null for a plain tar */
-    public function __construct(protected string $path, ?int $level = null)
+    /**
+     * @param  string|Output  $target  a file, or the chain it goes through (PLAN §67.12)
+     * @param  int|null  $level  gzip level 1–9; null for a plain tar
+     */
+    public function __construct(string|Output $target, ?int $level = null)
     {
-        $this->gzip = $level !== null;
-        $out = $this->gzip ? gzopen($path, 'wb'.max(1, min(9, $level))) : fopen($path, 'wb');
+        $out = is_string($target) ? new FileOutput($target) : $target;
 
-        if (! $out) {
-            throw new RuntimeException('Could not create '.$path);
-        }
-
-        $this->out = $out;
+        $this->out = $level !== null ? new GzipOutput($out, $level) : $out;
     }
 
     public function addFile(string $name, string $source): void
@@ -60,7 +55,7 @@ class TarWriter
     {
         // Two empty blocks end the archive.
         $this->write(str_repeat("\0", 1024));
-        $this->gzip ? gzclose($this->out) : fclose($this->out);
+        $this->out->close();
     }
 
     protected function header(string $name, int $size, int $mtime): void
@@ -131,14 +126,6 @@ class TarWriter
 
     protected function write(string $data): void
     {
-        if ($data === '') {
-            return;
-        }
-
-        $written = $this->gzip ? gzwrite($this->out, $data) : fwrite($this->out, $data);
-
-        if ($written !== strlen($data)) {
-            throw new RuntimeException('Could not write '.$this->path.' (is the disk full?)');
-        }
+        $this->out->write($data);
     }
 }

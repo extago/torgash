@@ -6,6 +6,7 @@ use App\Core\Backups\Backups;
 use App\Core\Backups\Names;
 use App\Core\Backups\PlanSchedule;
 use App\Core\Backups\Retention;
+use App\Core\Backups\Volumes;
 use App\Http\Controllers\Controller;
 use App\Models\BackupDestination;
 use App\Models\BackupPlan;
@@ -164,6 +165,17 @@ class BackupPlansController extends Controller
             'without_thumbnails' => in_array('files', $contents, true) && ! empty($input['without_thumbnails']),
         ];
         $options['env'] = $options['encrypt'] && ! empty($input['env']);
+
+        // Volumes (PLAN §67.12): a preset, or a size of its own in MB; a tar only.
+        $volume = (string) ($input['volume'] ?? '');
+        $volumeMb = $volume === 'custom' ? (int) ($input['volume_mb'] ?? 0) : (int) $volume;
+        if (in_array($format, Volumes::FORMATS, true) && $volume !== '') {
+            if ($volumeMb < Volumes::MIN_MB || $volumeMb > Volumes::MAX_MB) {
+                $errors['options.volume_mb'] = __('A volume is from :min to :max MB.', ['min' => Volumes::MIN_MB, 'max' => Volumes::MAX_MB]);
+            } else {
+                $options['volume_mb'] = $volumeMb;
+            }
+        }
 
         $typed = (string) $request->input('password', '');
         if ($options['encrypt']) {

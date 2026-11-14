@@ -142,22 +142,36 @@ class KitController extends Controller
                     ->all(),
             ];
 
-            $cart->add($main->id, 1, $config);
+            $key = $cart->add($main->id, 1, $config);
 
-            return response()->view('torgash.cart::partials.changed')->header('HX-Trigger', \Torgash\Cart\Http\CartController::CHANGED);
+            return $this->changed($cart, [$key => 1]);
         }
 
         // A simple set is a convenient way to put several ordinary things in
         // the basket at once, and that is all it is: every line is afterwards
         // the customer's to change or remove, and none of them carries a
         // discount (the form does not offer one for this kind).
-        $cart->add($main->id, 1, $config);
+        $moved = [$cart->add($main->id, 1, $config) => 1];
 
         foreach ($offer['slots'] as $line) {
-            $cart->add($line['product']->id, max(1, (int) $line['qty']));
+            $qty = max(1, (int) $line['qty']);
+            $key = $cart->add($line['product']->id, $qty);
+            $moved[$key] = ($moved[$key] ?? 0) + $qty;
         }
 
-        return response()->view('torgash.cart::partials.changed')->header('HX-Trigger', \Torgash\Cart\Http\CartController::CHANGED);
+        return $this->changed($cart, $moved);
+    }
+
+    /**
+     * The basket's answer, telling the page what went in (CartEvents): each
+     * line at the price the basket now charges for it.
+     *
+     * @param  array<string, int>  $moved  line key => quantity added
+     */
+    protected function changed(CartManager $cart, array $moved)
+    {
+        return response()->view('torgash.cart::partials.changed')
+            ->header('HX-Trigger', \Torgash\Cart\CartEvents::header(\Torgash\Cart\CartEvents::lines($cart->items(), $moved)));
     }
 
     /**

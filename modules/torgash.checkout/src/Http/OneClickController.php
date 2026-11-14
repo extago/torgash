@@ -9,6 +9,8 @@ use Illuminate\Validation\ValidationException;
 use Torgash\Cart\CartManager;
 use Torgash\Catalog\Models\Product;
 use Torgash\Checkout\CouponManager;
+use Torgash\Checkout\Models\Order;
+use Torgash\Checkout\Orders\JustPlaced;
 use Torgash\Checkout\Orders\OneClick;
 use Torgash\Checkout\Orders\PlaceOrder;
 use Torgash\Checkout\Shipping\Location;
@@ -179,7 +181,7 @@ class OneClickController extends Controller
                 : redirect()->to($confirmation);
         }
 
-        return $this->done($request, $order->order_number);
+        return $this->done($request, $order);
     }
 
     /** Asked from the cart page, for the whole basket. */
@@ -188,14 +190,24 @@ class OneClickController extends Controller
         return $request->input('scope') === 'cart';
     }
 
-    protected function done(Request $request, ?string $orderNumber)
+    protected function done(Request $request, ?Order $order)
     {
-        $message = $orderNumber
-            ? __('Order :number placed. We will call you back to confirm it.', ['number' => $orderNumber])
+        $message = $order
+            ? __('Order :number placed. We will call you back to confirm it.', ['number' => $order->order_number])
             : __('Thank you — we will call you back.');
 
         if ($request->header('HX-Request')) {
-            return response()->view('torgash.checkout::partials.one-click-done', ['message' => $message]);
+            $response = response()->view('torgash.checkout::partials.one-click-done', ['message' => $message]);
+
+            // An order placed from the product page has no page of its own to
+            // show it placed, so this answer is that page: the page hears
+            // `torgash:order-placed` (a counter's purchase). Not for an answer
+            // to a trap, which placed nothing.
+            if ($order && ($placed = JustPlaced::header($order)) !== null) {
+                $response->header('HX-Trigger', $placed);
+            }
+
+            return $response;
         }
 
         return back()->with('status', $message);

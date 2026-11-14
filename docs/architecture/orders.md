@@ -610,3 +610,25 @@ token `{order_fields}`, automations (`order.fields.<code>`,
 `order.fields_text`), the exim column `fields` (read only) and the API.
 Asked by the storefront checkout only — the admin's own order, one click and
 the API do not demand them. Deleting a field leaves orders' answers alone.
+
+## The page is told the order is placed (PLAN §73)
+
+`Orders\JustPlaced`: the first page that shows an order placed raises
+`torgash:order-placed` — on the order's own page a script of the page
+dispatches it once the page is parsed (a deferred listener is there by
+then), and `checkout.order.just_placed` is rendered beside it; on the
+one-click answer of a product page, which is the page such an order has, it
+is the answer's `HX-Trigger`. ONCE per order, remembered in the session
+(`last_order_announced`, personal like `last_order_number`): the "thank
+you" stays for two hours of reloads, and a counter told on each would count
+the purchase as many times. The detail (`describe()`): the shop's number,
+`total` (what the customer pays), `shipping`, `discount`, `coupon`, the
+books' `currency`, and every line that is a product — a build's parts
+included at their own prices — as `ProductFacts::item()` with the line's
+own name. A counter converts and words it itself (torgash.metrika).
+
+A checkout begun is `torgash:checkout-started` (`Orders\CheckoutStarted`):
+a script of the checkout page, the basket's lines as `CartEvents` describes
+them (up to 200, Google's limit for one event), the coupon, the books'
+currency — and nothing when the form came back refused (old input), which
+is the same checkout. Google Analytics' begin_checkout.

@@ -221,6 +221,20 @@ class InstallController extends Controller
         foreach ([Installer::UPLOADS, 'app/private/'.\App\Core\Backups\Backups::DIR] as $dir) {
             foreach (glob(storage_path($dir).'/*') ?: [] as $path) {
                 $base = basename($path);
+
+                // Volumes (PLAN §67.12): their list stands for the set.
+                if (str_ends_with($base, \App\Core\Backups\Volumes::SET)) {
+                    try {
+                        $listed = \App\Core\Backups\Volumes::parse((string) file_get_contents($path));
+                    } catch (Throwable) {
+                        continue;
+                    }
+                    $found['storage/'.$dir.'/'.$base] = substr($base, 0, -strlen(\App\Core\Backups\Volumes::SET)).' · '
+                        .number_format(array_sum(array_column($listed, 'bytes')) / 1048576, 1).' MB · '.trans_choice(':count volume|:count volumes', count($listed));
+
+                    continue;
+                }
+
                 $backup = is_dir($path) ? is_file($path.'/manifest.json') : (bool) preg_match('/\.(zip|tar|tar\.gz|enc)$/', $base);
                 if ($backup) {
                     $found['storage/'.$dir.'/'.$base] = $base.(is_file($path) ? ' · '.number_format(filesize($path) / 1048576, 1).' MB' : '');

@@ -251,6 +251,82 @@ class AdminApiTest extends TestCase
         $this->call_('POST', '/api/v2/admin/orders/TG-API1/actions/teleport')->assertStatus(404);
     }
 
+    /**
+     * A CRM that keeps the books says where the money is through the same code
+     * as the payment control on the order's page — and saying it again is
+     * nothing, so a whole state may be sent every hour.
+     */
+    public function test_a_payment_is_recorded_and_taken_back_through_the_shops_own_code(): void
+    {
+        $order = $this->order('TG-PAY1');
+
+        $this->call_('POST', '/api/v2/admin/orders/TG-PAY1/actions/payment', ['state' => 'paid'])
+            ->assertOk()
+            ->assertJsonPath('data.payment.state', PaymentState::PAID)
+            ->assertJsonPath('data.payment.paid_total', '10.00');
+
+        $line = $order->logs()->where('description', 'Payment: :from → :to (:amount) — :source')->firstOrFail();
+        $this->assertSame('API: Tests', $line->params['source'], 'the history says which token said so');
+        $this->assertNotNull($order->fresh()->paid_at);
+
+        $lines = $order->logs()->count();
+        $this->call_('POST', '/api/v2/admin/orders/TG-PAY1/actions/payment', ['state' => 'paid'])->assertOk();
+        $this->assertSame($lines, $order->logs()->count(), 'the same state sent again writes nothing');
+
+        // Marked paid by mistake: taken back off, and the amount with it.
+        $this->call_('POST', '/api/v2/admin/orders/TG-PAY1/actions/payment', ['state' => 'pending'])
+            ->assertOk()
+            ->assertJsonPath('data.payment.state', PaymentState::PENDING)
+            ->assertJsonPath('data.payment.paid_total', '0.00');
+
+        $this->call_('POST', '/api/v2/admin/orders/TG-PAY1/actions/payment', ['state' => 'partially_paid', 'paid_total' => '4.50'])
+            ->assertOk()
+            ->assertJsonPath('data.payment.state', PaymentState::PARTIALLY_PAID);
+        $this->assertSame(4_50, (int) $order->fresh()->paid_total);
+    }
+
+    public function test_a_payment_the_shop_could_not_record_is_refused_in_words(): void
+    {
+        $this->order('TG-PAY2');
+
+        $this->call_('POST', '/api/v2/admin/orders/TG-PAY2/actions/payment', ['state' => 'settled'])
+            ->assertStatus(422)->assertJsonValidationErrors('state');
+        $this->call_('POST', '/api/v2/admin/orders/TG-PAY2/actions/payment', ['state' => 'paid', 'paid_total' => 'lots'])
+            ->assertStatus(422)->assertJsonValidationErrors('paid_total');
+        $this->call_('POST', '/api/v2/admin/orders/TG-PAY2/actions/payment', ['state' => 'paid', 'paid_total' => '-5'])
+            ->assertStatus(422);
+
+        $this->assertSame(PaymentState::PENDING, Order::where('order_number', 'TG-PAY2')->value('payment_state'));
+    }
+
+    /** A merged order is a shell (PLAN §40.10/4): both doors answer in words, not with a 500. */
+    public function test_a_merged_order_takes_neither_a_status_nor_a_payment(): void
+    {
+        $root = $this->order('TG-PAY3');
+        $this->order('TG-PAY4', ['status' => 'merged', 'merged_into_id' => $root->id]);
+
+        $this->call_('POST', '/api/v2/admin/orders/TG-PAY4/actions/payment', ['state' => 'paid'])->assertStatus(422);
+        $this->call_('POST', '/api/v2/admin/orders/TG-PAY4/actions/status', ['status' => 'open'])->assertStatus(422);
+        $this->call_('POST', '/api/v2/admin/orders/TG-PAY3/actions/status', ['status' => 'nowhere'])
+            ->assertStatus(422)
+            ->assertJsonPath('message', 'There is no order status "nowhere".');
+
+        $this->assertSame('merged', Order::where('order_number', 'TG-PAY4')->value('status'));
+    }
+
+    /** @param array<string, mixed> $attributes */
+    protected function order(string $number, array $attributes = []): Order
+    {
+        return Order::create($attributes + [
+            'order_number' => $number,
+            'customer_name' => 'Buyer', 'email' => 'buyer@example.test',
+            'address_line' => '1 Test Street', 'city' => 'Testville',
+            'currency_code' => 'USD', 'subtotal' => 10_00, 'shipping_cost' => 0, 'total' => 10_00,
+            'status' => 'open', 'payment_state' => PaymentState::PENDING,
+            'stock_deducted' => false, 'items' => [],
+        ]);
+    }
+
     /** @param array<string, mixed> $attributes */
     /** Categories: the list replaces, a string is an external id, an unknown one refuses it all. */
     public function test_categories_are_written_whole_or_not_at_all(): void

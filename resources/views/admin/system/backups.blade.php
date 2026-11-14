@@ -100,6 +100,7 @@
                                             {{ $run->plan?->name ?? '' }}@if ($run->plan) · @endif{{ $reasons[$run->reason] ?? $run->reason }}
                                             @if ($run->pinned) · <span class="inline-flex items-center gap-0.5"><x-icon name="pin" size="sm" /> {{ __('pinned') }}</span> @endif
                                             @if ($run->isFolder()) · {{ __('a folder, no archive') }} @endif
+                                            @if ($run->isVolumes()) · {{ trans_choice(':count volume|:count volumes', $run->volumeCount()) }} @endif
                                             @if ($run->encrypted) · <span class="inline-flex items-center gap-0.5" title="{{ __('Encrypted with the password of its plan') }}"><x-icon name="lock" size="sm" /> {{ __('encrypted') }}</span> @endif
                                         </div>
                                         {{-- Changed files only (PLAN §67.10): which full backup it leans
@@ -147,7 +148,20 @@
                                     <td data-cell="actions" class="text-end whitespace-nowrap w-px">
                                         <div class="inline-flex items-center gap-1">
                                             @foreach ($stored as $copy)
-                                                @if ($copy->destination && ! $run->isFolder())
+                                                @if ($copy->destination && $run->isVolumes())
+                                                    {{-- Volumes (PLAN §67.12): one link each. --}}
+                                                    <x-popover placement="bottom" align="end" class="btn btn-ghost btn-sm btn-square" panel-class="p-2 w-64" :label="__('Download from :storage', ['storage' => $copy->destination->name])">
+                                                        <div class="text-xs opacity-60 px-2 pb-1">{{ __('Download from :storage', ['storage' => $copy->destination->name]) }}</div>
+                                                        <ul class="menu menu-sm p-0 w-full max-h-72 overflow-y-auto flex-nowrap">
+                                                            @foreach ((array) $run->volumes as $i => $volume)
+                                                                <li><a href="{{ route('admin.system.backups.download', ['copy' => $copy, 'volume' => $i + 1]) }}" class="font-mono justify-between">
+                                                                    <span>{{ \App\Core\Backups\Volumes::file('', $i + 1) }}</span><span class="opacity-60 tabular-nums">{{ $mb($volume['bytes'] ?? null) }}</span></a></li>
+                                                            @endforeach
+                                                        </ul>
+                                                        <p class="text-xs opacity-60 px-2 pt-1">{{ __('Put together with') }} <code class="font-mono break-all">cat {{ $run->name }}.* &gt; {{ $run->name }}</code> {{ __('(Windows: copy /b), or open the .001 in 7-Zip.') }}</p>
+                                                        <x-slot:trigger><x-icon name="download" size="sm" /></x-slot:trigger>
+                                                    </x-popover>
+                                                @elseif ($copy->destination && ! $run->isFolder())
                                                     <a href="{{ route('admin.system.backups.download', $copy) }}" class="btn btn-ghost btn-sm btn-square"
                                                        title="{{ __('Download from :storage', ['storage' => $copy->destination->name]) }}" aria-label="{{ __('Download from :storage', ['storage' => $copy->destination->name]) }}"><x-icon name="download" size="sm" /></a>
                                                 @endif

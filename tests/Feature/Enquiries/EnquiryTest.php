@@ -129,6 +129,17 @@ class EnquiryTest extends TestCase
         $this->assertNull(Enquiry::latest('id')->firstOrFail()->email);
     }
 
+    /** A form sent in place tells the page which kind it was — a counter's "call back requested" (PLAN §73). */
+    public function test_a_form_sent_in_place_tells_the_page_its_kind(): void
+    {
+        $answer = $this->withHeader('HX-Request', 'true')->post('http://localhost/enquiry', $this->payload())->assertOk();
+
+        $this->assertSame(
+            [\Torgash\Enquiries\Http\EnquiryController::SENT => ['kind' => 'callback']],
+            json_decode((string) $answer->headers->get('HX-Trigger'), true),
+        );
+    }
+
     public function test_a_callback_is_stored_with_its_answers_and_their_labels(): void
     {
         $this->post('http://localhost/enquiry', $this->payload())->assertRedirect();

@@ -5,7 +5,8 @@
              icon="zap"
              size="sm"
              :trigger="__('Buy in one click')"
-             trigger-class="btn btn-outline w-full gap-2">
+             trigger-class="btn btn-outline w-full gap-2"
+             opened="one-click-opened">
         {{-- The bare product's price only for a product that asks nothing:
              a build's price is the buy box's, and quoting the bare one here
              promised a number the order would not have. --}}

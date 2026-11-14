@@ -19,7 +19,9 @@ use Throwable;
  * modules and themes back too, when the backup has them.
  *
  * Any form a plan makes (§67.3): zip, tar, tar.gz, encrypted, or a folder
- * (`--file=` names the folder). An encrypted backup takes `--password=`;
+ * (`--file=` names the folder), or volumes (§67.12: `--file=` names any of
+ * them — the `.001`, the `-volumes.json`, or the name they share; fetched
+ * from a storage one at a time). An encrypted backup takes `--password=`;
  * without it the journal's plan gives its own when it can, and the console
  * asks. `--with-env` puts the backup's .env in place (encrypted backups carry it
  * when the plan says so) — on a new server, the APP_KEY that reads the rest.
@@ -32,7 +34,7 @@ class BackupRestoreCommand extends Command
 {
     protected $signature = 'torgash:backup-restore {name? : The backup, e.g. torgash-local-main-2026-11-02-034000.zip}
         {--destination= : Look in this storage (its name or number) by reading the storage itself, not the journal}
-        {--file= : A backup on this server, by its path: a file, or the folder of one made without an archive (a new server: the journal is empty)}
+        {--file= : A backup on this server, by its path: a file, the folder of one made without an archive, or the .001 of one cut into volumes (a new server: the journal is empty)}
         {--password= : The password of an encrypted backup (asked when it is needed and not given)}
         {--with-env : Put the .env the backup carries in place too, when it carries one (the current one is kept as .env.before-restore)}
         {--database= : Restore the database into this other (existing) database instead}
@@ -61,7 +63,7 @@ class BackupRestoreCommand extends Command
 
             if ($name === '') {
                 try {
-                    $rows = $backups->listIn($from)->map(fn ($b) => [$b['name'], $b['folder'] ? 'folder' : number_format(($b['bytes'] ?? 0) / 1048576, 1).' MB', $b['path']])->all();
+                    $rows = $backups->listIn($from)->map(fn ($b) => [$b['name'], $b['folder'] ? 'folder' : number_format(($b['bytes'] ?? 0) / 1048576, 1).' MB'.(($b['volumes'] ?? 0) > 0 ? ' in '.$b['volumes'].' volumes' : ''), $b['path']])->all();
                 } catch (Throwable $e) {
                     $this->error("\"{$from->name}\" cannot be read: ".Destinations::reason($e));
 

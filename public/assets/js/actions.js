@@ -7,7 +7,9 @@
  *   data-confirm="Delete this?"   on a form: asked before it is sent;
  *                                 on a button or link: asked before the click
  *                                 does anything (a formaction, htmx, Alpine).
- *   data-open-dialog="id"         opens the <dialog id="id">.
+ *   data-open-dialog="id"         opens the <dialog id="id">; a dialog with
+ *                                 data-opened-event="name" then announces
+ *                                 `torgash:name` (a counter's goal hears it).
  *   data-close-dialog             closes the dialog it is in.
  *   data-print                    prints the page.
  *   data-select                   selects the field's text on click.
@@ -52,7 +54,13 @@
             // An opener inside a <summary> (a filter block's "i") must not
             // also fold the block it heads.
             if (opener.closest('summary')) event.preventDefault();
-            document.getElementById(opener.dataset.openDialog)?.showModal();
+            const dialog = document.getElementById(opener.dataset.openDialog);
+            if (dialog) {
+                dialog.showModal();
+                if (dialog.dataset.openedEvent) {
+                    dialog.dispatchEvent(new CustomEvent('torgash:' + dialog.dataset.openedEvent, { bubbles: true }));
+                }
+            }
             return;
         }
 

@@ -31,16 +31,9 @@ class RecordPayment
      */
     public function record(Order $order, string $state, ?int $amount = null, ?string $source = null): Order
     {
-        // States that mean "no money here" zero the amount rather than leaving a
-        // stale one behind: an order marked failed after a paid one would
-        // otherwise still read as if the shop were holding the cash. What was
-        // paid in advance (a gift card) is not the person's to zero — it stays,
-        // and Settlement says what the order then holds. The amount typed is
-        // the whole of what the order holds, as the field beside it shows.
-        $amount = PaymentState::holdsMoney($state) ? ($amount ?? $order->total) : 0;
         $was = $order->payment_state;
 
-        $columns = Settlement::afterReport($order, $state, max(0, $amount - (int) $order->prepaid_total));
+        $columns = $this->columns($order, $state, $amount);
         $order->update($columns);
         $state = $columns['payment_state'];
         $amount = $columns['paid_total'];
@@ -53,5 +46,33 @@ class RecordPayment
         ], fn ($v) => $v !== null));
 
         return $order;
+    }
+
+    /**
+     * Whether saying this would move anything — what an automated sender asks
+     * first. A person clicking is answered with a line even for "paid → paid"
+     * (they did click); a CRM sending its whole state every hour must not
+     * write five hundred of them into the orders' histories.
+     */
+    public function changes(Order $order, string $state, ?int $amount = null): bool
+    {
+        $columns = $this->columns($order, $state, $amount);
+
+        return $columns['payment_state'] !== $order->payment_state
+            || (int) $columns['paid_total'] !== (int) $order->paid_total;
+    }
+
+    /** @return array{payment_state: string, paid_total: int, paid_at: mixed} what the order's row becomes */
+    protected function columns(Order $order, string $state, ?int $amount): array
+    {
+        // States that mean "no money here" zero the amount rather than leaving a
+        // stale one behind: an order marked failed after a paid one would
+        // otherwise still read as if the shop were holding the cash. What was
+        // paid in advance (a gift card) is not the person's to zero — it stays,
+        // and Settlement says what the order then holds. The amount typed is
+        // the whole of what the order holds, as the field beside it shows.
+        $amount = PaymentState::holdsMoney($state) ? ($amount ?? (int) $order->total) : 0;
+
+        return Settlement::afterReport($order, $state, max(0, $amount - (int) $order->prepaid_total));
     }
 }

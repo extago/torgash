@@ -18,6 +18,9 @@ use Torgash\Enquiries\Submit;
  */
 class EnquiryController extends Controller
 {
+    /** What the page hears when a form is sent — with its `kind` (`callback`, `form.<code>` …). */
+    public const SENT = 'torgash:enquiry-sent';
+
     public function store(Request $request, Submit $submit)
     {
         $kind = (string) $request->input('kind', '');
@@ -62,8 +65,11 @@ class EnquiryController extends Controller
         // HTMX swaps the form for the thank-you in place; a browser without it
         // (or with JavaScript off) gets the page back with a flash. The same
         // form markup serves both, which is why the answer is not JSON.
+        // ...and says so to the page (`torgash:enquiry-sent`, with the kind):
+        // a counter's "call requested" goal listens for it (PLAN §73).
         if ($request->header('HX-Request')) {
-            return response()->view('torgash.enquiries::partials.sent', ['message' => $message]);
+            return response()->view('torgash.enquiries::partials.sent', ['message' => $message])
+                ->header('HX-Trigger', (string) json_encode([self::SENT => ['kind' => $kind]], JSON_UNESCAPED_SLASHES));
         }
 
         return back()->with('status', $message);

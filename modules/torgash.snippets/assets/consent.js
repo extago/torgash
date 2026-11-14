@@ -1,13 +1,11 @@
 /*
- * Switches on snippets that were printed waiting (PLAN §49): inside a
- * <template data-consent="statistics"> until the visitor agrees to that
- * category, or <template data-consent-click> until they press its button.
+ * Switches on snippets that were printed waiting for a click (PLAN §49):
+ * inside a <template data-consent-click> until the visitor presses its button.
+ * Code waiting for CONSENT is core's (assets/js/consent-gate.js).
  *
  * A script that arrives inside a template never runs, and neither does one
  * moved into the page as it is — so each is re-created, which is what makes a
- * browser execute it. The banner announces consent as a DOM event
- * (`torgash:consent`); this file has never heard of any privacy module, and
- * that module has never heard of snippets.
+ * browser execute it.
  */
 (function () {
     function run(template) {
@@ -24,14 +22,6 @@
 
         template.replaceWith(fragment);
     }
-
-    document.addEventListener('torgash:consent', function (event) {
-        var allowed = (event.detail && event.detail.categories) || [];
-
-        document.querySelectorAll('template[data-consent]').forEach(function (template) {
-            if (allowed.indexOf(template.getAttribute('data-consent')) !== -1) run(template);
-        });
-    });
 
     document.addEventListener('click', function (event) {
         var button = event.target.closest('[data-consent-click-button]');

@@ -58,14 +58,13 @@ class ImportCommand extends Command
 
     protected $description = 'Import a file as the import screen does, by a preset or by its column names';
 
-    public function handle(ImportRunner $runner, SchemaRegistry $schema): int
+    public function handle(ImportRunner $runner): int
     {
         $entity = (string) $this->option('entity');
         $fields = $runner->fields($entity);
 
         if ($fields === []) {
-            $importable = array_filter(array_keys($schema->entities()), fn (string $key) => $runner->fields($key) !== []);
-            $this->error("Nothing is imported as \"{$entity}\". These are: ".implode(', ', $importable).'.');
+            $this->error("Nothing is imported as \"{$entity}\". These are: ".implode(', ', array_keys($runner->importable())).'.');
 
             return self::FAILURE;
         }

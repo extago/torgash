@@ -1,0 +1,86 @@
+{
+    "id": "torgash.google-analytics",
+    "name": "Google Analytics",
+    "version": "1.0.0",
+    "icon": "chart-pie",
+    "section": "marketing",
+    "description": "Google Analytics 4 by its measurement ID, or a Google Tag Manager container: the recommended e-commerce events — a product viewed, put into and taken out of the basket, added to the wishlist, a checkout begun, a purchase — and a lead for the forms the shop picks; the visitor's client ID kept on the order for a CRM. Waits for the visitor's consent where the shop asks for it, or loads at once under Google's Consent Mode.",
+    "provider": "Torgash\\GoogleAnalytics\\GoogleAnalyticsServiceProvider",
+    "autoload": {
+        "Torgash\\GoogleAnalytics\\": "src/"
+    },
+    "requires": {
+        "core": ">=0.1",
+        "modules": ["torgash.catalog"]
+    },
+    "settings": [
+        {
+            "key": "tag_id",
+            "type": "text",
+            "default": "",
+            "label": "Measurement ID or container",
+            "help": "G-… is the measurement ID of the site's web stream in Google Analytics (Admin → Data streams); GTM-… is a Google Tag Manager container, whose tags are then set up in Tag Manager. Empty: nothing is printed on the pages.",
+            "keywords": {
+                "en": "google analytics ga4 gtag tag manager gtm measurement id statistics",
+                "ru": "гугл аналитика google analytics ga4 тег менеджер gtm идентификатор статистика"
+            }
+        },
+        {
+            "key": "consent",
+            "type": "select",
+            "default": "wait",
+            "options": {
+                "wait": "Wait until the visitor allows statistics",
+                "consent_mode": "Load at once, under Consent Mode",
+                "none": "Do not wait — count everyone"
+            },
+            "label": "Before the visitor agrees",
+            "help": "Where the shop asks for consent. Waiting, Google learns nothing of a visitor who has not agreed. Under Consent Mode the tag loads at once and stores nothing until they agree, sending Google signals without cookies, from which it models the visits and conversions it cannot see; it needs \"Google Consent Mode v2\" on in Personal data, and without it the tag waits. Not waiting, the tag loads for everyone, as code in the \"Necessary\" category does — while Consent Mode is on, Google still keeps its cookies until the visitor agrees. Whether the law where the shop sells allows it is the shop's decision."
+        },
+        {
+            "key": "_g_ecommerce",
+            "type": "group",
+            "label": "E-commerce"
+        },
+        {
+            "key": "ecommerce",
+            "type": "checkbox",
+            "default": true,
+            "label": "Send e-commerce events",
+            "help": "view_item, add_to_cart, remove_from_cart, add_to_wishlist, begin_checkout and purchase, with the products and their prices in the shop's accounting currency — Google Analytics converts it into the property's own."
+        },
+        {
+            "key": "item_id",
+            "type": "select",
+            "default": "sku",
+            "options": {
+                "sku": "The product's code (SKU)",
+                "id": "The product's number in the shop"
+            },
+            "label": "A product's item ID",
+            "help": "What a product is called in the reports, and what Google Ads matches it with a product feed by — choose what the feed gives as id."
+        },
+        {
+            "key": "_g_leads",
+            "type": "group",
+            "label": "Leads"
+        },
+        {
+            "key": "leads",
+            "type": "checkboxes",
+            "default": ["callback", "product_question"],
+            "options": {},
+            "label": "Forms that are a lead",
+            "help": "Sending one of them is the generate_lead event, the form's kind as lead_source. Mark generate_lead as a key event in Google Analytics to count them as conversions."
+        },
+        {
+            "key": "_link_client_facts",
+            "type": "link",
+            "url": "/admin/settings/torgash.checkout",
+            "label": "Keep the client ID on orders",
+            "help": "Tick \"Google Analytics client ID\" among what an order writes down about the buyer's browser (and in the enquiries settings, for requests): the order's card, the API and the export of orders then say which visitor of Google Analytics placed it — what a CRM sends a sale back to Google Analytics with. Written only where the tag was allowed to run."
+        }
+    ],
+    "permissions": [],
+    "admin_menu": []
+}

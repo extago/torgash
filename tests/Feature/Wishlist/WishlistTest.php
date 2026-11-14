@@ -37,6 +37,25 @@ class WishlistTest extends TestCase
         $this->assertSame(0, $list->items()->count());
     }
 
+    /** The page hears what the heart did, and to which product — a counter's "added to the wishlist" (PLAN §73). */
+    public function test_the_toggle_tells_the_page_what_it_did(): void
+    {
+        $product = $this->product('WL-21', 'Wishkettle');
+        $event = fn () => json_decode((string) $this->post(route('wishlist.toggle', 'wl-21'), [], ['HX-Request' => 'true'])
+            ->assertOk()->headers->get('HX-Trigger'), true)[\Torgash\Wishlist\Http\WishlistController::CHANGED] ?? null;
+
+        $added = $event();
+        $this->assertSame([(string) $product->id, 'WL-21', 'Wishkettle', 100], [
+            $added['added'][0]['id'], $added['added'][0]['sku'], $added['added'][0]['name'], $added['added'][0]['price'],
+        ]);
+        $this->assertArrayNotHasKey('removed', $added);
+        $this->assertSame(shop_currency(), $added['currency']);
+
+        $removed = $event();
+        $this->assertSame((string) $product->id, $removed['removed'][0]['id']);
+        $this->assertArrayNotHasKey('added', $removed);
+    }
+
     /** An add says so in core's corner stack; a removal and the switched-off setting say nothing. */
     public function test_an_add_answers_with_a_corner_notice(): void
     {

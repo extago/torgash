@@ -97,7 +97,7 @@ class Cipher
     }
 
     /** @return array{0: string, 1: string} key and IV */
-    protected static function derive(string $password, string $salt): array
+    public static function derive(string $password, string $salt): array
     {
         $bytes = hash_pbkdf2('sha256', $password, $salt, self::ITERATIONS, 48, true);
 

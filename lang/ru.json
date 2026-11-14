@@ -2047,5 +2047,22 @@
     "We fill it in for you in orders and callback requests.": "Подставим его в заказы и заявки на звонок, вводить заново не придётся.",
     "Phone saved.": "Телефон сохранён.",
     "Phone removed.": "Телефон удалён.",
-    "Left by the customer for calls, not confirmed: :number": "Покупатель оставил для звонков, не подтверждён: :number"
+    "Left by the customer for calls, not confirmed: :number": "Покупатель оставил для звонков, не подтверждён: :number",
+    "Volume :n: :error": "Том :n: :error",
+    "No storage took volume :n: :error": "Ни одно хранилище не приняло том :n: :error",
+    "A volume needs :need of free space on the server, and :free is free. Make the volumes smaller.": "Для тома нужно :need свободного места на сервере, а свободно :free. Уменьшите размер томов.",
+    "Packing the backup as one file needs about :need of free space on the server, and :free is free. Cut it into volumes (tar or tar.gz, \"Volumes\" in the plan): then the server holds one volume at a time.": "Чтобы упаковать копию одним файлом, на сервере нужно около :need свободного места, а свободно :free. Разбейте её на тома (tar или tar.gz, «Тома» в задании): тогда на сервере лежит только один том за раз.",
+    "A volume is from :min to :max MB.": "Том — от :min до :max МБ.",
+    ":count volume|:count volumes": ":count том|:count тома|:count томов",
+    "Put together with": "Собрать обратно:",
+    "(Windows: copy /b), or open the .001 in 7-Zip.": "(Windows: copy /b) или открыть .001 в 7-Zip.",
+    "Volumes": "Тома",
+    "One file": "Одним файлом",
+    ":size MB each": "по :size МБ",
+    "My own size": "Свой размер",
+    "Each volume is stored as soon as it is full and deleted from the server before the next one: the server needs room for one volume, not for the whole backup, and a dropped connection costs one volume. Put together with cat name.tar.gz.* > name.tar.gz (Windows: copy /b), or open the .001 in 7-Zip.": "Каждый том отправляется в хранилища, как только набран, и удаляется с сервера до начала следующего: месту на сервере нужно хватить на один том, а не на всю копию, и оборванная связь стоит одного тома. Собрать обратно: cat имя.tar.gz.* > имя.tar.gz (Windows: copy /b) или открыть .001 в 7-Zip.",
+    "Only a tar or tar.gz is cut into volumes: it is written as it goes, a zip is finished only when it is closed.": "На тома режется только tar или tar.gz: он пишется по ходу, а zip готов лишь в момент закрытия.",
+    "Packing in volumes of :size MB": "Упаковка томами по :size МБ",
+    "Volume :n stored": "Том :n сохранён",
+    "Sending volume :n of :count to :storage": "Том :n из :count отправляется в «:storage»"
 }

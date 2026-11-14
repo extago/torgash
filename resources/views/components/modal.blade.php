@@ -23,6 +23,10 @@
     // A lucide icon drawn before the trigger's words (a row of small actions
     // under a buy button, where every other control has one).
     'triggerIcon' => null,
+    // An event the page hears when its trigger opens it — `torgash:<name>` on
+    // the dialog, bubbling (actions.js): a counter's goal, "the one-click
+    // form was opened". A name, never code.
+    'opened' => null,
 ])
 
 {{--
@@ -80,7 +84,7 @@
     </button>
 @endif
 
-<dialog id="{{ $id }}" class="modal">
+<dialog id="{{ $id }}" class="modal"@if (filled($opened)) data-opened-event="{{ $opened }}"@endif>
     {{-- No taller than the screen: the header and the footer stay, the content
          between them scrolls (a long list of block types did not). --}}
     <div class="modal-box p-0 overflow-hidden flex flex-col max-h-[calc(100dvh-2rem)] {{ $width }}">

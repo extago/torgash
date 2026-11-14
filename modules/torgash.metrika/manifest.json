@@ -1,0 +1,131 @@
+{
+    "id": "torgash.metrika",
+    "name": "Yandex Metrica",
+    "version": "1.0.0",
+    "icon": "chart-line",
+    "section": "marketing",
+    "description": "The Yandex Metrica counter by its number: visits, Webvisor and the click map; e-commerce — products viewed, put into and taken out of the basket, and bought; goals for the basket, the order, the wishlist, the one-click form and a call back; the visitor's ClientID kept on the order for a CRM. Waits for the visitor's consent where the shop asks for it.",
+    "provider": "Torgash\\Metrika\\MetrikaServiceProvider",
+    "autoload": {
+        "Torgash\\Metrika\\": "src/"
+    },
+    "requires": {
+        "core": ">=0.1",
+        "modules": ["torgash.catalog"]
+    },
+    "settings": [
+        {
+            "key": "counter_id",
+            "type": "text",
+            "default": "",
+            "label": "Counter number",
+            "help": "The digits in the counter's code in Metrica — ym(12345678, \"init\", …). Empty: nothing is printed on the pages.",
+            "keywords": {
+                "en": "yandex metrica metrika counter tag analytics statistics",
+                "ru": "яндекс метрика счётчик счетчик статистика аналитика"
+            }
+        },
+        {
+            "key": "wait_consent",
+            "type": "checkbox",
+            "default": true,
+            "label": "Wait for the visitor's consent",
+            "help": "Where the shop asks for consent (Personal data), the counter starts only for visitors who allowed \"Statistics\". Unticked, it counts everyone, as code in the \"Necessary\" category of Code snippets does; whether the law where the shop sells allows that is the shop's decision."
+        },
+        {
+            "key": "_g_collects",
+            "type": "group",
+            "label": "What the counter collects"
+        },
+        {
+            "key": "webvisor",
+            "type": "checkbox",
+            "default": true,
+            "label": "Webvisor",
+            "help": "Recordings of visits, watched in Metrica: what a visitor saw, where they moved and what they clicked."
+        },
+        {
+            "key": "clickmap",
+            "type": "checkbox",
+            "default": true,
+            "label": "Click map",
+            "help": "Where on each page visitors click."
+        },
+        {
+            "key": "track_links",
+            "type": "checkbox",
+            "default": true,
+            "label": "External links and downloads",
+            "help": "Clicks on links to other sites and on files to download, in Metrica's own report."
+        },
+        {
+            "key": "accurate_bounce",
+            "type": "checkbox",
+            "default": true,
+            "label": "Accurate bounce rate",
+            "help": "A visit counts as a bounce only when it lasted under 15 seconds, not whenever it saw one page."
+        },
+        {
+            "key": "track_hash",
+            "type": "checkbox",
+            "default": true,
+            "label": "Changes after # in the address",
+            "help": "A change of the part of the address after # counts as a page view."
+        },
+        {
+            "key": "count_hits",
+            "type": "checkbox",
+            "default": true,
+            "label": "Pages opened without a reload",
+            "help": "\"Show more\" under a list puts the next page's address into the address bar; it is counted as a page view, as an ordinary page is."
+        },
+        {
+            "key": "_g_ecommerce",
+            "type": "group",
+            "label": "E-commerce"
+        },
+        {
+            "key": "ecommerce",
+            "type": "checkbox",
+            "default": true,
+            "label": "Send e-commerce data",
+            "help": "Products viewed, put into and taken out of the basket, and orders, with their prices — Metrica's E-commerce reports. Switch E-commerce on in the counter's settings in Metrica too."
+        },
+        {
+            "key": "currency",
+            "type": "select",
+            "default": "",
+            "options": {},
+            "label": "Currency of the counter",
+            "help": "Metrica does not convert: a sum in a currency other than the counter's is counted as zero. Choose the one set in the counter's settings in Metrica; sums are converted from the shop's accounting currency at the shop's rate."
+        },
+        {
+            "key": "_g_goals",
+            "type": "group",
+            "label": "Goals"
+        },
+        {
+            "key": "goals",
+            "type": "checkboxes",
+            "default": ["basket", "order", "wishlist", "buy_with_one_click_form_opened", "call_request"],
+            "options": {
+                "basket": "Put into the basket (basket)",
+                "order": "Order placed (order)",
+                "wishlist": "Added to the wishlist (wishlist)",
+                "buy_with_one_click_form_opened": "One-click form opened (buy_with_one_click_form_opened)",
+                "call_request": "Call back requested (call_request)"
+            },
+            "label": "Goals the counter is told of",
+            "help": "Each is reached under the identifier in brackets: in Metrica add a goal of the kind \"JavaScript event\" with that identifier. A placed order gives its goal the order's sum as revenue."
+        },
+        {
+            "key": "_link_client_facts",
+            "type": "link",
+            "url": "/admin/settings/torgash.checkout",
+            "label": "Keep the ClientID on orders",
+            "help": "Tick \"Yandex Metrica ClientID\" among what an order writes down about the buyer's browser (and in the enquiries settings, for requests): the order's card, the API and the export of orders then say which visitor of Metrica placed it — what a CRM matches calls and sales to advertising by. Written only where the counter was allowed to run."
+        }
+    ],
+    "permissions": [],
+    "admin_menu": []
+}

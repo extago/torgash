@@ -68,6 +68,19 @@ class BackupPlan extends Model
         return $this->format !== 'folder' && (bool) $this->option('encrypt') && $this->password() !== '';
     }
 
+    /**
+     * The size of a volume in bytes, or null for one file (PLAN §67.12).
+     * Only a tar is cut: it is written as it goes, so each volume is stored
+     * and deleted before the next — a zip is finished only when closed.
+     * `$megabyte` is what a test shrinks to see many volumes of a small shop.
+     */
+    public function volumeBytes(int $megabyte = 1048576): ?int
+    {
+        $mb = (int) $this->option('volume_mb', 0);
+
+        return in_array($this->format, \App\Core\Backups\Volumes::FORMATS, true) && $mb > 0 ? $mb * $megabyte : null;
+    }
+
     public function level(): int
     {
         return self::LEVELS[$this->option('level', 'normal')] ?? 6;

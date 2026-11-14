@@ -274,4 +274,8 @@
             </div>
         </div>
     </div>
+
+    {{-- A checkout begun, told to the page — not when the form came back
+         refused (CheckoutStarted: a counter's begin_checkout). --}}
+    {!! \Torgash\Checkout\Orders\CheckoutStarted::announce($cart, $appliedCoupon?->code) !!}
 @endsection

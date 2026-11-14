@@ -84,7 +84,24 @@ class Backups
      */
     public int $retryPause = 20;
 
+    /**
+     * Bytes in the megabyte a plan's volume size is counted in (PLAN
+     * §67.12). A test shrinks it to cut a small shop into many volumes.
+     */
+    public int $megabyte = 1048576;
+
+    /** Room left free on the disk beyond what packing needs, in bytes. */
+    protected const ROOM_MARGIN = 64 * 1048576;
+
     public function __construct(protected Destinations $destinations) {}
+
+    /** Bytes free on the disk of a folder; null when the system will not say. */
+    protected function freeSpace(string $dir): ?float
+    {
+        $free = @disk_free_space($dir);
+
+        return $free === false ? null : (float) $free;
+    }
 
     // ------------------------------------------------------------ plans and runs
 
@@ -182,6 +199,19 @@ class Backups
             );
             $manifest = $staged['manifest'];
 
+            $pathIn = function (BackupDestination $destination) use ($plan, $at, $name): string {
+                $folder = Names::folder((string) $destination->path_template, $plan, $at);
+
+                return ($folder === '' ? '' : $folder.'/').$name;
+            };
+            // Cut into volumes (PLAN §67.12): each stored everywhere as soon
+            // as it is full and deleted before the next — what a storage
+            // refused is said per storage, and that storage takes no more.
+            $volumeBytes = $format === 'folder' ? null : $plan->volumeBytes($this->megabyte);
+            $volumes = null;
+            $refused = [];
+            $sent = [];
+
             if ($format === 'folder') {
                 $bytes = array_sum(array_map(fn (array $entry) => (int) filesize($entry[1]), $staged['entries']));
                 // No one file to hash: the journal vouches for the dump, the
@@ -193,7 +223,66 @@ class Backups
                     }
                 }
                 $send = fn (Store $store, string $path) => $this->uploadFolder($store, $path, $staged['entries']);
+            } elseif ($volumeBytes !== null) {
+                $this->assertRoom($work, $volumeBytes, true);
+                $say('Packing in volumes of :size MB', ['size' => (int) $plan->option('volume_mb')]);
+                $volumes = [];
+                $stores = [];
+
+                $sealed = function (int $number, string $local, int $volumeSize, string $volumeHash) use (&$volumes, &$stores, &$refused, &$sent, $destinations, $pathIn, $say): void {
+                    foreach ($destinations as $destination) {
+                        if (isset($refused[$destination->id])) {
+                            continue;
+                        }
+
+                        $path = Volumes::file($pathIn($destination), $number);
+
+                        for ($attempt = 1; ; $attempt++) {
+                            try {
+                                $stores[$destination->id] ??= $this->destinations->open($destination);
+                                $this->upload($stores[$destination->id], $path, $local);
+                                $sent[$destination->id][] = $path;
+                                break;
+                            } catch (Throwable $e) {
+                                unset($stores[$destination->id]);
+                                $message = Str::limit(Destinations::reason($e), 800);
+
+                                if ($attempt < 2) {
+                                    $say(':storage did not take the file (:error) — trying once more', ['storage' => $destination->name, 'error' => Str::limit($message, 200)]);
+                                    sleep($this->retryPause);
+
+                                    continue;
+                                }
+
+                                $refused[$destination->id] = __('Volume :n: :error', ['n' => $number, 'error' => $message]);
+                                break;
+                            }
+                        }
+                    }
+
+                    @unlink($local);
+
+                    if (count($refused) >= $destinations->count()) {
+                        throw new RuntimeException(__('No storage took volume :n: :error', ['n' => $number, 'error' => implode('; ', $refused)]));
+                    }
+
+                    $volumes[] = ['bytes' => $volumeSize, 'sha256' => $volumeHash];
+                    $say('Volume :n stored', ['n' => $number]);
+                };
+
+                try {
+                    [$bytes, $sha256] = $this->buildVolumes($work.DIRECTORY_SEPARATOR.$name, $format, $staged['entries'], $plan->level(), $password, $volumeBytes, $sealed);
+                } catch (Throwable $e) {
+                    // Half a backup is not one: the volumes already stored go again.
+                    $this->takeBack($destinations, $sent);
+
+                    throw $e;
+                }
+
+                $setFile = $work.DIRECTORY_SEPARATOR.'volumes.json';
+                $send = fn (Store $store, string $path) => $this->upload($store, $path.Volumes::SET, $setFile);
             } else {
+                $this->assertRoom($work, array_sum(array_map(fn (array $entry) => (int) @filesize($entry[1]), $staged['entries'])), false);
                 $say('Packing', []);
                 $file = $work.DIRECTORY_SEPARATOR.$name;
                 $this->build($file, $format, $staged['entries'], $plan->level(), $password);
@@ -206,6 +295,7 @@ class Backups
                 'name' => $name,
                 'bytes' => $bytes,
                 'sha256' => $sha256,
+                'volumes' => $volumes,
                 'contents' => $manifest['contents'],
                 'format' => $format,
                 'encrypted' => $encrypt,
@@ -213,14 +303,27 @@ class Backups
                 'files_since' => $manifest['files_since'] !== null ? $base?->started_at : null,
             ]);
 
+            if ($volumes !== null) {
+                file_put_contents($setFile, Volumes::setOf($run));
+            }
+
             $stored = 0;
             $failures = [];
 
             foreach ($destinations as $destination) {
                 $say('Storing the backup in :storage', ['storage' => $destination->name]);
                 unset($store);
-                $folder = Names::folder((string) $destination->path_template, $plan, $at);
-                $path = ($folder === '' ? '' : $folder.'/').$name;
+                $path = $pathIn($destination);
+
+                // A storage that refused a volume holds no backup: what it
+                // did take goes again, and "send again" sends it whole.
+                if (isset($refused[$destination->id])) {
+                    $this->takeBack(collect([$destination]), $sent);
+                    $run->copies()->create(['destination_id' => $destination->id, 'path' => $path, 'status' => BackupCopy::FAILED, 'error' => $refused[$destination->id]]);
+                    $failures[] = $destination->name.': '.$refused[$destination->id];
+
+                    continue;
+                }
 
                 // A storage that refuses is tried once more after a pause (PLAN
                 // §67.11): a server that was busy for a moment usually is not
@@ -250,6 +353,9 @@ class Backups
                             continue;
                         }
 
+                        if ($volumes !== null) {
+                            $this->takeBack(collect([$destination]), $sent);
+                        }
                         $run->copies()->create(['destination_id' => $destination->id, 'path' => $path, 'status' => BackupCopy::FAILED, 'error' => $message]);
                         $failures[] = $destination->name.': '.$message;
                         break;
@@ -442,6 +548,12 @@ class Backups
         $path = (string) $copy->path;
 
         try {
+            if ($run->isVolumes()) {
+                $this->resendVolumes($run, $copy, $destination, $from, $fromPath, $work, $say);
+
+                return $copy->refresh();
+            }
+
             $say('Fetching the backup', []);
             $entries = [];
 
@@ -494,6 +606,59 @@ class Backups
         }
 
         return $copy->refresh();
+    }
+
+    /**
+     * A backup kept as volumes sent again (PLAN §67.12): volume by volume,
+     * each fetched, compared with the journal, stored and deleted before the
+     * next — the server needs the room of one here too — and the set file
+     * last. What was stored of a set that did not finish goes again.
+     */
+    protected function resendVolumes(BackupRun $run, BackupCopy $copy, BackupDestination $destination, Store $from, string $fromPath, string $work, callable $say): void
+    {
+        $path = (string) $copy->path;
+        $local = $work.DIRECTORY_SEPARATOR.'volume';
+        $uploaded = [];
+        $store = null;
+
+        try {
+            $store = $this->destinations->open($destination);
+
+            foreach (array_values((array) $run->volumes) as $i => $volume) {
+                $n = $i + 1;
+                $say('Sending volume :n of :count to :storage', ['n' => $n, 'count' => $run->volumeCount(), 'storage' => $destination->name]);
+                $this->fetch($from, Volumes::file($fromPath, $n), $local);
+
+                if (! empty($volume['sha256']) && ! hash_equals((string) $volume['sha256'], (string) hash_file('sha256', $local))) {
+                    throw new RuntimeException("Volume $n of {$run->name} in the copy it is sent from is not the file that was made: its checksum differs from the journal's.");
+                }
+
+                $this->upload($store, Volumes::file($path, $n), $local);
+                $uploaded[] = Volumes::file($path, $n);
+                @unlink($local);
+            }
+
+            file_put_contents($local, Volumes::setOf($run));
+            $this->upload($store, $path.Volumes::SET, $local);
+        } catch (Throwable $e) {
+            foreach ($uploaded as $done) {
+                try {
+                    $store?->delete($done);
+                } catch (Throwable) {
+                }
+            }
+            $copy->update(['error' => Str::limit(Destinations::reason($e), 800)]);
+            $this->settle($run);
+
+            throw $e;
+        }
+
+        $copy->update(['status' => BackupCopy::STORED, 'error' => null]);
+        $this->settle($run);
+
+        if ($run->plan) {
+            $this->prune($run->plan, $destination);
+        }
     }
 
     /** A finished run's status from its copies: `done` with every one stored, `partial` while some are not. */
@@ -732,7 +897,17 @@ class Backups
     /** A copy taken away: a file, or the folder of one made without an archive. */
     protected function remove(Store $store, BackupRun $run, string $path): void
     {
-        $run->isFolder() ? $store->deleteFolder($path) : $store->delete($path);
+        if ($run->isFolder()) {
+            $store->deleteFolder($path);
+        } elseif ($run->isVolumes()) {
+            // The set file first: a set half deleted must not look complete.
+            $store->delete($path.Volumes::SET);
+            for ($n = 1; $n <= $run->volumeCount(); $n++) {
+                $store->delete(Volumes::file($path, $n));
+            }
+        } else {
+            $store->delete($path);
+        }
     }
 
     /** A failed run says what went wrong; after a month it has said it. */
@@ -785,9 +960,11 @@ class Backups
                 try {
                     $store = $this->destinations->open($copy->destination);
                     $run = $copy->run;
-                    $there = $run?->isFolder()
-                        ? $store->exists($copy->path.'/manifest.json')
-                        : $store->exists((string) $copy->path);
+                    $there = match (true) {
+                        (bool) $run?->isFolder() => $store->exists($copy->path.'/manifest.json'),
+                        (bool) $run?->isVolumes() => $store->exists($copy->path.Volumes::SET),
+                        default => $store->exists((string) $copy->path),
+                    };
 
                     if ($there) {
                         return [$store, (string) $copy->path, $run];
@@ -804,7 +981,7 @@ class Backups
             try {
                 $store = new Store(Storage::disk($disk), self::DIR);
 
-                if ($store->exists($name) || $store->exists($name.'/manifest.json')) {
+                if ($store->exists($name) || $store->exists($name.'/manifest.json') || $store->exists($name.Volumes::SET)) {
                     return [$store, $name, null];
                 }
             } catch (Throwable) {
@@ -820,7 +997,7 @@ class Backups
      * older journal, and a new server none. A file the engine names, or a
      * folder with a manifest.json — under any folder of the template.
      *
-     * @return Collection<int, array{name: string, path: string, bytes: ?int, folder: bool}>
+     * @return Collection<int, array{name: string, path: string, bytes: ?int, folder: bool, volumes: int}>
      */
     public function listIn(BackupDestination $destination): Collection
     {
@@ -834,14 +1011,32 @@ class Backups
                 $folder = dirname($path);
                 $name = basename($folder);
                 if (preg_match(self::SAFE_NAME, $name) && ! str_contains(dirname($folder), 'files/') ) {
-                    $found->push(['name' => $name, 'path' => $folder, 'bytes' => null, 'folder' => true]);
+                    $found->push(['name' => $name, 'path' => $folder, 'bytes' => null, 'folder' => true, 'volumes' => 0]);
+                }
+
+                continue;
+            }
+
+            // Volumes (PLAN §67.12): the set file stands for them, and only
+            // a set that has one finished.
+            if (str_ends_with($base, Volumes::SET) && ! preg_match('#(^|/)[^/]+/(files|code)/#', $path)) {
+                $name = substr($base, 0, -strlen(Volumes::SET));
+                if (preg_match(self::SAFE_NAME, $name)) {
+                    try {
+                        $read = $store->read($path);
+                        $listed = Volumes::parse((string) stream_get_contents($read));
+                        fclose($read);
+                    } catch (Throwable) {
+                        continue;
+                    }
+                    $found->push(['name' => $name, 'path' => substr($path, 0, -strlen(Volumes::SET)), 'bytes' => array_sum(array_column($listed, 'bytes')), 'folder' => false, 'volumes' => count($listed)]);
                 }
 
                 continue;
             }
 
             if (preg_match(self::SAFE_NAME, $base) && preg_match('/\.(zip|tar|tar\.gz|enc)$/', $base) && ! preg_match('#(^|/)[^/]+/(files|code)/#', $path)) {
-                $found->push(['name' => $base, 'path' => $path, 'bytes' => $store->size($path), 'folder' => false]);
+                $found->push(['name' => $base, 'path' => $path, 'bytes' => $store->size($path), 'folder' => false, 'volumes' => 0]);
             }
         }
 
@@ -1046,17 +1241,87 @@ class Backups
             return;
         }
 
-        $tar = $password === '' ? $target : $target.'.plain';
-        $writer = new Archive\TarWriter($tar, $format === 'tar.gz' ? $level : null);
+        // Encrypted as it is written (PLAN §67.12): never a plain tar on
+        // the disk beside the encrypted one, which doubled the room needed.
+        $out = new Archive\FileOutput($target);
+        $writer = new Archive\TarWriter($password === '' ? $out : new Archive\CipherOutput($out, $password), $format === 'tar.gz' ? $level : null);
+        foreach ($entries as [$name, $source]) {
+            $writer->addFile($name, $source);
+        }
+        $writer->close();
+    }
+
+    /**
+     * The tar written straight into volumes of `$size` bytes (PLAN §67.12):
+     * tar → gzip → cipher → volumes, each handed to `$sealed` (which stores
+     * and deletes it) before the next is begun. Returns the bytes and the
+     * checksum of the volumes put together.
+     *
+     * @param  list<array{0: string, 1: string}>  $entries
+     * @param  \Closure(int, string, int, string): void  $sealed
+     * @return array{0: int, 1: ?string}
+     */
+    protected function buildVolumes(string $base, string $format, array $entries, int $level, string $password, int $size, \Closure $sealed): array
+    {
+        $volumes = new Archive\VolumeOutput($base, $size, $sealed);
+        $writer = new Archive\TarWriter($password === '' ? $volumes : new Archive\CipherOutput($volumes, $password), $format === 'tar.gz' ? $level : null);
         foreach ($entries as [$name, $source]) {
             $writer->addFile($name, $source);
         }
         $writer->close();
 
-        if ($password !== '') {
-            Archive\Cipher::encryptFile($tar, $target, $password);
-            @unlink($tar);
+        return [$volumes->bytes(), $volumes->sha256()];
+    }
+
+    /**
+     * The volumes a run stored in these storages, deleted again: a set that
+     * never finished is no backup, and the storage is not left holding it.
+     *
+     * @param  iterable<BackupDestination>  $destinations
+     * @param  array<int, list<string>>  $sent
+     */
+    protected function takeBack(iterable $destinations, array &$sent): void
+    {
+        foreach ($destinations as $destination) {
+            if (empty($sent[$destination->id])) {
+                continue;
+            }
+
+            try {
+                $store = $this->destinations->open($destination);
+                foreach ($sent[$destination->id] as $path) {
+                    try {
+                        $store->delete($path);
+                    } catch (Throwable) {
+                    }
+                }
+            } catch (Throwable) {
+                // Unreachable now: the volumes stay, the set file never comes.
+            }
+
+            unset($sent[$destination->id]);
         }
+    }
+
+    /**
+     * Refuses, in words and before anything is packed, a backup the work
+     * folder's disk cannot hold (PLAN §67.6): a site of 50 GB on a disk of
+     * 80 would fail an hour later with "is the disk full?". Volumes need the
+     * room of one; a file needs the room of all it packs.
+     */
+    protected function assertRoom(string $work, int $need, bool $volumes): void
+    {
+        $free = $this->freeSpace($work);
+
+        if ($free === null || $need + self::ROOM_MARGIN <= $free) {
+            return;
+        }
+
+        $gb = fn (float $bytes) => number_format($bytes / 1073741824, 1).' GB';
+
+        throw new RuntimeException($volumes
+            ? __('A volume needs :need of free space on the server, and :free is free. Make the volumes smaller.', ['need' => $gb($need + self::ROOM_MARGIN), 'free' => $gb($free)])
+            : __('Packing the backup as one file needs about :need of free space on the server, and :free is free. Cut it into volumes (tar or tar.gz, "Volumes" in the plan): then the server holds one volume at a time.', ['need' => $gb($need + self::ROOM_MARGIN), 'free' => $gb($free)]));
     }
 
     /** A zip of $contents at $zipPath (an update's backup); returns its manifest. */
@@ -1461,6 +1726,11 @@ class Backups
                 return new Archive\FolderReader(new Store(Storage::build(['driver' => 'local', 'root' => $file, 'throw' => true])), '');
             }
 
+            // Volumes on this disk, named by any of their files (PLAN §67.12).
+            if ($set = Volumes::onDisk($file)) {
+                return $this->localVolumeReader($set, $password);
+            }
+
             if (! is_file($file)) {
                 throw new RuntimeException("There is no file $file.");
             }
@@ -1480,6 +1750,12 @@ class Backups
         // laid beside a file (on S3 a name can be both) pass for a folder.
         if ($run ? $run->isFolder() : $store->exists($path.'/manifest.json')) {
             return new Archive\FolderReader($store, $path);
+        }
+
+        if ($run ? $run->isVolumes() : $store->exists($path.Volumes::SET)) {
+            $say('Fetching the backup');
+
+            return $this->volumeReader($store, $path, $run, $password, $work);
         }
 
         $say('Fetching the backup');
@@ -1521,12 +1797,87 @@ class Backups
                 throw new RuntimeException('The backup is encrypted: give its password (--password).');
             }
 
-            $plain = $work.DIRECTORY_SEPARATOR.'decrypted';
-            Archive\Cipher::decryptFile($path, $plain, $password);
-            $path = $plain;
+            // Decrypted as it is read (PLAN §67.12), never into a second
+            // file the size of the first. A wrong password shows at once:
+            // what comes out is neither gzip nor a tar.
+            $reader = new Archive\TarReader(fn () => Archive\TarReader::unwrap(new Archive\FileInput($path), $password));
+            $reader->each(fn () => false);
+
+            return $reader;
         }
 
         return Archive\Reader::file($path, $password);
+    }
+
+    /**
+     * A backup kept as volumes in a storage, read as the one file they are
+     * (PLAN §67.12): each volume fetched when the one before it has been read
+     * through and deleted, so the disk holds one at a time. Every volume is
+     * compared with the journal's checksum before a byte of it is read — the
+     * journal is out of reach of whoever can write to the storage; without a
+     * journal, the list beside the volumes tells a damaged one.
+     */
+    protected function volumeReader(Store $store, string $path, ?BackupRun $run, ?string $password, string $work): Archive\Reader
+    {
+        $trusted = (bool) $run?->isVolumes();
+
+        if ($trusted) {
+            $listed = array_values((array) $run->volumes);
+        } else {
+            $read = $store->read($path.Volumes::SET);
+            $listed = Volumes::parse((string) stream_get_contents($read));
+            if (is_resource($read)) {
+                fclose($read);
+            }
+        }
+
+        $name = $run?->name ?? basename($path);
+        $local = $work.DIRECTORY_SEPARATOR.'volume';
+
+        $open = function (int $n) use ($store, $path, $listed, $local, $trusted, $name): string {
+            $this->fetch($store, Volumes::file($path, $n), $local);
+            $expected = $listed[$n - 1]['sha256'] ?? null;
+
+            if ($expected !== null && ! hash_equals((string) $expected, (string) hash_file('sha256', $local))) {
+                @unlink($local);
+
+                throw new RuntimeException($trusted
+                    ? "Volume $n of the backup $name is not the file that was made: its checksum differs from the journal's, so it was changed where it is kept. Nothing of it has been read. If you know these files and trust them, restore them by their path with --file."
+                    : "Volume $n of the backup $name is damaged: its checksum differs from the list beside it.");
+            }
+
+            return $local;
+        };
+
+        return new Archive\TarReader(fn () => Archive\TarReader::unwrap(
+            new Archive\VolumeInput(count($listed), $open, fn (int $n, string $file) => @unlink($file)),
+            $password,
+        ));
+    }
+
+    /**
+     * Volumes lying on this disk (`--file=`, the installer): read where they
+     * are, nothing deleted; a list beside them is compared with each.
+     *
+     * @param  array{base: string, files: list<string>, hashes: list<?string>}  $set
+     */
+    protected function localVolumeReader(array $set, ?string $password): Archive\Reader
+    {
+        $open = function (int $n) use ($set): string {
+            $file = $set['files'][$n - 1];
+            $expected = $set['hashes'][$n - 1] ?? null;
+
+            if ($expected !== null && ! hash_equals($expected, (string) hash_file('sha256', $file))) {
+                throw new RuntimeException("Volume $n is damaged: its checksum differs from the list beside it ($file).");
+            }
+
+            return $file;
+        };
+
+        return new Archive\TarReader(fn () => Archive\TarReader::unwrap(
+            new Archive\VolumeInput(count($set['files']), $open, fn () => null),
+            $password,
+        ));
     }
 
     protected function restoreDump(string $dump, string $target): void

@@ -13,8 +13,19 @@ this file is the reasoning. Read it before changing anything it covers.
   below its owner's rights); a call is an ordinary logged-in user, so every
   `can()` is the admin panel's. A status moves through
   `actions/status` → `OrderStatusChanger`, never a PATCH of the column: the
-  column would look like it worked and move no stock. Storefront and language
-  come from `X-Storefront` / `Accept-Language`.
+  column would look like it worked and move no stock. Money is the second
+  axis and has its own door, `actions/payment` (`state`, optional `paid_total`
+  — the whole of what the order holds) → `RecordPayment`, the payment control
+  on the order's page: a CRM that keeps the books marks an order paid, takes a
+  payment back off (`pending`) or records a refund made outside any gateway.
+  It asks `RecordPayment::changes()` first, so the same state sent again writes
+  nothing — a CRM may send its whole state every hour; the history line names
+  the token. A merged order (PLAN §40.10/4) and an unknown status are a 422 in
+  words, never a 500. Storefront and language
+  come from `X-Storefront` / `Accept-Language`. An order's `client` is what it
+  wrote down about the browser, by key — the facts the shop ticked, a
+  counter's id of the visitor among them (`metrika_client_id`,
+  `ga_client_id`): what a CRM matches calls and sales to advertising by.
 - A resource may declare `create` (`fn (array $data): Model`, described by
   `creatable` / `create_description`) — `POST /api/v2/admin/{resource}` —
   for the few rows the shop's own code makes on request (a gift card is

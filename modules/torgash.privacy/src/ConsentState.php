@@ -90,6 +90,16 @@ class ConsentState
      *
      * @return array<string, string|int>
      */
+    /**
+     * Are Google's tags told the visitors' choices on this shop — the
+     * defaults before any tag, the update on an answer? The shop's setting,
+     * and only where visitors are asked at all.
+     */
+    public function tellsGoogle(): bool
+    {
+        return setting('torgash.privacy', 'google_consent_mode', true) && $this->mode() !== 'off';
+    }
+
     public function googleDefaults(): array
     {
         $grant = fn (string $category) => $this->allows($category) ? 'granted' : 'denied';

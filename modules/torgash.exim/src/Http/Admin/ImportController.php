@@ -7,6 +7,7 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
+use Illuminate\Validation\Rule;
 use Torgash\Exim\Import\Columns;
 use Torgash\Exim\Import\ImportFile;
 use Torgash\Exim\Import\XmlFile;
@@ -32,19 +33,22 @@ use Torgash\Exim\SchemaRegistry;
  */
 class ImportController extends Controller
 {
-    public function index(SchemaRegistry $schema)
+    public function index(SchemaRegistry $schema, ImportRunner $runner)
     {
         return view('torgash.exim::admin.import.index', [
-            'entities' => $this->entities($schema),
+            // Offered: what a file can be imported as. Named: everything, for
+            // a draft or a preset of an entity that is exported only now.
+            'entities' => $this->importable($schema, $runner),
+            'labels' => $this->entities($schema),
             'presets' => ImportPreset::query()->orderBy('entity')->orderBy('name')->get(),
             'drafts' => ImportDraft::query()->with('user')->latest('updated_at')->get(),
         ]);
     }
 
-    public function upload(Request $request)
+    public function upload(Request $request, SchemaRegistry $schema, ImportRunner $runner)
     {
         $validated = $request->validate([
-            'entity' => 'required|string',
+            'entity' => ['required', 'string', Rule::in(array_keys($this->importable($schema, $runner)))],
             // By extension, not by the browser's guess: a YML is "text/plain"
             // to one and "application/octet-stream" to another.
             'file' => ['required', 'file', function ($attribute, $file, $fail) {
@@ -75,7 +79,7 @@ class ImportController extends Controller
     /** The mapping screen: every column of the file, a few of its values, and the field it goes to. */
     public function map(Request $request, string $token, ImportRunner $runner, SchemaRegistry $schema)
     {
-        $draft = $this->draft($token);
+        $draft = $this->openDraft($token, $runner);
 
         if (! $draft) {
             return $this->expired();
@@ -179,7 +183,7 @@ class ImportController extends Controller
     public function preview(Request $request, ImportRunner $runner, SchemaRegistry $schema)
     {
         $request->validate(['token' => 'required|string']);
-        $draft = $this->draft((string) $request->input('token'));
+        $draft = $this->openDraft((string) $request->input('token'), $runner);
 
         if (! $draft) {
             return $this->expired();
@@ -263,9 +267,9 @@ class ImportController extends Controller
         });
     }
 
-    public function commit(Request $request)
+    public function commit(Request $request, ImportRunner $runner)
     {
-        $draft = $this->draft((string) $request->input('token'));
+        $draft = $this->openDraft((string) $request->input('token'), $runner);
 
         if (! $draft || $draft->mappedCount() === 0) {
             return $this->expired();
@@ -349,6 +353,12 @@ class ImportController extends Controller
     protected function entities(SchemaRegistry $schema): array
     {
         return $schema->entities() ?: ['product' => 'Product', 'category' => 'Category', 'feature' => 'Feature'];
+    }
+
+    /** @return array<string, string> the entities a file can be imported as (ImportRunner::importable()) */
+    protected function importable(SchemaRegistry $schema, ImportRunner $runner): array
+    {
+        return array_intersect_key($this->entities($schema), $runner->importable());
     }
 
     /**
@@ -492,6 +502,26 @@ class ImportController extends Controller
     protected function draft(string $token): ?ImportDraft
     {
         return preg_match('/^[A-Za-z0-9]{32}$/', $token) ? ImportDraft::where('token', $token)->first() : null;
+    }
+
+    /**
+     * A draft that can still be imported. One uploaded as something that is
+     * exported only now (orders, PLAN §72) could write nothing, so it is
+     * nothing to come back to: the screen's way in and its two steps drop it.
+     * The helpers redrawing the screen in between are reached only through
+     * the first, and do not pay for the schema on every keystroke.
+     */
+    protected function openDraft(string $token, ImportRunner $runner): ?ImportDraft
+    {
+        $draft = $this->draft($token);
+
+        if ($draft && $runner->fields($draft->entity) === []) {
+            $draft->discard();
+
+            return null;
+        }
+
+        return $draft;
     }
 
     /** Runs `$work` with a local copy of the upload (the disk may be a bucket). */

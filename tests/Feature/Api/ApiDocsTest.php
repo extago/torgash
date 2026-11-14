@@ -94,6 +94,10 @@ class ApiDocsTest extends TestCase
 
         $this->assertNotEmpty($operation['description']);
         $this->assertArrayHasKey('status', $operation['requestBody']['content']['application/json']['schema']['properties']);
+
+        $payment = $this->document()['paths']['/api/v2/admin/orders/{key}/actions/payment']['post'];
+        $this->assertArrayHasKey('state', $payment['requestBody']['content']['application/json']['schema']['properties']);
+        $this->assertArrayHasKey('paid_total', $payment['requestBody']['content']['application/json']['schema']['properties']);
     }
 
     /** Which half needs a token is stated per operation, not left to be inferred. */

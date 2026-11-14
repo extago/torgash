@@ -3,8 +3,8 @@
  *
  * The forms post to /privacy/consent like any form; here they go over fetch,
  * and the answer — the categories now allowed — is announced as the DOM event
- * `torgash:consent`, which whoever printed waiting code listens for (the
- * snippets module's consent.js). Google Consent Mode gets its update too.
+ * `torgash:consent`, which whoever printed waiting code listens for (core's
+ * consent-gate.js). Google Consent Mode gets its update too.
  * "#cookie-settings" anywhere opens the window of choices again.
  */
 (function () {

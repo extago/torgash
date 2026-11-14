@@ -54,7 +54,7 @@ class PrivacyTest extends TestCase
         $this->assertStringContainsString('<script>window.ownHelper=1</script>', $html);
         $this->assertStringContainsString('<template data-consent="statistics"><script>window.analyticsRan=1</script></template>', $html);
         $this->assertStringContainsString('<template data-consent="marketing">', $html);
-        $this->assertStringContainsString('snippets/assets/consent.js', $html);
+        $this->assertStringContainsString('/assets/js/consent-gate.js', $html);
         $this->assertStringContainsString('data-privacy-banner', $html);
         $this->assertStringContainsString('"analytics_storage":"denied"', $html);
 
@@ -100,7 +100,7 @@ class PrivacyTest extends TestCase
         $this->assertStringContainsString('<script>window.ownHelper=1</script>', $html);
         $this->assertStringContainsString('data-privacy-banner', $html);
         $this->assertStringContainsString('"analytics_storage":"denied"', $html);
-        $this->assertStringContainsString('snippets/assets/consent.js', $html);
+        $this->assertStringContainsString('/assets/js/consent-gate.js', $html);
         $this->assertOneNonce($stranger);
 
         $this->flushSession();

@@ -982,3 +982,23 @@ not Secure", and the owner was told so. Empty means the framework decides per
 request, and the live answer had `secure` on it all along. The test written first
 passed on the old code, which is what showed it. A finding is a measured
 response, not a line that looks wrong.
+
+## A command we print is tested as it is printed
+
+Volumes were put together in the test by their numbers, `.001`, `.002`… —
+and every screen told the owner `cat <name>.* > <name>`. That glob also took
+`<name>.volumes.json`, the list beside them, and appended it: gzip called it
+trailing garbage, and an encrypted set would not decrypt at all. The test was
+right about the volumes and silent about the command. Run what the screen
+says (here: the glob), not what the test knows.
+
+## A script in an HTMX answer carries the wrong nonce
+
+htmx runs the scripts of an answer it swaps in by re-creating them, attributes
+copied — so the copy carries the nonce of the ANSWER, and the page's policy
+knows only the page's. `strict-dynamic` lets a trusted script load files, not
+run inline text with somebody else's nonce. The engine never relied on it (its
+partials keep scripts in the footer), and the one-click purchase for a counter
+would have been the first: nothing fails, the purchase is just never counted.
+An answer tells the page with `HX-Trigger` — an event with its detail — and a
+script already on the page acts on it.

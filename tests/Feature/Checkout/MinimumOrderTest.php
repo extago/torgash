@@ -33,9 +33,8 @@ class MinimumOrderTest extends TestCase
 
     public function test_under_the_minimum_the_basket_shows_the_bar_and_holds_the_button(): void
     {
-        $this->post('http://localhost/cart/add/wrapping-paper', ['qty' => 1])
-            ->assertOk()
-            ->assertHeader('HX-Trigger', 'torgash:cart-changed');
+        $added = $this->post('http://localhost/cart/add/wrapping-paper', ['qty' => 1])->assertOk();
+        $this->assertArrayHasKey('torgash:cart-changed', (array) json_decode((string) $added->headers->get('HX-Trigger'), true));
 
         $this->get('http://localhost/cart')->assertOk()
             ->assertSee('Minimum order amount')

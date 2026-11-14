@@ -800,3 +800,25 @@ newsletter campaign's deliveries take it before the subscription's own.
 a link over the whole page. Layout containment makes the box the containing block
 of anything fixed or absolute inside it, and the overflow keeps it there; a wide
 table scrolls by itself.
+
+## What the page hears (PLAN §73)
+
+The storefront's DOM events — raised by whoever owns what happened, heard by
+whatever wants to know (a counter, a badge) without naming the owner. An
+HTMX answer raises its event with `HX-Trigger`; the detail of one that names
+products is `ProductsEvent`'s (ASCII JSON, 1 KB at most, cart.md).
+
+| Event | Raised by | Detail |
+|---|---|---|
+| `torgash:cart-changed` | every change of the basket | `added`, `removed` (lines with the quantity that moved), `currency` |
+| `torgash:wishlist-changed` | a heart ticked or unticked | `added` or `removed`: the product, `currency` |
+| `torgash:checkout-started` | the checkout page, not again when the form comes back refused (orders.md) | `lines`, `coupon`, `currency` |
+| `torgash:order-placed` | the first page that shows an order placed (orders.md) | `number`, `total`, `shipping`, `discount`, `coupon`, `currency`, `lines` |
+| `torgash:enquiry-sent` | a form sent | `kind` (`callback`, a shop's form…) |
+| `torgash:one-click-opened` | the one-click form opened | — |
+| `torgash:consent` | the privacy banner's answer | `categories` |
+
+A dialog announces its own opening when asked: `<x-modal opened="name">`
+raises `torgash:name` (actions.js). A script inside an HTMX answer does not
+run (its nonce is the answer's, access.md), which is why answers raise events
+instead of carrying scripts.

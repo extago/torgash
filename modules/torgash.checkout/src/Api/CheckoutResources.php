@@ -2,11 +2,15 @@
 
 namespace Torgash\Checkout\Api;
 
+use App\Core\Support\PriceScale;
+use Illuminate\Support\Facades\Validator;
+use Illuminate\Validation\Rule;
 use Torgash\Api\ApiResources;
 use Torgash\Checkout\Models\Order;
 use Torgash\Checkout\Models\OrderStatus;
 use Torgash\Checkout\Orders\OrderStatusChanger;
 use Torgash\Checkout\Orders\PaymentState;
+use Torgash\Checkout\Orders\RecordPayment;
 
 /**
  * Orders on the API — readable, and moved by NAMED transitions.
@@ -22,7 +26,9 @@ use Torgash\Checkout\Orders\PaymentState;
  *
  * The same goes for money: `paid_total` is written by PaymentApplier from a
  * gateway's word, and an exchange marking an order paid goes through the same
- * door rather than around it.
+ * door rather than around it. `actions/payment` is that door for a CRM that
+ * keeps the books — RecordPayment, the payment control on the order's page:
+ * marked paid, taken back off (`pending`), returned outside any gateway.
  */
 class CheckoutResources
 {
@@ -72,10 +78,46 @@ class CheckoutResources
                     'body' => [
                         'status' => ['type' => 'string', 'description' => 'The status’ own code, as it appears in `status` on the order.', 'example' => 'complete'],
                     ],
-                    'apply' => fn (Order $order, array $data) => app(OrderStatusChanger::class)->change(
-                        $order,
-                        OrderStatus::findOrFail((string) ($data['status'] ?? '')),
-                    ),
+                    'apply' => function (Order $order, array $data) {
+                        $status = OrderStatus::find((string) ($data['status'] ?? ''));
+                        abort_unless($status, 422, __('There is no order status ":status".', ['status' => (string) ($data['status'] ?? '')]));
+
+                        try {
+                            return app(OrderStatusChanger::class)->change($order, $status);
+                        } catch (\RuntimeException $e) {
+                            // A merged order's status is closed both ways — said
+                            // in words to the program that asked, not as a 500.
+                            abort(422, $e->getMessage());
+                        }
+                    },
+                ],
+                'payment' => [
+                    'description' => 'Say where the money is — the payment control on the order’s page in the admin, for a CRM or an accounting system that keeps the books: `paid` when the money arrived, `pending` to take a payment back off an order marked paid by mistake, `refunded` when it was returned outside any gateway (a gateway’s own refund moves money; this only records it). Logged in the order’s history with the token’s name. Saying what the order already says changes nothing and logs nothing, so a whole state may be sent again.',
+                    'body' => [
+                        'state' => ['type' => 'string', 'description' => 'One of `'.implode('`, `', PaymentState::all()).'`.', 'example' => 'paid'],
+                        'paid_total' => ['type' => 'string|null', 'description' => 'What the order now holds in all, a gift card included: a decimal string in major units of the order’s `currency`, two places at most. Left out — all of it. Ignored for a state that holds no money.', 'example' => '1500.00'],
+                    ],
+                    'apply' => function (Order $order, array $data) {
+                        $valid = Validator::make($data, [
+                            'state' => ['required', 'string', Rule::in(PaymentState::all())],
+                            'paid_total' => ['nullable', PriceScale::amountRule()],
+                        ])->validate();
+
+                        $amount = PriceScale::minorFrom($valid['paid_total'] ?? null);
+                        abort_if($amount !== null && $amount < 0, 422, __('A paid amount cannot be negative.'));
+                        // A shell whose goods and money are another order's
+                        // (PLAN §40.10/4): the admin draws no control for it.
+                        abort_if($order->status === OrderStatus::MERGED || $order->merged_into_id, 422, __('Order :number was merged into another — its payment is recorded there.', ['number' => $order->order_number]));
+
+                        $payments = app(RecordPayment::class);
+
+                        if ($payments->changes($order, $valid['state'], $amount)) {
+                            $token = request()?->attributes->get('api_token');
+                            $payments->record($order, $valid['state'], $amount, $token?->name ? 'API: '.$token->name : 'API');
+                        }
+
+                        return $order;
+                    },
                 ],
             ],
         ]);
@@ -136,6 +178,7 @@ class CheckoutResources
             'source' => ['type' => 'string|null', 'description' => 'How it was placed: checkout, one_click, admin, api, exchange; null on an order from before that was recorded.'],
             'locale' => ['type' => 'string|null', 'description' => 'The language the customer bought in — what a reprint and an email are written in.'],
             'ip_address' => ['type' => 'string|null', 'description' => 'The address the order was placed from. Null for an order nobody placed from a browser — a manager’s exchange, an import.'],
+            'client' => ['type' => 'object', 'description' => 'What the order wrote down about the browser it was placed from, by key — the facts the shop ticked in the checkout settings: `user_agent`, `languages`, and those a module adds (`metrika_client_id`, the visitor in Yandex Metrica; `ga_client_id`, in Google Analytics). Empty for an order nobody placed from a browser.'],
             'created_at' => ['type' => 'string|null', 'format' => 'date-time'],
             'updated_at' => ['type' => 'string|null', 'format' => 'date-time'],
         ];
@@ -231,6 +274,7 @@ class CheckoutResources
             'source' => $order->source,
             'locale' => $order->locale,
             'ip_address' => $order->ip_address,
+            'client' => (object) array_filter((array) ($order->client ?? []), 'is_scalar'),
             'created_at' => $order->created_at?->toIso8601String(),
             'updated_at' => $order->updated_at?->toIso8601String(),
         ], ['order' => $order]);

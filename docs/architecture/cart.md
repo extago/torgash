@@ -195,6 +195,19 @@ this file is the reasoning. Read it before changing anything it covers.
   whatever shows the basket outside the out-of-band parts — listen with
   `hx-trigger="torgash:cart-changed from:body"`. A new way of changing the
   basket raises it as well.
+- **…and WHAT changed** (PLAN §73, `CartEvents`): the event's detail is
+  `added` / `removed` — each line as `ProductFacts::item()` describes it
+  (id, sku, name, brand, categories root first, the price per unit the basket
+  charged as a major-unit number in the books, the quantity that MOVED) — and
+  the books' `currency`. A quantity changed moves only the difference; a
+  variation swapped is one out and one in; clearing names what was there.
+  What a counter reports "added to the basket" from, without knowing the
+  basket (torgash.metrika). The header is budgeted (`ProductsEvent`): ASCII
+  JSON (a raw Cyrillic name in a header is mojibake), 1 KB at most — nginx
+  keeps 4 KB for ALL of an answer's headers and the cookies and the policy
+  take 1.6 KB (measured) — so long descriptions are slimmed, then lines left
+  out, then the bare event is sent. A new way of changing the basket passes
+  what it moved (`CartEvents::header()` / `lines()`), never the bare name.
 
 ### How many (report of 2026-11-09)
 
