@@ -34,6 +34,7 @@ class Entry extends Model
             'refund' => 'Returned from an order',
             'revoke' => 'Taken back from an order',
             'adjust' => 'Corrected by hand',
+            'bonus' => 'A bonus from the shop',
             'expire' => 'Expiry',
             default => (string) $this->type,
         });

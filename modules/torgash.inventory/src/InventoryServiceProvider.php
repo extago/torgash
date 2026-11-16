@@ -45,6 +45,24 @@ class InventoryServiceProvider extends ServiceProvider
         // Already a log: recording it again in the audit is the same event twice.
         hook_listen('guard.audit.ignored_tables', fn (array $tables) => [...$tables, 'm_inventory_moves']);
 
+        // "How many of these were sold in the last N days" — asked by whoever
+        // judges a shelf by how fast it empties (torgash.automations, PLAN
+        // §64.5). Net of what came back: a cancelled order returns its units
+        // under the same cause.
+        hook_listen('catalog.products.sold', function (array $sold, array $context) {
+            $ids = array_map('intval', (array) ($context['ids'] ?? []));
+
+            if ($ids === []) {
+                return $sold;
+            }
+
+            return $sold + \Illuminate\Support\Facades\DB::table('m_inventory_moves')
+                ->whereIn('product_id', $ids)->where('type', 'order')
+                ->where('created_at', '>=', now()->subDays(max(1, (int) ($context['days'] ?? 30))))
+                ->groupBy('product_id')->havingRaw('sum(delta) < 0')
+                ->selectRaw('product_id, -sum(delta) as sold')->pluck('sold', 'product_id')->map(fn ($n) => (int) $n)->all();
+        });
+
         // What the order earned, and its own expenses and income (§42.5а),
         // as a card on the order — for whoever keeps the books.
         hook_listen('checkout.order.side_panels', function (array $panels, array $context) {

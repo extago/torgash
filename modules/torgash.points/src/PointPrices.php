@@ -27,7 +27,7 @@ class PointPrices
             return null;
         }
 
-        $this->prices ??= DB::table('m_points_products')->pluck('points_price', 'product_id')->map('intval')->all();
+        $this->prices ??= DB::table('m_points_products')->whereNotNull('points_price')->pluck('points_price', 'product_id')->map('intval')->all();
 
         return $this->prices[$product instanceof Product ? (int) $product->id : (int) $product] ?? null;
     }

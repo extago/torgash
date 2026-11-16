@@ -41,11 +41,11 @@ class Context
         // What this order leaves on the shelf, per product (LowStock), and
         // the lines that leave too little — one entry per product.
         $left = LowStock::left($order, $products);
-        $threshold = LowStock::threshold();
+        $states = LowStock::states($order, $products);
         $short = [];
         foreach ((array) ($order->items ?? []) as $item) {
             $id = (int) ($item['product_id'] ?? 0);
-            if (is_array($item) && LowStock::state($left[$id] ?? null, $threshold) !== '' && ! isset($short[$id])) {
+            if (is_array($item) && ($states[$id] ?? '') !== '' && ! isset($short[$id])) {
                 $variation = $products[$id] ?? null ? self::line($item, $products[$id])['variation'] ?? '' : '';
                 $short[$id] = trim((string) ($item['name'] ?? '')).($variation !== '' ? ' ('.$variation.')' : '').' — '.__(':count pcs.', ['count' => $left[$id]]);
             }
@@ -117,7 +117,7 @@ class Context
                     'line_total_formatted' => $order->money((int) ($item['line_total'] ?? 0)),
                     // After this order, on the product's shelf (LowStock).
                     'stock' => $left[(int) ($item['product_id'] ?? 0)] ?? '',
-                    'stock_state' => $state = LowStock::state($left[(int) ($item['product_id'] ?? 0)] ?? null, $threshold),
+                    'stock_state' => $state = $states[(int) ($item['product_id'] ?? 0)] ?? '',
                     'low_stock' => $state !== '',
                 ], $order->items ?? []),
                 'low_stock_count' => count($short),

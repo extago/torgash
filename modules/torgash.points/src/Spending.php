@@ -16,6 +16,11 @@ use Torgash\Checkout\CouponManager;
  * points. What they come to is worked out every time from the balance and the
  * rules, never stored: a balance that moved since the basket was filled is
  * simply a smaller discount, and PlaceOrder spends only what the line says.
+ *
+ * How much of the goods points may pay is asked LINE BY LINE (PLAN §74): each
+ * product's share comes from its own answer, a rule or the shop's setting
+ * ({@see Rules::spend()}), and the basket's room is their sum. The discount
+ * itself stays one line on the order, as every discount there is.
  */
 class Spending
 {
@@ -23,7 +28,7 @@ class Spending
 
     public const LINES = 'points_lines';
 
-    public function __construct(protected Ledger $ledger, protected PointPrices $prices) {}
+    public function __construct(protected Ledger $ledger, protected PointPrices $prices, protected Rules $rules) {}
 
     public function requested(CartManager $cart): int
     {
@@ -53,6 +58,58 @@ class Spending
     public function pointValue(): int
     {
         return (int) round((float) setting('torgash.points', 'point_value', 1) * 100);
+    }
+
+    /**
+     * The money points may take off this basket: every line's own share of
+     * its total, brought down by what the coupon already took. `$except` are
+     * lines bought outright for their price in points.
+     *
+     * @param  list<string>  $except
+     */
+    public function room(CartManager $cart, int $base, array $except = []): int
+    {
+        $user = auth()->user();
+        $items = $cart->items();
+        $this->rules->prime($items->map(fn ($item) => $item->product)->all());
+
+        $goods = 0;
+        $weighted = 0;
+
+        foreach ($items as $item) {
+            $total = (int) $item->line_total;
+            $goods += $total;
+
+            if (in_array((string) $item->key, $except, true) || $total <= 0) {
+                continue;
+            }
+
+            $weighted += $total * $this->rules->spend((int) $item->product->id, intdiv($total, max(1, (int) $item->qty)), $user)['percent'];
+        }
+
+        if ($goods <= 0 || $weighted <= 0) {
+            return 0;
+        }
+
+        // The coupon lowered every line alike: so is each line's share.
+        return (int) floor($weighted * min($base, $goods) / ($goods * 100));
+    }
+
+    /** Whether something in the basket takes fewer points than the shop's usual share. */
+    public function restricted(CartManager $cart): bool
+    {
+        $user = auth()->user();
+        $share = max(0, min(100, (int) setting('torgash.points', 'spend_max_percent', 50)));
+        $items = $cart->items();
+        $this->rules->prime($items->map(fn ($item) => $item->product)->all());
+
+        foreach ($items as $item) {
+            if ($this->rules->spend((int) $item->product->id, intdiv((int) $item->line_total, max(1, (int) $item->qty)), $user)['percent'] < $share) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     /**
@@ -100,14 +157,13 @@ class Spending
             }
         }
 
-        // Points spent as money, within the shop's share of the goods.
+        // Points spent as money, within what the goods allow.
         $free = 0;
         $value = $this->pointValue();
         $requested = $this->requested($cart);
 
         if ($requested > 0 && $value > 0) {
-            $share = max(0, min(100, (int) setting('torgash.points', 'spend_max_percent', 50)));
-            $room = min($base - $covered, intdiv($base * $share, 100));
+            $room = min($base - $covered, $this->room($cart, $base, $bought));
             $free = min($requested, $balance - $linePoints, intdiv(max(0, $room), $value));
 
             if ($free < max(0, (int) setting('torgash.points', 'spend_min', 0))) {
@@ -144,8 +200,6 @@ class Spending
             return 0;
         }
 
-        $share = max(0, min(100, (int) setting('torgash.points', 'spend_max_percent', 50)));
-
-        return max(0, min($this->ledger->balance($user->id), intdiv(intdiv($base * $share, 100), $value)));
+        return max(0, min($this->ledger->balance($user->id), intdiv($this->room($cart, $base), $value)));
     }
 }

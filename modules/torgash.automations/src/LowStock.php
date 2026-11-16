@@ -67,6 +67,61 @@ class LowStock
         return $left;
     }
 
+    /**
+     * product id => at how many pieces it is "running low": the product's own
+     * line (PLAN §64.4), else the shop's — and never less than what it sells
+     * in the days the shop set (§64.5: "left for fewer than N days"), where
+     * somebody keeps a record of what is sold (`catalog.products.sold`,
+     * answered by `torgash.inventory` from its journal).
+     *
+     * @param  iterable<object>  $products  anything with `id` and `low_stock_threshold`
+     * @return array<int, int>
+     */
+    public static function thresholds(iterable $products): array
+    {
+        $shop = self::threshold();
+        $lines = [];
+
+        foreach ($products as $product) {
+            $lines[(int) $product->id] = $product->low_stock_threshold !== null ? (int) $product->low_stock_threshold : $shop;
+        }
+
+        $days = max(0, (int) setting('torgash.automations', 'low_stock_days', 0));
+
+        if ($days > 0 && $lines !== []) {
+            $sold = (array) hook_filter('catalog.products.sold', [], ['ids' => array_keys($lines), 'days' => $days]);
+
+            foreach ($sold as $id => $count) {
+                // "Less than it sells in N days" — so the last piece of that many is still enough.
+                if (isset($lines[(int) $id])) {
+                    $lines[(int) $id] = max($lines[(int) $id], (int) $count - 1);
+                }
+            }
+        }
+
+        return $lines;
+    }
+
+    /**
+     * product id => its state after this order ('' — enough), each by its own line.
+     *
+     * @param  Collection<int, Product>|null  $products
+     * @return array<int, string>
+     */
+    public static function states(Order $order, ?Collection $products = null): array
+    {
+        $taken = array_filter(array_map(fn ($item) => is_array($item) ? (int) ($item['product_id'] ?? 0) : 0, (array) $order->items));
+        $products ??= Product::whereIn('id', $taken)->get(['id', 'stock', 'low_stock_threshold'])->keyBy('id');
+        $lines = self::thresholds($products);
+        $states = [];
+
+        foreach (self::left($order, $products) as $id => $left) {
+            $states[$id] = self::state($left, $lines[$id] ?? null);
+        }
+
+        return $states;
+    }
+
     public static function state(?int $left, ?int $threshold = null): string
     {
         return match (true) {

@@ -52,7 +52,48 @@ class OrderFlow
         $row = OrderPoints::find($order->id);
 
         if ($row && ! $row->credited_at) {
-            $row->update(['earn' => $this->earning->forOrder($order->fresh())]);
+            [$earn, $terms] = $this->earning->plan($order->fresh(), $row->terms);
+            $row->update(['earn' => $earn, 'terms' => $terms ?: null]);
+        }
+    }
+
+    /**
+     * The points promotions gave this order — the whole list, as
+     * `torgash.promotions` worked it out (at placement, and again when a
+     * manager rechecks the promotions): what is kept is REPLACED, so asking
+     * twice gives once and a promotion the order no longer wins gives nothing.
+     *
+     * @param  list<array{type: string, value: int, promotion_id: int, name: string}>  $effects
+     */
+    public function promoted(Order $order, array $effects): void
+    {
+        $row = OrderPoints::find($order->id);
+
+        if (! $row || $row->credited_at) {
+            return;
+        }
+
+        $extra = [];
+
+        foreach ($effects as $effect) {
+            if (($effect['type'] ?? null) === 'give_points' && (int) ($effect['value'] ?? 0) > 0) {
+                $extra[(int) $effect['promotion_id']] = (int) $effect['value'];
+            }
+        }
+
+        $terms = (array) $row->terms;
+
+        if ($extra === (array) ($terms['extra'] ?? [])) {
+            return;
+        }
+
+        $row->update(['terms' => ['extra' => $extra] + $terms]);
+        $this->plan($order);
+
+        foreach ($effects as $effect) {
+            if (isset($extra[(int) ($effect['promotion_id'] ?? 0)])) {
+                OrderLog::record($order, 'Promotion ":name": +:points bonus points, credited with the order', ['name' => (string) $effect['name'], 'points' => (int) $effect['value']], by: null);
+            }
         }
     }
 

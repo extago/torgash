@@ -757,3 +757,23 @@ rows. `category_nav_hide_empty` never hides the current row or the way up.
   (the slug's, in the locale shape the request came in), 404 for a product
   that is not `reachable()`. Registered through `StorefrontRoutes::group`
   like every storefront route, so `/ru/p/151` exists too.
+
+- **The products list's "Change…" dialog takes other modules' fields**
+  (PLAN §74, `torgash.points` is the worked example): a module prints its
+  section on `catalog.products.bulk.fields` (`hook_render`, inside the bulk
+  form — plain inputs under names of its own, each starting at "leave as it
+  is"), reads them back on `catalog.products.bulk.changes` (a filter over
+  `[module id => bag]`, given the `request`; nothing filled in — nothing
+  added, so "Nothing to change" still fires), and is handed every chunk of
+  products with the bags on `catalog.products.bulk.apply`. Core's own
+  arithmetic stays `BulkEdit`'s; a module never patches the dialog or the
+  controller.
+
+- **"Low" is the product's own answer**: `Product::lowStockThreshold()` —
+  its `low_stock_threshold` (PLAN §64.4), else the shop's setting. The
+  storefront's "Low stock" label, the dashboard's list (in SQL:
+  `coalesce(low_stock_threshold, ?)`) and `torgash.automations` all ask it;
+  never read `stock_low_threshold` for a known product. The model also
+  announces `catalog.product.created` and `catalog.product.price_changed`
+  (`from` / `to`, the books price — a derived price recomputed on a rate
+  change is written past the model and is nobody's decision to announce).

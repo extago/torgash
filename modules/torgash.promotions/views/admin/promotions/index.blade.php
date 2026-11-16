@@ -18,7 +18,7 @@
             PromotionTier::FREE_SHIPPING => 'truck',
             PromotionTier::GIVE_GROUP => 'user-check',
             PromotionTier::FREE_PRODUCT => 'gift',
-            default => 'circle',
+            default => PromotionTier::moduleEffects()[$type]['icon'] ?? 'circle',
         };
 
         $stateTabs = [
@@ -168,6 +168,8 @@
                                                             {{ __('upgrade to :group', ['group' => $groupNames[$tier->give_group_id] ?? '#'.$tier->give_group_id]) }}
                                                         @elseif ($tier->discount_type === PromotionTier::FREE_PRODUCT)
                                                             {{ __('gift: :sku ×:qty', ['sku' => $productSkus[$tier->free_product_id] ?? '#'.$tier->free_product_id, 'qty' => $tier->free_qty]) }}
+                                                        @elseif ($tier->moduleEffectText() !== null)
+                                                            {{ $tier->moduleEffectText() }}
                                                         @else
                                                             −{{ $tier->adminValue() }}
                                                         @endif

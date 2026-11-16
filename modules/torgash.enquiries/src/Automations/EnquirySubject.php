@@ -73,6 +73,12 @@ class EnquirySubject extends BaseSubject
             : [];
     }
 
+    /** The right a button under a Telegram message asks of whoever presses it. */
+    public function pressPermission(): string
+    {
+        return 'enquiries.manage';
+    }
+
     public function sample(): ?Model
     {
         return Enquiry::latest('id')->first();

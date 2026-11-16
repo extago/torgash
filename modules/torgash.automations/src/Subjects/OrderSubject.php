@@ -123,6 +123,12 @@ class OrderSubject extends BaseSubject
         return Conditions::passes($condition, $model);
     }
 
+    /** The right a button under a Telegram message asks of whoever presses it (Telegram\Updates). */
+    public function pressPermission(): string
+    {
+        return 'orders.manage';
+    }
+
     public function refs(array $ids): array
     {
         return Order::withTrashed()->whereIn('id', $ids)->get(['id', 'order_number'])

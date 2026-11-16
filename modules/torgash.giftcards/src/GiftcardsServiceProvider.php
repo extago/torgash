@@ -264,6 +264,14 @@ class GiftcardsServiceProvider extends ServiceProvider
         hook_listen('catalog.product.needs_delivery', fn (bool $needs, array $context) => $needs
             && ! app(GiftConfig::class)->isGift($context['product'] ?? null));
 
+        // A gift card is money: buying one earns no bonus points and points do
+        // not buy it — what it pays for later earns like money instead
+        // (torgash.points, PLAN §74).
+        hook_listen('points.products.outside', fn (array $outside, array $context) => [...$outside, ...array_filter(
+            array_map('intval', (array) ($context['ids'] ?? [])),
+            fn (int $id) => app(GiftConfig::class)->isGift($id),
+        )]);
+
         hook_listen('cart.product.asks', function (bool $asks, array $context) {
             $row = app(GiftConfig::class)->row($context['product'] ?? null);
 

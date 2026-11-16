@@ -46,7 +46,14 @@
             "type": "number",
             "default": 0,
             "label": "Running low at, pieces",
-            "help": "A product an order leaves with this many or fewer is \"running low\" in a rule (item.low_stock, the Stock condition). 0 — the catalogue's \"Low stock threshold\"."
+            "help": "A product left with this many or fewer is \"running low\" in a rule (the \"A product runs low\" event, item.low_stock, the Stock condition). 0 — the catalogue's \"Low stock threshold\". A product's own line, on its form, comes first."
+        },
+        {
+            "key": "low_stock_days",
+            "type": "number",
+            "default": 0,
+            "label": "Also running low when left for fewer days than",
+            "help": "A product with less on the shelf than it sold in this many days is running low too, whatever the number above says — a fast seller is noticed while there are still dozens. Counted from the stock journal, so it needs the Inventory module. 0 — off."
         },
         {
             "key": "allow_private_hosts",

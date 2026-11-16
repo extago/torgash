@@ -95,6 +95,32 @@ class Ledger
     }
 
     /**
+     * A bonus from the shop that no order earned by being bought — an
+     * automation rule's gift. `$key` names what gave it: the same key gives
+     * once, and null is answered the second time.
+     */
+    public function bonus(int $userId, int $points, string $reason, string $key, ?int $orderId = null): ?Entry
+    {
+        if ($points <= 0) {
+            return null;
+        }
+
+        return DB::transaction(function () use ($userId, $points, $reason, $key, $orderId) {
+            $this->lock($userId);
+
+            if (Entry::where('source_key', $key)->exists()) {
+                return null;
+            }
+
+            $months = (int) setting('torgash.points', 'lifetime_months', 0);
+            $entry = $this->write($userId, 'bonus', $points, $orderId, $reason, $months > 0 ? now()->addMonthsNoOverflow($months) : null);
+            $entry->forceFill(['source_key' => $key])->save();
+
+            return $entry;
+        });
+    }
+
+    /**
      * Points past their date, written off — oldest first. The balance may not
      * exceed what the still-living credits add up to; the excess is what has
      * expired, whatever order it was spent in. One query per customer who has

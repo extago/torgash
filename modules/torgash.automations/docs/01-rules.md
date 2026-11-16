@@ -32,6 +32,44 @@ One admin action is one event, however many writes it took internally:
 editing the contents rewrites lines, subtotal and total, and your rule sees
 that once.
 
+About a product — the shelf itself, whoever moved it: a sale, a write-off, a
+delivery, an import, the exchange with 1C:
+
+* **A product runs low** — the stock comes down to its "running low" line.
+* **A product runs out** — the stock reaches zero.
+* **A product is back in stock** — a product that had none has some again.
+* **A product's price changes** — in the form, the list, an import or the
+  bulk dialog.
+
+These are **crossings, not levels**: "runs low" fires once, when the stock
+passes the line on its way down, not at every sale of something already low.
+And they are worked out **once per act**: whatever happened within one request
+or one background job arrives as one message with a list of products. An
+import that empties three thousand shelves is one message, not three thousand;
+a number changed and put back within the same act is no event at all. A
+product just created gives none: its first stock is not "back in stock".
+
+So a message about products speaks of a **list**:
+
+```
+⚠️ Running low ({{ count }}):
+{{#products}}• {{ item.sku }} {{ item.name }} — {{ item.stock }} pcs. (was {{ item.stock_before }})
+{{ item.admin_url }}
+{{/products}}
+```
+
+`{{ products_text }}` is the same list as ready lines (the first 30, then
+"…and N more"); `{{ product.name }}` and the other `product.…` are the first
+product of the list, for the usual case of one. A price event has
+`{{ item.price_before_formatted }} → {{ item.price_formatted }}`, and
+`{{ actor.name }}` says who changed it.
+
+Such a rule's conditions **narrow the list**: "Product category — is in Shoes"
+leaves only the shoes in the message, and when nothing of the list fits the
+rule stays silent. There are also "Price — is at least / at most", "Stock — is
+at most / at least" and, for the price event, "The price — went down / went
+up".
+
 ## Wait
 
 **Wait, min**, and it is the queue that waits — nothing in the shop is held
@@ -41,6 +79,13 @@ unpaid…". `0` runs at once (still in the queue).
 **The conditions are checked when the rule actually runs, not when it was
 triggered.** In half an hour the order may have been paid or cancelled, and
 firing at it anyway is the one behaviour nobody forgives.
+
+**Not more often than once in, hours** — the rule does not repeat itself about
+the same order, enquiry or product more often than that: `24` is once a day,
+however many times it happens. For products the count is kept per product: of
+five products, two already told of today, the message is about three. The log
+records such a skip as "Already told within the quiet period". "Test" ignores
+the period.
 
 ## Only when
 
@@ -133,6 +178,48 @@ The message is written as a person writes one, with the variables below.
 customer's name with angle brackets cannot break the message — Telegram
 refuses outright a message whose HTML does not parse. A longer message is cut
 at 4096 characters, the most Telegram takes.
+
+### Buttons under the message
+
+A message can carry buttons — up to six: "Take it", "Shipped", "Called". In
+the rule's form, under the message's text: what the button says and what it
+does — one of the actions a rule already has, with its choice made:
+
+* **Set the status: …** — to one particular status;
+* **Assign a manager: whoever pressed** (or one particular person);
+* **Write the button's name into the history** — "Called" becomes a line of
+  the order's history.
+
+A press is **a person's act, not a rule's**:
+
+* whoever pressed is found by their Telegram account, and must be a staff
+  member with the right the admin asks for the same thing (for an order —
+  managing orders). The right is checked at every press: taken away in the
+  admin, it is gone here too;
+* the act runs through the same code as the admin's own button: a status
+  takes the stock the same way, and the history says "Ivan (via Telegram)";
+* a person having acted, **the rules that wait for that change fire** — as
+  after a click in the admin;
+* a button is pressed **once**: the message gains the line "✅ Shipped — Ivan",
+  the buttons go, and whoever presses next is told "Already done by Ivan".
+
+**Linking your Telegram.** Automations → **Telegram buttons** → "Get a code".
+Send the bot `/link 483920` — in a private chat with it or in the group it
+writes to — or open the bot by the link on that page and press Start. The code
+is good for 15 minutes and only for whoever asked for it. The screen is open
+to every staff member; unlinking somebody else's account takes the right to
+manage automations.
+
+**How presses reach the shop** — the same screen, per bot:
+
+* **The shop asks Telegram** (the default) — works anywhere, a computer with
+  no public address included; answered within a second or two while the shop's
+  scheduler runs;
+* **Telegram calls the shop** — instant, but the shop's address must be public
+  and https.
+
+The bot also answers `/id` with the id of the chat it was asked in — the
+number "Chat id" wants.
 
 ## Composing the text and the body
 
@@ -234,6 +321,26 @@ threshold". The condition "Stock — an item runs low after this order" sends
 it as a rule of its own (to a buyer's chat, say); the ready-made one is
 "Running low", and "New order to Telegram" carries the block already.
 
+**The "running low" line** is one for orders and for the "A product runs low"
+event, the first that is set of:
+
+1. **the product's own** — "Running low at, pieces" on the product's form,
+   beside its stock: a fast seller from five, a rare one from one. The
+   storefront's "Low stock" label reads it too;
+2. the module's "Running low at, pieces";
+3. the catalogue's "Low stock threshold".
+
+Over it stands **"Also running low when left for fewer days than"**: a product
+with less on the shelf than it sold in that many days is running low whatever
+the line says — a fast seller is noticed while there are still dozens. Sales
+are read from the stock journal, so it needs the Inventory module; `0` is off.
+
+**Through the order or through the shelf?** The order's condition speaks
+together with the order that emptied the shelf, and repeats at every order of
+something already low. The "A product runs low" event (see "When") speaks once
+per crossing and sees every cause — a write-off, an import, 1C. A buyer's chat
+usually wants the second.
+
 ## Formats
 
 A value can go through a format: `{{ value | format }}`, several in a row —
@@ -284,6 +391,9 @@ are written already; the rule asks for the Telegram bot and chat (leave them
 empty to use the ones your other rules use) and arrives switched off: check it
 with "Test" and enable it. From then on it is an ordinary rule — change
 anything.
+
+About the shelf: "Shelf: running low" (once a day per product), "Shelf: ran
+out", "Shelf: back in stock", "A price changed".
 
 ## Testing it
 

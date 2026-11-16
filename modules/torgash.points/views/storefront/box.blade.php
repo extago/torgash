@@ -21,6 +21,9 @@
                    aria-label="{{ __('How many points to spend') }}">
             <button class="btn btn-sm">{{ __('Apply') }}</button>
         </form>
+        @if ($pointsRestricted ?? false)
+            <p class="text-xs opacity-60">{{ __('Some of these goods cannot be paid with points, or only in part.') }}</p>
+        @endif
         @if ($pointsLine)
             <p class="text-xs text-success">{{ __(':points points take :amount off this order.', ['points' => number_format($pointsLine['points'], 0, '.', ' '), 'amount' => format_price($pointsLine['amount'])]) }}</p>
         @endif

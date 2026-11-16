@@ -8,6 +8,8 @@ use Illuminate\Database\Eloquent\Model;
  * What one order does with points: `earn` is what it WILL earn (worked out at
  * placement and again when its contents change, shown as "waiting"), `earned`
  * what it was credited, `spent` / `spent_money` what the customer paid with.
+ * `terms` is what each line earns BY (PLAN §74), kept so that a rule edited
+ * later does not move the waiting number of an order already placed.
  */
 class OrderPoints extends Model
 {
@@ -27,6 +29,7 @@ class OrderPoints extends Model
             'spent' => 'int',
             'spent_money' => 'int',
             'credited_at' => 'datetime',
+            'terms' => 'array',
         ];
     }
 }

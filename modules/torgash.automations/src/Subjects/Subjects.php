@@ -14,7 +14,7 @@ class Subjects
     /** @return array<string, Subject> */
     public static function all(): array
     {
-        $classes = hook_filter('automations.subjects', ['order' => OrderSubject::class]);
+        $classes = hook_filter('automations.subjects', ['order' => OrderSubject::class, 'product' => ProductSubject::class]);
 
         $subjects = [];
         foreach ($classes as $key => $class) {

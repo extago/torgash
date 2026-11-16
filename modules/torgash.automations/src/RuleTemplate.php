@@ -41,7 +41,8 @@ class RuleTemplate
                 // what travels. Both are asked for by name on import.
                 $needs[] = ['path' => "actions.{$index}.token", 'label' => __('Bot token'), 'secret' => true];
                 $needs[] = ['path' => "actions.{$index}.chat_id", 'label' => __('Chat id'), 'secret' => false];
-                $actions[] = ['type' => 'telegram', 'text' => (string) $action->config('text', '')];
+                $actions[] = ['type' => 'telegram', 'text' => (string) $action->config('text', '')]
+                    + ((array) $action->config('buttons', []) !== [] ? ['buttons' => (array) $action->config('buttons')] : []);
 
                 continue;
             }
@@ -92,6 +93,7 @@ class RuleTemplate
             'event' => $rule->event,
             'fields' => $rule->fields,
             'delay_minutes' => $rule->delay_minutes,
+            'quiet_minutes' => $rule->quiet_minutes,
             'conditions' => $rule->conditions->map(fn ($condition) => [
                 'kind' => $condition->kind,
                 'operator' => $condition->operator,
@@ -178,6 +180,7 @@ class RuleTemplate
                 ? array_values(array_intersect((array) ($payload['fields'] ?? []), array_keys($subject->fields()))) ?: null
                 : null,
             'delay_minutes' => max(0, (int) ($payload['delay_minutes'] ?? 0)),
+            'quiet_minutes' => max(0, (int) ($payload['quiet_minutes'] ?? 0)),
             // Off on arrival, always. An imported rule points at an endpoint
             // nobody has tested from this shop yet, and the "Test" button is one
             // click away — enabling it silently is how a template's first act is
@@ -221,6 +224,9 @@ class RuleTemplate
                         'token' => trim((string) ($answers["actions.{$index}.token"] ?? '')) ?: (string) ($bot['token'] ?? ''),
                         'chat_id' => trim((string) ($answers["actions.{$index}.chat_id"] ?? '')) ?: (string) ($bot['chat_id'] ?? ''),
                         'text' => (string) ($row['text'] ?? ''),
+                        // Kept to what THIS shop's actions offer: a status code
+                        // from another shop is dropped, not guessed at.
+                        'buttons' => Telegram\Buttons::clean($row['buttons'] ?? [], Subjects::keyFor($event)),
                     ]
                     : ($type === 'webhook'
                     ? [

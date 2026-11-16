@@ -88,6 +88,21 @@ class Product extends Model implements HasMedia, PageSubject
             }
         });
 
+        // "The price of this product changed" — announced by the model, so
+        // the form, the list's quick edit, an import and the bulk dialog all
+        // say it the same way. The books price: a price typed in another
+        // currency moving with its rate is a recomputation, written past the
+        // model, and nobody's decision to announce.
+        static::updated(function (Product $product) {
+            if ($product->wasChanged('price')) {
+                hook_action('catalog.product.price_changed', [
+                    'product' => $product,
+                    'from' => (int) $product->getOriginal('price'),
+                    'to' => (int) $product->price,
+                ]);
+            }
+        });
+
         static::created(function (Product $product) {
             $typed = ! str_starts_with((string) $product->sku, self::SKU_PENDING);
             $fallback = $typed ? (string) $product->sku : self::freeSku('P-'.$product->id, $product->id);
@@ -98,7 +113,23 @@ class Product extends Model implements HasMedia, PageSubject
                 $product->sku = $sku;
                 $product->saveQuietly();
             }
+
+            // "A product appeared" — for whoever must tell a new product's
+            // first stock from a shelf filled again (torgash.automations).
+            hook_action('catalog.product.created', ['product' => $product]);
         });
+    }
+
+    /**
+     * At how many pieces this product is "running low": its own line (PLAN
+     * §64.4), else the shop's "Low stock threshold". One answer for the
+     * storefront's "Low stock", the dashboard and whoever watches the shelf.
+     */
+    public function lowStockThreshold(): int
+    {
+        return $this->low_stock_threshold !== null
+            ? (int) $this->low_stock_threshold
+            : max(0, (int) setting('torgash.catalog', 'stock_low_threshold', 10));
     }
 
     /** Is the SKU somebody else's (a product in the bin included — the column is unique)? */
@@ -1081,8 +1112,7 @@ class Product extends Model implements HasMedia, PageSubject
             return 'out_of_stock';
         }
 
-        if (setting('torgash.catalog', 'stock_level_labels')
-            && $this->stock <= (int) setting('torgash.catalog', 'stock_low_threshold', 10)) {
+        if (setting('torgash.catalog', 'stock_level_labels') && $this->stock <= $this->lowStockThreshold()) {
             return 'low_stock';
         }
 

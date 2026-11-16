@@ -23,6 +23,7 @@ class Rule extends Model
             'enabled' => 'bool',
             'fields' => 'array',
             'delay_minutes' => 'int',
+            'quiet_minutes' => 'int',
             'position' => 'int',
         ];
     }

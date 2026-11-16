@@ -7,6 +7,9 @@ use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Support\Facades\Http;
 use Torgash\Automations\Models\RuleAction;
 use Torgash\Automations\Models\RuleRun;
+use Torgash\Automations\Telegram\Bot;
+use Torgash\Automations\Telegram\Buttons;
+use Torgash\Automations\Telegram\Message;
 use Torgash\Automations\Template;
 
 /**
@@ -59,6 +62,24 @@ class TelegramAction implements Action
         // The token is in the path, so the log gets the address without it.
         $shownUrl = 'https://api.telegram.org/bot…/sendMessage';
 
+        // Buttons (PLAN §64.1): the message is written down BEFORE it goes —
+        // a button carries the row's id — and forgotten again if it never went.
+        $buttons = array_values(array_filter((array) $action->config('buttons', []), 'is_array'));
+        $kept = null;
+
+        if ($buttons !== []) {
+            $kept = Message::create([
+                'bot_id' => Bot::for($token)->id,
+                'rule_id' => $action->rule_id,
+                'rule_name' => $action->rule?->name,
+                'subject' => (string) ($action->rule?->subjectKey() ?? 'order'),
+                'subject_id' => $order->getKey(),
+                'chat_id' => $chat,
+                'text' => $text,
+                'buttons' => $buttons,
+            ]);
+        }
+
         try {
             // A connection that drops on the way (from some networks one in
             // forty does) is tried again at once, twice; what still fails is
@@ -75,7 +96,7 @@ class TelegramAction implements Action
                     'text' => $text,
                     'parse_mode' => 'HTML',
                     'disable_web_page_preview' => true,
-                ]);
+                ] + ($kept ? ['reply_markup' => ['inline_keyboard' => Buttons::keyboard($kept->id, $buttons)]] : []));
 
             $detail = [
                 'url' => $shownUrl,
@@ -86,8 +107,12 @@ class TelegramAction implements Action
             ];
 
             if ($response->successful() && $response->json('ok') === true) {
+                $kept?->update(['message_id' => (int) $response->json('result.message_id')]);
+
                 return ['status' => RuleRun::SENT, 'summary' => __('Delivered to chat :chat', ['chat' => $chat]), 'detail' => $detail];
             }
+
+            $kept?->delete();
 
             // Telegram explains itself in `description` ("chat not found",
             // "bot was blocked by the user") — that sentence is the fix. "Too
@@ -99,6 +124,8 @@ class TelegramAction implements Action
                 'retry' => $response->status() === 429 || $response->serverError(),
             ];
         } catch (ConnectionException $e) {
+            $kept?->delete();
+
             return [
                 'status' => RuleRun::FAILED,
                 'summary' => __('Telegram could not be reached: :error', ['error' => str_replace($token, '…', $e->getMessage())]),
@@ -106,6 +133,8 @@ class TelegramAction implements Action
                 'retry' => true,
             ];
         } catch (\Throwable $e) {
+            $kept?->delete();
+
             return [
                 'status' => RuleRun::FAILED,
                 'summary' => str_replace($token, '…', $e->getMessage()),

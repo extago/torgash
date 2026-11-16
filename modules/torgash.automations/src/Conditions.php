@@ -183,15 +183,7 @@ class Conditions
     /** @param  list<string>  $states  whether any product this order leaves in one of these */
     protected static function leaves(Order $order, array $states): bool
     {
-        $threshold = LowStock::threshold();
-
-        foreach (LowStock::left($order) as $left) {
-            if (in_array(LowStock::state($left, $threshold), $states, true)) {
-                return true;
-            }
-        }
-
-        return false;
+        return array_intersect(LowStock::states($order), $states) !== [];
     }
 
     /** Whether a line's product is gone or has not got the units (see KINDS['stock']). */

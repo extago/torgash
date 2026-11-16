@@ -1,12 +1,14 @@
 @extends('admin.layout')
 
 @section('title', __('Bonus points'))
-@section('title_hint', __('Points customers earn for orders and spend in the basket as a discount. How many an order earns, when they are credited and what a point is worth are in the module\'s settings; here are the multipliers and every movement.'))
+@section('title_hint', __('Points customers earn for orders and spend in the basket as a discount. How many an order earns, when they are credited and what a point is worth are in the module\'s settings; here is every movement; which goods earn more, less or nothing, and which points do not pay for, are the Rules.'))
 @section('title_actions')
     <a href="{{ url('/admin/settings/torgash.points') }}" class="btn btn-ghost gap-1.5"><x-icon name="settings" size="sm" /> {{ __('Settings') }}</a>
 @endsection
 
 @section('content')
+    @include('torgash.points::admin._nav', ['pointsScreen' => 'movements'])
+
     @if (session('status'))
         <div class="alert alert-success">{{ session('status') }}</div>
     @endif
@@ -92,51 +94,6 @@
                 </div>
             </section>
 
-            <section class="card bg-base-100 border border-base-300">
-                <div class="card-body gap-3">
-                    <h3 class="font-semibold">{{ __('Multipliers') }}</h3>
-                    <p class="text-xs opacity-60">{{ __('×2 earns double, ×0 earns nothing. A category counts with everything beneath it; a product\'s own is set on its Bonus points tab and wins over its category\'s. A customer group\'s multiplies either.') }}</p>
-
-                    @foreach ($rules as $rule)
-                        <div class="flex items-center justify-between gap-2 text-sm">
-                            <span class="min-w-0 truncate">
-                                <span class="opacity-60">{{ match ($rule->kind) { 'category' => __('Category'), 'product' => __('Product'), default => __('Customer group') } }}:</span>
-                                {{ $ruleNames[$rule->kind][$rule->target_id] ?? '#'.$rule->target_id }}
-                            </span>
-                            <span class="flex items-center gap-1">
-                                <span class="badge badge-sm badge-neutral">×{{ rtrim(rtrim(number_format((float) $rule->multiplier, 2, '.', ''), '0'), '.') }}</span>
-                                <form method="POST" action="{{ route('admin.points.rules.destroy', $rule->id) }}">
-                                    @csrf @method('DELETE')
-                                    <button class="btn btn-ghost btn-sm btn-square text-error" title="{{ __('Delete') }}" aria-label="{{ __('Delete') }}"><x-icon name="trash-2" size="sm" /></button>
-                                </form>
-                            </span>
-                        </div>
-                    @endforeach
-
-                    <form method="POST" action="{{ route('admin.points.rules.store') }}" class="flex flex-col gap-2 border-t border-base-300 pt-3" x-data="{ kind: 'category' }">
-                        @csrf
-                        <select name="kind" x-model="kind" class="select select-bordered w-full">
-                            <option value="category">{{ __('Category') }}</option>
-                            <option value="group">{{ __('Customer group') }}</option>
-                        </select>
-                        <select name="category_id" class="select select-bordered w-full" x-show="kind === 'category'" :disabled="kind !== 'category'">
-                            @foreach ($categoryOptions as $categoryId => $categoryLabel)
-                                <option value="{{ $categoryId }}">{{ $categoryLabel }}</option>
-                            @endforeach
-                        </select>
-                        <select name="group_id" class="select select-bordered w-full" x-show="kind === 'group'" x-cloak :disabled="kind !== 'group'">
-                            @foreach ($groups as $group)
-                                <option value="{{ $group->id }}">{{ $group->t('name') }}</option>
-                            @endforeach
-                        </select>
-                        <label class="input input-bordered w-full">
-                            <span class="opacity-50">×</span>
-                            <input name="multiplier" type="number" step="0.01" min="0" max="100" required class="grow" value="2">
-                        </label>
-                        <button class="btn btn-sm">{{ __('Add') }}</button>
-                    </form>
-                </div>
-            </section>
         </div>
     </div>
 @endsection

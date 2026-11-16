@@ -103,7 +103,37 @@ class PromotionTier extends Model
      */
     public function isSideEffect(): bool
     {
-        return in_array($this->discount_type, self::SIDE_EFFECT_TYPES, true);
+        return in_array($this->discount_type, self::SIDE_EFFECT_TYPES, true) || isset(self::moduleEffects()[$this->discount_type]);
+    }
+
+    /**
+     * Side effects OTHER modules give a cart promotion — bonus points
+     * (`torgash.points`, PLAN §74). Declared on `promotions.side_effects` as
+     * `type => ['label' => English, 'value_label' => English, 'icon' => lucide,
+     * 'describe' => fn (int $value): string]`; the number the admin types is
+     * the tier's `discount_value`. This module draws the choice, decides
+     * which tier won and says so once per order on `promotions.order.effects`;
+     * what the effect IS belongs to its owner.
+     *
+     * @return array<string, array<string, mixed>>
+     */
+    public static function moduleEffects(): array
+    {
+        return array_filter((array) hook_filter('promotions.side_effects', []), 'is_array');
+    }
+
+    /** A module effect in words, for the list and the API. */
+    public function moduleEffectText(): ?string
+    {
+        $effect = self::moduleEffects()[$this->discount_type] ?? null;
+
+        if (! $effect) {
+            return null;
+        }
+
+        return is_callable($effect['describe'] ?? null)
+            ? (string) $effect['describe']((int) $this->discount_value)
+            : __((string) ($effect['label'] ?? $this->discount_type)).': '.(int) $this->discount_value;
     }
 
     /**

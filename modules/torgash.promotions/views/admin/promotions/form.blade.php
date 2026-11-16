@@ -122,7 +122,10 @@
               firstKind() { return Object.keys(this.labels())[0]; },
               // The four that adjust a price — mirrors PromotionTier::ADJUSTING_TYPES.
               adjusting: ['percent', 'fixed', 'to_percent', 'to_amount'],
+              // What other modules give (PromotionTier::moduleEffects()): type → the label of its number.
+              moduleEffects: {{ \Illuminate\Support\Js::from(collect(\Torgash\Promotions\Models\PromotionTier::moduleEffects())->map(fn ($effect) => __((string) ($effect['value_label'] ?? 'Value')))) }},
               valueLabel(type) {
+                  if (this.moduleEffects[type]) return this.moduleEffects[type];
                   if (type === 'percent') return {{ \Illuminate\Support\Js::from(__('Percent')) }};
                   if (type === 'to_percent') return {{ \Illuminate\Support\Js::from(__('% of the price')) }};
                   if (type === 'to_amount') return {{ \Illuminate\Support\Js::from(__('New price')) }};
@@ -610,6 +613,9 @@
                                 <x-icon name="truck" size="sm" x-show="tier.discount_type === 'free_shipping'" x-cloak class="opacity-70" />
                                 <x-icon name="user-check" size="sm" x-show="tier.discount_type === 'give_group'" x-cloak class="opacity-70" />
                                 <x-icon name="gift" size="sm" x-show="tier.discount_type === 'free_product'" x-cloak class="opacity-70" />
+                                @foreach (\Torgash\Promotions\Models\PromotionTier::moduleEffects() as $effectType => $effect)
+                                    <x-icon :name="$effect['icon'] ?? 'circle'" size="sm" x-show="tier.discount_type === '{{ $effectType }}'" x-cloak class="opacity-70" />
+                                @endforeach
                             </div>
 
                             <fieldset class="fieldset p-0 w-28">
@@ -641,12 +647,15 @@
                                             <option value="free_shipping">{{ __('Free shipping') }}</option>
                                             <option value="give_group">{{ __('Give customer group') }}</option>
                                             <option value="free_product">{{ __('Free gift product') }}</option>
+                                            @foreach (\Torgash\Promotions\Models\PromotionTier::moduleEffects() as $effectType => $effect)
+                                                <option value="{{ $effectType }}">{{ __((string) ($effect['label'] ?? $effectType)) }}</option>
+                                            @endforeach
                                         </optgroup>
                                     </template>
                                 </select>
                             </fieldset>
 
-                            <fieldset class="fieldset p-0 w-32" x-show="adjusting.includes(tier.discount_type)" x-cloak>
+                            <fieldset class="fieldset p-0 w-32" x-show="adjusting.includes(tier.discount_type) || moduleEffects[tier.discount_type]" x-cloak>
                                 <legend class="fieldset-legend" x-text="valueLabel(tier.discount_type)"></legend>
                                 <input type="number" :step="zone === 'catalog' ? '{{ price_step() }}' : '0.01'" min="0" class="input input-bordered w-full" form="promotion-form"
                                        :name="`tiers[${ti}][discount_value]`" x-model="tier.discount_value">

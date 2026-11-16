@@ -98,6 +98,15 @@ class RunRule implements ShouldQueue
             }
         }
 
+        // "Not more often than…" — asked once the conditions hold; never of a
+        // retry (the same telling, still on its way) nor of the form's "Test".
+        if ($rule->quiet_minutes > 0 && $this->onlyActionId === null && ! str_ends_with($this->idempotencyKey, '-test') && method_exists($subject, 'quiet')
+            && $subject->quiet($rule, $model, now()->subMinutes($rule->quiet_minutes))) {
+            $this->log($rule, $model, RuleRun::SKIPPED, __('Already told within the quiet period'));
+
+            return;
+        }
+
         $context = $subject->context($model, $this->event, $this->changed);
         // "Was → now": a field that did not change was what it is now, so
         // `{{ before.status_label }} → {{ order.status_label }}` reads right

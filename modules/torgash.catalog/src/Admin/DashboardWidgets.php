@@ -37,9 +37,10 @@ class DashboardWidgets
         $tracked = Product::query()->where('status', 'active')->where('availability_status', 'in_stock');
 
         $out = (clone $tracked)->where('stock', '<=', 0)->count();
-        $low = (clone $tracked)->where('stock', '>', 0)->where('stock', '<=', $threshold)->count();
+        // A product's own "running low" line over the shop's (Product::lowStockThreshold()).
+        $low = (clone $tracked)->where('stock', '>', 0)->whereRaw('stock <= coalesce(low_stock_threshold, ?)', [$threshold])->count();
 
-        $rows = (clone $tracked)->where('stock', '<=', $threshold)
+        $rows = (clone $tracked)->whereRaw('stock <= coalesce(low_stock_threshold, ?)', [$threshold])
             ->orderBy('stock')->orderBy('id')->limit(6)->get(['id', 'name', 'sku', 'stock'])
             ->map(fn (Product $product) => [
                 'label' => $product->t('name'),

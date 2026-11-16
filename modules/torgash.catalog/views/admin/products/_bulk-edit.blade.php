@@ -138,6 +138,10 @@
                     </div>
                 </section>
             @endif
+
+            {{-- Other modules' fields (bonus points): each a section of its
+                 own, read back by its owner on `catalog.products.bulk.changes`. --}}
+            {!! hook_render('catalog.products.bulk.fields') !!}
         </div>
 
         <div class="flex items-center gap-2 px-6 py-4 border-t border-base-300">

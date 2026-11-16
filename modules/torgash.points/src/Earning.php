@@ -3,68 +3,37 @@
 namespace Torgash\Points;
 
 use App\Models\User;
-use Illuminate\Support\Facades\DB;
 use Torgash\Catalog\Models\Product;
-use Torgash\Catalog\Support\CategoryTree;
 use Torgash\Checkout\Models\Order;
 
 /**
- * How many points money earns (PLAN §40.5): "N points for every X" from the
- * settings, times a multiplier — the product's own rule if it has one, else
- * the nearest rule up its category tree (a category is its subcategories),
- * and times the customer group's. 0 anywhere excludes.
+ * How many points money earns (PLAN §40.5, §74): "N points for every X" from
+ * the settings, unless the product's own answer or a rule ({@see Rules}) says
+ * otherwise — a multiplier of that rate, a percent of the price, a fixed
+ * number per piece, or nothing — and times the customer group's multiplier.
  *
- * Counted from the GOODS after every discount, never from delivery, and — by
- * default — only from the part paid with money: a gift card was paid for once
- * already. The rules are a small table read once per request.
+ * Counted from the GOODS after every discount, never from delivery. What a
+ * gift card paid earns like money (the card itself, when it was bought,
+ * earned nothing — it is outside the programme) unless the shop chose to earn
+ * on money alone.
  */
 class Earning
 {
-    /** @var array<string, float>|null kind:target → multiplier */
-    protected ?array $rules = null;
-
-    /** @var array<int, list<int>> product id → its categories, primed per page */
-    protected array $categories = [];
+    public function __construct(protected Rules $rules) {}
 
     /**
-     * A page of cards announces itself (`catalog.products.listed`): their
-     * categories in one query, or "+N points" on a grid is a query per card.
-     * Nothing at all when no category carries a rule.
+     * A page of cards announces itself (`catalog.products.listed`): what the
+     * rules ask about them in one query per kind, or "+N points" on a grid is
+     * a query per card.
      *
-     * @param  iterable<Product>  $products
+     * @param  iterable<Product|int>  $products
      */
     public function prime(iterable $products): void
     {
-        $ids = [];
-
-        foreach ($products as $product) {
-            if ($product instanceof Product && ! isset($this->categories[(int) $product->id])) {
-                $ids[] = (int) $product->id;
-                $this->categories[(int) $product->id] = [];
-            }
-        }
-
-        if ($ids === [] || ! $this->hasCategoryRules()) {
-            return;
-        }
-
-        foreach (DB::table('m_catalog_category_product')->whereIn('product_id', $ids)->get(['product_id', 'category_id']) as $row) {
-            $this->categories[(int) $row->product_id][] = (int) $row->category_id;
-        }
+        $this->rules->prime($products);
     }
 
-    protected function hasCategoryRules(): bool
-    {
-        foreach (array_keys($this->rules()) as $key) {
-            if (str_starts_with($key, 'category:')) {
-                return true;
-            }
-        }
-
-        return false;
-    }
-
-    /** Points one unit of money earns, before multipliers. */
+    /** Points one MINOR unit of money earns, before anything else. */
     public function rate(): float
     {
         $points = (float) setting('torgash.points', 'earn_points', 1);
@@ -73,21 +42,57 @@ class Earning
         return $per > 0 ? $points / $per : 0.0;
     }
 
-    /** What buying this product at this price earns — "+N points" on a card. */
-    public function forPrice(Product $product, int $price, ?User $user = null): int
+    /**
+     * Points for an amount of money (minor units) that is `$qty` pieces,
+     * by the terms worked out for them — not yet rounded.
+     *
+     * @param  array{mode: string, value: float|int}  $terms
+     */
+    public function points(array $terms, int $amount, int $qty): float
     {
-        return (int) floor($price * $this->rate() * $this->multiplier((int) $product->id, null, $user));
+        return match ($terms['mode']) {
+            'multiplier' => $amount * $this->rate() * (float) $terms['value'],
+            'percent' => $amount / 100 * (float) $terms['value'] / 100,
+            'fixed' => (float) $terms['value'] * $qty,
+            'none' => 0.0,
+            default => $amount * $this->rate(),
+        };
     }
 
     /**
-     * What an order earns: its goods lines, reduced by the order's discount
-     * in proportion, reduced again by what a gift card paid when the shop
-     * earns on money alone.
+     * What buying this product at this price (price units, as
+     * `effectivePrice()` answers) earns — "+N points" on a card.
      */
+    public function forPrice(Product $product, int $price, ?User $user = null): int
+    {
+        $unit = price_scale()->toMinor($price);
+        $terms = $this->rules->earn((int) $product->id, $unit, $user);
+
+        return (int) floor($this->points($terms, $unit, 1) * $this->rules->groupMultiplier($user));
+    }
+
+    /** What an order earns. */
     public function forOrder(Order $order): int
     {
-        if (! $order->user_id || $this->rate() <= 0) {
-            return 0;
+        return $this->plan($order)[0];
+    }
+
+    /**
+     * What an order earns and BY WHAT: its goods lines, each by its own
+     * terms, reduced by the order's discount in proportion, reduced again by
+     * what a gift card paid when the shop earns on money alone.
+     *
+     * `$kept` are the terms the order was planned by. A line that had terms
+     * keeps them — a rule edited after the order was placed does not move
+     * it; a line added since gets today's.
+     *
+     * @param  array<string, mixed>|null  $kept
+     * @return array{0: int, 1: array<string, mixed>}
+     */
+    public function plan(Order $order, ?array $kept = null): array
+    {
+        if (! $order->user_id) {
+            return [0, []];
         }
 
         $lines = array_filter((array) $order->items, fn ($line) => is_array($line) && empty($line['parent_key']) && ! empty($line['product_id']));
@@ -95,57 +100,34 @@ class Earning
         $afterDiscount = max(0, $subtotal - (int) $order->discount_amount) / $subtotal;
         $money = 1.0;
 
-        if (setting('torgash.points', 'money_only', true) && (int) $order->total > 0) {
+        if (setting('torgash.points', 'money_only', false) && (int) $order->total > 0) {
             $money = max(0, (int) $order->total - (int) $order->prepaid_total) / (int) $order->total;
         }
 
         $user = User::find($order->user_id);
-        $weighted = 0.0;
+        $this->rules->prime(array_map(fn ($line) => (int) $line['product_id'], $lines));
+
+        // `extra` — whole points a promotion gave this order (promotion id →
+        // points): the order's own, so they wait, are credited and taken back
+        // with the rest, but no discount or multiplier touches them.
+        $terms = ['group' => (float) ($kept['group'] ?? $this->rules->groupMultiplier($user)), 'lines' => [], 'extra' => (array) ($kept['extra'] ?? [])];
+        $sum = 0.0;
 
         foreach ($lines as $line) {
-            $weighted += (int) ($line['line_total'] ?? 0) * $this->multiplier((int) $line['product_id'], null, $user);
-        }
+            $id = (int) $line['product_id'];
+            $qty = max(1, (int) ($line['qty'] ?? 1));
+            $total = (int) ($line['line_total'] ?? 0);
+            $by = $terms['lines'][$id] ?? $kept['lines'][$id] ?? null;
 
-        return (int) floor($weighted * $afterDiscount * $money * $this->rate());
-    }
-
-    /**
-     * The multiplier for one product and one customer.
-     *
-     * @param  list<int>|null  $categoryIds  the product's categories, when the caller has them
-     */
-    public function multiplier(int $productId, ?array $categoryIds, ?User $user): float
-    {
-        $rules = $this->rules();
-        $product = $rules['product:'.$productId] ?? null;
-
-        if ($product === null && $this->hasCategoryRules()) {
-            $categoryIds ??= $this->categories[$productId]
-                ??= DB::table('m_catalog_category_product')->where('product_id', $productId)->pluck('category_id')->map('intval')->all();
-            $tree = app(CategoryTree::class);
-
-            foreach ($categoryIds as $categoryId) {
-                // The nearest rule up the tree; several categories — the best.
-                foreach ($tree->ancestors($categoryId, includeSelf: true) as $id) {
-                    if (isset($rules['category:'.$id])) {
-                        $product = max($product ?? 0, $rules['category:'.$id]);
-
-                        break;
-                    }
-                }
+            if (! is_array($by) || ! isset($by['mode'])) {
+                $found = $this->rules->earn($id, intdiv($total, $qty), $user);
+                $by = ['mode' => $found['mode'], 'value' => $found['value']];
             }
+
+            $terms['lines'][$id] = $by;
+            $sum += $this->points($by, $total, $qty);
         }
 
-        $group = $user?->customer_group_id ? ($rules['group:'.$user->customer_group_id] ?? 1.0) : 1.0;
-
-        return ($product ?? 1.0) * $group;
-    }
-
-    /** @return array<string, float> */
-    public function rules(): array
-    {
-        return $this->rules ??= DB::table('m_points_rules')->get()
-            ->mapWithKeys(fn ($rule) => [$rule->kind.':'.$rule->target_id => (float) $rule->multiplier])
-            ->all();
+        return [(int) floor($sum * $terms['group'] * $afterDiscount * $money) + (int) array_sum($terms['extra']), $terms];
     }
 }

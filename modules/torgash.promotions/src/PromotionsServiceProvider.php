@@ -694,6 +694,9 @@ class PromotionsServiceProvider extends ServiceProvider
             $recorded[] = $promotionId;
         }
 
+        $moduleEffects = PromotionTier::moduleEffects();
+        $given = [];
+
         foreach (app(CartPricing::class)->sideEffects($orderLines, $subtotal, $order->user, $customerRef, $paymentMethodId, $where) as ['promotion' => $promotion, 'tier' => $tier]) {
             // A gift is recorded from what the ORDER actually carries, not from
             // re-deriving that it won: the items hook withholds a gift the
@@ -720,6 +723,18 @@ class PromotionsServiceProvider extends ServiceProvider
             if ($tier->discount_type === PromotionTier::GIVE_GROUP && $tier->give_group_id && $order->user) {
                 $order->user->update(['customer_group_id' => $tier->give_group_id]);
             }
+
+            if (isset($moduleEffects[$tier->discount_type])) {
+                $given[] = ['type' => $tier->discount_type, 'value' => (int) $tier->discount_value, 'promotion_id' => $promotion->id, 'name' => $promotion->t('name')];
+            }
+        }
+
+        // What other modules' effects this order won — the WHOLE list, every
+        // time it is worked out (placement, and a manager's "Recheck the
+        // promotions"), so an owner replaces what it kept rather than adds to
+        // it: asked twice, a gift of points is still given once.
+        if ($moduleEffects !== []) {
+            hook_action('promotions.order.effects', ['order' => $order, 'effects' => $given]);
         }
 
         return $recorded;

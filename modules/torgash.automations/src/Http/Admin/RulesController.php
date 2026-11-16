@@ -209,6 +209,9 @@ class RulesController extends Controller
             'schemas' => $schemas,
             'variables' => collect($subjects)->map(fn ($subject) => $subject->variables())->all(),
             'actionTypes' => $actionTypes,
+            // What a button under a Telegram message can do, per subject.
+            'buttonChoices' => collect($subjects)->map(fn ($subject, $key) => collect(\Torgash\Automations\Telegram\Buttons::choices((string) $key))
+                ->map(fn ($label, $value) => ['value' => (string) $value, 'label' => (string) $label])->values()->all())->all(),
         ]);
     }
 
@@ -221,6 +224,7 @@ class RulesController extends Controller
             'fields' => ['nullable', 'array'],
             'fields.*' => ['string'],
             'delay_minutes' => ['nullable', 'integer', 'min:0', 'max:10080'],
+            'quiet_hours' => ['nullable', 'numeric', 'min:0', 'max:8760'],
             'position' => ['nullable', 'integer', 'min:0'],
         ]);
 
@@ -235,6 +239,8 @@ class RulesController extends Controller
                 ? array_values(array_intersect($validated['fields'] ?? [], array_keys($subject->fields())))
                 : null,
             'delay_minutes' => (int) ($validated['delay_minutes'] ?? 0),
+            // Typed in hours ("once a day" is 24), kept in minutes like the wait.
+            'quiet_minutes' => (int) round((float) ($validated['quiet_hours'] ?? 0) * 60),
             'position' => (int) ($validated['position'] ?? 0),
             'enabled' => $request->boolean('enabled'),
         ];
@@ -292,7 +298,7 @@ class RulesController extends Controller
 
             $rule->actions()->create([
                 'type' => $type,
-                'config' => $this->actionConfig($type, $known[$type], (array) $row, $tokens),
+                'config' => $this->actionConfig($type, $known[$type], (array) $row, $tokens, $key),
                 'position' => $position++,
             ]);
         }
@@ -308,7 +314,7 @@ class RulesController extends Controller
      * @param  array<int, string>  $tokens  stored bot tokens by the id of the row that held them
      * @return array<string, mixed>
      */
-    protected function actionConfig(string $type, string $class, array $row, array $tokens = []): array
+    protected function actionConfig(string $type, string $class, array $row, array $tokens = [], string $subject = 'order'): array
     {
         if (is_subclass_of($class, HasFields::class)) {
             $config = [];
@@ -328,6 +334,7 @@ class RulesController extends Controller
                 'token' => trim((string) ($row['token'] ?? '')) ?: ($tokens[(int) ($row['id'] ?? 0)] ?? ''),
                 'chat_id' => trim((string) ($row['chat_id'] ?? '')),
                 'text' => (string) ($row['text'] ?? ''),
+                'buttons' => \Torgash\Automations\Telegram\Buttons::clean($row['buttons'] ?? [], $subject),
             ],
             default => [
                 'method' => in_array($row['method'] ?? '', ['POST', 'PUT', 'PATCH', 'GET'], true) ? $row['method'] : 'POST',

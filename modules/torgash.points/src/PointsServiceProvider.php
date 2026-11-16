@@ -23,9 +23,11 @@ class PointsServiceProvider extends ServiceProvider
     public function register(): void
     {
         $this->app->singleton(Ledger::class);
+        $this->app->singleton(Rules::class);
         $this->app->singleton(Earning::class);
         $this->app->singleton(PointPrices::class);
-        PerRequest::forget($this->app, Ledger::class, Earning::class, PointPrices::class);
+        $this->app->singleton(ProductTerms::class);
+        PerRequest::forget($this->app, Ledger::class, Rules::class, Earning::class, PointPrices::class, ProductTerms::class);
     }
 
     public function boot(): void
@@ -86,6 +88,111 @@ class PointsServiceProvider extends ServiceProvider
         $this->orders();
         $this->catalog();
         $this->people();
+        $this->manyProducts();
+        $this->gifts();
+    }
+
+    /**
+     * Points the shop gives beyond what goods earn (PLAN §74, stage 3): a
+     * cart promotion's "Give bonus points" — the order's own, waiting and
+     * credited with the rest — and an automation rule's action, given at once.
+     * Both are answers to the other module's question: a shop without
+     * promotions or automations never asks.
+     */
+    protected function gifts(): void
+    {
+        hook_listen('promotions.side_effects', fn (array $effects) => $effects + [
+            'give_points' => [
+                'label' => 'Give bonus points',
+                'value_label' => 'Points',
+                'icon' => 'coins',
+                'describe' => fn (int $value) => trans_choice('+:points bonus point|+:points bonus points', $value, ['points' => number_format($value, 0, '.', ' ')]),
+            ],
+        ]);
+
+        hook_listen('promotions.order.effects', fn (array $context) => ($context['order'] ?? null) instanceof Order
+            ? app(OrderFlow::class)->promoted($context['order'], (array) ($context['effects'] ?? []))
+            : null);
+
+        hook_listen('automations.actions', fn (array $actions) => $actions + [
+            'give_points' => Automations\GivePointsAction::class,
+        ]);
+    }
+
+    /**
+     * A product's own answers for many products at once (PLAN §74, stage 2):
+     * three columns of the product exchange, spelled so that an export goes
+     * through a spreadsheet and back ({@see ProductTerms}), and a section of
+     * the products list's "Change…" dialog.
+     */
+    protected function manyProducts(): void
+    {
+        $column = fn (string $key, string $label, string $help, array $aliases, \Closure $get, \Closure $after) => [
+            'key' => $key,
+            'group' => 'prices',
+            'label' => $label,
+            'help' => $help,
+            'aliases' => $aliases,
+            // Not part of "every field": a feed nobody changed grows no columns.
+            'on_request' => true,
+            'get' => fn (Product $product) => $get(app(ProductTerms::class)->row((int) $product->id)),
+            'set' => null,
+            'after' => $after,
+        ];
+        $refused = function (string $label, $value, array $ctx): void {
+            if (($ctx['batch'] ?? null) instanceof \Torgash\Exim\Import\ImportBatch) {
+                $ctx['batch']->note('Line :line: ":value" is not an answer for ":column" — left as it was.', ['value' => (string) $value, 'column' => __($label)]);
+            }
+        };
+
+        hook_listen('exim.schema.product', fn (array $fields) => [...$fields,
+            $column('points_earn', 'Bonus points: earns', 'Empty — as the rules say; x2 — the shop\'s rate doubled; 5% — of the price; 500 — points per piece; none.', [],
+                fn (?object $row) => ProductTerms::spellEarn($row),
+                function (Product $product, $value, array $ctx = []) use ($refused) {
+                    ($earn = ProductTerms::parseEarn($value)) === null
+                        ? $refused('Bonus points: earns', $value, $ctx)
+                        : app(ProductTerms::class)->write((int) $product->id, ['earn' => $earn]);
+                }),
+            $column('points_pay', 'Bonus points: paying with points', 'Empty — as the rules say; yes; no; 30% — up to its own share of the price.', ['Pay by points'],
+                fn (?object $row) => ProductTerms::spellPay($row),
+                function (Product $product, $value, array $ctx = []) use ($refused) {
+                    ($spend = ProductTerms::parsePay($value)) === null
+                        ? $refused('Bonus points: paying with points', $value, $ctx)
+                        : app(ProductTerms::class)->write((int) $product->id, ['spend' => $spend]);
+                }),
+            $column('points_price', 'Bonus points: price in points', 'A whole number; empty — none.', ['Price in points'],
+                fn (?object $row) => (string) ($row->points_price ?? ''),
+                fn (Product $product, $value) => app(ProductTerms::class)->write((int) $product->id, ['price' => (int) preg_replace('/\D/', '', (string) $value)])),
+        ]);
+
+        // An answer changed is a change of the product feed that has the column.
+        hook_listen('exim.watch.product', fn (array $tables) => [...$tables, 'm_points_products']);
+
+        hook_listen('catalog.products.bulk.fields', fn (string $html) => $html.view('torgash.points::admin.bulk-fields')->render());
+
+        hook_listen('catalog.products.bulk.changes', function (array $changes, array $context) {
+            $request = $context['request'];
+            $mine = [];
+            $earn = (string) $request->input('points_bulk_earn');
+            $spend = (string) $request->input('points_bulk_spend');
+
+            if ($earn === 'default' || $earn === 'none' || (in_array($earn, Rules::EARN_MODES, true) && is_numeric($request->input('points_bulk_earn_value')))) {
+                $mine['earn'] = [$earn, $request->input('points_bulk_earn_value')];
+            }
+            if (in_array($spend, ['default', 'allowed', 'forbidden'], true) || ($spend === 'limit' && is_numeric($request->input('points_bulk_spend_percent')))) {
+                $mine['spend'] = [$spend, $request->input('points_bulk_spend_percent')];
+            }
+
+            return $mine === [] ? $changes : $changes + ['torgash.points' => $mine];
+        });
+
+        hook_listen('catalog.products.bulk.apply', function (array $context) {
+            $mine = $context['changes']['torgash.points'] ?? null;
+
+            foreach ($mine ? $context['products'] : [] as $product) {
+                app(ProductTerms::class)->write((int) $product->id, $mine);
+            }
+        });
     }
 
     protected function checkout(): void
@@ -149,6 +256,7 @@ class PointsServiceProvider extends ServiceProvider
             'pointsAsked' => $spending->requested($cart),
             'pointsLine' => $line,
             'pointsBlocked' => ! setting('torgash.points', 'with_coupon', true) && $coupons->current(),
+            'pointsRestricted' => $spending->restricted($cart),
             'in' => $in,
         ])->render();
     }
@@ -221,8 +329,8 @@ class PointsServiceProvider extends ServiceProvider
                 'section' => true,
                 'label' => __('Bonus points'),
                 'html' => view('torgash.points::admin.product-tab', [
-                    'pointsPrice' => $product->exists ? \Illuminate\Support\Facades\DB::table('m_points_products')->where('product_id', $product->id)->value('points_price') : null,
-                    'pointsMultiplier' => $product->exists ? \Illuminate\Support\Facades\DB::table('m_points_rules')->where('kind', 'product')->where('target_id', $product->id)->value('multiplier') : null,
+                    'pointsOwn' => $product->exists ? \Illuminate\Support\Facades\DB::table('m_points_products')->where('product_id', $product->id)->first() : null,
+                    'pointsNow' => $product->exists ? $this->explain($product) : null,
                 ])->render(),
             ];
 
@@ -236,19 +344,34 @@ class PointsServiceProvider extends ServiceProvider
                 return;
             }
 
-            $id = $context['product']->id;
-            $db = \Illuminate\Support\Facades\DB::table('m_points_products');
-            $price = (int) $request->input('points_price');
-            $price > 0
-                ? $db->updateOrInsert(['product_id' => $id], ['points_price' => $price, 'updated_at' => now(), 'created_at' => now()])
-                : $db->where('product_id', $id)->delete();
-
-            $rules = \Illuminate\Support\Facades\DB::table('m_points_rules');
-            $multiplier = $request->input('points_multiplier');
-            is_numeric($multiplier)
-                ? $rules->updateOrInsert(['kind' => 'product', 'target_id' => $id], ['multiplier' => (float) $multiplier, 'updated_at' => now(), 'created_at' => now()])
-                : $rules->where('kind', 'product')->where('target_id', $id)->delete();
+            app(ProductTerms::class)->write((int) $context['product']->id, [
+                'earn' => [(string) $request->input('points_earn_mode'), $request->input('points_earn_value')],
+                'spend' => [(string) $request->input('points_spend_mode'), $request->input('points_spend_percent')],
+                'price' => (int) $request->input('points_price'),
+            ]);
         });
+    }
+
+    /**
+     * What the product earns and how much of it points pay TODAY, and who
+     * said so — printed on its Bonus points tab, so that nobody has to work a
+     * list of rules out in their head. At its list price, for a customer of
+     * no group.
+     *
+     * @return array{earn: int, earn_by: array<string, mixed>, spend: array<string, mixed>}
+     */
+    protected function explain(Product $product): array
+    {
+        $rules = app(Rules::class);
+        $earning = app(Earning::class);
+        $unit = price_scale()->toMinor((int) $product->price);
+        $by = $rules->earn((int) $product->id, $unit, null);
+
+        return [
+            'earn' => (int) floor($earning->points($by, $unit, 1)),
+            'earn_by' => $by,
+            'spend' => $rules->spend((int) $product->id, $unit, null),
+        ];
     }
 
     /** "+N points" and, when the shop sells for points, "or N points". */

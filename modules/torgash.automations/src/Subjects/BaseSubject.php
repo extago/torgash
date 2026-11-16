@@ -24,6 +24,21 @@ abstract class BaseSubject implements Subject
     public function afterActions(): void {}
 
     /**
+     * A rule's quiet period (`Rule::quiet_minutes`): has this rule already
+     * spoken of this very order, enquiry… since `$since`? The run log is the
+     * memory — a row that went out. A subject that is a LIST keeps its own
+     * (ProductSubject: per product).
+     */
+    public function quiet(\Torgash\Automations\Models\Rule $rule, \Illuminate\Database\Eloquent\Model $model, \Illuminate\Support\Carbon $since): bool
+    {
+        return \Torgash\Automations\Models\RuleRun::where('rule_id', $rule->id)
+            ->where('subject_id', $model->getKey())
+            ->where('status', \Torgash\Automations\Models\RuleRun::SENT)
+            ->where('created_at', '>=', $since)
+            ->exists();
+    }
+
+    /**
      * What a submitted condition row stores, by the kind's input.
      *
      * A comma-separated line (`csv`) is how a human types "UA, PL, DE"; storing

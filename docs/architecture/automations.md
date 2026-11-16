@@ -139,3 +139,56 @@ reads a literal pair in a template as its own echo (it did, twice).
   actions twice. Telegram tries a dropped connection three times at once
   first (`Http::retry`, connection errors only — a message Telegram took
   but did not confirm would be sent twice).
+
+**An action that GIVES something is idempotent by the run's key, in its own
+table** (`torgash.points`' `GivePointsAction`, PLAN §74): the `Idempotency-Key`
+protects a receiver over HTTP; an internal action that adds — points to a
+balance — has no receiver to refuse a repeat, so it writes the key (plus the
+action's id: one rule may give twice) into a unique column of the row it
+creates and answers SKIPPED when the row is there.
+
+**A rule about products is about a LIST, worked out once per act** (PLAN
+§64.2, `ProductWatch` → `ProductBatch` → `Subjects\ProductSubject`). Stock
+movements (`catalog.stock.moved`) and price changes
+(`catalog.product.price_changed`, announced by the Product model) are only
+NOTED while a request or a job runs; when it ends (`terminating`, the queue's
+and the console's "finished") the products are read once and those that
+CROSSED a line — ran low, ran out, came back, changed their price — go to the
+rules together, one batch per event. Never a level ("stock ≤ 3"), never one
+run per product: an import must not be three thousand messages. "Before" is
+"now" less everything that moved, so it holds for a product on its own column
+and for one kept per warehouse; a product created in the act is left out
+(`catalog.product.created`); with no enabled rule asking, nothing is read or
+written. The listeners RESOLVE the watch when called — it holds one act's
+notes. A product rule's conditions narrow the batch the run holds
+(`ProductBatch::narrow`), and so does its quiet period.
+
+**"Running low" has one line per product** — `LowStock::thresholds()`: the
+product's own (`Product::lowStockThreshold()`, catalog's column), else the
+module's setting, else the catalogue's; never less than what it sold in
+`low_stock_days` (`catalog.products.sold`, answered by whoever keeps a record
+of sales). The order's Stock condition, `item.low_stock` and the "runs low"
+event all read it — never `LowStock::threshold()` alone for a known product.
+
+**A quiet period is the SUBJECT's memory** (`Rule::quiet_minutes`,
+`BaseSubject::quiet()`): the run log for one order or enquiry, a row per
+product for a batch (`m_automations_product_marks`, written when asked — so a
+retry of one action and the form's "Test" never ask).
+
+**A button under a Telegram message is a PERSON's act through an existing
+action** (PLAN §64.1, `Telegram\Buttons`, `Telegram\Updates`). A button
+stores `type|field|value` of an action the subject already has (one with a
+single select field; `@me` is whoever pressed; `note` writes the button's
+name) — never logic of its own, so a status set from a phone goes through
+`OrderStatusChanger` like every other. Whoever pressed is found by the linked
+Telegram account (`m_automations_telegram_users`, tied with a one-use code
+shown to the signed-in staff member), must be staff, and must hold the
+subject's `pressPermission()` — asked at EVERY press. The act runs with that
+user as `auth()->user()` and a rule name of "Ivan (via Telegram)", and it is
+NOT under `RuleGuard`: a person acted, so rules waiting for the change fire.
+Pressed once — claimed by an atomic update of the message row, released if
+the act failed. Presses arrive by asking (`automations:telegram-poll`, bots
+of enabled rules with buttons only) or by Telegram's call (a route outside
+`web`; the proof is the secret header, never the address). The bot's token in
+`m_automations_telegram_bots` is encrypted and the row is found by its hash;
+nothing built from a Bot API response is printed without `Bot::mask()`.

@@ -291,12 +291,39 @@ paid order waiting for a delivery must keep its payment and its points.
 **`torgash.points`** (PLAN §40.5): a ledger per customer (`m_points_ledger`,
 balance = sum on `m_points_accounts`, locked when spent), `m_points_orders`
 per order (planned `earn` shown as waiting, `earned` once credited on the
-shop's statuses, `spent`), multipliers per category subtree / product /
-customer group (`Earning`, rules read once per request, categories primed off
-`catalog.products.listed`). Spent as a discount through `Spending::quote()`
+shop's statuses, `spent`). Spent as a discount through `Spending::quote()`
 (balance, the share of the goods, with a coupon or not); an optional price in
 points buys a whole line (`points_lines` in the cart's answers). Expiry is
 FIFO by one rule: the balance may not exceed what unexpired credits add up to.
+
+**What a product earns and how much of it points pay is `Rules`** (PLAN §74),
+two questions answered separately, each by the first of: the product's own
+row (`m_points_products`), the rules top to bottom (`m_points_rules`: the
+first that matches AND speaks of that question — a rule about earning never
+settles paying), the settings. The list's order is the only law; there is no
+hidden "a subcategory beats its category" — `Rules::placeFor()` puts a new
+rule above the first that would cover it and `Rules::dead()` names the ones
+nothing reaches. A customer group's multiplier (`m_points_groups`) is another
+axis and multiplies the result. Never read those tables beside `Rules`: it
+is the per-request memo, primed in batches off `catalog.products.listed`
+(categories and characteristic values only when a rule asks about them), so
+a basket recalculated ten times asks nothing new. The points discount stays
+ONE line on the order; what limits it is the sum of every line's own share
+(`Spending::room()`). An order keeps the terms each line earned by
+(`m_points_orders.terms`): `Earning::plan($order, $kept)` — a rule edited
+later moves no order already placed, a line added since takes today's. Goods
+another module keeps out of the programme altogether answer
+`points.products.outside` (a gift card is money: buying one earns nothing and
+points do not buy it — which is why a part PAID with a card earns like money
+unless `money_only` is on). A product's own answers are WRITTEN only by
+`ProductTerms::write()` — the tab, the exim columns (`points_earn`,
+`points_pay`, `points_price`, spelled by the same class both ways) and the
+products list's bulk dialog all go through it. Points beyond what goods earn
+are answers to another module's question: a cart promotion's `give_points`
+(`promotions.side_effects` / `promotions.order.effects` → `OrderFlow::promoted()`,
+kept in `terms.extra` by promotion id and REPLACED each time, so they are the
+order's own and given once) and an automation's `GivePointsAction`
+(`Ledger::bonus()`, a `bonus` line with a unique `source_key` — once per event).
 
 **`torgash.giftcards`**: a card is found by an HMAC of its code under the app
 key (`code_hash`), never by the code; its balance is the SUM of its ledger,

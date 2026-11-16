@@ -33,6 +33,7 @@
                 'chat_id' => (string) $a->config('chat_id', ''),
                 'text' => (string) $a->config('text', ''),
                 'has_token' => $a->type === 'telegram' && (string) $a->config('token', '') !== '',
+                'buttons' => array_values((array) $a->config('buttons', [])),
                 'config' => ($actionTypes[$a->type]['fields'] ?? []) !== []
                     ? collect($actionTypes[$a->type]['fields'])->map(fn ($f, $name) => (string) $a->config($name, ''))->all()
                     : (object) [],
@@ -256,11 +257,12 @@
                          x-data="{
                              rows: {{ Js::from($actionRows) }},
                              types: {{ Js::from($actionTypes) }},
+                             buttonChoices: {{ Js::from($buttonChoices) }},
                              get available() {
                                  return Object.fromEntries(Object.entries(this.types).filter(([, t]) => t.subjects.length === 0 || t.subjects.includes(this.subject)));
                              },
                              add() {
-                                 this.rows.push({ id: null, type: 'telegram' in this.available ? 'telegram' : Object.keys(this.available)[0], method: 'POST', url: '', headers: '', body: '', chat_id: '', text: '', has_token: false, config: {} });
+                                 this.rows.push({ id: null, type: 'telegram' in this.available ? 'telegram' : Object.keys(this.available)[0], method: 'POST', url: '', headers: '', body: '', chat_id: '', text: '', has_token: false, buttons: [], config: {} });
                              },
                              init() { this.$watch('subject', () => { this.rows = this.rows.filter((row) => this.available[row.type]); }); },
                          }">
@@ -371,6 +373,36 @@
                                                   :name="`actions[${index}][text]`" x-model="row.text"></textarea>
                                         <p class="text-xs opacity-60 mt-1">{{ __('Plain text with the variables listed below. Bold, italic and links are written as in HTML: <b>…</b>, <i>…</i>, <a href="…">…</a>.') }}</p>
                                     </fieldset>
+
+                                    {{-- Buttons under the message (PLAN §64.1): each does ONE
+                                         thing an action of this subject already does. --}}
+                                    <fieldset class="fieldset p-0" x-show="(buttonChoices[subject] ?? []).length" x-cloak>
+                                        <legend class="fieldset-legend">{{ __('Buttons under the message') }}</legend>
+                                        <template x-for="(button, bi) in (row.buttons ?? [])" :key="bi">
+                                            <div class="flex flex-wrap gap-2 items-center mb-2">
+                                                <input class="input input-bordered input-sm w-48" form="rule-form" maxlength="40" placeholder="{{ __('Take it') }}"
+                                                       :name="`actions[${index}][buttons][${bi}][label]`" x-model="button.label" aria-label="{{ __('What the button says') }}">
+                                                <select class="select select-bordered select-sm grow min-w-56" form="rule-form"
+                                                        :name="`actions[${index}][buttons][${bi}][do]`" x-model="button.do" aria-label="{{ __('What the button does') }}">
+                                                    <template x-for="choice in (buttonChoices[subject] ?? [])" :key="choice.value">
+                                                        <option :value="choice.value" x-text="choice.label" :selected="choice.value === button.do"></option>
+                                                    </template>
+                                                </select>
+                                                <button type="button" class="btn btn-ghost btn-sm btn-square text-error" @click="row.buttons.splice(bi, 1)"
+                                                        title="{{ __('Remove') }}" aria-label="{{ __('Remove') }}"><x-icon name="x" size="sm" /></button>
+                                            </div>
+                                        </template>
+                                        <div>
+                                            <button type="button" class="btn btn-sm gap-1.5" x-show="(row.buttons ?? []).length < {{ \Torgash\Automations\Telegram\Buttons::MAX }}"
+                                                    @click="(row.buttons ??= []).push({ label: '', do: (buttonChoices[subject] ?? [])[0]?.value ?? '' })">
+                                                <x-icon name="plus" size="sm" /> {{ __('Add a button') }}
+                                            </button>
+                                        </div>
+                                        <p class="text-xs opacity-60 mt-1">
+                                            {{ __('Pressed once, by a staff member whose Telegram is linked and who has the right to do the same in the admin; the message then says who did it.') }}
+                                            <a href="{{ route('admin.automations.telegram.index') }}" class="link" target="_blank">{{ __('Link a Telegram account and choose how presses arrive') }}</a>
+                                        </p>
+                                    </fieldset>
                                 </div>
                             </div>
                         </template>
@@ -395,6 +427,12 @@
                             <input type="number" min="0" max="10080" name="delay_minutes"
                                    value="{{ old('delay_minutes', $rule->delay_minutes ?? 0) }}" class="input input-bordered w-full">
                             <p class="label text-xs opacity-60 whitespace-normal">{{ __('0 runs at once. The conditions are checked again when the wait is over.') }}</p>
+                        </fieldset>
+                        <fieldset class="fieldset p-0"><legend class="fieldset-legend">{{ __('Not more often than once in, hours') }}</legend>
+                            <input type="number" min="0" max="8760" step="0.5" name="quiet_hours"
+                                   value="{{ old('quiet_hours', ($rule->quiet_minutes ?? 0) > 0 ? rtrim(rtrim(number_format($rule->quiet_minutes / 60, 2, '.', ''), '0'), '.') : '') }}"
+                                   class="input input-bordered w-full" placeholder="0">
+                            <p class="label text-xs opacity-60 whitespace-normal">{{ __('About the same order, enquiry or product: 24 — once a day, however often it happens. Empty — every time.') }}</p>
                         </fieldset>
                         <fieldset class="fieldset p-0"><legend class="fieldset-legend">{{ __('Sort order') }}</legend>
                             <input type="number" min="0" name="position" value="{{ old('position', $rule->position ?? 0) }}" class="input input-bordered w-full">

@@ -1,0 +1,27 @@
+{
+  "torgash_automation": 1,
+  "name": {
+    "en": "A price changed",
+    "ru": "Изменилась цена",
+    "uk": "Змінилася ціна"
+  },
+  "about": {
+    "en": "Somebody changed a product's price — in the form, the list, an import or the bulk dialog: what it was and what it is, and who did it.",
+    "ru": "Кто-то изменил цену товара — в форме, в списке, импортом или массовой правкой: какой была, какой стала и кто это сделал.",
+    "uk": "Хтось змінив ціну товару — у формі, у списку, імпортом або масовою правкою: якою була, якою стала і хто це зробив."
+  },
+  "event": "automations.product.price_changed",
+  "delay_minutes": 0,
+  "quiet_minutes": 0,
+  "conditions": [],
+  "actions": [
+    {
+      "type": "telegram",
+      "text": {
+        "en": "💲 Price changed by {{ actor.name }} ({{ count }}):\n{{ products_text }}",
+        "ru": "💲 Цену изменил(а) {{ actor.name }} ({{ count }}):\n{{ products_text }}",
+        "uk": "💲 Ціну змінив(ла) {{ actor.name }} ({{ count }}):\n{{ products_text }}"
+      }
+    }
+  ]
+}

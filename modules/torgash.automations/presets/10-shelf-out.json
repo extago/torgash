@@ -1,0 +1,27 @@
+{
+  "torgash_automation": 1,
+  "name": {
+    "en": "Shelf: ran out",
+    "ru": "Полка: товар закончился",
+    "uk": "Полиця: товар закінчився"
+  },
+  "about": {
+    "en": "A product's stock reaches zero — from an order or from anywhere else.",
+    "ru": "Остаток товара дошёл до нуля — из-за заказа или по любой другой причине.",
+    "uk": "Залишок товару дійшов до нуля — через замовлення або з будь-якої іншої причини."
+  },
+  "event": "automations.product.out",
+  "delay_minutes": 0,
+  "quiet_minutes": 0,
+  "conditions": [],
+  "actions": [
+    {
+      "type": "telegram",
+      "text": {
+        "en": "⛔ Out of stock ({{ count }}):\n{{ products_text }}",
+        "ru": "⛔ Закончились ({{ count }}):\n{{ products_text }}",
+        "uk": "⛔ Закінчилися ({{ count }}):\n{{ products_text }}"
+      }
+    }
+  ]
+}

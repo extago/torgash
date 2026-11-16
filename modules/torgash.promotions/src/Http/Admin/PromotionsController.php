@@ -405,6 +405,8 @@ class PromotionsController extends Controller
             $discountType = in_array($tier['discount_type'] ?? null, [
                 ...PromotionTier::PRICE_TYPES,
                 PromotionTier::GIVE_GROUP, PromotionTier::FREE_PRODUCT,
+                // What other modules give (bonus points) — a cart promotion's only.
+                ...($promotion->zone === 'cart' ? array_keys(PromotionTier::moduleEffects()) : []),
             ], true) ? $tier['discount_type'] : PromotionTier::PERCENT;
 
             // Restricts a percent/fixed discount to specific products/categories

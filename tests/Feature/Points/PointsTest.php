@@ -124,8 +124,9 @@ class PointsTest extends TestCase
         $this->assertSame(0, app(Ledger::class)->balance($this->customer->id));
     }
 
-    public function test_a_gift_card_part_earns_nothing(): void
+    public function test_a_gift_card_part_earns_nothing_when_the_shop_earns_on_money_alone(): void
     {
+        app(\App\Core\Settings\SettingsManager::class)->set('torgash.points', 'money_only', true);
         [, $code] = app(Issuer::class)->issue(1000_00);
 
         $this->actingAs($this->customer)->post('http://localhost/cart/add/pt-table', ['qty' => 1]);
@@ -141,7 +142,7 @@ class PointsTest extends TestCase
         $parent = Category::create(['name' => ['en' => 'Furniture'], 'slug' => 'pt-furniture']);
         $child = Category::create(['name' => ['en' => 'Tables'], 'slug' => 'pt-tables', 'parent_id' => $parent->id]);
         Product::where('sku', 'PT-1')->first()->categories()->attach($child->id);
-        DB::table('m_points_rules')->insert(['kind' => 'category', 'target_id' => $parent->id, 'multiplier' => 2]);
+        DB::table('m_points_rules')->insert(['conditions' => json_encode(['categories' => [$parent->id]]), 'earn_mode' => 'multiplier', 'earn_value' => 2]);
 
         $order = $this->buy();
 

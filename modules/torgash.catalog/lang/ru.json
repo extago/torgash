@@ -1321,5 +1321,7 @@
     "Up to :n products": "До :n товаров",
     "Variation added — this is the new product. It shows the photos and description of :sku until it gets its own.": "Вариация добавлена — это новый товар. Он показывает фото и описание :sku, пока не получит свои.",
     "{0} No variation added.|{1} One variation added.|[2,*] :count variations added.": "{0} Вариации не добавлены.|{1} Добавлена одна вариация.|[2,*] Добавлено вариаций: :count.",
-    "{1} One combination already existed.|[2,*] :count combinations already existed.": "{1} Одно сочетание уже было.|[2,*] Сочетаний уже было: :count."
+    "{1} One combination already existed.|[2,*] :count combinations already existed.": "{1} Одно сочетание уже было.|[2,*] Сочетаний уже было: :count.",
+    "This product's own line: a fast seller is low at five, a rare one at one. Empty — the shop's.": "Свой порог этого товара: ходовой «заканчивается» с пяти штук, редкий — с одной. Пусто — как в магазине.",
+    "Running low at, pieces": "Товар заканчивается — от, шт."
 }

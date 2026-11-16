@@ -272,15 +272,28 @@ class ProductsController extends Controller
         }
 
         $changes = in_array($action, Product::STATUSES, true) ? ['status' => $action] : $this->changes($validated);
-        if (array_filter($changes) === []) {
+
+        // What other modules' fields of the dialog (`catalog.products.bulk.fields`)
+        // ask for: each reads ITS inputs off the request and answers with a
+        // bag under its own id, or nothing — then is handed every chunk.
+        $others = $action === 'edit' ? array_filter((array) hook_filter('catalog.products.bulk.changes', [], ['request' => $request])) : [];
+
+        if (array_filter($changes) === [] && $others === []) {
             return back()->withErrors(['action' => __('Nothing to change: fill in at least one field.')]);
         }
 
         $edit = app(BulkEdit::class);
-        $query->chunkById(200, fn ($products) => $edit->apply($products, $changes));
-        $result = $edit->result();
+        $query->chunkById(200, function ($products) use ($edit, $changes, $others) {
+            $edit->apply($products, $changes);
 
-        $message = trans_choice(':count product changed.|:count products changed.', $result['changed'], ['count' => $result['changed']]);
+            if ($others !== []) {
+                hook_action('catalog.products.bulk.apply', ['products' => $products, 'changes' => $others]);
+            }
+        });
+        $result = $edit->result();
+        $changed = $others !== [] ? $total : $result['changed'];
+
+        $message = trans_choice(':count product changed.|:count products changed.', $changed, ['count' => $changed]);
         $notes = [
             'negative_price' => ':count left as it was: the price would have gone below zero.|:count left as they were: the price would have gone below zero.',
             'stock_locked' => ':count kept its stock: it is counted by warehouses.|:count kept their stock: it is counted by warehouses.',
@@ -808,6 +821,7 @@ class ProductsController extends Controller
             // mean to use, and the number would then move on its own.
             'price_currency' => ['nullable', 'string', 'size:3', Rule::exists('currencies', 'code')],
             'stock' => 'required|integer',
+            'low_stock_threshold' => 'nullable|integer|min:0|max:1000000',
             'availability_status' => ['nullable', Rule::in(array_keys(app(AvailabilityStatuses::class)->all()))],
             'weight' => 'nullable|numeric|min:0',
             'needs_delivery' => 'nullable|boolean',
@@ -855,6 +869,7 @@ class ProductsController extends Controller
             'short_description' => $shortDescription,
             'slug' => Slugs::make($slugSource),
             'stock' => (int) $validated['stock'],
+            'low_stock_threshold' => isset($validated['low_stock_threshold']) ? (int) $validated['low_stock_threshold'] : null,
             // Nullable in the request: a form built before this field existed
             // (a test, a script) leaves a product exactly as it always
             // behaved — gated purely by the stock number, which "in_stock" IS.

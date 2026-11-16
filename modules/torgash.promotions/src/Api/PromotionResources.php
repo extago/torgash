@@ -222,7 +222,7 @@ class PromotionResources
             PromotionTier::FREE_SHIPPING => __('free shipping'),
             PromotionTier::GIVE_GROUP => __('upgrade to :group', ['group' => '#'.$tier->give_group_id]),
             PromotionTier::FREE_PRODUCT => __('gift: :sku ×:qty', ['sku' => '#'.$tier->free_product_id, 'qty' => $tier->free_qty]),
-            default => $tier->discount_type,
+            default => $tier->moduleEffectText() ?? $tier->discount_type,
         };
     }
 }

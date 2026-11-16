@@ -599,6 +599,11 @@
                                        @if ($stockLocked) readonly title="{{ __('Split across warehouses — edit it there instead.') }}" @endif
                                        class="input input-bordered w-full {{ $stockLocked ? 'opacity-60' : '' }}" placeholder="0">
                             </label>
+                            <label class="fieldset p-0"><span class="fieldset-legend">{{ __('Running low at, pieces') }}</span>
+                                <input name="low_stock_threshold" type="number" min="0" value="{{ old('low_stock_threshold', $product->low_stock_threshold) }}"
+                                       class="input input-bordered w-full" placeholder="{{ (int) setting('torgash.catalog', 'stock_low_threshold', 10) }}">
+                                <span class="label text-xs opacity-60 whitespace-normal">{{ __('This product\'s own line: a fast seller is low at five, a rare one at one. Empty — the shop\'s.') }}</span>
+                            </label>
                             <div>
                             {{-- A second axis from Status below (PLAN §31.3): whether the
                                  product can be bought right now and whether the number

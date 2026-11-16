@@ -1,0 +1,27 @@
+{
+  "torgash_automation": 1,
+  "name": {
+    "en": "Shelf: back in stock",
+    "ru": "Полка: товар снова в наличии",
+    "uk": "Полиця: товар знову в наявності"
+  },
+  "about": {
+    "en": "A product that had none has some again — a delivery booked in, a return, a correction.",
+    "ru": "У товара, которого не было, снова есть остаток — оприходована поставка, возврат, корректировка.",
+    "uk": "У товару, якого не було, знову є залишок — оприбутковано поставку, повернення, коригування."
+  },
+  "event": "automations.product.restocked",
+  "delay_minutes": 0,
+  "quiet_minutes": 0,
+  "conditions": [],
+  "actions": [
+    {
+      "type": "telegram",
+      "text": {
+        "en": "✅ Back in stock ({{ count }}):\n{{ products_text }}",
+        "ru": "✅ Снова в наличии ({{ count }}):\n{{ products_text }}",
+        "uk": "✅ Знову в наявності ({{ count }}):\n{{ products_text }}"
+      }
+    }
+  ]
+}

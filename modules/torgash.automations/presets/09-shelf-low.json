@@ -1,0 +1,27 @@
+{
+  "torgash_automation": 1,
+  "name": {
+    "en": "Shelf: running low",
+    "ru": "Полка: товар заканчивается",
+    "uk": "Полиця: товар закінчується"
+  },
+  "about": {
+    "en": "A product's stock comes down to its \"running low\" line — whoever moved it: a sale, a write-off, an import, 1C. Once per crossing, and several products at once are one message.",
+    "ru": "Остаток товара опустился до его порога «заканчивается» — кто бы его ни изменил: продажа, списание, импорт, 1С. Один раз на пересечение, а несколько товаров сразу — одно сообщение.",
+    "uk": "Залишок товару опустився до його порога «закінчується» — хто б його не змінив: продаж, списання, імпорт, 1С. Один раз на перетин, а кілька товарів одразу — одне повідомлення."
+  },
+  "event": "automations.product.low",
+  "delay_minutes": 0,
+  "quiet_minutes": 1440,
+  "conditions": [],
+  "actions": [
+    {
+      "type": "telegram",
+      "text": {
+        "en": "⚠️ Running low ({{ count }}):\n{{#products}}• {{ item.sku }} {{ item.name }} — {{ item.stock }} pcs. (was {{ item.stock_before }})\n{{ item.admin_url }}\n{{/products}}",
+        "ru": "⚠️ Заканчивается ({{ count }}):\n{{#products}}• {{ item.sku }} {{ item.name }} — {{ item.stock }} шт. (было {{ item.stock_before }})\n{{ item.admin_url }}\n{{/products}}",
+        "uk": "⚠️ Закінчується ({{ count }}):\n{{#products}}• {{ item.sku }} {{ item.name }} — {{ item.stock }} шт. (було {{ item.stock_before }})\n{{ item.admin_url }}\n{{/products}}"
+      }
+    }
+  ]
+}

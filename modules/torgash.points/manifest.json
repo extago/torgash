@@ -5,7 +5,7 @@
     "icon": "coins",
     "color": "#ca8a04",
     "section": "marketing",
-    "description": "Bonus points for customers with an account: earned for an order once it reaches the status the shop chose, from the money actually paid, with multipliers per category, product and customer group; spent in the basket as a discount after the coupon, within a share of the order; optionally a price in points under a product's price, for which a line can be bought outright. Every movement is a line in the customer's history.",
+    "description": "Bonus points for customers with an account: earned for an order once it reaches the status the shop chose, from the goods after every discount, by rules — a category, a brand, a price, a customer group — that say which goods earn more, less or nothing and which points do not pay for; spent in the basket as a discount after the coupon, within a share of the goods; optionally a price in points under a product's price, for which a line can be bought outright. Every movement is a line in the customer's history.",
     "provider": "Torgash\\Points\\PointsServiceProvider",
     "autoload": {
         "Torgash\\Points\\": "src/"
@@ -36,9 +36,9 @@
         {
             "key": "money_only",
             "type": "checkbox",
-            "default": true,
-            "label": "Earn only on what was paid with money",
-            "help": "The part of an order a gift card paid earns nothing — it was paid for once already. Off — the whole order earns."
+            "default": false,
+            "label": "A part paid with a gift card earns nothing",
+            "help": "Off — a gift card pays like money and the order earns in full: buying the card itself earned nothing. On — only what was paid with money earns."
         },
         {
             "key": "earn_statuses",
@@ -75,7 +75,14 @@
             "type": "number",
             "default": 50,
             "label": "Points may pay at most, % of the goods",
-            "help": "After the coupon. 100 — the whole of the goods; delivery is never paid with points."
+            "help": "After the coupon. 100 — the whole of the goods; delivery is never paid with points. A rule or a product can set its own share."
+        },
+        {
+            "key": "spend_default",
+            "type": "checkbox",
+            "default": true,
+            "label": "Goods can be paid with points",
+            "help": "For every product no rule and no product's own setting speaks of. Off — points pay only for the goods a rule or the product itself allows."
         },
         {
             "key": "with_coupon",

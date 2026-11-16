@@ -1353,6 +1353,9 @@ class CatalogServiceProvider extends ServiceProvider
                     $p->{$column} = $value;
                 }
             }],
+            ['key' => 'low_stock_threshold', 'group' => 'stock', 'label' => 'Running low at, pieces', 'on_request' => true,
+                'get' => fn (Product $p) => $p->low_stock_threshold,
+                'set' => fn (Product $p, $v) => $p->low_stock_threshold = trim((string) $v) === '' ? null : max(0, (int) $v)],
             ['key' => 'stock', 'group' => 'stock', 'label' => 'Stock', 'aliases' => ['Quantity', 'Количество', 'Остаток', 'count'], 'get' => fn (Product $p) => $p->stock, 'set' => fn (Product $p, $v) => $p->stock = (int) $v],
             // `enabled` predates the three-state status and is kept as a
             // lossy boolean view of it, because export profiles already in the
