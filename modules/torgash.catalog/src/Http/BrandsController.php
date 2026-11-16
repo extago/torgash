@@ -21,7 +21,8 @@ class BrandsController extends Controller
 
         $brands = FeatureValue::whereIn('feature_id', $brandFeatureIds)
             ->whereNotNull('slug')
-            ->with('feature')
+            // `media`: every brand's logo is drawn, one query apiece otherwise.
+            ->with(['feature', 'media'])
             ->get()
             ->sortBy(fn (FeatureValue $v) => $v->display());
 

@@ -703,7 +703,16 @@ the header asks the database that may be what failed. Actions are LINKS, never
 inline script: "back" is the Referer when it is this shop (for a form, the page
 it posts to), so they work under a CSP. 419 (a form open too long) says so and
 leads back to the form. The storefront is resolved after the CSRF check, so a
-419 is drawn plain.
+419 is drawn plain. So is the 404 of an address no person typed
+(`App\Core\Http\StrayAddress`: a hidden file, `wp-*`, the ending of a program,
+an archive or a static file) — a scanner trying `/.env` was drawn the whole
+storefront, 26 queries a request and a third of a live shop's server time
+(2026-11-16). It only dresses a 404: the routes, the pages' fallback and the
+redirects have declined the address before it is asked.
+
+**The storefront's language and currency pickers read core's memos**
+(`Languages::offered($storefront)`, `Currencies::offered($storefront)`), never
+the tables: the layout and the `locale` block both draw them on every page.
 
 **Loading states: skeletons only where a part arrives AFTER the page.** The
 storefront is drawn on the server, so a page never starts as grey boxes (a

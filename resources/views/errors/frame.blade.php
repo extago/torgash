@@ -5,10 +5,14 @@
      link is still in the shop and should be able to go on from here. Without
      them for a server error (drawing the header asks the very database that
      may have failed), in the admin, and for a request that never got a
-     session. Each code's view passes `code`, `title`, `text` and `actions`. --}}
+     session — and for an address no person typed (`/.env`, `/wp-login.php`,
+     a picture that is not there: App\Core\Http\StrayAddress), which is a
+     scanner's and was costing it the whole storefront each time.
+     Each code's view passes `code`, `title`, `text` and `actions`. --}}
 @php
     $errorFull = ! in_array($code, [500, 503], true)
         && ! request()->is('admin', 'admin/*')
+        && ! \App\Core\Http\StrayAddress::is(request())
         && request()->hasSession()
         && (function () {
             // A closed storefront's header and menu are the shop it is not

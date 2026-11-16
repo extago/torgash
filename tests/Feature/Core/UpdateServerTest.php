@@ -69,6 +69,39 @@ class UpdateServerTest extends TestCase
             ->assertSee('Torgash 0.2.0')->assertSee('Faster checkout')->assertSee(route('admin.system.updates.install'), false);
     }
 
+    /**
+     * A shop two versions behind installs both, so it reads what both bring,
+     * newest first — it used to see only the newest one's notes. They are
+     * shown short with a button for the rest: a box scrolling inside itself
+     * looked like text cut off (the owner's screenshot of 0.5.13, 2026-11-15).
+     */
+    public function test_every_version_the_update_brings_is_read_before_installing(): void
+    {
+        $download = 'https://uds.test/uds/torgash/?action=download&product=torgash&version=';
+        Http::fake(['uds.test/*' => Http::response([
+            'product' => 'torgash', 'current' => '0.1.0', 'latest' => '0.3.0',
+            'updates' => [
+                ['version' => '0.2.0', 'notes' => 'Faster checkout', 'size' => 3, 'sha256' => 'abc', 'download' => $download.'0.2.0'],
+                ['version' => '0.3.0', 'notes' => 'Backups in volumes', 'size' => 3, 'sha256' => 'def', 'download' => $download.'0.3.0'],
+            ],
+        ])]);
+        app(UpdateServer::class)->check();
+
+        $this->assertSame(['0.3.0', '0.2.0'], array_column(app(UpdateServer::class)->offered(), 'version'));
+        $this->assertSame('0.3.0', app(UpdateServer::class)->offer()['version'], 'the one installed is still the newest');
+
+        $this->actingAs(User::role('admin')->firstOrFail());
+        $page = (string) $this->get('http://localhost/admin/system')->assertOk()->getContent();
+        $this->assertNotFalse($older = strpos($page, 'Faster checkout'), 'the version in between is read too');
+        $this->assertLessThan($older, strpos($page, 'Backups in volumes'), 'newest first');
+        $this->assertStringContainsString('Torgash 0.2.0', $page);
+        $this->assertStringContainsString('Show in full', $page);
+        $this->assertDoesNotMatchRegularExpression('~torgash-rich[^>]*overflow-y-auto|overflow-y-auto[^>]*torgash-rich~', $page, 'no box scrolling inside itself');
+
+        config(['torgash.version' => '0.2.0']);
+        $this->assertSame(['0.3.0'], array_column(app(UpdateServer::class)->offered(), 'version'), 'what is installed is not offered again');
+    }
+
     public function test_an_offer_older_than_this_code_is_not_offered(): void
     {
         $this->offering('0.2.0');
@@ -142,6 +175,8 @@ class UpdateServerTest extends TestCase
         $this->assertStringContainsString('0.2.0', $rows['core_update']['label']);
 
         config(['torgash.version' => '0.2.0']);
+        // The next page: the rows are counted once per request.
+        app()->forgetInstance(AdminNotifications::class);
         $this->assertArrayNotHasKey('core_update', collect(app(AdminNotifications::class)->all())->keyBy('key')->all());
     }
 

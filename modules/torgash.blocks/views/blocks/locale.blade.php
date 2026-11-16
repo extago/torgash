@@ -3,9 +3,11 @@
      browser's prefetcher on its own). Drawn only when there is a choice. --}}
 @php
     $localeStorefront = current_storefront();
-    $localeLanguages = \App\Models\Language::whereIn('code', $localeStorefront?->locales ?? [])->where('enabled', true)->orderBy('sort')->get();
+    // From core's memos of the two tables: the layout's header has asked for
+    // the same rows already.
+    $localeLanguages = app(\App\Core\Support\Languages::class)->offered($localeStorefront);
     $localeCurrencies = ($settings['currencies'] ?? true)
-        ? \App\Models\Currency::whereIn('code', $localeStorefront?->currencies ?? [])->where('enabled', true)->orderBy('sort')->get()
+        ? app(\App\Core\Support\Currencies::class)->offered($localeStorefront)
         : collect();
     $localeActiveCurrency = session('currency', $localeStorefront?->default_currency);
 

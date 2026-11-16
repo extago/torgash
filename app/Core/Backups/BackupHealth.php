@@ -75,7 +75,10 @@ class BackupHealth
                 continue;
             }
 
-            $newest = BackupRun::query()->where('plan_id', $plan->id)->whereIn('status', [BackupRun::DONE, BackupRun::PARTIAL])->orderByDesc('id')->first();
+            // The newest backup that was made IS the last finished one: a
+            // failed or partial last one has left the loop above, so what
+            // remains is a good one or none — no second question for it.
+            $newest = $last;
             if ($newest && $newest->isDifferential() && ! $newest->baseKept()) {
                 $found->push([
                     'plan' => $plan,

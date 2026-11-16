@@ -40,6 +40,8 @@ class SystemController extends Controller
                 'current' => (string) config('torgash.version'),
                 'last' => app(\App\Core\Updates\UpdateServer::class)->last(),
                 'offer' => app(\App\Core\Updates\UpdateServer::class)->offer(),
+                // Every version that installing the offer brings, for its notes.
+                'offered' => app(\App\Core\Updates\UpdateServer::class)->offered(),
                 'running' => $this->running('Install an update'),
                 'address' => (string) setting(CoreSettings::ID, \App\Core\Updates\UpdateServer::ADDRESS),
                 'default' => app(\App\Core\Updates\UpdateServer::class)->defaultUrl(),

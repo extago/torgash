@@ -70,8 +70,8 @@
     {!! hook_render('core.body_start') !!}
     @php
         $storefront = current_storefront();
-        $languages = \App\Models\Language::whereIn('code', $storefront?->locales ?? [])->where('enabled', true)->orderBy('sort')->get();
-        $currencies = \App\Models\Currency::whereIn('code', $storefront?->currencies ?? [])->where('enabled', true)->orderBy('sort')->get();
+        $languages = app(\App\Core\Support\Languages::class)->offered($storefront);
+        $currencies = app(\App\Core\Support\Currencies::class)->offered($storefront);
         $activeCurrency = session('currency', $storefront?->default_currency);
         $hasBrands = \Illuminate\Support\Facades\Route::has('catalog.brands.index')
             && \Torgash\Catalog\Models\FeatureValue::whereNotNull('slug')

@@ -50,7 +50,8 @@ class ContentRenderer
             return '';
         }
 
-        $methods = \Torgash\Checkout\Models\PaymentMethod::where('enabled', true)->orderBy('position')->get();
+        // `media`: each method's logo is asked for below, one query apiece otherwise.
+        $methods = \Torgash\Checkout\Models\PaymentMethod::where('enabled', true)->orderBy('position')->with('media')->get();
 
         return $methods->isEmpty() ? '' : view('torgash.motivation::partials.methods-list', [
             'methods' => $methods->map(fn ($m) => ['name' => $m->t('name'), 'note' => $m->t('instructions'), 'logo' => $m->logoUrl()]),
@@ -64,7 +65,7 @@ class ContentRenderer
             return '';
         }
 
-        $methods = \Torgash\Shipping\Models\ShippingMethod::where('enabled', true)->orderBy('position')->get();
+        $methods = \Torgash\Shipping\Models\ShippingMethod::where('enabled', true)->orderBy('position')->with('media')->get();
 
         return $methods->isEmpty() ? '' : view('torgash.motivation::partials.methods-list', [
             'methods' => $methods->map(fn ($m) => ['name' => $m->t('name'), 'note' => null, 'logo' => $m->logoUrl()]),

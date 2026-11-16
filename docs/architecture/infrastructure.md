@@ -485,6 +485,11 @@ local self-signed certificate): `check()` keeps the answer as the core
 setting `update_check`, `offer()` is the newest still newer than this code,
 `download()` checks the announced sha256. System → "Updates": check, notes,
 "Install" (`InstallUpdate`, a tracked job: download → `Updater::apply`).
+The notes are those of EVERY version the install brings (`offered()`,
+newest first, each under its number): a shop two versions behind installs
+both and used to read only the newest one's. Shown short, faded, with
+"Show in full" — never a box scrolling inside itself, which an owner read
+as text cut off.
 `torgash:update` with no package does the same from the console;
 `torgash:release --publish --notes=` puts a build on the server
 (`TORGASH_UDS_TOKEN`, only on the publishing machine). The scheduler asks

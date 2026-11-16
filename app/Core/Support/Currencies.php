@@ -42,6 +42,23 @@ class Currencies
     }
 
     /**
+     * The currencies a storefront offers its visitors: its own list, without
+     * the ones switched off, in the shop's order. From the memo — the layout
+     * and the "language and currency" block each asked the table for them.
+     *
+     * @return \Illuminate\Support\Collection<int, Currency>
+     */
+    public function offered(?Storefront $storefront): \Illuminate\Support\Collection
+    {
+        $codes = (array) ($storefront?->currencies ?? []);
+
+        return collect($this->all())
+            ->filter(fn (Currency $currency) => $currency->enabled && in_array($currency->code, $codes, true))
+            ->sortBy(fn (Currency $currency) => [(int) $currency->sort, (int) $currency->id])
+            ->values();
+    }
+
+    /**
      * The books currency where no storefront is being served — a console
      * command, a queued job: the default storefront's, else the currency at
      * rate 1. Before this the answer there was a bare "USD", so the demo

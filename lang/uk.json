@@ -2064,5 +2064,7 @@
     "Only a tar or tar.gz is cut into volumes: it is written as it goes, a zip is finished only when it is closed.": "На томи ріжеться лише tar або tar.gz: він пишеться по ходу, а zip готовий лише в момент закриття.",
     "Packing in volumes of :size MB": "Пакування томами по :size МБ",
     "Volume :n stored": "Том :n збережено",
-    "Sending volume :n of :count to :storage": "Том :n з :count надсилається в «:storage»"
+    "Sending volume :n of :count to :storage": "Том :n з :count надсилається в «:storage»",
+    "Show in full": "Показати повністю",
+    "Collapse": "Згорнути"
 }

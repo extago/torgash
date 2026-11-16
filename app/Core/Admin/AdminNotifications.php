@@ -18,12 +18,27 @@ namespace App\Core\Admin;
  */
 class AdminNotifications
 {
+    /**
+     * Asked once per page: the dashboard draws the rows twice — the bell in
+     * the top bar and its "Needs attention" card — and every module counted
+     * its queue for each (measured on a live shop: the whole chain of counts
+     * ran twice). One per request (`scoped`, forgotten by PerRequest), so
+     * the next page counts afresh.
+     *
+     * @var list<array{key: string, label: string, count: int, url: string, icon: string}>|null
+     */
+    protected ?array $rows = null;
+
     /** @return list<array{key: string, label: string, count: int, url: string, icon: string}> */
     public function all(): array
     {
+        if ($this->rows !== null) {
+            return $this->rows;
+        }
+
         $rows = (array) hook_filter('core.admin.notifications', [], ['user' => auth()->user()]);
 
-        return array_values(array_filter(array_map(fn ($row) => is_array($row) ? [
+        return $this->rows = array_values(array_filter(array_map(fn ($row) => is_array($row) ? [
             'key' => (string) ($row['key'] ?? ''),
             'label' => (string) ($row['label'] ?? ''),
             'count' => (int) ($row['count'] ?? 0),

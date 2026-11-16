@@ -144,6 +144,26 @@ class UpdateServer
         return is_array($last) ? $last : null;
     }
 
+    /**
+     * Every version of the last check still newer than this code, newest
+     * first — what installing the newest one brings. A shop two versions
+     * behind reads both versions' notes, not only the newest one's (a 0.5.11
+     * shop offered 0.5.13 never saw what 0.5.12 had added).
+     *
+     * @return list<array>
+     */
+    public function offered(): array
+    {
+        $current = (string) config('torgash.version');
+        $newer = array_filter(
+            (array) ($this->last()['updates'] ?? []),
+            fn ($update) => is_array($update) && version_compare((string) ($update['version'] ?? ''), $current, '>'),
+        );
+        usort($newer, fn (array $a, array $b) => version_compare((string) $b['version'], (string) $a['version']));
+
+        return array_values($newer);
+    }
+
     /** The newest offer of the last check, if it is still newer than this code. */
     public function offer(): ?array
     {

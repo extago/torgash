@@ -72,6 +72,9 @@ class CatalogServiceProvider extends ServiceProvider
         // request's answer — a stock that moved changes the next page's.
         PerRequest::forget($this->app, Labels::class);
         PerRequest::forget($this->app, Stock\StockMoves::class);
+        // A group's members, asked twice by the product page: one request's.
+        $this->app->singleton(Support\Variations::class);
+        PerRequest::forget($this->app, Support\Variations::class);
         // Rows a queue job reads too (an export, a feed, a letter): emptied
         // before each job, or a long-running worker serves what it booted with.
         PerRequest::flushPerJob($this->app, PriceTypes::class, CategoryTree::class, AvailabilityStatuses::class, Sorts::class, Filters\Flags::class);
@@ -567,6 +570,15 @@ class CatalogServiceProvider extends ServiceProvider
      */
     protected function registerVariationsList(): void
     {
+        // The members Variations keeps for the page are dropped the moment a
+        // product or one of its answers is written — whoever reads next reads
+        // the table, not what was true before the write.
+        $forgetGroups = fn () => app(Variations::class)->flush();
+        Product::saved($forgetGroups);
+        Product::deleted($forgetGroups);
+        \Torgash\Catalog\Models\ProductFeature::saved($forgetGroups);
+        \Torgash\Catalog\Models\ProductFeature::deleted($forgetGroups);
+
         hook_listen('cart.buy_box.bottom', function (string $html, array $context) {
             $product = $context['product'] ?? null;
 

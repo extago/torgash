@@ -33,6 +33,42 @@ class ErrorPagesTest extends TestCase
         $this->assertSame(1, substr_count($body, '<h1'));
     }
 
+    /**
+     * A scanner's address is not a visitor's dead link: `/.env` was served the
+     * whole storefront — 26 queries a request on a live shop (2026-11-16).
+     */
+    public function test_an_address_no_person_typed_gets_the_bare_page(): void
+    {
+        foreach (['/.env', '/src/.env', '/.git/config', '/wp-login.php', '/wp-admin/setup', '/backup.zip', '/ru/old.php', '/images/gone.jpg'] as $address) {
+            $body = $this->get('http://localhost'.$address)->assertNotFound()->getContent();
+
+            // The words are in the address's language (`/ru/…`); the page is the same.
+            $this->assertStringContainsString('<meta name="robots" content="noindex">', $body, $address);
+            $this->assertStringNotContainsString('<meta name="csrf-token"', $body, $address.' is not drawn in the storefront layout');
+            $this->assertStringNotContainsString('name="q"', $body, $address);
+        }
+
+        // Counted from a second request: the first warms the per-request memos.
+        $queries = 0;
+        \Illuminate\Support\Facades\DB::listen(function () use (&$queries) {
+            $queries++;
+        });
+        $this->get('http://localhost/api/.env.production')->assertNotFound();
+
+        $this->assertLessThanOrEqual(8, $queries, 'a scanner costs the lookups that decline it, not a page');
+    }
+
+    public function test_what_a_page_of_the_shop_may_be_called_is_never_stray(): void
+    {
+        foreach (['', 'delivery', 'info/delivery.html', 'product/phone.md', 'catalog/v2.0', '.well-known/security.txt-page', 'ru/about'] as $path) {
+            $this->assertFalse(\App\Core\Http\StrayAddress::matches($path), $path);
+        }
+
+        foreach (['.env', 'a/.git/HEAD', 'WP-Login.PHP', 'x/%2Eenv', 'cgi-bin/test', 'dump.sql.gz'] as $path) {
+            $this->assertTrue(\App\Core\Http\StrayAddress::matches($path), $path);
+        }
+    }
+
     public function test_a_server_error_gets_a_page_that_reads_nothing(): void
     {
         $body = $this->get('http://localhost/_error-probe')->assertStatus(500)->getContent();

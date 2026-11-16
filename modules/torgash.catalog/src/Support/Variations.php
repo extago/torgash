@@ -301,6 +301,23 @@ class Variations
         return array_map(fn (array $row) => array_diff_key($row, ['order' => 0]), $rows);
     }
 
+    /**
+     * The storefront's members of each group already asked about on this
+     * page: the product page asks for its pickers and again for the "all
+     * variants" list under the buy box, and each asking was three queries.
+     * One request's answer (PerRequest forgets the object), dropped at once
+     * when a product or an answer of one is written. The admin's view
+     * (`$everyStatus`) is never kept — it reads straight after it writes.
+     *
+     * @var array<string, Collection<int, Product>>
+     */
+    protected array $visibleMembers = [];
+
+    public function flush(): void
+    {
+        $this->visibleMembers = [];
+    }
+
     /** @return Collection<int, Product> */
     protected function members(Product $product, bool $everyStatus): Collection
     {
@@ -310,6 +327,16 @@ class Variations
             return new Collection([$product]);
         }
 
+        if (! $everyStatus) {
+            return $this->visibleMembers[$product->variation_group] ??= $this->query($product, false);
+        }
+
+        return $this->query($product, true);
+    }
+
+    /** @return Collection<int, Product> */
+    protected function query(Product $product, bool $everyStatus): Collection
+    {
         return Product::query()
             ->where('variation_group', $product->variation_group)
             ->when(! $everyStatus, fn ($q) => $q->visible())

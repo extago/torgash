@@ -94,10 +94,12 @@ class CoreServiceProvider extends ServiceProvider
         $this->app->scoped(\App\Core\Access\Impersonation::class);
         // Whether this page printed code that waits for consent.
         $this->app->scoped(\App\Core\Privacy\ConsentGate::class);
+        // The bell's rows, counted once for the page that draws them twice.
+        $this->app->scoped(\App\Core\Admin\AdminNotifications::class);
 
         // ...and actually forgotten when the next request begins. `scoped()`
         // declares the intent; only Octane enforces it. See PerRequest.
-        PerRequest::forget($this->app, PageMeta::class, Breadcrumbs::class, StructuredData::class, \App\Core\Themes\ThemeSettings::class, \App\Core\Themes\ShopPalette::class, \App\Core\Support\GrammaticalCases::class, \App\Core\Content\SafeHtml::class, \App\Core\Assets\AssetVersions::class, \App\Core\Http\Csp::class, \App\Core\Access\Impersonation::class, \App\Core\Privacy\ConsentGate::class);
+        PerRequest::forget($this->app, \App\Core\Admin\AdminNotifications::class, PageMeta::class, Breadcrumbs::class, StructuredData::class, \App\Core\Themes\ThemeSettings::class, \App\Core\Themes\ShopPalette::class, \App\Core\Support\GrammaticalCases::class, \App\Core\Content\SafeHtml::class, \App\Core\Assets\AssetVersions::class, \App\Core\Http\Csp::class, \App\Core\Access\Impersonation::class, \App\Core\Privacy\ConsentGate::class);
         $this->app->singleton(ModuleManager::class, fn ($app) => new ModuleManager($app));
 
         // Pages kept ready for guests (PLAN §61): the registry every module
@@ -163,7 +165,8 @@ class CoreServiceProvider extends ServiceProvider
 
         // Read again by every queue job: a worker runs for days, and a setting,
         // a rate or a unit changed in the admin has to reach its next job.
-        PerRequest::flushPerJob($this->app, SettingsManager::class, Currencies::class, Units::class);
+        $this->app->singleton(\App\Core\Support\Languages::class);
+        PerRequest::flushPerJob($this->app, SettingsManager::class, Currencies::class, \App\Core\Support\Languages::class, Units::class);
 
         // A FrankenPHP worker puts back what a request may have changed in the
         // objects it shares with the next one (hooks, theme, translations).
@@ -680,6 +683,10 @@ class CoreServiceProvider extends ServiceProvider
 
     protected function announceCurrencyChanges(): void
     {
+        // The storefront's pickers read the memo: a currency added or
+        // switched off is one the next reader must see.
+        Currency::saved(fn () => app(Currencies::class)->flush());
+
         Currency::updated(function (Currency $currency) {
             // The books currency shown with more or fewer places: a price
             // derived from another currency is rounded to them (catalog's

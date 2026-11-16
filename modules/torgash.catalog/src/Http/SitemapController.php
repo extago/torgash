@@ -117,7 +117,11 @@ class SitemapController extends Controller
         // noindex: inviting a crawler to a page that sends it elsewhere is a
         // contradiction (Support\VariationCards::indexable()).
         $cards = app(\Torgash\Catalog\Support\VariationCards::class);
-        $products = $cards->onlyHeads($cards->indexable())->with('media')->get();
+        // `categories` as well: a picture's alt text is worked out from a
+        // template chosen by the product's categories (torgash.seo), which
+        // asked for them one product at a time — 579 queries for one map,
+        // measured on a live shop.
+        $products = $cards->onlyHeads($cards->indexable())->with(['media', 'categories'])->get();
 
         // Photos a module keeps from a visitor who has said nothing (goods
         // for adults, covered until an age is confirmed — torgash.age) are

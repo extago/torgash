@@ -169,10 +169,28 @@
                                     </button>
                                 </form>
                             </div>
-                            @if (trim((string) ($updates['offer']['notes'] ?? '')) !== '')
+                            @php $releaseNotes = array_values(array_filter($updates['offered'], fn ($release) => trim((string) ($release['notes'] ?? '')) !== '')); @endphp
+                            @if ($releaseNotes !== [])
                                 {{-- Markdown, English first and each translation under a `---`: the
-                                     admin's own section (ReleaseNotes). --}}
-                                <div class="text-sm max-h-80 overflow-y-auto rounded-box bg-base-200/50 px-4 py-3 torgash-rich">{{ \App\Core\Updates\ReleaseNotes::html((string) $updates['offer']['notes']) }}</div>
+                                     admin's own section (ReleaseNotes). Every version the update
+                                     brings, newest first — a shop two versions behind reads both.
+                                     Shown short, faded, with a button for the rest: a box that
+                                     scrolled inside itself looked like text cut off. --}}
+                                <div class="flex flex-col items-start gap-1" x-data="{ all: false, long: false }" x-init="$nextTick(() => long = $refs.notes.scrollHeight > $refs.notes.clientHeight + 1)">
+                                    <div x-ref="notes" :data-all="all" :data-faded="long && ! all"
+                                         class="w-full text-sm max-h-80 overflow-hidden data-[all]:max-h-none data-[faded]:[mask-image:linear-gradient(to_bottom,black_70%,transparent)] rounded-box bg-base-200/50 px-4 py-3 torgash-rich">
+                                        @foreach ($releaseNotes as $release)
+                                            @if (count($releaseNotes) > 1)
+                                                <div @class(['text-xs font-semibold uppercase tracking-wide text-base-content/60', 'mt-6 pt-4 border-t border-base-content/15' => ! $loop->first])>Torgash {{ $release['version'] }}</div>
+                                            @endif
+                                            {{ \App\Core\Updates\ReleaseNotes::html((string) $release['notes']) }}
+                                        @endforeach
+                                    </div>
+                                    <button type="button" class="btn btn-ghost btn-sm" x-show="long" x-cloak x-on:click="all = ! all">
+                                        <span x-show="! all">{{ __('Show in full') }}</span>
+                                        <span x-show="all" x-cloak>{{ __('Collapse') }}</span>
+                                    </button>
+                                </div>
                             @endif
                             <p class="text-xs opacity-60">{{ __("A backup of the database is made first; if anything fails, the previous version is put back by itself. The way back afterwards, from the server's console:") }} <code>php artisan torgash:update-rollback</code></p>
                         @elseif (! empty($updates['last']['error']))

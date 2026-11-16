@@ -18,5 +18,8 @@ class Language extends Model
     {
         static::saved(fn () => app(\App\Core\Support\GrammaticalCases::class)->flush());
         static::deleted(fn () => app(\App\Core\Support\GrammaticalCases::class)->flush());
+        // ...nor the memo of the table itself (the storefront's pickers).
+        static::saved(fn () => app(\App\Core\Support\Languages::class)->flush());
+        static::deleted(fn () => app(\App\Core\Support\Languages::class)->flush());
     }
 }
