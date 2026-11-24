@@ -112,11 +112,13 @@ class Earning
         // with the rest, but no discount or multiplier touches them.
         $terms = ['group' => (float) ($kept['group'] ?? $this->rules->groupMultiplier($user)), 'lines' => [], 'extra' => (array) ($kept['extra'] ?? [])];
         $sum = 0.0;
+        $inside = 0;
 
         foreach ($lines as $line) {
             $id = (int) $line['product_id'];
             $qty = max(1, (int) ($line['qty'] ?? 1));
             $total = (int) ($line['line_total'] ?? 0);
+            $inside += $this->rules->outside($id) ? 0 : $total;
             $by = $terms['lines'][$id] ?? $kept['lines'][$id] ?? null;
 
             if (! is_array($by) || ! isset($by['mode'])) {
@@ -128,6 +130,39 @@ class Earning
             $sum += $this->points($by, $total, $qty);
         }
 
-        return [(int) floor($sum * $terms['group'] * $afterDiscount * $money) + (int) array_sum($terms['extra']), $terms];
+        // What the way of paying adds. An order planned before keeps its
+        // answer — "nothing" too — until it is paid another way.
+        $methodId = (int) $order->payment_method_id;
+        $pay = $kept['payment'] ?? (isset($kept['lines']) ? ['method' => $methodId, 'mode' => 'none', 'value' => 0.0] : null);
+
+        if (! is_array($pay) || (int) ($pay['method'] ?? 0) !== $methodId) {
+            $pay = $this->rules->payment($methodId);
+        }
+
+        $pay['points'] = $this->forPayment($pay, (int) round($inside * $afterDiscount * $money));
+        $terms['payment'] = $pay;
+
+        return [(int) floor($sum * $terms['group'] * $afterDiscount * $money) + (int) array_sum($terms['extra']) + $pay['points'], $terms];
+    }
+
+    /**
+     * Points a way of paying adds to goods worth `$goods` (minor units, after
+     * every discount; goods outside the programme are not among them). An
+     * order with none gets nothing: a gift card bought is money changed for
+     * money, however it was paid.
+     *
+     * @param  array{mode: string, value: float|int}  $pay
+     */
+    public function forPayment(array $pay, int $goods): int
+    {
+        if ($goods <= 0) {
+            return 0;
+        }
+
+        return match ($pay['mode'] ?? 'none') {
+            'fixed' => max(0, (int) round((float) $pay['value'])),
+            'percent' => (int) floor($goods / 100 * (float) $pay['value'] / 100),
+            default => 0,
+        };
     }
 }

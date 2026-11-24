@@ -128,7 +128,17 @@ class OrderFlow
     {
         $row = OrderPoints::find($order->id);
 
-        if (! $row || ! in_array($order->payment_state, [PaymentState::REFUNDED, PaymentState::PARTIALLY_REFUNDED], true)) {
+        if (! $row) {
+            return;
+        }
+
+        // Paid another way: what the way of paying adds follows it.
+        if (! $row->credited_at && isset($row->terms['lines']) && (int) ($row->terms['payment']['method'] ?? 0) !== (int) $order->payment_method_id) {
+            $this->plan($order);
+            $row->refresh();
+        }
+
+        if (! in_array($order->payment_state, [PaymentState::REFUNDED, PaymentState::PARTIALLY_REFUNDED], true)) {
             return;
         }
 

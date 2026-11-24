@@ -71,6 +71,13 @@
             "help": "0 — any number."
         },
         {
+            "key": "spend_from",
+            "type": "number",
+            "default": 0,
+            "label": "Points pay for an order from, in the shop's currency",
+            "help": "Compared with the goods in the basket, before the coupon. 0 — any order."
+        },
+        {
             "key": "spend_max_percent",
             "type": "number",
             "default": 50,
@@ -99,11 +106,32 @@
             "help": "Counted from the day they were credited; the oldest are spent first. 0 — for ever."
         },
         {
+            "key": "expiry_notice_days",
+            "type": "number",
+            "default": 7,
+            "label": "Warn about expiring points, days ahead",
+            "help": "A letter to the customer: how many points are about to expire and when the first of them go. Once for each credit. 0 — no letter."
+        },
+        {
             "key": "show_earn",
             "type": "checkbox",
             "default": true,
             "label": "Show \"+N points\" on product cards and pages",
             "help": "What buying the product earns, and to a guest — that it would earn it with an account."
+        },
+        {
+            "key": "show_spend",
+            "type": "checkbox",
+            "default": true,
+            "label": "Show on a product's page how much of it points pay",
+            "help": "\"Points pay for up to 30% of the price\" — when it is less than the whole price, and \"Points do not pay for this product\" for an exception."
+        },
+        {
+            "key": "info_url",
+            "type": "text",
+            "default": "",
+            "label": "Page about the programme",
+            "help": "The address of the shop's page with the rules, such as /bonus-points. A link \"About bonus points\" then stands on a product's page, by the points in the basket and in the account. Empty — no link."
         },
         {
             "key": "card_place",

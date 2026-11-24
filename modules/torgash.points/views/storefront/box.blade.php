@@ -5,11 +5,18 @@
 <div class="flex flex-col gap-1.5 text-sm">
     <div class="flex justify-between items-center gap-2">
         <span class="flex items-center gap-1.5"><x-icon name="coins" size="sm" class="opacity-60" /> {{ __('Bonus points') }}</span>
-        <span class="opacity-70 tabular-nums">{{ __('you have :points', ['points' => number_format($pointsBalance, 0, '.', ' ')]) }}</span>
+        <span class="opacity-70 tabular-nums">
+            {{ __('you have :points', ['points' => number_format($pointsBalance, 0, '.', ' ')]) }}
+            @if ($pointsInfoUrl)
+                <a href="{{ $pointsInfoUrl }}" class="link link-hover ml-1" aria-label="{{ __('About bonus points') }}" title="{{ __('About bonus points') }}"><x-icon name="circle-help" size="sm" class="inline align-text-bottom" /></a>
+            @endif
+        </span>
     </div>
 
     @if ($pointsBlocked)
         <p class="text-xs opacity-60">{{ __('Points cannot be spent together with a coupon.') }}</p>
+    @elseif ($pointsFrom > 0)
+        <p class="text-xs opacity-60">{{ __('Points pay for an order from :amount.', ['amount' => format_price($pointsFrom)]) }}</p>
     @elseif ($pointsMax > 0 || $pointsLine)
         <form method="POST" action="{{ route('points.spend') }}" class="flex gap-2"
               hx-post="{{ route('points.spend') }}"

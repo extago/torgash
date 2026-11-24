@@ -60,6 +60,37 @@ class Spending
         return (int) round((float) setting('torgash.points', 'point_value', 1) * 100);
     }
 
+    /** The goods an order must hold before points pay for any of it, in minor units — 0 for any order. */
+    public function orderFrom(): int
+    {
+        return max(0, (int) round((float) setting('torgash.points', 'spend_from', 0) * 100));
+    }
+
+    /** Whether this basket is too small for points to be spent on it at all. */
+    public function tooSmall(CartManager $cart): bool
+    {
+        $from = $this->orderFrom();
+
+        return $from > 0 && (int) $cart->items()->sum(fn ($item) => (int) $item->line_total) < $from;
+    }
+
+    /**
+     * Where the shop explains its programme — the "About bonus points" link.
+     * An address inside the shop is written the way this visitor's are.
+     */
+    public static function infoUrl(): ?string
+    {
+        $url = trim((string) setting('torgash.points', 'info_url', ''));
+
+        if ($url === '' || preg_match('~^(?:https?:)?//~i', $url)) {
+            return preg_match('~^https?://~i', $url) ? $url : null;
+        }
+
+        $prefix = \App\Core\Storefronts\LocaleResolver::prefixOf(request()->route());
+
+        return url(($prefix ? '/'.$prefix : '').'/'.ltrim($url, '/'));
+    }
+
     /**
      * The money points may take off this basket: every line's own share of
      * its total, brought down by what the coupon already took. `$except` are
@@ -122,7 +153,7 @@ class Spending
     {
         $user = auth()->user();
 
-        if (! $user || $base <= 0) {
+        if (! $user || $base <= 0 || $this->tooSmall($cart)) {
             return null;
         }
 
@@ -196,7 +227,7 @@ class Spending
         $user = auth()->user();
         $value = $this->pointValue();
 
-        if (! $user || $value <= 0) {
+        if (! $user || $value <= 0 || $this->tooSmall($cart)) {
             return 0;
         }
 

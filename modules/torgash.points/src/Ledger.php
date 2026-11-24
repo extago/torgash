@@ -135,9 +135,7 @@ class Ledger
         foreach ($users as $userId) {
             DB::transaction(function () use ($userId, &$count) {
                 $this->lock($userId);
-                $alive = (int) Entry::where('user_id', $userId)->where('points', '>', 0)->whereIn('type', ['earn', 'adjust', 'refund'])
-                    ->where(fn ($q) => $q->whereNull('expires_at')->orWhere('expires_at', '>=', now()))->sum('points');
-                $excess = $this->fresh($userId) - $alive;
+                $excess = $this->fresh($userId) - $this->alive($userId);
 
                 if ($excess > 0) {
                     $this->write($userId, 'expire', -$excess);
@@ -147,6 +145,52 @@ class Ledger
         }
 
         return $count;
+    }
+
+    /**
+     * What is about to expire, by the same sum {@see expire()} writes off —
+     * points are spent oldest first, so a credit past its date takes only
+     * what the balance still holds of it. With `$until`: everything that goes
+     * up to then; without: what goes on the nearest day anything does.
+     *
+     * @return array{points: int, at: \Illuminate\Support\Carbon}|null
+     */
+    public function expiring(int $userId, ?\DateTimeInterface $until = null): ?array
+    {
+        $credits = Entry::where('user_id', $userId)->where('points', '>', 0)->where('expires_at', '>=', now())
+            ->when($until, fn ($q) => $q->where('expires_at', '<=', $until))
+            ->orderBy('expires_at')->get(['points', 'expires_at']);
+
+        if ($credits->isEmpty()) {
+            return null;
+        }
+
+        // Below zero while what was spent still came out of living credits.
+        $gone = $this->fresh($userId) - $this->alive($userId);
+        $first = null;
+        $points = 0;
+
+        foreach ($credits as $credit) {
+            if ($first && ! $until && ! $credit->expires_at->isSameDay($first)) {
+                break;
+            }
+
+            $gone += $credit->points;
+
+            if ($gone > 0) {
+                $first ??= $credit->expires_at;
+                $points = $gone;
+            }
+        }
+
+        return $first ? ['points' => $points, 'at' => $first] : null;
+    }
+
+    /** Every credit that has not passed its date — whatever gave it. */
+    protected function alive(int $userId): int
+    {
+        return (int) Entry::where('user_id', $userId)->where('points', '>', 0)
+            ->where(fn ($q) => $q->whereNull('expires_at')->orWhere('expires_at', '>=', now()))->sum('points');
     }
 
     public static function sum(int $userId): int

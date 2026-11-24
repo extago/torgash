@@ -1,5 +1,11 @@
 {{-- Under a price: what buying it earns ("+24 points", to a guest "with an
-     account"), and — where the shop sells for points — "or 1 500 points". --}}
+     account"), and — where the shop sells for points — "or 1 500 points".
+     On the product's page also how much of it points pay, when that is not
+     the whole price, and the way to the shop's page about the programme. --}}
+@php
+    $pointsShare ??= null;
+    $pointsInfoUrl ??= null;
+@endphp
 <div @class(['flex flex-wrap items-center gap-x-3 gap-y-0.5 text-sm', 'mt-1' => $pointsWhere === 'page', 'text-xs' => $pointsWhere === 'card'])>
     @if ($pointsPrice !== null)
         <span class="font-medium text-warning flex items-center gap-1">
@@ -18,5 +24,15 @@
                     : trans_choice('+:points point|+:points points', $pointsEarn, ['points' => number_format($pointsEarn, 0, '.', ' ')]) }}
             </x-slot:trigger>
         </x-popover>
+    @endif
+    @if ($pointsShare !== null)
+        <span class="opacity-70">
+            {{ $pointsShare > 0
+                ? __('Points pay for up to :percent% of the price', ['percent' => $pointsShare])
+                : __('Points do not pay for this product') }}
+        </span>
+    @endif
+    @if ($pointsInfoUrl)
+        <a href="{{ $pointsInfoUrl }}" class="link link-hover opacity-70">{{ __('About bonus points') }}</a>
     @endif
 </div>

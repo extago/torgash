@@ -8,6 +8,9 @@
      one counted as chosen (what the summary beside it prices). --}}
 @php
     $paymentTotals = app(\Torgash\Checkout\Totals::class);
+    // What a module says about paying this way ("+50 bonus points"): one
+    // question for the whole list, answered as id => plain sentences.
+    $paymentHints = (array) hook_filter('checkout.payment_methods.hints', [], ['methods' => $checkoutPayment['methods'], 'cart' => $cart ?? null]);
 @endphp
 <div id="checkout-payments" class="flex flex-col gap-2" @if ($oob ?? false) hx-swap-oob="true" @endif>
     @forelse ($checkoutPayment['methods'] as $method)
@@ -35,6 +38,9 @@
                      method that cannot take the currency on screen still
                      charges a real amount, and finding that out afterwards
                      is what makes a customer abandon a placed order. --}}
+                @foreach ((array) ($paymentHints[$method->id] ?? []) as $paymentHint)
+                    <span class="text-xs text-success">{{ $paymentHint }}</span>
+                @endforeach
                 @if ($charge !== current_currency())
                     <span class="text-xs opacity-60">
                         {{ __('The payment itself goes through in :currency, converted at the current rate.', ['currency' => $charge]) }}

@@ -452,6 +452,13 @@ purpose — every shop has payment methods (cash on delivery, a transfer) and mu
 keep them with this module uninstalled; gateways are the optional half, which is
 the opposite of shipping, where the whole subsystem is optional.
 
+What a module has to say about paying one way or another AT CHECKOUT is
+`checkout.payment_methods.hints` — one question for the whole list
+(`methods`, `cart`), answered as `id => list of plain sentences` printed under
+the method's name (`torgash.points`: "+100 bonus points"). Plain text, escaped
+by checkout; the list is drawn again with every re-quote, so the answer may
+depend on the coupon.
+
 A gateway is configured on the
 payment method itself (Admin → Payment), through `checkout.payment_method.extra`
 + `checkout.payment_method.saved` — the same idiom as taxes in the product form.

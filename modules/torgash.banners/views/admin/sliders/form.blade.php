@@ -38,7 +38,8 @@
               },
               remove(i) { this.others.unshift(this.rows.splice(i, 1)[0]); },
               /* By a drag (x-sort, which works under a finger) or by the arrows a
-                 finger gets. Named by the banner's id: Alpine Sort drops a key of 0 as "none". */
+                 finger gets. Named by the banner's id: Alpine Sort drops a key of 0 as none.
+                 No double quote anywhere in here: it would end the attribute. */
               move(id, to) {
                   const from = this.rows.findIndex((row) => row.id === id);
                   if (from === -1 || from === to || to < 0 || to >= this.rows.length) return;

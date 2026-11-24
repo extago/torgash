@@ -40,6 +40,8 @@ class PointsController extends Controller
             'orders' => \Torgash\Checkout\Models\Order::whereIn('id', Entry::where('user_id', $userId)->whereNotNull('order_id')->select('order_id'))
                 ->pluck('order_number', 'id'),
             'pointValue' => app(Spending::class)->pointValue(),
+            'expiring' => $ledger->expiring($userId),
+            'infoUrl' => Spending::infoUrl(),
         ]);
     }
 

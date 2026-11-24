@@ -42,6 +42,9 @@ class Rules
     /** @var array<int, float>|null customer group → multiplier */
     protected ?array $groups = null;
 
+    /** @var array<int, array{mode: string, value: float}>|null payment method → what paying by it adds */
+    protected ?array $payments = null;
+
     /** @var array<int, array{categories: list<int>, values: list<int>, own: ?object, outside: bool}> */
     protected array $facts = [];
 
@@ -65,7 +68,34 @@ class Rules
     {
         $this->rules = null;
         $this->groups = null;
+        $this->payments = null;
         $this->facts = [];
+    }
+
+    public const PAYMENT_MODES = ['fixed', 'percent'];
+
+    /**
+     * What paying by this method adds to an order (PLAN §74, stage 4): whole
+     * points, or a percent of the goods as points. `none` when the shop gave
+     * the method nothing.
+     *
+     * @return array{method: int, mode: string, value: float}
+     */
+    public function payment(?int $methodId): array
+    {
+        $this->payments ??= DB::table('m_points_payment_methods')->get()
+            ->mapWithKeys(fn ($row) => [(int) $row->payment_method_id => ['mode' => (string) $row->mode, 'value' => (float) $row->value]])->all();
+        $found = $this->payments[(int) $methodId] ?? null;
+
+        return $found && in_array($found['mode'], self::PAYMENT_MODES, true) && $found['value'] > 0
+            ? ['method' => (int) $methodId] + $found
+            : ['method' => (int) $methodId, 'mode' => 'none', 'value' => 0.0];
+    }
+
+    /** Whether another module keeps this product out of the programme (a gift card). */
+    public function outside(int $productId): bool
+    {
+        return $this->facts($productId)['outside'];
     }
 
     /**

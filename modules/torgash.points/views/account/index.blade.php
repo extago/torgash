@@ -9,7 +9,12 @@
         @include('account._nav')
 
         <div class="flex-1 flex flex-col gap-4 min-w-0">
-            <h1 class="text-xl font-bold">{{ __('Bonus points') }}</h1>
+            <div class="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
+                <h1 class="text-xl font-bold">{{ __('Bonus points') }}</h1>
+                @if ($infoUrl)
+                    <a href="{{ $infoUrl }}" class="link link-hover text-sm opacity-70">{{ __('About bonus points') }}</a>
+                @endif
+            </div>
 
             <div class="grid sm:grid-cols-2 gap-4">
                 <div class="card bg-base-100 shadow-sm border border-base-300/60">
@@ -17,6 +22,12 @@
                         <div class="text-sm opacity-60">{{ __('You have') }}</div>
                         <div class="text-3xl font-bold tabular-nums">{{ number_format($balance, 0, '.', ' ') }}</div>
                         <div class="text-xs opacity-60">{{ __('Worth :amount — spend them in the basket.', ['amount' => format_price($balance * $pointValue)]) }}</div>
+                        @if ($expiring)
+                            <div class="text-xs text-warning flex items-center gap-1 mt-1">
+                                <x-icon name="clock" size="sm" />
+                                {{ trans_choice(':points point expires on :date|:points points expire on :date', $expiring['points'], ['points' => number_format($expiring['points'], 0, '.', ' '), 'date' => $expiring['at']->format('d.m.Y')]) }}
+                            </div>
+                        @endif
                     </div>
                 </div>
                 <div class="card bg-base-100 shadow-sm border border-base-300/60">

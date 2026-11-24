@@ -127,8 +127,11 @@ class AutomationsServiceProvider extends ServiceProvider
         }
 
         hook_listen('core.schedule', function (array $context) {
+            // Started only while a bot waits to be asked: a shop with no
+            // buttons (or with Telegram calling it) boots nothing every minute.
             $context['schedule']->command('automations:telegram-poll')
-                ->everyMinute()->name('automations:telegram-poll')->withoutOverlapping(2)->runInBackground();
+                ->everyMinute()->name('automations:telegram-poll')->withoutOverlapping(2)->runInBackground()
+                ->when(fn () => Telegram\Listening::bots()->where('mode', Telegram\Bot::POLL)->isNotEmpty());
         });
 
         // A message's buttons are of no use once the log that names it is gone.

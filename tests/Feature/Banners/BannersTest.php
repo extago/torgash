@@ -357,8 +357,13 @@ class BannersTest extends TestCase
         $this->get('http://localhost/admin/banners/'.$banner->id.'/edit')->assertOk();
         $this->get('http://localhost/admin/banners/create')->assertOk();
         $this->get('http://localhost/admin/banners/sliders')->assertOk();
-        $this->get('http://localhost/admin/banners/sliders/'.$slider->id.'/edit')->assertOk()->assertSee('iPhone Air');
+        $sliderPage = $this->get('http://localhost/admin/banners/sliders/'.$slider->id.'/edit')->assertOk()->assertSee('iPhone Air')->getContent();
         $this->get('http://localhost/admin/banners/sliders/create')->assertOk();
+
+        // The form's x-data is one double-quoted attribute: a stray " inside it
+        // ends the attribute early and the rest of the code is printed as text
+        // (the banners could not be reordered on a live shop).
+        $this->assertMatchesRegularExpression('/x-data="\{\s*rows:[^"]*move\(id, to\)[^"]*\}"/', $sliderPage);
     }
 
     public function test_a_copy_starts_off_and_in_no_slider_with_the_same_pictures(): void

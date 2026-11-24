@@ -9,6 +9,12 @@
         <span class="opacity-70">{{ $pointsRow->credited_at ? __('Earned') : __('To earn') }}</span>
         <span>{{ number_format($pointsRow->credited_at ? $pointsRow->earned : $pointsRow->earn, 0, '.', ' ') }}</span>
     </div>
+    @if (! $pointsRow->credited_at && (int) ($pointsRow->terms['payment']['points'] ?? 0) > 0)
+        <div class="flex justify-between text-xs opacity-70">
+            <span>{{ __('of them for the way of paying') }}</span>
+            <span>{{ number_format((int) $pointsRow->terms['payment']['points'], 0, '.', ' ') }}</span>
+        </div>
+    @endif
     @can('orders.manage')
         <form method="POST" action="{{ route('admin.points.orders.earn', $order) }}" class="join w-full">
             @csrf

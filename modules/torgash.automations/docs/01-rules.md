@@ -214,7 +214,9 @@ manage automations.
 
 * **The shop asks Telegram** (the default) — works anywhere, a computer with
   no public address included; answered within a second or two while the shop's
-  scheduler runs;
+  scheduler runs. Where the scheduler is a systemd unit that ends as soon as
+  it has started its tasks (`Type=oneshot`), it cuts the asking short too:
+  choose the second way there;
 * **Telegram calls the shop** — instant, but the shop's address must be public
   and https.
 

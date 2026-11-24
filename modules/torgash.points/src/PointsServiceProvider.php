@@ -36,7 +36,7 @@ class PointsServiceProvider extends ServiceProvider
         hook_listen('core.impersonation.writes', fn (array $routes) => [...$routes, 'points.spend', 'points.line']);
 
         // Customers' points and their history are on no guest's page (PLAN §61).
-        page_cache()->unseen(['m_points_accounts', 'm_points_ledger', 'm_points_orders']);
+        page_cache()->unseen(['m_points_accounts', 'm_points_ledger', 'm_points_orders', 'm_points_payment_methods']);
 
         // "Has points", for the newsletter's campaigns: a reminder that a balance is waiting.
         hook_listen('newsletter.segments', fn (array $kinds) => $kinds + [
@@ -82,6 +82,8 @@ class PointsServiceProvider extends ServiceProvider
 
         hook_listen('core.schedule', function (array $context) {
             $context['schedule']->call(fn () => app(Ledger::class)->expire())->dailyAt('03:20')->name('points:expire');
+            // A letter is read in the morning, not found at night.
+            $context['schedule']->call(fn () => app(ExpiryNotices::class)->send())->dailyAt('10:10')->name('points:expiry-notices');
         });
 
         $this->checkout();
@@ -257,6 +259,8 @@ class PointsServiceProvider extends ServiceProvider
             'pointsLine' => $line,
             'pointsBlocked' => ! setting('torgash.points', 'with_coupon', true) && $coupons->current(),
             'pointsRestricted' => $spending->restricted($cart),
+            'pointsFrom' => $spending->tooSmall($cart) ? $spending->orderFrom() : 0,
+            'pointsInfoUrl' => Spending::infoUrl(),
             'in' => $in,
         ])->render();
     }
@@ -278,6 +282,65 @@ class PointsServiceProvider extends ServiceProvider
         hook_listen('checkout.order.merging', fn (array $context) => app(OrderMerging::class)->merge($context));
         hook_listen('checkout.order.unmerging', fn (array $context) => app(OrderMerging::class)->undo($context));
 
+        // Points for the way of paying (PLAN §74, stage 4): set on the
+        // method's own form, said beside it at checkout to whoever would
+        // get them.
+        hook_listen('checkout.payment_method.extra', fn (string $html, array $context) => $html.view('torgash.points::admin.payment-method-field', [
+            'pointsPayment' => app(Rules::class)->payment($context['method']->exists ? (int) $context['method']->id : null),
+        ])->render());
+
+        hook_listen('checkout.payment_method.saved', function (array $context) {
+            $request = $context['request'];
+
+            // Absent field (another form, the list's switch) must not wipe it.
+            if (! $request->has('points_payment_shown')) {
+                return;
+            }
+
+            $value = round(max(0, (float) str_replace(',', '.', (string) $request->input('points_payment_value'))), 2);
+            $table = \Illuminate\Support\Facades\DB::table('m_points_payment_methods');
+
+            $value > 0
+                ? $table->updateOrInsert(['payment_method_id' => $context['method']->id], [
+                    'mode' => $request->input('points_payment_mode') === 'percent' ? 'percent' : 'fixed',
+                    'value' => $request->input('points_payment_mode') === 'percent' ? min(100, $value) : $value,
+                    'created_at' => now(),
+                    'updated_at' => now(),
+                ])
+                : $table->where('payment_method_id', $context['method']->id)->delete();
+
+            app(Rules::class)->flush();
+        });
+
+        hook_listen('checkout.payment_methods.hints', function (array $hints, array $context) {
+            $cart = $context['cart'] ?? null;
+
+            if (! auth()->check() || ! $cart instanceof CartManager) {
+                return $hints;
+            }
+
+            $rules = app(Rules::class);
+            $earning = app(Earning::class);
+            $goods = null;
+
+            foreach ($context['methods'] ?? [] as $method) {
+                $pay = $rules->payment((int) $method->id);
+
+                if ($pay['mode'] === 'none') {
+                    continue;
+                }
+
+                $goods ??= $this->goodsThatEarn($cart);
+                $points = $earning->forPayment($pay, $goods);
+
+                if ($points > 0) {
+                    $hints[$method->id][] = trans_choice('+:points bonus point|+:points bonus points', $points, ['points' => number_format($points, 0, '.', ' ')]);
+                }
+            }
+
+            return $hints;
+        });
+
         hook_listen('checkout.order.payment_extra', function (string $html, array $context) {
             $order = $context['order'];
             $row = $order->user_id ? OrderPoints::find($order->id) : null;
@@ -288,6 +351,30 @@ class PointsServiceProvider extends ServiceProvider
 
             return $html.view('torgash.points::admin.order-panel', ['order' => $order, 'pointsRow' => $row])->render();
         });
+    }
+
+    /**
+     * The basket's goods a way of paying is rewarded for, as the order will
+     * count them: inside the programme, after the coupon and whatever else
+     * comes off (minor units).
+     */
+    protected function goodsThatEarn(CartManager $cart): int
+    {
+        $rules = app(Rules::class);
+        $items = $cart->items();
+        $rules->prime($items->map(fn ($item) => $item->product)->all());
+
+        $goods = (int) $items->sum(fn ($item) => (int) $item->line_total);
+        $inside = (int) $items->sum(fn ($item) => $rules->outside((int) $item->product->id) ? 0 : (int) $item->line_total);
+
+        if ($goods <= 0 || $inside <= 0) {
+            return 0;
+        }
+
+        $coupons = app(\Torgash\Checkout\CouponManager::class);
+        $off = $coupons->couponDiscount() + (int) collect($coupons->otherDiscounts())->sum('amount');
+
+        return (int) round($inside * max(0, $goods - $off) / $goods);
     }
 
     protected function catalog(): void
@@ -382,8 +469,9 @@ class PointsServiceProvider extends ServiceProvider
             ? app(Earning::class)->forPrice($product, (int) $product->effectivePrice(), $user)
             : 0;
         $price = app(PointPrices::class)->for($product);
+        $share = $where === 'page' ? $this->shareToSay($product, $user) : null;
 
-        if ($earn <= 0 && $price === null) {
+        if ($earn <= 0 && $price === null && $share === null) {
             return '';
         }
 
@@ -392,7 +480,27 @@ class PointsServiceProvider extends ServiceProvider
             'pointsPrice' => $price,
             'pointsWhere' => $where,
             'pointsGuest' => ! $user,
+            'pointsShare' => $share,
+            'pointsInfoUrl' => $where === 'page' ? Spending::infoUrl() : null,
         ])->render();
+    }
+
+    /**
+     * The share of this product points pay, when a product's page has
+     * something to say about it: a part of the price, or — in a shop where
+     * points do pay — an exception they do not pay for. Null where they pay
+     * for the whole of it, or for nothing anywhere.
+     */
+    protected function shareToSay(Product $product, ?\App\Models\User $user): ?int
+    {
+        if (! setting('torgash.points', 'show_spend', true)) {
+            return null;
+        }
+
+        $percent = app(Rules::class)->spend((int) $product->id, price_scale()->toMinor((int) $product->effectivePrice()), $user)['percent'];
+        $usual = setting('torgash.points', 'spend_default', true) ? (int) setting('torgash.points', 'spend_max_percent', 50) : 0;
+
+        return $percent >= 100 || ($percent <= 0 && $usual <= 0) ? null : $percent;
     }
 
     protected function people(): void

@@ -91,6 +91,18 @@ Two more ways to give points, each inside the module it belongs to:
   order {{ order.number }}"). Given **at once**, when the rule runs, and once
   per event however many times the rule is retried.
 
+## Points for the way of paying
+
+Admin → Payment → a method → *Bonus points for paying this way*: a number of
+points per order, or a percent of the goods as points (counted after every
+discount). A shop that would rather be paid online than on delivery says so
+here. A signed-in customer sees "+100 bonus points" beside the method at
+checkout, before choosing. These are the order's own points: they wait, are
+credited with the rest and go back with them; an order paid another way after
+all (a manager changes the method) loses or gains them, and an order of gift
+cards alone earns none. A fixed number is given to every order, however small —
+a percent is the safer of the two.
+
 ## Spending
 
 In the basket and at checkout: "Bonus points — you have 540 — [ ] Apply". A point
@@ -100,6 +112,22 @@ product a rule keeps points away from is not in it, and the basket says so to
 the customer. They come off after the coupon and
 lower the tax like it, and together with a coupon only if the shop allows it.
 The order prints them as a discount line.
+
+*Points pay for an order from* (Settings) keeps points for orders worth
+spending them on: with less in the basket (the goods, before the coupon) the
+box says "Points pay for an order from 3 000" instead of offering to spend.
+
+A product's page says how much of it points pay when that is not the whole
+price — "Points pay for up to 30% of the price" — and names an exception
+points do not pay for (Settings → *Show on a product's page how much of it
+points pay*).
+
+## A page about the programme
+
+Write the rules on a page of the shop and put its address into Settings →
+*Page about the programme* (`/bonus-points`). A link "About bonus points" then
+stands on every product's page, by the points in the basket and in the
+customer's account.
 
 ## Prices in points
 
@@ -116,4 +144,8 @@ the coins button on that line and buys it outright for them.
 * **The order** — its payment card: points spent and what it earns, which a
   manager can change.
 * Points can have a **life** (months): the oldest are spent first and the rest
-  expire by themselves.
+  expire by themselves. The account says how many go on the nearest day, and
+  the customer gets a letter ahead — *Warn about expiring points, days ahead*
+  (7 by default, 0 for none), once for each credit and only about points
+  still unspent. Its words are in Admin → Letters, "Bonus points are about to
+  expire".
