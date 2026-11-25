@@ -756,5 +756,11 @@
     "Too many codes tried. Please wait a minute.": "Забагато спроб ввести код. Зачекайте хвилину.",
     "There is no order status \":status\".": "Статусу замовлення «:status» немає.",
     "A paid amount cannot be negative.": "Сплачена сума не може бути від’ємною.",
-    "Order :number was merged into another — its payment is recorded there.": "Замовлення :number об’єднано з іншим — оплату позначають там."
+    "Order :number was merged into another — its payment is recorded there.": "Замовлення :number об’єднано з іншим — оплату позначають там.",
+    "Attached to the account :account": "Прив'язано до облікового запису :account",
+    "Attached to the account :account: it confirmed this order's contact": "Прив'язано до облікового запису :account: він підтвердив контакт цього замовлення",
+    ":count order attached to the account.|:count orders attached to the account.": ":count замовлення прив'язано до облікового запису.|:count замовлення прив'язано до облікового запису.|:count замовлень прив'язано до облікового запису.",
+    "Placed without signing in, with this customer's email or phone": "Оформлені без входу, з поштою або телефоном цього покупця",
+    "Not in the account yet: the customer does not see them there. Tick the ones that are theirs.": "Їх поки немає в обліковому записі, і покупець їх там не бачить. Позначте ті, що його.",
+    "Attach to this account": "Прив'язати до цього облікового запису"
 }

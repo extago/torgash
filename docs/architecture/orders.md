@@ -345,6 +345,21 @@ gateway events (dedup by key, no going backwards) because a gateway repeats
 itself and arrives out of order; a human is the authority and has nothing to
 arbitrate.
 
+**Orders placed without signing in** (`Torgash\Checkout\Orders\GuestOrders`,
+2026-11-25). An order gets `user_id` only from a signed-in buyer, so a guest
+order stayed nobody's even with the account's own email on it — the customer
+opened the account and their order was not there. It reaches the account two
+ways: by itself when the account CONFIRMS that email or phone
+(`core.user.contact_confirmed`; never an unconfirmed one — anyone could
+register with a stranger's address and read the stranger's order and
+delivery address; never a staff account), and by a manager's hand from the
+customer's card, which lists the guest orders sharing ANY of the account's
+contacts (the number left for calls too) and attaches only what it offered.
+A phone matches by its last nine digits. Each attachment writes a line in the
+order's history; `customer_ref` is NOT rewritten (frozen for the exchange).
+The migration `attach_checkout_guest_orders` did it once for the orders that
+came before.
+
 **Who the buyer is when there is no account: `customer_ref`**
 (`Torgash\Checkout\Orders\CustomerRef`), a short reference DERIVED — not
 looked up — from the strongest identity the order carries (user id, else the

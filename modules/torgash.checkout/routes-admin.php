@@ -23,6 +23,9 @@ Route::post('/create/delivery', [OrderCreateController::class, 'delivery'])->nam
 Route::post('/', [OrderCreateController::class, 'store'])->name('store');
 // Before the {order:order_number} wildcards, so "bulk" is never read as an order number.
 Route::post('/bulk', [OrdersController::class, 'bulk'])->name('bulk');
+// Guest orders a manager gives to a customer's account (GuestOrders), from
+// the customer's card. Before the wildcards too.
+Route::post('/attach-to/{customer}', [OrdersController::class, 'attachToAccount'])->name('attach')->whereNumber('customer');
 // The trash. By NUMBER, not by route-model binding: a trashed order is outside
 // the default query, and these are the two routes that must find it.
 Route::post('/trash/{number}/restore', [OrdersController::class, 'restore'])->name('restore');

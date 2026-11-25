@@ -11,6 +11,7 @@ use Torgash\Checkout\Models\OrderLog;
 use Torgash\Checkout\Models\OrderStatus;
 use Torgash\Checkout\Models\PaymentMethod;
 use Torgash\Checkout\Orders\ClientFacts;
+use Torgash\Checkout\Orders\GuestOrders;
 use Torgash\Checkout\Orders\MethodNames;
 use Torgash\Checkout\Orders\OrderFilter;
 use Torgash\Checkout\Orders\OrderStatusChanger;
@@ -161,6 +162,19 @@ class OrdersController extends Controller
      * single change would refuse slips through. One that fails is counted and
      * named, never allowed to stop the rest.
      */
+    public function attachToAccount(Request $request, int $customer, GuestOrders $guestOrders)
+    {
+        $account = User::customers()->findOrFail($customer);
+        $validated = $request->validate(['orders' => 'required|array|max:100', 'orders.*' => 'integer']);
+
+        // Only what the card offered: guest orders sharing one of the
+        // account's contacts — an id typed into the form attaches nothing else.
+        $offered = $guestOrders->candidates($account, 100)->whereIn('id', array_map('intval', $validated['orders']));
+        $done = $guestOrders->attach($account, $offered, $request->user());
+
+        return back()->with('status', trans_choice(':count order attached to the account.|:count orders attached to the account.', $done, ['count' => $done]));
+    }
+
     public function bulk(Request $request, OrderStatusChanger $changer, RecordPayment $payments)
     {
         $validated = $request->validate([

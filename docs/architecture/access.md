@@ -42,6 +42,12 @@ this file is the reasoning. Read it before changing anything it covers.
   `core.user.deleting` (context `user`), fired by the `User` model for staff
   and customers alike — for a column with no foreign key (reviews' `user_id`
   is set to NULL there; `author_name` already holds the name).
+- **`core.user.contact_confirmed`** (context `user`, `kinds` — `email` /
+  `phone`) is fired by the `User` model whenever a contact carries its
+  "confirmed" mark anew — a fresh account, a code, a changed contact, a
+  password link, staff typing it — so a module that trusts only PROVEN
+  contacts listens once instead of at every door. Checkout attaches the
+  guest orders placed with it (orders.md, "Orders placed without signing in").
 
 ### What a manager's group opens (2026-10-30)
 

@@ -756,5 +756,11 @@
     "Too many codes tried. Please wait a minute.": "Слишком много попыток ввести код. Подождите минуту.",
     "There is no order status \":status\".": "Статуса заказа «:status» нет.",
     "A paid amount cannot be negative.": "Оплаченная сумма не может быть отрицательной.",
-    "Order :number was merged into another — its payment is recorded there.": "Заказ :number объединён с другим — оплату отмечают там."
+    "Order :number was merged into another — its payment is recorded there.": "Заказ :number объединён с другим — оплату отмечают там.",
+    "Attached to the account :account": "Привязан к учётной записи :account",
+    "Attached to the account :account: it confirmed this order's contact": "Привязан к учётной записи :account: она подтвердила контакт этого заказа",
+    ":count order attached to the account.|:count orders attached to the account.": ":count заказ привязан к учётной записи.|:count заказа привязаны к учётной записи.|:count заказов привязаны к учётной записи.",
+    "Placed without signing in, with this customer's email or phone": "Оформлены без входа, с почтой или телефоном этого покупателя",
+    "Not in the account yet: the customer does not see them there. Tick the ones that are theirs.": "Их пока нет в учётной записи, и покупатель их там не видит. Отметьте те, что его.",
+    "Attach to this account": "Привязать к этой учётной записи"
 }

@@ -3,7 +3,9 @@
 namespace Torgash\Checkout\Admin;
 
 use Illuminate\Support\Facades\DB;
+use App\Models\User;
 use Torgash\Checkout\Models\Order;
+use Torgash\Checkout\Orders\GuestOrders;
 
 /**
  * What the admin's customer screens are told about a customer's ORDERS.
@@ -42,6 +44,14 @@ class CustomerOrders
             }
 
             return [...$panels, ['key' => 'orders', 'position' => 10, 'html' => $this->panel($customer)]];
+        });
+
+        // An account that proves an email or a phone gets the orders placed
+        // with it without signing in (GuestOrders: only a CONFIRMED contact).
+        hook_listen('core.user.contact_confirmed', function (array $context) {
+            if (($user = $context['user'] ?? null) instanceof User) {
+                app(GuestOrders::class)->attachConfirmed($user, (array) ($context['kinds'] ?? []));
+            }
         });
 
         // Said to whoever is deleting, whatever they may see: the orders are
@@ -100,6 +110,7 @@ class CustomerOrders
             'count' => (clone $query)->count(),
             'paid' => (int) (clone $query)->sum('paid_total'),
             'statuses' => app(\Torgash\Checkout\Support\Statuses::class),
+            'guestOrders' => app(GuestOrders::class)->candidates($customer),
         ])->render();
     }
 }

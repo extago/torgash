@@ -97,6 +97,29 @@ class User extends Authenticatable implements HasLocalePreference
             }
         });
 
+        // A contact the person PROVED — an email or a phone that now carries
+        // its "confirmed" mark, or a confirmed one changed — from whichever
+        // door (registration, a code, the account's contacts, a password
+        // link, staff). Announced here because the doors are many: a module
+        // that trusts only confirmed contacts (checkout attaching the orders
+        // placed without signing in) listens once. Context: `user`, `kinds`
+        // (list of 'email' | 'phone').
+        static::saved(function (User $user) {
+            $kinds = [];
+            foreach (['email' => 'email_verified_at', 'phone' => 'phone_verified_at'] as $kind => $mark) {
+                $confirmed = $user->{$mark} !== null && filled($user->{$kind});
+                $fresh = $user->wasRecentlyCreated || $user->wasChanged($mark) || $user->wasChanged($kind);
+
+                if ($confirmed && $fresh) {
+                    $kinds[] = $kind;
+                }
+            }
+
+            if ($kinds !== []) {
+                hook_action('core.user.contact_confirmed', ['user' => $user, 'kinds' => $kinds]);
+            }
+        });
+
         static::updated(function (User $user) {
             if (! $user->wasChanged('password')) {
                 return;
