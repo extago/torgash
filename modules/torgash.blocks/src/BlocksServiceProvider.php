@@ -2,13 +2,15 @@
 
 namespace Torgash\Blocks;
 
+use App\Core\Modules\ModuleLifecycle;
 use App\Core\Storefronts\StorefrontRoutes;
 use Illuminate\Support\Facades\Route;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\ServiceProvider;
 use Throwable;
 use Torgash\Blocks\Models\Block;
 
-class BlocksServiceProvider extends ServiceProvider
+class BlocksServiceProvider extends ServiceProvider implements ModuleLifecycle
 {
     public function register(): void
     {
@@ -28,6 +30,13 @@ class BlocksServiceProvider extends ServiceProvider
                 app(ThemeDefaults::class)->replaceWith((string) $zone, (array) $blocks);
             }
         });
+
+        // A block's own pictures (a tile's, picked on the block's form).
+        hook_listen('core.files.directories', fn (array $directories) => [...$directories, [
+            'disk' => 'public',
+            'directory' => BlockImages::DIR,
+            'label' => 'Block pictures',
+        ]]);
 
         Route::middleware(['web', 'auth', 'can:blocks.manage'])
             ->prefix('admin/blocks')
@@ -302,5 +311,13 @@ class BlocksServiceProvider extends ServiceProvider
                 return $blocks->isEmpty() ? $value : $value.app(ZoneRenderer::class)->render($blocks, $context);
             });
         }
+    }
+
+    public function install(): void {}
+
+    /** The pictures blocks named (BlockImages) go with the module. */
+    public function uninstall(): void
+    {
+        Storage::disk('public')->deleteDirectory(BlockImages::DIR);
     }
 }

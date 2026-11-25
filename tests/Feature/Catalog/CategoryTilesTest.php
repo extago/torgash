@@ -31,17 +31,142 @@ class CategoryTilesTest extends TestCase
         return app(ZoneRenderer::class)->block(new Block(['type' => 'category_tiles', 'settings' => $settings]));
     }
 
-    /** A pick is kept in its order, once, and only while it is still on offer. */
-    public function test_picks_keep_their_order_and_drop_what_is_not_offered(): void
+    /**
+     * The tiles are rows in their order: a bare id stored before (the old
+     * list of picks) is a category tile, a category no longer offered or a
+     * row without one is dropped, and the same category may stand twice —
+     * with a different picture, say.
+     */
+    public function test_tiles_keep_their_order_and_drop_what_is_not_offered(): void
     {
         $a = $this->category('alpha');
         $b = $this->category('beta');
 
         $clean = BlockTypes::sanitize('category_tiles', ['categories' => [(string) $b->id, $a->id, $b->id, 999999, ['x']]]);
-        $this->assertSame([$b->id, $a->id], $clean['categories']);
+        $this->assertSame([$b->id, $a->id, $b->id], array_column($clean['categories'], 'category'));
+        $this->assertSame(['category'], array_unique(array_column($clean['categories'], 'kind')));
+        $this->assertCount(3, array_unique(array_column($clean['categories'], 'id')), 'every row its own id');
 
         $this->assertSame([], BlockTypes::sanitize('category_tiles', [])['categories'], 'nothing posted is an empty list');
         $this->assertSame([], BlockTypes::sanitize('category_tiles', ['categories' => 'not a list'])['categories']);
+    }
+
+    /**
+     * A tile of its own: a category with its own name, picture and class on
+     * this block, and a link with an address — one that is not an address
+     * (javascript:, //elsewhere) or has no name is not a tile.
+     */
+    public function test_a_tile_has_its_own_name_picture_and_class_and_a_link_is_a_tile(): void
+    {
+        Storage::fake('public');
+        $phones = $this->category('phones');
+        $picture = 'block-images/202611/tile-'.str_repeat('a', 16).'.webp';
+
+        $clean = BlockTypes::sanitize('category_tiles', ['categories' => [
+            ['id' => 'tileone1', 'kind' => 'category', 'category' => (string) $phones->id, 'name' => 'Smartphones', 'image' => $picture, 'class' => 'hot "><script>'],
+            ['kind' => 'link', 'url' => '/sale', 'name' => 'Sale', 'class' => 'sale'],
+            ['kind' => 'link', 'url' => 'javascript:alert(1)', 'name' => 'Bad'],
+            ['kind' => 'link', 'url' => '//elsewhere.test/x', 'name' => 'Elsewhere'],
+            ['kind' => 'link', 'url' => '/no-name'],
+            ['kind' => 'category', 'category' => $phones->id, 'image' => '../../.env'],
+        ]]);
+
+        $rows = $clean['categories'];
+        $this->assertCount(3, $rows);
+        $this->assertSame(['id' => 'tileone1', 'kind' => 'category', 'category' => $phones->id, 'name' => 'Smartphones', 'class' => 'hot', 'image' => $picture], $rows[0]);
+        $this->assertSame(['link', '/sale', 'Sale', 'sale'], [$rows[1]['kind'], $rows[1]['url'], $rows[1]['name'], $rows[1]['class']]);
+        $this->assertArrayNotHasKey('image', $rows[2], 'a path we did not write is never a picture');
+
+        $html = $this->tiles(['categories' => $rows, 'layout' => 'grid']);
+
+        $this->assertSame(1, preg_match('#class="torgash-tile hot".*?</a>#s', $html, $own));
+        $this->assertStringContainsString('Smartphones', $own[0]);
+        $this->assertStringNotContainsString('Tile Phones', $own[0], 'the own name replaces the category\'s');
+        $this->assertStringContainsString(Storage::disk('public')->url($picture), $html);
+        $this->assertMatchesRegularExpression('#<a href="[^"]*/catalog/ct-phones" class="torgash-tile hot"#', $html);
+        $this->assertMatchesRegularExpression('#<a href="/sale" class="torgash-tile sale"#', $html);
+        $this->assertStringContainsString('Tile Phones', $html, 'the second tile has nothing of its own');
+
+        // An own picture stands whole, in the picture size, as a product's
+        // photo does — or fills the frame when the tile says so.
+        $this->assertStringNotContainsString('is-photo', $own[0]);
+        $covered = BlockTypes::sanitize('category_tiles', ['categories' => [$rows[0] + ['fit' => 'cover'], ['kind' => 'category', 'category' => $phones->id, 'fit' => 'stretched']]]);
+        $this->assertSame('cover', $covered['categories'][0]['fit']);
+        $this->assertArrayNotHasKey('fit', $covered['categories'][1], 'only a choice on offer is kept');
+        $this->assertSame(1, preg_match('#class="torgash-tile hot".*?</a>#s', $this->tiles(['categories' => $covered['categories'], 'layout' => 'grid']), $own));
+        $this->assertStringContainsString('torgash-tile-pic is-photo', $own[0]);
+    }
+
+    /**
+     * The form posts one language: a tile's name typed in Russian joins the
+     * English one by the row's id, whatever place the row moved to.
+     */
+    public function test_a_tiles_name_is_translated_by_its_row_not_its_place(): void
+    {
+        $this->actingAs(User::role('admin')->firstOrFail());
+        $a = $this->category('first');
+        $b = $this->category('second');
+
+        $existing = ['categories' => [
+            ['id' => 'rowaaaa1', 'kind' => 'category', 'category' => $a->id, 'name' => 'First own'],
+            ['id' => 'rowbbbb2', 'kind' => 'category', 'category' => $b->id, 'name' => 'Second own'],
+        ]];
+
+        session(['admin_content_locale' => 'ru']);
+        $locale = admin_content_locale();
+
+        $clean = BlockTypes::sanitize('category_tiles', ['categories' => [
+            ['id' => 'rowbbbb2', 'kind' => 'category', 'category' => $b->id, 'name' => 'Второй'],
+            ['id' => 'rowaaaa1', 'kind' => 'category', 'category' => $a->id, 'name' => ''],
+        ]], $existing, 'form');
+
+        $base = content_base_locale();
+        $this->assertSame('ru', $locale, 'the test means a second language');
+        $this->assertSame([$base => 'Second own', 'ru' => 'Второй'], $clean['categories'][0]['name']);
+        $this->assertSame('First own', $clean['categories'][1]['name'], 'blank in this language keeps the others');
+
+        $flat = BlockTypes::localize('category_tiles', $clean, 'ru');
+        $this->assertSame('Второй', $flat['categories'][0]['name']);
+    }
+
+    /**
+     * A picture is stored when picked and answered with its path; the block
+     * that stops naming it — replaced, or the block deleted — deletes it.
+     */
+    public function test_a_tiles_picture_is_uploaded_and_deleted_with_the_last_block_naming_it(): void
+    {
+        Storage::fake('public');
+        $this->actingAs(User::role('admin')->firstOrFail());
+        $phones = $this->category('pictured-tile');
+
+        $path = $this->post('http://localhost/admin/blocks/image', ['file' => UploadedFile::fake()->image('tile.png', 300, 300)])
+            ->assertOk()->json('path');
+        $this->assertMatchesRegularExpression('#^block-images/\d{6}/tile-[A-Za-z0-9]{16}\.png$#', $path);
+        Storage::disk('public')->assertExists($path);
+
+        $this->post('http://localhost/admin/blocks/image', ['file' => UploadedFile::fake()->create('notes.txt', 1, 'text/plain')])
+            ->assertStatus(302);
+
+        $block = Block::create(['zone' => 'storefront.home.content', 'type' => 'category_tiles', 'enabled' => true, 'settings' => [
+            'categories' => [['id' => 'picrow01', 'kind' => 'category', 'category' => $phones->id, 'image' => $path]],
+        ]]);
+
+        $form = $this->get('http://localhost/admin/blocks/'.$block->id.'/edit')->assertOk()->getContent();
+        $this->assertStringContainsString(basename($path), $form);
+        $this->assertStringNotContainsString('row.id === id); if', $form, 'the rows editor arrives whole, not as text');
+
+        $this->put('http://localhost/admin/blocks/'.$block->id, [
+            'zone' => $block->zone, 'type' => 'category_tiles', 'enabled' => '1',
+            'settings' => ['categories' => [['id' => 'picrow01', 'kind' => 'category', 'category' => $phones->id, 'image' => '']]],
+        ])->assertRedirect();
+
+        $this->assertArrayNotHasKey('image', $block->fresh()->settings['categories'][0]);
+        Storage::disk('public')->assertMissing($path);
+
+        $second = $this->post('http://localhost/admin/blocks/image', ['file' => UploadedFile::fake()->image('tile.webp')])->json('path');
+        $block->update(['settings' => ['categories' => [['id' => 'picrow01', 'kind' => 'category', 'category' => $phones->id, 'image' => $second]]]]);
+        $this->delete('http://localhost/admin/blocks/'.$block->id)->assertRedirect();
+        Storage::disk('public')->assertMissing($second);
     }
 
     public function test_picked_categories_are_drawn_in_the_order_picked_and_switched_off_ones_skipped(): void

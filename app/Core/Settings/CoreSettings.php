@@ -283,7 +283,7 @@ class CoreSettings
                 'rows' => 3,
                 'default' => IconPlaceholders::DEFAULTS,
                 'label' => 'Icons available in content as {icon_…}',
-                'help' => 'Names from lucide.dev, separated by commas — all 2035 are already installed, this is only which of them appear in the placeholder list. Add one and it can be written into any HTML block as {icon_name}. A name that does not exist is ignored.',
+                'help' => 'Names from lucide.dev, separated by commas — all of them are already installed, this is only which of them appear in the placeholder list. Add one and it can be written into any HTML block as {icon_name}. A name that does not exist is ignored.',
             ],
             [
                 'key' => \App\Core\Content\Share::SETTING,

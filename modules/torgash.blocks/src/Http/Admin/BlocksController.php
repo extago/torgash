@@ -8,6 +8,7 @@ use App\Core\Zones\ZoneRegistry;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use Illuminate\Validation\ValidationException;
+use Torgash\Blocks\BlockImages;
 use Torgash\Blocks\BlockTypes;
 use Torgash\Blocks\CssClasses;
 use Torgash\Blocks\Models\Block;
@@ -293,6 +294,26 @@ class BlocksController extends Controller
             : redirect()->route('admin.blocks.edit', $block))->with('status', __('Block created.'));
     }
 
+    /**
+     * A picture for a row of a block's settings (a tile's own picture),
+     * stored the moment it is picked and answered with its path, which the
+     * form posts like any other value. One the block never saves is left
+     * behind; one it saves and later drops is deleted then (BlockImages).
+     */
+    public function image(Request $request)
+    {
+        $request->validate(['file' => ['required', 'file', 'max:2048']]);
+        $file = $request->file('file');
+
+        if (strtolower($file->getClientOriginalExtension()) !== 'svg' && $file->getMimeType() !== 'image/svg+xml') {
+            $request->validate(['file' => ['image', 'mimes:png,jpg,jpeg,webp,gif']]);
+        }
+
+        $path = BlockImages::store($file);
+
+        return response()->json(['path' => $path, 'url' => BlockImages::url($path)]);
+    }
+
     public function edit(Block $block)
     {
         return view('torgash.blocks::admin.form', $this->formData($block));
@@ -300,8 +321,10 @@ class BlocksController extends Controller
 
     public function update(Request $request, Block $block)
     {
+        $pictures = BlockImages::named($block->type, (array) $block->settings);
         $this->fill($request, $block);
         $block->save();
+        BlockImages::forget($pictures, BlockImages::named($block->type, (array) $block->settings), $block->id);
 
         return ($request->input('after_save') === 'close'
             ? redirect()->route('admin.blocks.zone', $block->zone)
@@ -311,7 +334,9 @@ class BlocksController extends Controller
     public function destroy(Block $block)
     {
         $zone = $block->zone;
+        $pictures = BlockImages::named($block->type, (array) $block->settings);
         $block->delete();
+        BlockImages::forget($pictures, [], $block->id);
 
         return redirect()->route('admin.blocks.zone', $zone)->with('status', __('Block deleted.'));
     }

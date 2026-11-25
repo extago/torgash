@@ -234,11 +234,33 @@ class ProductBlock
             'schema' => [
                 ['key' => 'heading', 'type' => 'text', 'translatable' => true, 'label' => 'Heading',
                     'help' => 'Optional.'],
-                ['key' => 'categories', 'type' => 'picks', 'label' => 'Which categories',
-                    'empty' => 'None picked — the top categories, in the catalogue\'s order.',
-                    'help' => 'In the order picked. A category that is switched off or closed to the visitor is skipped.',
-                    'options' => fn () => collect(app(\Torgash\Catalog\Support\CategoryTree::class)->options())
-                        ->map(fn ($label, $id) => ['value' => (int) $id, 'label' => $label])->values()->all()],
+                // Tiles one by one: a category with, if the shop wants, its
+                // own picture, name and class — or a link of its own. Stored
+                // before as a plain list of category ids, which still reads
+                // (`scalar`): each id is a category tile with nothing changed.
+                ['key' => 'categories', 'type' => 'rows', 'label' => 'Which tiles',
+                    'empty' => 'None added — the top categories, in the catalogue\'s order.',
+                    'help' => 'In this order. A tile\'s own picture and name replace the category\'s on this block only; the CSS class is for the shop\'s own stylesheet. A category that is switched off or closed to the visitor is skipped.',
+                    'kinds' => [
+                        ['value' => 'category', 'label' => 'Category'],
+                        ['value' => 'link', 'label' => 'Link'],
+                    ],
+                    'scalar' => ['kind' => 'category', 'part' => 'category'],
+                    'fields' => [
+                        ['key' => 'category', 'type' => 'pick', 'kinds' => ['category'], 'required' => true, 'label' => 'Category',
+                            'options' => fn () => collect(app(\Torgash\Catalog\Support\CategoryTree::class)->options())
+                                ->map(fn ($label, $id) => ['value' => (int) $id, 'label' => $label])->values()->all()],
+                        ['key' => 'url', 'type' => 'link', 'kinds' => ['link'], 'required' => true, 'label' => 'Address',
+                            'placeholder' => '/sale or https://…'],
+                        ['key' => 'name', 'type' => 'text', 'translatable' => true, 'required' => ['link'], 'label' => 'Name'],
+                        ['key' => 'class', 'type' => 'class', 'label' => 'CSS class'],
+                        ['key' => 'image', 'type' => 'image', 'label' => 'Picture'],
+                        // Whole in the block's "Picture size", as a product's
+                        // photo stands in a tile — or filling the frame, as a
+                        // category's own tile picture does.
+                        ['key' => 'fit', 'type' => 'pick', 'with' => 'image', 'wide' => false, 'label' => 'How the picture stands',
+                            'empty' => 'Whole, in the picture size', 'options' => [['value' => 'cover', 'label' => 'Filling the frame']]],
+                    ]],
                 ['key' => 'layout', 'type' => 'select', 'default' => 'strip', 'label' => 'Layout', 'options' => [
                     ['value' => 'grid', 'label' => 'Grid'],
                     ['value' => 'strip', 'label' => 'One row that scrolls'],

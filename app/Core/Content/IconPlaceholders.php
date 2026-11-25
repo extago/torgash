@@ -6,7 +6,7 @@ use App\Core\Settings\CoreSettings;
 use App\Core\Support\Icons;
 
 /**
- * `{icon_gem}` in admin-authored HTML — for a chosen handful, not for all 2035.
+ * `{icon_gem}` in admin-authored HTML — for a chosen handful, not for the whole set.
  *
  * Admin HTML has no way to draw an icon: the component tag compiler does not
  * run on database content, and it must not. A token is the way in.

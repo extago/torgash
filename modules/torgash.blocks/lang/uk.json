@@ -182,5 +182,11 @@
     "block «:name»": "блок «:name»",
     "Background": "Фон",
     "Shown only under conditions": "Показується лише за умов",
-    "Where it stands": "Де стоїть"
+    "Where it stands": "Де стоїть",
+    "Block pictures": "Картинки блоків",
+    "a list of rows, in order": "список рядків за порядком",
+    "The picture could not be uploaded.": "Не вдалося завантажити картинку.",
+    "Choose…": "Виберіть…",
+    "Move earlier": "Перемістити раніше",
+    "Move later": "Перемістити пізніше"
 }

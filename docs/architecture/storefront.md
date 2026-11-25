@@ -193,7 +193,7 @@ this file is the reasoning. Read it before changing anything it covers.
   working: PHP ignores an argument a closure did not ask for.
 - `{icon_gem}` in content comes from `IconPlaceholders`: a LIST (the core
   `icon_tokens` setting, plus whatever modules add through `core.icon_tokens`),
-  never the whole 2035-icon pack — the placeholder picker is a menu a human
+  never the whole icon pack — the placeholder picker is a menu a human
   reads. An unknown name registers nothing, so the typo stays visible.
 - A theme ships zone content as `default_blocks` in `theme.json`, laid out ONCE
   by a migration guarded per zone — an upgrade may not drop a block back into an
@@ -585,9 +585,21 @@ it — three modules that do not know each other must not own three corners.
   `views/blocks/category-tiles.blade.php`) in `storefront.home.content`, from
   the theme's `default_blocks`; an upgrading shop gets it from torgash.blocks'
   `seed_theme_blocks_for_home_categories` (that zone only, only while empty).
-  The shop picks and ORDERS the categories through the block field type
-  `picks` (an ordered list of ids drawn as `<x-admin.picker ordered>`; an id
-  no longer offered is dropped on save) — none picked is the top level. A
+  The shop adds and ORDERS the tiles through the block field type `rows`
+  (2026-11-24, it replaced `picks` here): a row is a category — with, if the
+  shop wants, its own picture, name and CSS class on this block only — or a
+  link of its own (address `/…` or `http(s)://…`, a name, a picture). The
+  old list of ids still reads: `scalar` makes a bare id a category row, in
+  `BlockTypes::castRows()` and in the view (the subcategories partial still
+  passes ids). Every row has an `id`; a translated part (the name) is
+  merged by it, so moving rows never swaps their languages. A row's picture
+  is uploaded the moment it is picked (`admin.blocks.image`,
+  `BlockImages`: `block-images/` on the public disk, declared on
+  `core.files.directories`), posted as its path, accepted only when shaped
+  like ours, and deleted when no block names it any more. A view gets the
+  rows with their translated parts flattened (`BlockTypes::localize`) and
+  checks a link and a class again — a theme's default blocks never went
+  through the form. None added is the top level. A
   row that scrolls is the browser's own scroll, like the product carousel —
   not Embla, which is torgash.banners' and optional; `assets/tiles.js` only
   adds the thin indicator, arrows and mouse dragging. Every size follows from

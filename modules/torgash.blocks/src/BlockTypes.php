@@ -2,6 +2,8 @@
 
 namespace Torgash\Blocks;
 
+use Illuminate\Support\Str;
+
 /**
  * Registry of block types. A type is a declaration, registered from a module or
  * theme service provider:
@@ -62,7 +64,34 @@ namespace Torgash\Blocks;
 class BlockTypes
 {
     /** Field types the generated form knows how to render and validate. */
-    public const FIELD_TYPES = ['text', 'textarea', 'html', 'number', 'checkbox', 'select', 'picks'];
+    public const FIELD_TYPES = ['text', 'textarea', 'html', 'number', 'checkbox', 'select', 'picks', 'rows'];
+
+    /**
+     * The parts a `rows` field's row may have. A row is a small record the
+     * shop adds, orders by dragging and fills in — a category tile with its
+     * own picture, name and class, or a tile that is a link of its own:
+     *
+     *     ['key' => 'categories', 'type' => 'rows', 'label' => 'Tiles',
+     *      'kinds' => [['value' => 'category', 'label' => 'Category'], ['value' => 'link', 'label' => 'Link']],
+     *      'scalar' => ['kind' => 'category', 'part' => 'category'],   // a bare 12 stored before = a category row
+     *      'fields' => [
+     *          ['key' => 'category', 'type' => 'pick', 'kinds' => ['category'], 'required' => true, 'options' => fn () => [...]],
+     *          ['key' => 'url', 'type' => 'link', 'kinds' => ['link'], 'required' => true],
+     *          ['key' => 'name', 'type' => 'text', 'translatable' => true, 'required' => ['link']],
+     *          ['key' => 'image', 'type' => 'image'],
+     *          ['key' => 'class', 'type' => 'class'],
+     *      ]]
+     *
+     * `kinds` on a part: only rows of those kinds have it. `required`: true,
+     * or the kinds it is required for — a row without it is dropped. Every
+     * row carries an `id` of its own, by which a translated part is merged
+     * when the form posts one language (rows move; their positions do not
+     * say which is which).
+     */
+    public const ROW_PARTS = ['pick', 'text', 'link', 'image', 'class'];
+
+    /** How many rows one field keeps. */
+    public const ROWS_MAX = 60;
 
     /** Only text-shaped fields can hold translations; a number or a select cannot. */
     public const TRANSLATABLE_TYPES = ['text', 'textarea', 'html'];
@@ -219,6 +248,20 @@ class BlockTypes
             if ($key !== null && static::isTranslatable($field) && array_key_exists($key, $settings)) {
                 $settings[$key] = static::text($settings[$key], $locale);
             }
+
+            // A row's translated parts, flattened the same way.
+            if ($key !== null && ($field['type'] ?? null) === 'rows' && is_array($settings[$key] ?? null)) {
+                $translated = array_column(array_filter((array) ($field['fields'] ?? []), fn ($part) => ! empty($part['translatable'])), 'key');
+                $settings[$key] = array_map(function ($row) use ($translated, $locale) {
+                    foreach (is_array($row) ? $translated : [] as $part) {
+                        if (array_key_exists($part, $row)) {
+                            $row[$part] = static::text($row[$part], $locale);
+                        }
+                    }
+
+                    return $row;
+                }, $settings[$key]);
+            }
         }
 
         return $settings;
@@ -265,9 +308,11 @@ class BlockTypes
                 continue;
             }
 
-            $clean[$key] = static::isTranslatable($field)
-                ? static::castTranslatable($input[$key] ?? null, $existing[$key] ?? null, $mode)
-                : static::castValue($field, $input[$key] ?? null);
+            $clean[$key] = match (true) {
+                static::isTranslatable($field) => static::castTranslatable($input[$key] ?? null, $existing[$key] ?? null, $mode),
+                ($field['type'] ?? null) === 'rows' => static::castRows($field, $input[$key] ?? null, $existing[$key] ?? null, $mode),
+                default => static::castValue($field, $input[$key] ?? null),
+            };
         }
 
         return $clean;
@@ -343,6 +388,86 @@ class BlockTypes
             // malformed string, it is the wrong type — fall back to the default.
             default => is_scalar($value) ? (string) $value : (string) ($default ?? ''),
         };
+    }
+
+    /**
+     * A `rows` field's value made exactly what it declares: rows of known
+     * kinds, each part cast by its type, a row missing a required part
+     * dropped. A bare value stored before the field had rows (a category id
+     * in a list of picks) becomes the row it meant (`scalar`).
+     *
+     * @param  'form'|'json'  $mode
+     * @return list<array<string, mixed>>
+     */
+    public static function castRows(array $field, mixed $value, mixed $existing = null, string $mode = 'json'): array
+    {
+        $kinds = array_map(fn ($kind) => (string) (is_array($kind) ? ($kind['value'] ?? '') : $kind), (array) ($field['kinds'] ?? []));
+        $parts = array_values(array_filter((array) ($field['fields'] ?? []), fn ($part) => isset($part['key']) && in_array($part['type'] ?? 'text', self::ROW_PARTS, true)));
+        $offered = [];
+        $before = [];
+
+        foreach (is_array($existing) ? $existing : [] as $old) {
+            if (is_array($old) && is_string($old['id'] ?? null)) {
+                $before[$old['id']] = $old;
+            }
+        }
+
+        $rows = [];
+        foreach (is_array($value) ? array_values($value) : [] as $row) {
+            if (is_scalar($row) && isset($field['scalar']['part'])) {
+                $row = ['kind' => $field['scalar']['kind'] ?? null, $field['scalar']['part'] => $row];
+            }
+            if (! is_array($row)) {
+                continue;
+            }
+
+            $kind = (string) ($row['kind'] ?? '');
+            if ($kinds !== [] && ! in_array($kind, $kinds, true)) {
+                $kind = $kinds[0];
+            }
+            $id = is_string($row['id'] ?? null) && preg_match('/^[a-z0-9]{6,16}$/', $row['id']) && ! isset($rows[$row['id']])
+                ? $row['id'] : strtolower(Str::random(10));
+
+            $clean = ['id' => $id] + ($kinds !== [] ? ['kind' => $kind] : []);
+            foreach ($parts as $part) {
+                if (isset($part['kinds']) && ! in_array($kind, (array) $part['kinds'], true)) {
+                    continue;
+                }
+
+                $typed = $row[$part['key']] ?? null;
+                $cast = match ($part['type'] ?? 'text') {
+                    'pick' => static::castPick($offered[$part['key']] ??= static::optionValues($part), $typed),
+                    'link' => is_scalar($typed) && preg_match('#^(https?://|/(?!/))\S*$#i', trim((string) $typed)) ? mb_substr(trim((string) $typed), 0, 1000) : null,
+                    'image' => BlockImages::isOurs($typed) ? $typed : null,
+                    'class' => CssClasses::accept($typed),
+                    default => ! empty($part['translatable'])
+                        ? (static::castTranslatable($typed, $before[$id][$part['key']] ?? null, $mode) ?: null)
+                        : (is_scalar($typed) && trim((string) $typed) !== '' ? mb_substr(trim((string) $typed), 0, 500) : null),
+                };
+
+                if ($cast !== null) {
+                    $clean[$part['key']] = $cast;
+                } elseif (($part['required'] ?? false) === true || in_array($kind, (array) ($part['required'] ?? []), true)) {
+                    continue 2;
+                }
+            }
+
+            $rows[$id] = $clean;
+        }
+
+        return array_slice(array_values($rows), 0, self::ROWS_MAX);
+    }
+
+    /** One of the options, as the option itself is typed (12, not "12"). */
+    protected static function castPick(array $values, mixed $value): mixed
+    {
+        foreach (is_scalar($value) ? $values : [] as $option) {
+            if ((string) $option === (string) $value) {
+                return $option;
+            }
+        }
+
+        return null;
     }
 
     /** Once per field: a lazily built option list is a query. */

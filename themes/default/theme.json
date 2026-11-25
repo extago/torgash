@@ -984,6 +984,19 @@
             "help": "A subcategory with subcategories of its own is a column: its name as the heading, its children under it. Past this many, \"More\" opens the rest. 0 — all of them."
         },
         {
+            "key": "catalog_menu_name_lines",
+            "section": "header",
+            "type": "select",
+            "default": "",
+            "label": "Long department names in the Catalogue menu",
+            "options": {
+                "": "Shown whole, on as many lines as they take",
+                "1": "Cut after one line",
+                "2": "Cut after two lines",
+                "3": "Cut after three lines"
+            }
+        },
+        {
             "key": "strip_menu",
             "section": "header",
             "type": "select",

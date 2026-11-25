@@ -453,7 +453,7 @@
     "Same for length, width and height. Stored in whole millimetres.": "То же для длины, ширины и высоты. В базе — целые миллиметры.",
     "Content": "Содержимое",
     "Icons available in content as {icon_…}": "Иконки, доступные в контенте как {icon_…}",
-    "Names from lucide.dev, separated by commas — all 2035 are already installed, this is only which of them appear in the placeholder list. Add one and it can be written into any HTML block as {icon_name}. A name that does not exist is ignored.": "Названия с lucide.dev через запятую — все 2035 уже установлены, здесь только те, что попадут в список подстановок. Добавьте название — и его можно писать в любом HTML-блоке как {icon_название}. Несуществующее имя игнорируется.",
+    "Names from lucide.dev, separated by commas — all of them are already installed, this is only which of them appear in the placeholder list. Add one and it can be written into any HTML block as {icon_name}. A name that does not exist is ignored.": "Названия с lucide.dev через запятую — все они уже установлены, здесь только те, что попадут в список подстановок. Добавьте название — и его можно писать в любом HTML-блоке как {icon_название}. Несуществующее имя игнорируется.",
     "Exchange rates": "Курсы валют",
     "Do not update automatically": "Не обновлять автоматически",
     "Take rates from": "Брать курсы из",

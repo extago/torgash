@@ -89,3 +89,24 @@ A source that no longer means anything — a deleted category, a label switched
 off, a promotion that has ended — shows **nothing**, never the whole catalogue
 under the old heading. A grid can show the first few and reveal the rest with a
 "Show more" button; "View all" links to the source's own page where it has one.
+
+## Category tiles: a tile of your own
+
+The **Category tiles** block lists its tiles one by one, in the order you drag
+them into (under a finger, the arrows beside each). **+ Category** adds a
+category; **+ Link** adds a tile that leads anywhere — a sale page, a brand, a
+landing — with an address (`/sale` or `https://…`) and a name.
+
+Each tile may have its own:
+
+- **picture** — click the square to upload one (PNG, JPG, WebP, GIF or SVG, up
+  to 2 MB). It replaces the category's on this block only; the category's own
+  tile picture stays for its other places;
+- **name** — empty means the category's name. Written in the content language
+  picked at the top, like every other text;
+- **CSS class** — for your own stylesheet (Code snippets): make one
+  tile wider, give it a colour, a badge.
+
+With nothing added, the block shows the top categories in the catalogue's
+order. A category switched off or closed to the visitor is skipped. A picture
+you replace or take out is deleted from the server when you save.

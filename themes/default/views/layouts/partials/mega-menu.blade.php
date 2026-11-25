@@ -52,7 +52,17 @@
          } }">
         <div class="grid md:grid-cols-[minmax(0,280px)_minmax(0,1fr)] gap-4">
 
-            {{-- Departments --}}
+            {{-- Departments. A long name is shown whole unless the theme
+                 says to cut it after one, two or three lines; the icon and
+                 the arrow stand by its FIRST line, not the middle of three. --}}
+            @php
+                $megaNameClass = match ((string) theme_setting('catalog_menu_name_lines', '')) {
+                    '1' => 'truncate',
+                    '2' => 'line-clamp-2',
+                    '3' => 'line-clamp-3',
+                    default => 'break-words',
+                };
+            @endphp
             <ul class="flex flex-col gap-0.5 md:border-r md:border-base-300 md:pr-4 max-h-[70vh] overflow-y-auto">
                 @foreach ($megaItems as $megaItem)
                     <li>
@@ -60,22 +70,22 @@
                            @if ($megaItem->newTab) target="_blank" rel="noopener" @endif
                            @mouseenter="megaActive = {{ \Illuminate\Support\Js::from($megaItem->id) }}"
                            @focus="megaActive = {{ \Illuminate\Support\Js::from($megaItem->id) }}"
-                           @class(['flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium hover:bg-base-200', $megaItem->cssClass, 'text-primary' => $megaItem->highlight])
+                           @class(['flex items-start gap-3 rounded-lg px-3 py-2 text-sm leading-5 font-medium hover:bg-base-200', $megaItem->cssClass, 'text-primary' => $megaItem->highlight])
                            :class="megaActive === {{ \Illuminate\Support\Js::from($megaItem->id) }} ? 'bg-base-200' : ''">
                             @if ($megaItem->image ?? null)
                                 <img src="{{ $megaItem->image }}" alt="" class="w-5 h-5 shrink-0 object-contain" loading="lazy">
                             @elseif ($megaItem->icon)
                                 <x-icon :name="$megaItem->icon" class="w-5 h-5 shrink-0 opacity-70" />
                             @endif
-                            <span class="flex-1 min-w-0 truncate">{{ $megaItem->label }}</span>
+                            <span class="flex-1 min-w-0 {{ $megaNameClass }}" title="{{ $megaNameClass === 'break-words' ? '' : $megaItem->label }}">{{ $megaItem->label }}</span>
                             @if ($megaItem->count !== null)
-                                <span class="text-xs opacity-50 tabular-nums">{{ $megaItem->count }}</span>
+                                <span class="text-xs leading-5 opacity-50 tabular-nums">{{ $megaItem->count }}</span>
                             @endif
                             @if ($megaItem->badge)
-                                <span class="badge badge-{{ $megaItem->badgeStyle }} badge-xs font-semibold">{{ $megaItem->badge }}</span>
+                                <span class="badge badge-{{ $megaItem->badgeStyle }} badge-xs font-semibold mt-0.5 shrink-0">{{ $megaItem->badge }}</span>
                             @endif
                             @if ($megaItem->children !== [])
-                                <x-icon name="chevron-right" size="sm" class="opacity-40" />
+                                <x-icon name="chevron-right" size="sm" class="opacity-40 shrink-0 mt-0.5" />
                             @endif
                         </a>
                     </li>
@@ -97,6 +107,9 @@
                         $megaColumns = collect($megaItem->children)->filter(fn ($megaChild) => $megaChild->children !== []);
                         $megaLinks = collect($megaItem->children)->filter(fn ($megaChild) => $megaChild->children === [] && $megaChild->kind !== 'divider');
                     @endphp
+                    {{-- A department with nothing under it is a link and no
+                         more: its name alone on the right read as a sub-item. --}}
+                    @continue($megaColumns->isEmpty() && $megaLinks->isEmpty())
                     <div x-cloak x-show="megaActive === {{ \Illuminate\Support\Js::from($megaItem->id) }}" class="flex flex-col gap-4">
                         <a href="{{ $megaItem->href }}" class="text-lg font-semibold hover:text-primary inline-flex items-center gap-2 self-start">
                             {{ $megaItem->label }} <x-icon name="chevron-right" size="sm" class="opacity-50" />

@@ -13,7 +13,7 @@
  * favour of one LICENSE next to them.
  */
 
-$version = $argv[1] ?? '1.34.0';
+$version = $argv[1] ?? '1.79.0';
 $root = dirname(__DIR__);
 $out = $root.'/resources/icons/lucide';
 $tarball = sys_get_temp_dir().'/lucide-static-'.$version.'.tgz';

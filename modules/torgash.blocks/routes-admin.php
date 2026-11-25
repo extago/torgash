@@ -16,6 +16,7 @@ Route::post('theme-defaults/{zone}/replace', [BlocksController::class, 'restoreR
 
 Route::get('create/{zone}/{type}', [BlocksController::class, 'create'])->name('create');
 Route::post('/', [BlocksController::class, 'store'])->name('store');
+Route::post('image', [BlocksController::class, 'image'])->name('image');
 Route::get('{block}/edit', [BlocksController::class, 'edit'])->name('edit');
 Route::put('{block}', [BlocksController::class, 'update'])->name('update');
 Route::delete('{block}', [BlocksController::class, 'destroy'])->name('destroy');

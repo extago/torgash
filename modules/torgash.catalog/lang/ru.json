@@ -1323,5 +1323,14 @@
     "{0} No variation added.|{1} One variation added.|[2,*] :count variations added.": "{0} Вариации не добавлены.|{1} Добавлена одна вариация.|[2,*] Добавлено вариаций: :count.",
     "{1} One combination already existed.|[2,*] :count combinations already existed.": "{1} Одно сочетание уже было.|[2,*] Сочетаний уже было: :count.",
     "This product's own line: a fast seller is low at five, a rare one at one. Empty — the shop's.": "Свой порог этого товара: ходовой «заканчивается» с пяти штук, редкий — с одной. Пусто — как в магазине.",
-    "Running low at, pieces": "Товар заканчивается — от, шт."
+    "Running low at, pieces": "Товар заканчивается — от, шт.",
+    "Which tiles": "Какие плитки",
+    "None added — the top categories, in the catalogue's order.": "Ничего не добавлено — категории верхнего уровня в порядке каталога.",
+    "In this order. A tile's own picture and name replace the category's on this block only; the CSS class is for the shop's own stylesheet. A category that is switched off or closed to the visitor is skipped.": "В этом порядке. Своя картинка и название плитки заменяют картинку и название категории только в этом блоке; CSS-класс — для собственных стилей магазина. Выключенная или закрытая для посетителя категория пропускается.",
+    "Link": "Ссылка",
+    "CSS class": "CSS-класс",
+    "/sale or https://…": "/sale или https://…",
+    "How the picture stands": "Как стоит картинка",
+    "Whole, in the picture size": "Целиком, в размере картинки",
+    "Filling the frame": "Заполняет рамку"
 }

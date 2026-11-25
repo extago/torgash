@@ -99,6 +99,11 @@
                             $translatable = BlockTypes::isTranslatable($field);
                         @endphp
 
+                        @if (($field['type'] ?? 'text') === 'rows' && ! $locked)
+                            @include('torgash.blocks::admin._rows', ['rowsField' => $field, 'rowsValue' => $value])
+                            @continue
+                        @endif
+
                         @if ($translatable && ! $locked)
                             {{-- The same component every other translatable field in
                                  the admin uses, so blocks behave the way products and
@@ -220,6 +225,8 @@
                                     {{ $field['key'] }} <span class="opacity-60">— {{ $field['type'] ?? 'text' }}</span>
                                     @if (($field['type'] ?? 'text') === 'picks')
                                         <span class="opacity-60">— {{ __('a list of ids, in order') }}</span>
+                                    @elseif (($field['type'] ?? 'text') === 'rows')
+                                        <span class="opacity-60">— {{ __('a list of rows, in order') }}: {{ collect($field['fields'] ?? [])->pluck('key')->implode(', ') }}</span>
                                     @elseif (isset($field['options']))
                                         <span class="opacity-60">({{ implode(' | ', BlockTypes::optionValues($field)) }})</span>
                                     @endif

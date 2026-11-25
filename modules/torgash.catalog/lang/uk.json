@@ -1323,5 +1323,14 @@
     "{0} No variation added.|{1} One variation added.|[2,*] :count variations added.": "{0} Варіацій не додано.|{1} Додано одну варіацію.|[2,*] Додано варіацій: :count.",
     "{1} One combination already existed.|[2,*] :count combinations already existed.": "{1} Одне поєднання вже було.|[2,*] Поєднань уже було: :count.",
     "This product's own line: a fast seller is low at five, a rare one at one. Empty — the shop's.": "Власний поріг цього товару: ходовий «закінчується» з п'яти штук, рідкісний — з однієї. Порожньо — як у магазині.",
-    "Running low at, pieces": "Товар закінчується — від, шт."
+    "Running low at, pieces": "Товар закінчується — від, шт.",
+    "Which tiles": "Які плитки",
+    "None added — the top categories, in the catalogue's order.": "Нічого не додано — категорії верхнього рівня в порядку каталогу.",
+    "In this order. A tile's own picture and name replace the category's on this block only; the CSS class is for the shop's own stylesheet. A category that is switched off or closed to the visitor is skipped.": "У цьому порядку. Власна картинка та назва плитки замінюють картинку й назву категорії лише в цьому блоці; CSS-клас — для власних стилів магазину. Вимкнена або закрита для відвідувача категорія пропускається.",
+    "Link": "Посилання",
+    "CSS class": "CSS-клас",
+    "/sale or https://…": "/sale або https://…",
+    "How the picture stands": "Як стоїть картинка",
+    "Whole, in the picture size": "Цілком, у розмірі картинки",
+    "Filling the frame": "Заповнює рамку"
 }

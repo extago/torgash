@@ -279,5 +279,10 @@
     "How many products": "Сколько товаров",
     "Under each name, counting everything inside the subcategory.": "Под каждым названием — считая всё, что внутри подкатегории.",
     "The bottom bar on a phone": "Нижняя панель на телефоне",
-    "Off — the bar is not drawn, and the wishlist and the basket with their counts move into the phone's header. Home is the logo, the catalogue and the account are in the menu.": "Выключено — панели нет, а избранное и корзина со счётчиками переезжают в шапку телефона. На главную ведёт логотип, каталог и кабинет — в меню."
+    "Off — the bar is not drawn, and the wishlist and the basket with their counts move into the phone's header. Home is the logo, the catalogue and the account are in the menu.": "Выключено — панели нет, а избранное и корзина со счётчиками переезжают в шапку телефона. На главную ведёт логотип, каталог и кабинет — в меню.",
+    "Long department names in the Catalogue menu": "Длинные названия разделов в меню «Каталог»",
+    "Shown whole, on as many lines as they take": "Целиком, в столько строк, сколько нужно",
+    "Cut after one line": "Обрезать после одной строки",
+    "Cut after two lines": "Обрезать после двух строк",
+    "Cut after three lines": "Обрезать после трёх строк"
 }

@@ -279,5 +279,10 @@
     "How many products": "Скільки товарів",
     "Under each name, counting everything inside the subcategory.": "Під кожною назвою — з урахуванням усього, що всередині підкатегорії.",
     "The bottom bar on a phone": "Нижня панель на телефоні",
-    "Off — the bar is not drawn, and the wishlist and the basket with their counts move into the phone's header. Home is the logo, the catalogue and the account are in the menu.": "Вимкнено — панелі немає, а обране й кошик із лічильниками переїжджають у шапку телефона. На головну веде логотип, каталог і кабінет — у меню."
+    "Off — the bar is not drawn, and the wishlist and the basket with their counts move into the phone's header. Home is the logo, the catalogue and the account are in the menu.": "Вимкнено — панелі немає, а обране й кошик із лічильниками переїжджають у шапку телефона. На головну веде логотип, каталог і кабінет — у меню.",
+    "Long department names in the Catalogue menu": "Довгі назви розділів у меню «Каталог»",
+    "Shown whole, on as many lines as they take": "Повністю, у стільки рядків, скільки потрібно",
+    "Cut after one line": "Обрізати після одного рядка",
+    "Cut after two lines": "Обрізати після двох рядків",
+    "Cut after three lines": "Обрізати після трьох рядків"
 }
