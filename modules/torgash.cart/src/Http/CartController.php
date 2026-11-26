@@ -74,7 +74,7 @@ class CartController extends Controller
         return response()->view('torgash.cart::partials.added', [
             'product' => $product,
             'qty' => $qty,
-            'line' => $line,
+            'addedLines' => $line ? [$line] : [],
             'mode' => $mode,
             'basketCount' => $cart->count(),
             'basketTotal' => (int) $items->sum('line_total'),

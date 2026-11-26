@@ -85,6 +85,8 @@ class KitController extends Controller
             'price' => $slot->priceFor((int) $product->effectivePrice()) * max(1, $slot->qty),
             'required' => (bool) $slot->required,
             'swappable' => (bool) $slot->swappable && $slot->isSet(),
+            // The cell is drawn the way the card around it lays them out.
+            'scroller' => $kit->layout === 'scroller',
         ]);
     }
 
@@ -112,7 +114,7 @@ class KitController extends Controller
         // than the basket would hold) must not leave half a set behind, and
         // the reason goes to a corner notice beside the unchanged badge.
         try {
-            return DB::transaction(fn () => $this->put($kit, $main, $offer, $config, $cart));
+            $moved = DB::transaction(fn () => $this->put($kit, $main, $offer, $config, $cart));
         } catch (ValidationException $e) {
             $cart->reload();
 
@@ -121,11 +123,41 @@ class KitController extends Controller
                 'message' => (string) collect($e->errors())->flatten()->first(),
             ]);
         }
+
+        return $this->added($request, $kit, $main, $cart, $moved);
+    }
+
+    /**
+     * The basket's answer, the same one a product's button gets — the shared
+     * dialog or corner notice (the shop's `after_add`), headed "the set is in
+     * your basket" and listing every line that went in — and telling the page
+     * what went in (CartEvents): each line at the price the basket now charges
+     * for it. It used to answer with the badge alone, so a set went into the
+     * basket without a word.
+     *
+     * @param  array<string, int>  $moved  line key => quantity added
+     */
+    protected function added(Request $request, Kit $kit, Product $main, CartManager $cart, array $moved)
+    {
+        app(\Torgash\Cart\ListBuy::class)->forgetCart();
+        $items = $cart->items();
+
+        return response()->view('torgash.cart::partials.added', [
+            'product' => $main,
+            'qty' => 1,
+            'addedLines' => $items->filter(fn (object $line) => isset($moved[$line->key]))->values(),
+            'addedTitle' => __('The set is in your basket'),
+            'addedText' => $kit->t('name') ?: $main->t('name'),
+            'mode' => \Torgash\Cart\Http\CartController::afterAdd($request),
+            'basketCount' => $cart->count(),
+            'basketTotal' => (int) $items->sum('line_total'),
+        ])->header('HX-Trigger', \Torgash\Cart\CartEvents::header(\Torgash\Cart\CartEvents::lines($items, $moved)));
     }
 
     /**
      * @param  array<string, mixed>  $offer
      * @param  array<string, mixed>  $config
+     * @return array<string, int>  line key => quantity added
      */
     protected function put(Kit $kit, Product $main, array $offer, array $config, CartManager $cart)
     {
@@ -144,7 +176,7 @@ class KitController extends Controller
 
             $key = $cart->add($main->id, 1, $config);
 
-            return $this->changed($cart, [$key => 1]);
+            return [$key => 1];
         }
 
         // A simple set is a convenient way to put several ordinary things in
@@ -159,19 +191,7 @@ class KitController extends Controller
             $moved[$key] = ($moved[$key] ?? 0) + $qty;
         }
 
-        return $this->changed($cart, $moved);
-    }
-
-    /**
-     * The basket's answer, telling the page what went in (CartEvents): each
-     * line at the price the basket now charges for it.
-     *
-     * @param  array<string, int>  $moved  line key => quantity added
-     */
-    protected function changed(CartManager $cart, array $moved)
-    {
-        return response()->view('torgash.cart::partials.changed')
-            ->header('HX-Trigger', \Torgash\Cart\CartEvents::header(\Torgash\Cart\CartEvents::lines($cart->items(), $moved)));
+        return $moved;
     }
 
     /**

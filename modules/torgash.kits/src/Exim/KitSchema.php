@@ -117,6 +117,9 @@ class KitSchema
                 $s->product_id = $sku === '' ? null : (Product::where('sku', $sku)->value('id') ?? $s->product_id);
             }],
             ['key' => 'source', 'label' => 'Source', 'get' => fn (KitSlot $s) => $s->source, 'set' => fn (KitSlot $s, $v) => $s->source = (trim((string) $v) ?: null)],
+            // A `list` slot's SKUs, as typed and in order (one cell, commas).
+            ['key' => 'products', 'label' => 'Products (SKUs)', 'get' => fn (KitSlot $s) => implode(', ', $s->skus()), 'set' => fn (KitSlot $s, $v) => $s->products = (trim((string) $v) ?: null)],
+            ['key' => 'caption', 'label' => 'Caption', 'translatable' => true, 'empty' => []],
             // "The same value of this characteristic as the main product" —
             // compatibility with no table of pairs (§33.5), named by the
             // characteristic's own code.

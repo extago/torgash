@@ -19,6 +19,9 @@
             @if ($kit->t('description'))
                 <p class="text-sm opacity-70 mt-1">{{ $kit->t('description') }}</p>
             @endif
+            @if ($kitUntil = $kit->countdownEndsAt())
+                @include('torgash.kits::storefront.countdown', ['until' => $kitUntil])
+            @endif
         </div>
 
         {{-- `hx-include` reaches the CONFIGURATOR on the same page.
@@ -58,7 +61,10 @@
             <div @class([
                     'flex-1 gap-3',
                     'flex items-start overflow-x-auto pb-2' => $scroller,
-                    'flex flex-wrap items-start' => ! $scroller,
+                    // Columns that share the width between them, at least
+                    // 9rem each: fixed-width cells in a wrapping row left a
+                    // phone's card with its goods pressed to the left edge.
+                    'grid grid-cols-[repeat(auto-fill,minmax(9rem,1fr))] items-start' => ! $scroller,
                  ])
                  hx-post="{{ route('kits.quote', $kit) }}"
                  hx-trigger="change, change from:#product-options"

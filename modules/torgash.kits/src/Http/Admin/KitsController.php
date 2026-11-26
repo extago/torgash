@@ -9,6 +9,7 @@ use Illuminate\Validation\Rule;
 use Torgash\Catalog\Models\Feature;
 use Torgash\Catalog\Models\Product;
 use Torgash\Catalog\Pricing\Prices;
+use Torgash\Catalog\Selections\Selection;
 use Torgash\Catalog\Selections\Sources;
 use Torgash\Kits\Kits;
 use Torgash\Kits\Models\Kit;
@@ -221,6 +222,7 @@ class KitsController extends Controller
             'sort' => (int) ($validated['sort'] ?? 0),
             'enabled' => $request->boolean('enabled'),
             'whole_set_only' => $request->boolean('whole_set_only'),
+            'show_countdown' => $request->boolean('show_countdown'),
             // A kit belonging to a product goes where that product goes; only a
             // shared one is placed by rules.
             'rules' => ($validated['main_product_id'] ?? null)
@@ -254,12 +256,18 @@ class KitsController extends Controller
             $kind = in_array($row['kind'] ?? '', KitSlot::KINDS, true) ? $row['kind'] : 'product';
             $product = $kind === 'product' ? $this->productFor((string) ($row['product'] ?? '')) : null;
             $source = $kind === 'source' ? trim((string) ($row['source'] ?? '')) : '';
+            // Kept as typed, one per line: what the owner reads back.
+            $skus = $kind === 'list' ? Selection::skus(['products' => (string) ($row['products'] ?? '')]) : [];
 
             if ($kind === 'product' && ! $product) {
                 continue;
             }
 
             if ($kind === 'source' && $source === '') {
+                continue;
+            }
+
+            if ($kind === 'list' && $skus === []) {
                 continue;
             }
 
@@ -274,6 +282,10 @@ class KitsController extends Controller
                 'kind' => $kind,
                 'product_id' => $product?->id,
                 'source' => $kind === 'source' ? $source : null,
+                'products' => $skus === [] ? null : implode("
+", $skus),
+                // The language picked at the top of the form; the others stay.
+                'caption' => put_translation($slot->caption, trim((string) ($row['caption'] ?? '')), admin_content_locale()) ?: null,
                 // A list, and an empty one is "anything in the set" rather
                 // than null-the-column: the accessor reads both the same way.
                 'match_features' => array_values(array_filter(array_map('intval', (array) ($row['match_features'] ?? [])))),
@@ -293,6 +305,38 @@ class KitsController extends Controller
         }
 
         $kit->slots()->whereNotIn('id', $kept ?: [0])->delete();
+    }
+
+    /**
+     * What the codes typed into a slot stand for — name, price, stock — so an
+     * SKU is not typed blind. Answers every code asked, in the order asked,
+     * an unknown one as such: a typo is seen while typing, not as a slot that
+     * quietly offers one product fewer.
+     */
+    public function lookup(Request $request)
+    {
+        $codes = array_slice(Selection::skus(['products' => (string) $request->query('codes', '')]), 0, 50);
+        $locale = admin_content_locale();
+        $found = $codes === [] ? collect() : Product::query()
+            ->where(fn ($q) => $q
+                ->whereIn('sku', $codes)
+                ->orWhereIn('id', array_map('intval', array_filter($codes, 'ctype_digit'))))
+            ->get(['id', 'sku', 'name', 'price', 'price_original', 'price_currency', 'stock', 'status']);
+
+        return response()->json(array_map(function (string $code) use ($found, $locale) {
+            $product = $found->first(fn (Product $p) => $p->sku === $code) ?? (ctype_digit($code) ? $found->firstWhere('id', (int) $code) : null);
+
+            return $product ? [
+                'code' => $code,
+                'found' => true,
+                'sku' => $product->sku,
+                'name' => (string) ($product->t('name', $locale) ?: $product->sku),
+                'price' => $product->adminPrice(),
+                'stock' => (int) $product->stock,
+                'active' => $product->status === Product::STATUS_ACTIVE,
+                'url' => route('admin.catalog.products.edit', $product),
+            ] : ['code' => $code, 'found' => false];
+        }, $codes));
     }
 
     /** A product named by id or by SKU — what an admin has in front of them. */

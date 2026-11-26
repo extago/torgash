@@ -328,6 +328,40 @@ class KitsTest extends TestCase
         $this->assertSame(200_00, $cart->items()->firstWhere('product.id', $this->case->id)->line_total);
     }
 
+    /**
+     * The set gets the answer a product's button gets — the dialog saying it
+     * is in the basket, with what went in. It used to answer with the badge
+     * alone: the set went into the basket without a word.
+     */
+    public function test_adding_the_set_says_so_and_lists_what_went_in(): void
+    {
+        $kit = $this->kit(['type' => 'simple']);
+        $slot = $this->slot($kit, ['kind' => 'product', 'product_id' => $this->case->id]);
+
+        $this->post('http://localhost/kits/'.$kit->id.'/add', [
+            'main' => $this->phone->id,
+            'slots' => [$slot->id => $this->case->id],
+            'after_add' => 'dialog',
+        ])->assertOk()
+            ->assertSee('torgash-cart-dialog-body', false)
+            ->assertSee(__('The set is in your basket'))
+            ->assertSee($this->phone->t('name'))
+            ->assertSee($this->case->t('name'))
+            ->assertHeader('HX-Trigger');
+
+        // A set of ONE line names its pieces under it.
+        $extended = $this->kit();
+        $glassSlot = $this->slot($extended, ['kind' => 'product', 'product_id' => $this->glass->id, 'discount_percent' => 20]);
+
+        $this->post('http://localhost/kits/'.$extended->id.'/add', [
+            'main' => $this->phone->id,
+            'slots' => [$glassSlot->id => $this->glass->id],
+            'after_add' => 'toast',
+        ])->assertOk()
+            ->assertDontSee('torgash-cart-dialog-body', false)
+            ->assertSee(__('The set is in your basket'));
+    }
+
     /** Pressing the card's button buys the set — and only what is ticked. */
     public function test_adding_the_set_puts_every_ticked_item_in_the_cart(): void
     {
@@ -556,6 +590,76 @@ class KitsTest extends TestCase
         $this->assertSame('simple', $kit->type);
         $this->assertSame('scroller', $kit->layout);
         $this->assertSame('before_details', $kit->placement);
+    }
+
+    /**
+     * "One of these products": the typed SKUs and no others, in the order
+     * typed — the first is offered, the rest are the choice — narrowed by
+     * fit like any set, never the main product itself.
+     */
+    public function test_a_slot_can_be_a_typed_list_of_products(): void
+    {
+        $kit = $this->kit();
+        $slot = $this->slot($kit, ['kind' => 'list', 'products' => "CS-1\nGL-2, GL-1\nPH-1\nNOPE"]);
+
+        $this->assertSame(['CS-1', 'GL-2', 'GL-1'], app(Offer::class)->candidates($slot, $this->phone)->pluck('sku')->all());
+        $this->assertSame('CS-1', app(Offer::class)->productFor($slot, $this->phone)?->sku);
+
+        $slot->update(['match_features' => [$this->model->id]]);
+        $this->assertSame(['CS-1', 'GL-1'], app(Offer::class)->candidates($slot->fresh(), $this->phone)->pluck('sku')->all());
+    }
+
+    /** The tick says what the shop wrote, in the visitor's language. */
+    public function test_a_slot_caption_replaces_the_general_words(): void
+    {
+        $slot = $this->slot($this->kit(), ['product_id' => $this->glass->id, 'caption' => ['en' => 'Glass', 'ru' => 'Стекло']]);
+
+        app()->setLocale('ru');
+        $this->assertSame('Стекло', $slot->captionText());
+
+        $slot->update(['caption' => null]);
+        app()->setLocale('en');
+        $this->assertSame('In the set', $slot->fresh()->captionText());
+    }
+
+    /** A timer counts to the kit's own end, and only when there is one. */
+    public function test_the_countdown_counts_to_the_kits_own_end(): void
+    {
+        $kit = $this->kit(['show_countdown' => true, 'ends_at' => now()->addDay()]);
+        $this->slot($kit, ['product_id' => $this->glass->id]);
+
+        $this->assertTrue($kit->countdownEndsAt()->equalTo($kit->ends_at));
+        $this->get('http://localhost/product/'.$this->phone->slug)->assertSee($kit->ends_at->toIso8601String(), false);
+
+        $kit->update(['ends_at' => null]);
+        $this->assertNull($kit->fresh()->countdownEndsAt());
+
+        $kit->update(['ends_at' => now()->addDay(), 'show_countdown' => false]);
+        $this->assertNull($kit->fresh()->countdownEndsAt());
+    }
+
+    /** The form saves a list and a caption; the lookup names what was typed. */
+    public function test_the_form_saves_a_list_and_a_caption_and_the_lookup_names_the_codes(): void
+    {
+        $kit = $this->kit();
+        $admin = User::role('admin')->firstOrFail();
+
+        $this->actingAs($admin)->put('http://localhost/admin/kits/'.$kit->id, [
+            'admin_name' => $kit->admin_name, 'name' => 'Starter set', 'placement' => 'after_buy_box',
+            'layout' => 'grid', 'type' => 'simple', 'sort' => 0, 'enabled' => 1,
+            'slots' => [['kind' => 'list', 'products' => "GL-1, CS-1", 'caption' => 'Protection', 'qty' => 1, 'discount_type' => 'none']],
+        ])->assertRedirect();
+
+        $slot = $kit->slots()->firstOrFail();
+        $this->assertSame('list', $slot->kind);
+        $this->assertSame(['GL-1', 'CS-1'], $slot->skus());
+        $this->assertSame(['en' => 'Protection'], $slot->caption);
+
+        $answer = $this->actingAs($admin)->getJson('http://localhost/admin/kits/lookup?codes='.urlencode("GL-1\nNOPE"))->assertOk()->json();
+
+        $this->assertSame('Glass for A', $answer[0]['name']);
+        $this->assertSame(20, $answer[0]['stock']);
+        $this->assertFalse($answer[1]['found']);
     }
 
     /**

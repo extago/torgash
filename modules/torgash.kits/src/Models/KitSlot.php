@@ -3,9 +3,11 @@
 namespace Torgash\Kits\Models;
 
 use App\Core\Support\HasCode;
+use App\Core\Support\HasTranslations;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Torgash\Catalog\Models\Product;
+use Torgash\Catalog\Selections\Selection;
 
 /**
  * One place in a kit: which goods, how many, and how much cheaper they are
@@ -18,9 +20,10 @@ use Torgash\Catalog\Models\Product;
  */
 class KitSlot extends Model
 {
-    use HasCode;
+    use HasCode, HasTranslations;
 
-    public const KINDS = ['product', 'source'];
+    /** One product, one of a catalogue set, or one of the products typed by SKU. */
+    public const KINDS = ['product', 'source', 'list'];
 
     public const DISCOUNTS = ['none', 'percent', 'fixed', 'to_price'];
 
@@ -32,6 +35,7 @@ class KitSlot extends Model
     {
         return [
             'match_features' => 'array',
+            'caption' => 'array',
             'qty' => 'int',
             'discount_percent' => 'float',
             'discount_amount' => 'int',
@@ -68,7 +72,7 @@ class KitSlot extends Model
      */
     protected function codeSource(): string
     {
-        return (string) (($this->product_id ? optional($this->product)->sku : null) ?: $this->source ?: 'slot');
+        return (string) (($this->product_id ? optional($this->product)->sku : null) ?: ($this->skus()[0] ?? null) ?: $this->source ?: 'slot');
     }
 
     public function product(): BelongsTo
@@ -76,9 +80,27 @@ class KitSlot extends Model
         return $this->belongsTo(Product::class, 'product_id');
     }
 
+    /** A slot the customer may choose in: a catalogue set or a typed list. */
     public function isSet(): bool
     {
-        return $this->kind === 'source';
+        return $this->kind === 'source' || $this->kind === 'list';
+    }
+
+    /**
+     * The SKUs a `list` slot names, in the order typed, each once — read the
+     * way a products block reads its own (`Selection::skus()`).
+     *
+     * @return list<string>
+     */
+    public function skus(): array
+    {
+        return $this->kind === 'list' ? Selection::skus(['products' => (string) $this->products]) : [];
+    }
+
+    /** What the slot's tick says on the card; the general words without one. */
+    public function captionText(): string
+    {
+        return (string) ($this->t('caption') ?: __('In the set'));
     }
 
     /**

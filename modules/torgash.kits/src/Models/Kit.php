@@ -39,6 +39,7 @@ class Kit extends Model
             'rules' => 'array',
             'enabled' => 'bool',
             'whole_set_only' => 'bool',
+            'show_countdown' => 'bool',
             'starts_at' => 'datetime',
             'ends_at' => 'datetime',
             'sort' => 'int',
@@ -78,6 +79,16 @@ class Kit extends Model
 
         return ! (($this->starts_at && $this->starts_at->greaterThan($now))
             || ($this->ends_at && $this->ends_at->lessThan($now)));
+    }
+
+    /**
+     * The moment the card counts down to: the kit's own end, while it is on
+     * and the shop asked for a timer. NULL — no timer — for a kit with no end
+     * date: an open-ended price has nothing to count to.
+     */
+    public function countdownEndsAt(): ?\Illuminate\Support\Carbon
+    {
+        return $this->show_countdown && $this->ends_at && $this->isCurrent() ? $this->ends_at : null;
     }
 
     /**

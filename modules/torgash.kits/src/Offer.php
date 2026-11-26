@@ -225,6 +225,17 @@ class Offer
         // `->latest()` the catalogue's sorts were written to abolish, and
         // `Sorts::applyKey` closes every ordering with `id`, which matters
         // here: accessories tie on price constantly.
+        //
+        // A typed list is the exception: its order IS the shop's word — the
+        // first SKU is the one offered, the rest are what "choose another"
+        // shows next — so it goes first and the shop's sort only breaks ties.
+        if ($slot->kind === 'list') {
+            $query->orderByRaw('array_position(?::text[], sku::text)', ['{'.implode(',', array_map(
+                fn (string $sku) => '"'.addcslashes($sku, '"\\').'"',
+                $slot->skus(),
+            )).'}']);
+        }
+
         $sorts = app(Sorts::class);
         $sorts->applyKey($query, $sorts->default());
 
@@ -289,6 +300,18 @@ class Offer
             return $slot->product_id
                 ? Product::listed()->whereKey($slot->product_id)
                 : null;
+        }
+
+        if ($slot->kind === 'list') {
+            $skus = $slot->skus();
+
+            if ($skus === []) {
+                return null;
+            }
+
+            $query = Product::listed()->whereIn('sku', $skus)->whereKeyNot($main->id);
+
+            return $slot->matchFeatureIds() !== [] ? $this->compatible($query, $slot, $main) : $query;
         }
 
         $resolved = app(Sources::class)->resolve((string) $slot->source);

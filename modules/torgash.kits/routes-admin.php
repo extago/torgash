@@ -9,6 +9,7 @@ use Torgash\Kits\Http\Admin\KitsController;
 Route::get('/', [KitsController::class, 'index'])->name('index');
 Route::get('/create', [KitsController::class, 'create'])->name('create');
 Route::post('/', [KitsController::class, 'store'])->name('store');
+Route::get('/lookup', [KitsController::class, 'lookup'])->name('lookup');
 Route::get('/{kit}/edit', [KitsController::class, 'edit'])->name('edit');
 Route::patch('/{kit}/status', [KitsController::class, 'setStatus'])->name('status');
 Route::post('/bulk', [KitsController::class, 'bulk'])->name('bulk');

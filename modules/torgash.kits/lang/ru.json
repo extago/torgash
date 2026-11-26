@@ -4,6 +4,7 @@
     "Add a kit": "Добавить комплект",
     "Add an item": "Добавить позицию",
     "Add the set to the cart": "Добавить всё в корзину",
+    "The set is in your basket": "Комплект добавлен в корзину",
     "A kit with nothing in it is not shown at all.": "Комплект без позиций не показывается вовсе.",
     "Also when the items are put in the basket separately": "Также когда товары положили в корзину по отдельности",
     "Amount off": "Скидка суммой",
@@ -142,5 +143,18 @@
     "The customer sees:": "Покупатель видит:",
     "The set": "Набор",
     "selected": "выбрано",
-    "Kit discounts": "Скидки комплектов"
+    "Kit discounts": "Скидки комплектов",
+    "no such product": "нет такого товара",
+    "One of these products": "Один из этих товаров",
+    "Products (SKUs, one per line)": "Товары (артикулы, по одному в строке)",
+    "The first one is offered; the rest are what the customer may choose instead.": "Предлагается первый; остальные покупатель может выбрать вместо него.",
+    "Caption on the card": "Подпись на карточке",
+    "What the tick above the item says: Glass, Case, Charger. Empty — the general words.": "Что написано у галочки над товаром: Стекло, Чехол, Блок питания. Пусто — общие слова.",
+    "Products (SKUs)": "Товары (артикулы)",
+    "In stock": "В наличии",
+    "Out of stock": "Нет в наличии",
+    "d": "д",
+    "Show a countdown to the end": "Показывать таймер до конца",
+    "The card counts down to the date above. Without an end date nothing is shown.": "Карточка отсчитывает время до даты выше. Без даты окончания таймера нет.",
+    "The set's price lasts": "Цена комплекта действует ещё"
 }

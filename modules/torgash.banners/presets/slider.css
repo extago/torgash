@@ -4,6 +4,9 @@
    slide and a light one alike; the old light glass all but vanished on a dark
    slide. */
 .hf-slider { position: relative; height: 100%; --pad: 1.25rem; }
+/* The corners are the slider's (its viewport is rounded and clips), not each
+   slide's: a slide's own radius showed at the seam while swiping. */
+.hf-slider .torgash-banner > * { border-radius: 0; }
 @media (min-width: 768px) { .hf-slider { --pad: 3.75rem; } }
 .hf-dots { position: absolute; z-index: 3; top: 1.25rem; left: var(--pad); }
 .hf-dots .torgash-slider-dots {

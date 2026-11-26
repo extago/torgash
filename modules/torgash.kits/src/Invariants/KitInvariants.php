@@ -137,14 +137,19 @@ class KitInvariants
                 : ['":product" cannot be bought right now.', ['product' => $product->t('name') ?: $product->sku]];
         }
 
-        $resolved = app(Sources::class)->resolve((string) $slot->source);
+        if ($slot->kind === 'list') {
+            $query = Product::visible()->whereIn('sku', $slot->skus() ?: ['']);
+        } else {
+            $resolved = app(Sources::class)->resolve((string) $slot->source);
 
-        if (! $resolved) {
-            return ['The set it draws from no longer stands for anything.', []];
+            if (! $resolved) {
+                return ['The set it draws from no longer stands for anything.', []];
+            }
+
+            [$definition, $arg] = $resolved;
+            $query = ($definition['apply'])(Product::visible(), $arg, []);
         }
 
-        [$definition, $arg] = $resolved;
-        $query = ($definition['apply'])(Product::visible(), $arg, []);
         app(AvailabilityStatuses::class)->applyOrderable($query);
 
         return $query->exists()

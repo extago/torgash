@@ -15,6 +15,9 @@
             'product' => $slot->product?->sku,
             'product_label' => $slot->product ? ($slot->product->t('name', $locale) ?: $slot->product->sku) : null,
             'source' => $slot->source,
+            'products' => $slot->products,
+            'caption' => (string) (($slot->caption ?? [])[$locale] ?? ''),
+            'found' => [],
             'match_features' => array_map('strval', $slot->matchFeatureIds()),
             'fq' => '',
             'qty' => $slot->qty,
@@ -36,7 +39,7 @@
 
     <form method="POST" class="flex flex-col gap-4"
           action="{{ $kit->exists ? route('admin.kits.update', $kit) : route('admin.kits.store') }}"
-          x-data="kitForm(@js($rows), @js($featureList))">
+          x-data="kitForm(@js($rows), @js($featureList), @js(route('admin.kits.lookup')))">
         @csrf
         @if ($kit->exists) @method('PUT') @endif
         <input type="hidden" name="main_product_id" value="{{ old('main_product_id', $kit->main_product_id) }}">
@@ -129,9 +132,10 @@
 
                                 <div class="flex items-center gap-2">
                                     <span class="w-7 h-7 rounded-full bg-base-300 text-xs font-semibold flex items-center justify-center shrink-0" x-text="index + 1"></span>
-                                    <select :name="`slots[${index}][kind]`" x-model="row.kind" class="select select-bordered w-auto" aria-label="{{ __('This item is') }}">
+                                    <select :name="`slots[${index}][kind]`" x-model="row.kind" @change="look(row, row.kind === 'list' ? row.products : (row.kind === 'product' ? row.product : ''))" class="select select-bordered w-auto" aria-label="{{ __('This item is') }}">
                                         <option value="product">{{ __('One product') }}</option>
                                         <option value="source">{{ __('One of a set of products') }}</option>
+                                        <option value="list">{{ __('One of these products') }}</option>
                                     </select>
                                     <div class="grow"></div>
                                     <label class="label cursor-pointer gap-2 me-2">
@@ -158,12 +162,22 @@
 
                                 <fieldset class="fieldset p-0" x-show="row.kind === 'product'">
                                     <legend class="fieldset-legend">{{ __('Product (SKU or id)') }}</legend>
-                                    <input :name="`slots[${index}][product]`" x-model="row.product" class="input input-bordered w-full font-mono">
-                                    <p class="label text-xs opacity-60" x-show="row.product_label" x-text="row.product_label"></p>
+                                    <input :name="`slots[${index}][product]`" x-model="row.product" @input.debounce.400ms="look(row, row.product)" class="input input-bordered w-full font-mono">
+                                    @include('torgash.kits::admin.kits._found')
                                 </fieldset>
 
-                                <div class="grid gap-3 md:grid-cols-2" x-show="row.kind === 'source'" x-cloak>
-                                    <fieldset class="fieldset p-0">
+                                {{-- "These three glasses and no others": SKUs typed in
+                                     the order they are offered — the first one by
+                                     default, the rest under "Choose another". --}}
+                                <fieldset class="fieldset p-0" x-show="row.kind === 'list'" x-cloak>
+                                    <legend class="fieldset-legend">{{ __('Products (SKUs, one per line)') }}</legend>
+                                    <textarea :name="`slots[${index}][products]`" x-model="row.products" @input.debounce.400ms="look(row, row.products)" rows="3" class="textarea textarea-bordered w-full font-mono"></textarea>
+                                    @include('torgash.kits::admin.kits._found')
+                                    <p class="label text-xs opacity-60 whitespace-normal">{{ __('The first one is offered; the rest are what the customer may choose instead.') }}</p>
+                                </fieldset>
+
+                                <div class="grid gap-3 md:grid-cols-2" x-show="row.kind !== 'product'" x-cloak>
+                                    <fieldset class="fieldset p-0" x-show="row.kind === 'source'">
                                         <legend class="fieldset-legend">{{ __('The set') }}</legend>
                                         <select :name="`slots[${index}][source]`" x-model="row.source" class="select select-bordered w-full">
                                             <option value="">{{ __('Choose…') }}</option>
@@ -206,6 +220,14 @@
                                         <p class="label text-xs opacity-60 whitespace-normal">{{ __('Nothing chosen: anything in the set fits. Several: all of them must match the main product.') }}</p>
                                     </fieldset>
                                 </div>
+
+                                {{-- What the tick on the card says, in the language picked
+                                     at the top of the form. --}}
+                                <fieldset class="fieldset p-0">
+                                    <legend class="fieldset-legend">{{ __('Caption on the card') }}</legend>
+                                    <input :name="`slots[${index}][caption]`" x-model="row.caption" maxlength="60" class="input input-bordered w-full" placeholder="{{ __('In the set') }}">
+                                    <p class="label text-xs opacity-60 whitespace-normal">{{ __('What the tick above the item says: Glass, Case, Charger. Empty — the general words.') }}</p>
+                                </fieldset>
 
                                 <div class="grid gap-3 grid-cols-2 md:grid-cols-[minmax(0,0.7fr)_minmax(0,1.6fr)_minmax(0,1.4fr)]">
                                     <fieldset class="fieldset p-0">
@@ -252,7 +274,7 @@
                                         <input type="checkbox" :name="`slots[${index}][required]`" value="1" x-model="row.required" class="checkbox checkbox-sm">
                                         <span class="label-text">{{ __('Cannot be unticked') }}</span>
                                     </label>
-                                    <label class="label cursor-pointer gap-2" x-show="row.kind === 'source'" x-cloak>
+                                    <label class="label cursor-pointer gap-2" x-show="row.kind !== 'product'" x-cloak>
                                         <input type="hidden" :name="`slots[${index}][swappable]`" value="0">
                                         <input type="checkbox" :name="`slots[${index}][swappable]`" value="1" x-model="row.swappable" class="checkbox checkbox-sm">
                                         <span class="label-text">{{ __('The customer may choose another') }}</span>
@@ -296,6 +318,13 @@
                                    value="{{ old('ends_at', $kit->ends_at?->format('Y-m-d\TH:i')) }}">
                             <p class="label text-xs opacity-60">{{ __('Empty — always.') }}</p>
                         </fieldset>
+                        <label class="label cursor-pointer justify-start gap-3 whitespace-normal">
+                            <input type="hidden" name="show_countdown" value="0">
+                            <input type="checkbox" name="show_countdown" value="1" class="toggle toggle-sm toggle-success"
+                                   @checked(old('show_countdown', $kit->show_countdown ?? false))>
+                            <span class="label-text">{{ __('Show a countdown to the end') }}</span>
+                        </label>
+                        <p class="text-xs opacity-60 -mt-2">{{ __('The card counts down to the date above. Without an end date nothing is shown.') }}</p>
                         <fieldset class="fieldset p-0"><legend class="fieldset-legend">{{ __('Position') }}</legend>
                             <input type="number" name="sort" value="{{ old('sort', $kit->sort ?? 0) }}" class="input input-bordered w-full">
                         </fieldset>
@@ -371,9 +400,25 @@
     @push('scripts')
         <script nonce="{{ csp_nonce() }}">
             document.addEventListener('alpine:init', () => {
-                Alpine.data('kitForm', (rows, features) => ({
+                Alpine.data('kitForm', (rows, features, lookupUrl) => ({
                     rows: rows,
                     features: features,
+
+                    init() {
+                        this.rows.forEach(row => {
+                            const codes = row.kind === 'list' ? row.products : (row.kind === 'product' ? row.product : '');
+                            if (codes) this.look(row, codes);
+                        });
+                    },
+                    // What the typed codes stand for: name, price, stock. The
+                    // answer of a slower request never overwrites a later one.
+                    async look(row, codes) {
+                        const asked = (codes || '').trim();
+                        row.asked = asked;
+                        if (asked === '') { row.found = []; return; }
+                        const answer = await fetch(lookupUrl + '?codes=' + encodeURIComponent(asked), { headers: { Accept: 'application/json' } });
+                        if (answer.ok && row.asked === asked) row.found = await answer.json();
+                    },
 
                     featureLabel(id) {
                         const f = this.features.find(f => f.id === String(id));
@@ -398,7 +443,7 @@
 
                     add() {
                         this.rows.push({
-                            id: null, kind: 'product', product: '', source: '', match_features: [], fq: '',
+                            id: null, kind: 'product', product: '', products: '', caption: '', found: [], source: '', match_features: [], fq: '',
                             qty: 1, discount_type: 'percent', discount_percent: '', discount_amount: '',
                             discount_currency: '', required: false, swappable: true, enabled: true,
                         });

@@ -4,6 +4,7 @@
     "Add a kit": "Додати комплект",
     "Add an item": "Додати позицію",
     "Add the set to the cart": "Додати все в кошик",
+    "The set is in your basket": "Комплект додано до кошика",
     "A kit with nothing in it is not shown at all.": "Комплект без позицій не показується зовсім.",
     "Also when the items are put in the basket separately": "Також коли товари поклали в кошик окремо",
     "Amount off": "Знижка сумою",
@@ -142,5 +143,18 @@
     "The customer sees:": "Покупець бачить:",
     "The set": "Набір",
     "selected": "вибрано",
-    "Kit discounts": "Знижки комплектів"
+    "Kit discounts": "Знижки комплектів",
+    "no such product": "немає такого товару",
+    "One of these products": "Один із цих товарів",
+    "Products (SKUs, one per line)": "Товари (артикули, по одному в рядку)",
+    "The first one is offered; the rest are what the customer may choose instead.": "Пропонується перший; решту покупець може вибрати замість нього.",
+    "Caption on the card": "Підпис на картці",
+    "What the tick above the item says: Glass, Case, Charger. Empty — the general words.": "Що написано біля галочки над товаром: Скло, Чохол, Блок живлення. Порожньо — загальні слова.",
+    "Products (SKUs)": "Товари (артикули)",
+    "In stock": "У наявності",
+    "Out of stock": "Немає в наявності",
+    "d": "д",
+    "Show a countdown to the end": "Показувати таймер до кінця",
+    "The card counts down to the date above. Without an end date nothing is shown.": "Картка відлічує час до дати вище. Без дати закінчення таймера немає.",
+    "The set's price lasts": "Ціна комплекту діє ще"
 }

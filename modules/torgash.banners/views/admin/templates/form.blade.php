@@ -54,6 +54,21 @@
                   const known = Object.keys(this.fields).filter((key) => found.includes(key));
                   return [...known, ...found.filter((key) => !known.includes(key))];
               },
+              // The banner's form asks in this order; a token found in the
+              // HTML first is not always the one to ask first (a <source>
+              // for the phone stands before its <img>).
+              move(key, step) {
+                  const order = this.tokens;
+                  const at = order.indexOf(key);
+                  const to = at + step;
+                  if (at < 0 || to < 0 || to >= order.length) return;
+                  [order[at], order[to]] = [order[to], order[at]];
+                  const fields = {};
+                  for (const k of order) fields[k] = this.row(k);
+                  for (const [k, f] of Object.entries(this.fields)) if (!(k in fields)) fields[k] = f;
+                  this.fields = fields;
+                  this.refresh();
+              },
               row(key) {
                   if (!this.fields[key]) {
                       this.fields[key] = { key, type: 'text', label: key.charAt(0).toUpperCase() + key.slice(1).replace(/[-_]/g, ' '), help: '', default: '', options: '', on: key, fallback: '' };
@@ -216,7 +231,9 @@
                             <div class="flex items-center gap-2">
                                 <code class="font-mono text-sm" x-text="'{' + key + '}'"></code>
                                 <input type="hidden" :name="'fields[' + i + '][key]'" :value="key">
-                                <select :name="'fields[' + i + '][type]'" x-model="row(key).type" class="select select-bordered select-sm ml-auto w-40">
+                                <button type="button" class="btn btn-ghost btn-sm btn-square ml-auto" x-on:click="move(key, -1)" :disabled="i === 0" title="{{ __('Move earlier') }}" aria-label="{{ __('Move earlier') }}"><x-icon name="arrow-up" /></button>
+                                <button type="button" class="btn btn-ghost btn-sm btn-square" x-on:click="move(key, 1)" :disabled="i === tokens.length - 1" title="{{ __('Move later') }}" aria-label="{{ __('Move later') }}"><x-icon name="arrow-down" /></button>
+                                <select :name="'fields[' + i + '][type]'" x-model="row(key).type" class="select select-bordered select-sm w-40">
                                     <template x-for="(name, type) in typeNames" :key="type">
                                         <option :value="type" x-text="name" :selected="row(key).type === type"></option>
                                     </template>

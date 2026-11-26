@@ -6,12 +6,11 @@
     $required = $required ?? false;
     $swappable = $swappable ?? false;
 @endphp
-{{-- Narrow enough that two fit side by side in the 400px column under the
-     buy button, and the card's own width (not the screen's) decides when
-     there is room for more. `shrink-0` matters only in the scrolling layout,
-     where a flex row would otherwise squeeze every cell to fit instead of
-     letting the row overflow and scroll. --}}
-<div class="w-36 @2xl:w-40 shrink-0 flex flex-col gap-1.5" @if (! $isMain) data-kit-slot="{{ $slot->id }}" @endif>
+{{-- In a grid the cell is its column (the card shares the width out, at
+     least 9rem each, so two stand side by side under the buy button and on a
+     phone). In the scrolling line it has a width of its own, and `shrink-0`
+     stops the flex row squeezing every cell to fit instead of scrolling. --}}
+<div @class(['flex flex-col gap-1.5 min-w-0', 'w-36 @2xl:w-40 shrink-0' => $scroller ?? false]) @if (! $isMain) data-kit-slot="{{ $slot->id }}" @endif>
     {{-- EVERY cell opens with a row of the same height, which is what puts the
          photographs on one baseline: a slot's is its tick, and the main
          product's is a word saying what it is. Before this the main product
@@ -33,7 +32,7 @@
             @endif
             {{-- The name is printed under the picture; repeated here it only
                  fitted cut off, so the tick says what it does instead. --}}
-            <span class="label-text text-xs">{{ __('In the set') }}<span class="sr-only">: {{ $product->t('name') }}</span></span>
+            <span class="label-text text-xs truncate">{{ $slot->captionText() }}<span class="sr-only">: {{ $product->t('name') }}</span></span>
         </label>
     @endif
 

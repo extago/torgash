@@ -47,6 +47,19 @@
             "help": "Optional. Up to 767 px wide the phone gets this one instead."
         },
         {
+            "key": "backdrop",
+            "type": "image",
+            "label": "Background photo",
+            "help": "Optional. Fills the whole slide behind the picture and the words, instead of the colour."
+        },
+        {
+            "key": "backdrop_phone",
+            "type": "image",
+            "label": "Background photo for a phone",
+            "fallback": "backdrop",
+            "help": "Optional. Up to 767 px wide the phone gets this one instead."
+        },
+        {
             "key": "video",
             "type": "video",
             "label": "Video behind the slide",

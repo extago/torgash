@@ -10,14 +10,21 @@
 }
 @media (min-width: 768px) { .hb-hero { --pad: 3.75rem; min-height: 25rem; } }
 .hb-hero-dark { color: #fff; }
+/* A background photo fills the slide behind everything; the colour shows
+   until it loads and stays the colour of the phone's blurred band. */
+.hb-hero-backdrop img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
 /* A video behind the slide fills it; the colour shows until it plays. */
 .hb-hero-video { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
 .hb-hero-dim .hb-hero-video { filter: brightness(0.55); }
+/* The picture stands in a frame as wide as the slide moved a quarter to the
+   right, centred at its bottom: the product sits in the right half and its
+   own right part runs off the slide — on a phone too, behind the words. */
+.hb-hero-picture { position: absolute; top: 0; left: 25%; width: 100%; height: 100%; overflow: hidden; }
 .hb-hero-picture img {
-    position: absolute; top: 0; left: 25%; width: 100%; height: 100%;
-    object-fit: contain; object-position: bottom left;
+    position: absolute; inset: 0; width: 100%; height: 100%;
+    object-fit: contain; object-position: center bottom;
 }
-.hb-fit-cover .hb-hero-picture img { object-fit: cover; object-position: center; }
+.hb-fit-cover .hb-hero-picture img { object-fit: cover; }
 .hb-hero-content {
     position: relative; z-index: 2; margin-top: auto; max-width: 75%; padding: var(--pad);
     display: flex; flex-direction: column; align-items: flex-start; pointer-events: none;
@@ -33,20 +40,10 @@
 .hb-hero-button:hover { filter: brightness(1.15); }
 /* The whole slide is the link, under the words and their button. */
 a.hb-hero-link { position: absolute; inset: 0; z-index: 1; }
-/* A phone: the slide grows taller and becomes a column — a picture kept
-   WHOLE takes whatever height the words leave above them, so however long
-   the text, the two never overlap (at full height it sat behind the words
-   and the button, a grey strip under "See the gateway"). A picture that
-   fills the slide stays behind everything, under the blurred band. */
+/* A phone: the picture stays where it is, BEHIND the words; the words stand
+   on a band of the slide's colour, blurred, fading out upwards. */
 @media (max-width: 767px) {
-    .hb-hero { min-height: 27rem; }
-    .hb-hero-picture img { left: 0; }
-    .hb-hero:not(.hb-fit-cover) { flex-direction: column; }
-    .hb-hero:not(.hb-fit-cover) .hb-hero-picture { position: relative; flex: 1 1 auto; min-height: 8rem; }
-    .hb-hero:not(.hb-fit-cover) .hb-hero-picture img {
-        padding: 1rem 1rem 0; object-position: center bottom;
-    }
-    .hb-hero:not(.hb-fit-cover) .hb-hero-content { margin-top: 0; }
+    .hb-hero { min-height: 22.5rem; }
     .hb-hero-content { max-width: 100%; width: 100%; }
     .hb-hero-content::after {
         content: ""; position: absolute; inset: 0; z-index: -1;

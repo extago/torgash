@@ -162,6 +162,15 @@ this file is the reasoning. Read it before changing anything it covers.
   `Invariants\KitInvariants` answers `guard.invariants` with "every slot has
   goods behind it" and "every kit written for a product is shown on it", the
   second asked of `Offer::for()` itself rather than reasoned about.
+  A slot can also be **a typed list** (`kind` `list`, `products` = the SKUs
+  as typed): those products and no others, in the order typed — the first is
+  offered, the rest are "choose another" — narrowed by `match_features` like
+  any set. The admin form names every code typed (`KitsController::lookup`:
+  name, price, stock, or "no such product"), so an SKU is never typed blind.
+  A slot's `caption` (translatable) is what its tick says on the card instead
+  of "In the set". `show_countdown` counts to the kit's OWN `ends_at`
+  (`Kit::countdownEndsAt()`), never to the end of the day — the promotions
+  rule: a timer that runs out while the price stays is decoration.
 
 ### How many files one visitor may send (report of 2026-11-09)
 
